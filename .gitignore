@@ -1,0 +1,10 @@
+# VS Code
+.vs/
+.cursor/
+
+# Build outputs
+bin/
+obj/
+
+# Resources
+src/NoMoreBets/NoMoreBets.Data/Resources/*
