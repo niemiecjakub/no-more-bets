@@ -6,5 +6,9 @@
 bin/
 obj/
 
+# Python
+__pycache__/
+venv/
+
 # Resources
 src/NoMoreBets/NoMoreBets.Data/Resources/*
