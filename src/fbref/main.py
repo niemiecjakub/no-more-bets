@@ -1,5 +1,5 @@
 from fbref import FBref
-from betclic import Betclic
+from betclic import Betclic, print_events
 from constants import PREMIER_LEAGUE
 from pprint import pprint
 
@@ -13,8 +13,9 @@ def main():
     #pprint(players)
 
     betclic = Betclic()
-    html = betclic.get_upcoming_games()
-    pprint(html)
+    html = betclic.get_match_events('https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/nottingham-forest-arsenal-m899333474271232')
+    print_events(html)
+    # pprint(html)
 
 if __name__ == "__main__":
     main()
