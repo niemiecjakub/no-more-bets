@@ -1,6 +1,3 @@
-"""Player model for club player statistics."""
-
-from typing import Optional
 from pydantic import BaseModel, Field
 
 
@@ -42,6 +39,5 @@ class Player(BaseModel):
     npxg_xg_assist_per90: float = Field(..., description="Non-penalty xG + xA per 90 minutes")
     
     class Config:
-        """Pydantic configuration."""
         frozen = True
 

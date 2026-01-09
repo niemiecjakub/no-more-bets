@@ -1,5 +1,3 @@
-"""Game model for club match statistics."""
-
 from typing import Optional
 from pydantic import BaseModel, Field
 
@@ -28,6 +26,5 @@ class Game(BaseModel):
     notes: Optional[str] = Field(None, description="Additional notes")
     
     class Config:
-        """Pydantic configuration."""
         frozen = True
 

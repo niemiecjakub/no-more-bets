@@ -3,14 +3,12 @@ from bs4 import BeautifulSoup
 from typing import List, Optional, Dict, Any
 import re
 import time
-import os
-from datetime import datetime
 from models.upcoming_game import UpcomingGame
 from models.bookmaker_event import BookmakerEvent, EventOption
 
 
 class Betclic:
-    """Betclic scraper class for fetching HTML from betclic.pl."""
+    """Betclic scraper class for fetching data from betclic.pl."""
     
     def __init__(self, impersonate: str = "chrome110"):
         """Initialize Betclic scraper.
@@ -130,21 +128,6 @@ class Betclic:
         
         return games
     
-    def _fetch_page(self, url: str) -> requests.Response:
-        """Fetch a page from betclic.pl.
-        
-        Parameters
-        ----------
-        url : str
-            URL to fetch.
-            
-        Returns
-        -------
-        requests.Response
-            Response object from the request.
-        """
-        return requests.get(url, impersonate=self.impersonate)
-    
     def get_match_events(self, game_link: str, expand: bool = False) -> List[BookmakerEvent]:
         """Get all bookmaker events for a specific match.
         
@@ -182,9 +165,58 @@ class Betclic:
                 raise Exception(f"Error fetching match page: Status code {response.status_code}")
             html = response.text
  
-        events = self.extract_events(str(html))
-        return self._aggregate_events(events)
+        return self._extract_events(str(html))
+        #return self._aggregate_events(events)
     
+    def _extract_events(self, html: str) -> List[BookmakerEvent]:
+        """Extract all bookmaker events from HTML content.
+        
+        Parameters
+        ----------
+        html : str
+            HTML content containing bookmaker events.
+            
+        Returns
+        -------
+        List[BookmakerEvent]
+            List of extracted bookmaker events.
+        """
+        soup = BeautifulSoup(html, 'lxml')
+        events = []
+        
+        # Find all market elements
+        market_elements = soup.find_all(['sports-markets-single-market', 'sports-grouped-markets'], 
+                                       class_='marketElement')
+        
+        for market_element in market_elements:
+            # Determine market type and parse accordingly
+            if market_element.name == 'sports-grouped-markets':
+                events.extend(self._parse_grouped_market(market_element))
+            else:
+                parsed_events = self._parse_single_market(market_element)
+                if parsed_events:
+                    if isinstance(parsed_events, list):
+                        events.extend(parsed_events)
+                    else:
+                        events.append(parsed_events)
+        
+        return events
+
+    def _fetch_page(self, url: str) -> requests.Response:
+        """Fetch a page from betclic.pl.
+        
+        Parameters
+        ----------
+        url : str
+            URL to fetch.
+            
+        Returns
+        -------
+        requests.Response
+            Response object from the request.
+        """
+        return requests.get(url, impersonate=self.impersonate)
+
     def _fetch_and_expand_page(self, url: str) -> str:
         """Fetch page using browser automation and click all "see more" buttons.
         
@@ -217,7 +249,7 @@ class Betclic:
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
-        chrome_options.add_argument(f'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+        chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
         
         driver = None
         try:
@@ -314,40 +346,6 @@ class Betclic:
             if driver:
                 driver.quit()
     
-    def extract_events(self, html: str) -> List[BookmakerEvent]:
-        """Extract all bookmaker events from HTML content.
-        
-        Parameters
-        ----------
-        html : str
-            HTML content containing bookmaker events.
-            
-        Returns
-        -------
-        List[BookmakerEvent]
-            List of extracted bookmaker events.
-        """
-        soup = BeautifulSoup(html, 'lxml')
-        events = []
-        
-        # Find all market elements
-        market_elements = soup.find_all(['sports-markets-single-market', 'sports-grouped-markets'], 
-                                       class_='marketElement')
-        
-        for market_element in market_elements:
-            # Determine market type and parse accordingly
-            if market_element.name == 'sports-grouped-markets':
-                events.extend(self._parse_grouped_market(market_element))
-            else:
-                parsed_events = self._parse_single_market(market_element)
-                if parsed_events:
-                    if isinstance(parsed_events, list):
-                        events.extend(parsed_events)
-                    else:
-                        events.append(parsed_events)
-        
-        return events
-    
     def _parse_single_market(self, market_element) -> Optional[BookmakerEvent | List[BookmakerEvent]]:
         """Parse a single market element.
         
@@ -375,7 +373,6 @@ class Betclic:
         spaced_blocks = market_element.find('sports-spaced-blocks')
         
         options = []
-        metadata = {}
         
         if split_cards:
             # Goalscorer market - split by teams, create separate events per team
@@ -392,8 +389,7 @@ class Betclic:
                     events.append(BookmakerEvent(
                         event_type="goalscorer",
                         title=f"{title} - {team_name}",
-                        options=card_options,
-                        metadata={"team": team_name}
+                        options=card_options
                     ))
             
             return events if events else None
@@ -408,15 +404,11 @@ class Betclic:
         
         if not options:
             return None
-        
-        # Extract metadata based on event type
-        metadata = self._extract_metadata(title, event_type, options)
-        
+
         return BookmakerEvent(
             event_type=event_type,
             title=title,
             options=options,
-            metadata=metadata if metadata else None
         )
     
     def _parse_grouped_market(self, market_element) -> List[BookmakerEvent]:
@@ -473,14 +465,12 @@ class Betclic:
                 if odds is None:
                     continue
                 
-                sub_market_title = sub_markets[i]
                 event_type = "first_last_goal"
                 
                 events.append(BookmakerEvent(
                     event_type=event_type,
-                    title=f"{main_title} - {sub_market_title}",
+                    title=f"{main_title}",
                     options=[EventOption(label=label, odds=odds)],
-                    metadata={"sub_market": sub_market_title}
                 ))
         
         return events
@@ -598,70 +588,11 @@ class Betclic:
         except (ValueError, AttributeError):
             return None
     
-    def _extract_metadata(self, title: str, event_type: str, options: List[EventOption]) -> Dict[str, Any]:
-        """Extract metadata from event title and options.
-        
-        Parameters
-        ----------
-        title : str
-            Event title.
-        event_type : str
-            Event type identifier.
-        options : List[EventOption]
-            List of event options.
-            
-        Returns
-        -------
-        Dict[str, Any]
-            Extracted metadata dictionary.
-        """
-        metadata = {}
-        
-        if event_type == "team_goals":
-            # Extract team name from title like "Liczba goli - Manchester United"
-            match = re.search(r'Liczba goli\s*-\s*(.+)', title, re.IGNORECASE)
-            if match:
-                metadata["team"] = match.group(1).strip()
-        elif event_type == "handicap":
-            # Extract handicap value from first option label
-            if options:
-                first_label = options[0].label
-                # Match patterns like "Manchester United (-3)" or "(-3)"
-                match = re.search(r'\(([+-]?\d+)\)', first_label)
-                if match:
-                    try:
-                        metadata["handicap_value"] = int(match.group(1))
-                    except ValueError:
-                        pass
-        elif event_type == "over_under_goals":
-            # Extract threshold from options
-            if options:
-                first_label = options[0].label
-                # Match patterns like "Powyżej 2,5" or "Poniżej 1,5"
-                match = re.search(r'(\d+[,.]?\d*)', first_label.replace(',', '.'))
-                if match:
-                    try:
-                        threshold = float(match.group(1))
-                        metadata["threshold"] = threshold
-                    except ValueError:
-                        pass
-        elif event_type == "half_result":
-            # Extract half number from title
-            match = re.search(r'(\d+)\.?\s*połowa', title, re.IGNORECASE)
-            if match:
-                try:
-                    metadata["half"] = int(match.group(1))
-                except ValueError:
-                    pass
-        
-        return metadata
-    
     def _aggregate_events(self, events: List[BookmakerEvent]) -> List[BookmakerEvent]:
-        """Aggregate events of the same type and metadata into single events.
+        """Aggregate events of the same type into single events.
         
-        Groups events by event_type and metadata, then merges their options.
-        For events with sub_market in metadata, removes the sub_market suffix from title.
-        
+        Groups events by event_type, then merges their options.
+     
         Parameters
         ----------
         events : List[BookmakerEvent]
@@ -675,13 +606,11 @@ class Betclic:
         if not events:
             return []
         
-        # Group events by event_type and metadata
         grouped = {}
         
         for event in events:
-            # Create a grouping key from event_type and metadata
-            metadata_key = self._get_metadata_key(event.metadata)
-            group_key = (event.event_type, metadata_key)
+            # Create a grouping key from event_type
+            group_key = (event.event_type)
             
             if group_key not in grouped:
                 grouped[group_key] = []
@@ -700,24 +629,6 @@ class Betclic:
         
         return aggregated
     
-    def _get_metadata_key(self, metadata: Optional[Dict[str, Any]]) -> tuple:
-        """Create a hashable key from metadata for grouping.
-        
-        Parameters
-        ----------
-        metadata : Optional[Dict[str, Any]]
-            Event metadata dictionary.
-            
-        Returns
-        -------
-        tuple
-            Hashable tuple representation of metadata.
-        """
-        if not metadata:
-            return ()
-        
-        # Sort items to ensure consistent grouping
-        return tuple(sorted(metadata.items()))
     
     def _merge_events(self, events: List[BookmakerEvent]) -> BookmakerEvent:
         """Merge multiple events of the same type into a single event.
@@ -725,7 +636,7 @@ class Betclic:
         Parameters
         ----------
         events : List[BookmakerEvent]
-            List of events to merge (must have same event_type and metadata).
+            List of events to merge
             
         Returns
         -------
@@ -761,7 +672,6 @@ class Betclic:
             event_type=base_event.event_type,
             title=original_title,
             options=sorted_options,
-            metadata=base_event.metadata
         )
     
 
@@ -786,11 +696,6 @@ def print_events(events: List[BookmakerEvent]) -> None:
         print(f"Event #{idx}")
         print(f"  Type: {event.event_type}")
         print(f"  Title: {event.title}")
-        
-        if event.metadata:
-            print(f"  Metadata:")
-            for key, value in event.metadata.items():
-                print(f"    - {key}: {value}")
         
         print(f"  Options ({len(event.options)}):")
         for option in event.options:

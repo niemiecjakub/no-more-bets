@@ -1,11 +1,9 @@
-"""Club model for Premier League statistics."""
-
 from typing import Optional
 from pydantic import BaseModel, Field
 
 
 class Club(BaseModel):
-    """Represents a Premier League club with its statistics."""
+    """Represents a club with its statistics."""
     
     rank: int = Field(..., description="League position/rank")
     team: str = Field(..., description="Team name")
@@ -29,6 +27,5 @@ class Club(BaseModel):
     notes: Optional[str] = Field(None, description="Additional notes")
     
     class Config:
-        """Pydantic configuration."""
         frozen = True
 

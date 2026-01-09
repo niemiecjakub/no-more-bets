@@ -1,5 +1,3 @@
-"""Upcoming game model for BetClick scraper."""
-
 from typing import Optional
 from pydantic import BaseModel, Field
 
@@ -17,5 +15,4 @@ class UpcomingGame(BaseModel):
     url: str = Field(..., description="BetClick URL for the match")
     
     class Config:
-        """Pydantic configuration."""
         frozen = True

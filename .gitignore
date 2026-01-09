@@ -12,3 +12,4 @@ venv/
 
 # Resources
 src/NoMoreBets/NoMoreBets.Data/Resources/*
+.env
