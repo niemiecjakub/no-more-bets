@@ -16,7 +16,6 @@ class FBref:
         self.impersonate = impersonate
         self.base_url = "https://fbref.com"
      
-    
     def get_premier_league_stats(self) -> list[Club]:
         """Get Premier League statistics as a list of Club objects.
         
