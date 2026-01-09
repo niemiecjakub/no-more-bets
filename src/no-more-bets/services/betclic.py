@@ -676,34 +676,3 @@ class Betclic:
     
 
 
-def print_events(events: List[BookmakerEvent]) -> None:
-    """Print a list of bookmaker events in a nice, readable format.
-    
-    Parameters
-    ----------
-    events : List[BookmakerEvent]
-        List of bookmaker events to print.
-    """
-    if not events:
-        print("No events to display.")
-        return
-    
-    print(f"\n{'=' * 80}")
-    print(f"BOOKMAKER EVENTS ({len(events)} total)")
-    print(f"{'=' * 80}\n")
-    
-    for idx, event in enumerate(events, 1):
-        print(f"Event #{idx}")
-        print(f"  Type: {event.event_type}")
-        print(f"  Title: {event.title}")
-        
-        print(f"  Options ({len(event.options)}):")
-        for option in event.options:
-            print(f"    • {option.label:<30} Odds: {option.odds:.2f}")
-        
-        # Add separator between events (except for the last one)
-        if idx < len(events):
-            print()
-    
-    print(f"\n{'=' * 80}\n")
-
