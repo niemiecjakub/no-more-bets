@@ -2,6 +2,9 @@ from curl_cffi import requests
 from bs4 import BeautifulSoup
 from typing import List, Optional, Dict, Any
 import re
+import time
+import os
+from datetime import datetime
 from models.upcoming_game import UpcomingGame
 from models.bookmaker_event import BookmakerEvent, EventOption
 
@@ -142,7 +145,7 @@ class Betclic:
         """
         return requests.get(url, impersonate=self.impersonate)
     
-    def get_match_events(self, game_link: str) -> List[BookmakerEvent]:
+    def get_match_events(self, game_link: str, expand: bool = False) -> List[BookmakerEvent]:
         """Get all bookmaker events for a specific match.
         
         Fetches the match page and extracts all events from the verticalScroller_list container.
@@ -151,6 +154,9 @@ class Betclic:
         ----------
         game_link : str
             URL to the match page (can be relative or absolute).
+        expand : bool, optional
+            If True, clicks all "see more" buttons to expand hidden content before extraction.
+            Default is False.
             
         Returns
         -------
@@ -161,25 +167,152 @@ class Betclic:
         ------
         Exception
             If the page cannot be fetched or the verticalScroller_list container is not found.
+        ImportError
+            If expand=True but selenium is not installed.
         """
-        # Handle relative URLs
-        if game_link.startswith('/'):
-            url = f"{self.base_url}{game_link}"
-        elif not game_link.startswith('http'):
-            url = f"{self.base_url}/{game_link}"
+
+        
+        # If expand is True, use browser automation to click "see more" buttons
+        if expand:
+            html = self._fetch_and_expand_page(game_link)
         else:
-            url = game_link
-        
-        # Fetch the page
-        response = self._fetch_page(url)
-        if response.status_code != 200:
-            raise Exception(f"Error fetching match page: Status code {response.status_code}")
-        
-        html = response.text
-        soup = BeautifulSoup(html, 'lxml')
-        
+            # Fetch the page normally
+            response = self._fetch_page(game_link)
+            if response.status_code != 200:
+                raise Exception(f"Error fetching match page: Status code {response.status_code}")
+            html = response.text
+ 
         events = self.extract_events(str(html))
         return self._aggregate_events(events)
+    
+    def _fetch_and_expand_page(self, url: str) -> str:
+        """Fetch page using browser automation and click all "see more" buttons.
+        
+        Parameters
+        ----------
+        url : str
+            URL to fetch.
+            
+        Returns
+        -------
+        str
+            HTML content after expanding all "see more" buttons.
+            
+        Raises
+        ------
+        ImportError
+            If selenium is not installed.
+        """
+        from selenium import webdriver
+        from selenium.webdriver.common.by import By
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.webdriver.chrome.options import Options
+        from selenium.common.exceptions import TimeoutException, NoSuchElementException
+
+        
+        # Setup Chrome options for headless browsing
+        chrome_options = Options()
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-blink-features=AutomationControlled')
+        chrome_options.add_argument(f'user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36')
+        
+        driver = None
+        try:
+            driver = webdriver.Chrome(options=chrome_options)
+            driver.get(url)
+            
+            # Wait for page to load
+            WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.TAG_NAME, "body"))
+            )
+            
+            # Wait 5 seconds for page to fully initialize
+            time.sleep(5)
+            
+            # Handle privacy consent popup if present
+            consent_clicked = False
+            try:
+                privacy_container = driver.find_element(By.ID, 'popin_tc_privacy_container_button')
+                if privacy_container:
+                    # Find all buttons inside the privacy container
+                    buttons = privacy_container.find_elements(By.TAG_NAME, 'button')
+                    if len(buttons) >= 2:
+                        # Click the 2nd button (index 1)
+                        driver.execute_script("arguments[0].scrollIntoView(true);", buttons[1])
+                        time.sleep(0.2)
+                        buttons[1].click()
+                        consent_clicked = True
+                        print("Privacy consent clicked")
+                        time.sleep(2)
+            except (NoSuchElementException, IndexError):
+                # Privacy container not found or doesn't have enough buttons, continue
+                pass
+            
+            if not consent_clicked:
+                print("Privacy consent not found or not clicked")
+            
+            # Handle modal if present
+            modal_clicked = False
+            try:
+                modal = driver.find_element(By.CSS_SELECTOR, 'div.modal')
+                if modal:
+                    # Find the first button inside the modal
+                    modal_buttons = modal.find_elements(By.TAG_NAME, 'button')
+                    if len(modal_buttons) >= 1:
+                        driver.execute_script("arguments[0].scrollIntoView(true);", modal_buttons[0])
+                        time.sleep(0.2)
+                        modal_buttons[0].click()
+                        modal_clicked = True
+                        print("Modal clicked")
+                        time.sleep(2)
+            except (NoSuchElementException, IndexError):
+                # Modal not found or doesn't have buttons, continue
+                pass
+            
+            if not modal_clicked:
+                print("Modal not found or not clicked")
+            
+            # Find all "see more" buttons (buttons with class containing 'seeMore' or 'is-seeMore')
+            see_more_buttons = driver.find_elements(
+                By.CSS_SELECTOR, 
+                "button.is-seeMore, button[class*='seeMore'], button[class*='see-more']"
+            )
+            
+            print(f"Found {len(see_more_buttons)} 'see more' button(s)")
+            
+            # Click all "see more" buttons
+            for button in see_more_buttons:
+                try:
+                    # Wait for button to be clickable
+                    WebDriverWait(driver, 1).until(
+                        EC.element_to_be_clickable(button)
+                    )
+                    
+                    # Scroll to button to ensure it's visible
+                    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
+                    time.sleep(0.3)  # Small delay for scroll
+                    
+                    # Try to click using JavaScript (more reliable for dynamic content)
+                    driver.execute_script("arguments[0].click();", button)
+                    time.sleep(0.5)  # Wait for content to expand
+                except (TimeoutException, Exception) as e:
+                    # Continue if button click fails (might be already clicked or not clickable)
+                    continue
+            
+            # Wait a bit more for any dynamic content to load
+            time.sleep(1)
+            
+            # Get the final HTML
+            html = driver.page_source
+            
+            return html
+            
+        finally:
+            if driver:
+                driver.quit()
     
     def extract_events(self, html: str) -> List[BookmakerEvent]:
         """Extract all bookmaker events from HTML content.

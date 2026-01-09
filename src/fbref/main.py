@@ -13,7 +13,7 @@ def main():
     #pprint(players)
 
     betclic = Betclic()
-    html = betclic.get_match_events('https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/nottingham-forest-arsenal-m899333474271232')
+    html = betclic.get_match_events('https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/nottingham-forest-arsenal-m899333474271232', expand=True)
     print_events(html)
     # pprint(html)
 
