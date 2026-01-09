@@ -178,7 +178,8 @@ class Betclic:
         html = response.text
         soup = BeautifulSoup(html, 'lxml')
         
-        return self.extract_events(str(html))
+        events = self.extract_events(str(html))
+        return self._aggregate_events(events)
     
     def extract_events(self, html: str) -> List[BookmakerEvent]:
         """Extract all bookmaker events from HTML content.
@@ -521,6 +522,115 @@ class Betclic:
                     pass
         
         return metadata
+    
+    def _aggregate_events(self, events: List[BookmakerEvent]) -> List[BookmakerEvent]:
+        """Aggregate events of the same type and metadata into single events.
+        
+        Groups events by event_type and metadata, then merges their options.
+        For events with sub_market in metadata, removes the sub_market suffix from title.
+        
+        Parameters
+        ----------
+        events : List[BookmakerEvent]
+            List of events to aggregate.
+            
+        Returns
+        -------
+        List[BookmakerEvent]
+            Aggregated list of events.
+        """
+        if not events:
+            return []
+        
+        # Group events by event_type and metadata
+        grouped = {}
+        
+        for event in events:
+            # Create a grouping key from event_type and metadata
+            metadata_key = self._get_metadata_key(event.metadata)
+            group_key = (event.event_type, metadata_key)
+            
+            if group_key not in grouped:
+                grouped[group_key] = []
+            grouped[group_key].append(event)
+        
+        # Merge events in each group
+        aggregated = []
+        for group_key, group_events in grouped.items():
+            if len(group_events) == 1:
+                # No need to aggregate if only one event
+                aggregated.append(group_events[0])
+            else:
+                # Merge multiple events
+                merged_event = self._merge_events(group_events)
+                aggregated.append(merged_event)
+        
+        return aggregated
+    
+    def _get_metadata_key(self, metadata: Optional[Dict[str, Any]]) -> tuple:
+        """Create a hashable key from metadata for grouping.
+        
+        Parameters
+        ----------
+        metadata : Optional[Dict[str, Any]]
+            Event metadata dictionary.
+            
+        Returns
+        -------
+        tuple
+            Hashable tuple representation of metadata.
+        """
+        if not metadata:
+            return ()
+        
+        # Sort items to ensure consistent grouping
+        return tuple(sorted(metadata.items()))
+    
+    def _merge_events(self, events: List[BookmakerEvent]) -> BookmakerEvent:
+        """Merge multiple events of the same type into a single event.
+        
+        Parameters
+        ----------
+        events : List[BookmakerEvent]
+            List of events to merge (must have same event_type and metadata).
+            
+        Returns
+        -------
+        BookmakerEvent
+            Merged event with combined options.
+        """
+        if not events:
+            raise ValueError("Cannot merge empty event list")
+        
+        if len(events) == 1:
+            return events[0]
+        
+        # Use the first event as base
+        base_event = events[0]
+        
+        # Collect all options, using (label, odds) as key to handle same label with different odds
+        options_dict = {}
+        for event in events:
+            for option in event.options:
+                # Use (label, odds) tuple as key to preserve options with same label but different odds
+                key = (option.label, option.odds)
+                if key not in options_dict:
+                    options_dict[key] = option
+        
+        # Keep the original title without modification
+        original_title = base_event.title
+        
+        # Sort options by label for consistent output
+        sorted_options = sorted(options_dict.values(), key=lambda x: x.label)
+        
+        # Create merged event
+        return BookmakerEvent(
+            event_type=base_event.event_type,
+            title=original_title,
+            options=sorted_options,
+            metadata=base_event.metadata
+        )
+    
 
 
 def print_events(events: List[BookmakerEvent]) -> None:
