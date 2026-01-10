@@ -9,7 +9,16 @@ from .base_scraper import BaseScraper
 class Betclic(BaseScraper):
     """Betclic scraper class for fetching data from betclic.pl."""
     
-    def __init__(self, impersonate: str = "chrome110", delay: float = 5.0, retry_count: int = 3, retry_delay: float = 2.0):
+    def __init__(
+        self,
+        impersonate: str = "chrome110",
+        delay: float = 5.0,
+        retry_count: int = 3,
+        retry_delay: float = 2.0,
+        timeout: float = 15.0,
+        store: bool = True,
+        use_cache: bool = True,
+    ):
         """Initialize Betclic scraper.
         
         Parameters
@@ -22,8 +31,14 @@ class Betclic(BaseScraper):
             Number of retry attempts if request fails. Default is 3.
         retry_delay : float
             Delay in seconds between retry attempts. Default is 2.0.
+        timeout : float
+            Request timeout in seconds. Default is 15.0.
+        store : bool
+            Whether to save fetched HTML to cache folder. Default is True.
+        use_cache : bool
+            Whether to use cached HTML if available. Default is True.
         """
-        super().__init__(impersonate, delay, retry_count, retry_delay)
+        super().__init__(impersonate, delay, retry_count, retry_delay, timeout, store, use_cache)
         self.base_url = "https://www.betclic.pl"
     
     def get_premier_league_html(self) -> str:
@@ -35,12 +50,8 @@ class Betclic(BaseScraper):
             HTML content of the page.
         """
         url = f"{self.base_url}/football-sfootball/premier-league-c3"
-        response = self._fetch_page(url)
-        
-        if response.status_code == 200:
-            return response.text
-        else:
-            raise Exception(f"Error fetching page: Status code {response.status_code}")
+        response = self._get_page_response(url)
+        return response.text
     
     def get_upcoming_games(self) -> List[UpcomingGame]:
         """Get list of upcoming games from the Premier League page.
@@ -165,9 +176,7 @@ class Betclic(BaseScraper):
             html = self._fetch_and_expand_page(game_link)
         else:
             # Fetch the page normally
-            response = self._fetch_page(game_link)
-            if response.status_code != 200:
-                raise Exception(f"Error fetching match page: Status code {response.status_code}")
+            response = self._get_page_response(game_link)
             html = response.text
  
         return self._extract_events(str(html))

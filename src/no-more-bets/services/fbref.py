@@ -5,7 +5,16 @@ from .base_scraper import BaseScraper
 class FBref(BaseScraper):
     """FBref scraper class for fetching and parsing data from fbref.com."""
     
-    def __init__(self, impersonate: str = "chrome110", delay: float = 5.0, retry_count: int = 3, retry_delay: float = 2.0):
+    def __init__(
+        self,
+        impersonate: str = "chrome110",
+        delay: float = 5.0,
+        retry_count: int = 3,
+        retry_delay: float = 2.0,
+        timeout: float = 15.0,
+        store: bool = True,
+        use_cache: bool = True,
+    ):
         """Initialize FBref scraper.
         
         Parameters
@@ -18,8 +27,14 @@ class FBref(BaseScraper):
             Number of retry attempts if request fails. Default is 3.
         retry_delay : float
             Delay in seconds between retry attempts. Default is 2.0.
+        timeout : float
+            Request timeout in seconds. Default is 15.0.
+        store : bool
+            Whether to save fetched HTML to cache folder. Default is True.
+        use_cache : bool
+            Whether to use cached HTML if available. Default is True.
         """
-        super().__init__(impersonate, delay, retry_count, retry_delay)
+        super().__init__(impersonate, delay, retry_count, retry_delay, timeout, store, use_cache)
         self.base_url = "https://fbref.com"
      
     def get_premier_league_stats(self) -> list[Club]:
@@ -36,12 +51,7 @@ class FBref(BaseScraper):
         selector = '#results2025-202691_overall > tbody'
 
         url = f"{self.base_url}/en/comps/9/Premier-League-Stats"
-        response = self._fetch_page(url)
-        
-        if response.status_code == 200:
-            html_content = response.text
-        else:
-            raise Exception(f"Error fetching page: Status code {response.status_code}")
+        html_content = self._get_page_html(url)     
         
         soup = BeautifulSoup(html_content, 'lxml')
         tbody = soup.select_one(selector)
@@ -166,12 +176,8 @@ class FBref(BaseScraper):
         """
         # First, get the Premier League stats to find the club link
         url = f"{self.base_url}/en/comps/9/Premier-League-Stats"
-        response = self._fetch_page(url)
-        
-        if response.status_code != 200:
-            raise Exception(f"Error fetching Premier League page: Status code {response.status_code}")
-        
-        soup = BeautifulSoup(response.text, 'lxml')
+        league_stats_html = self._get_page_html(url)
+        soup = BeautifulSoup(league_stats_html, 'lxml')
         tbody = soup.select_one('#results2025-202691_overall > tbody')
         
         if tbody is None:
@@ -194,13 +200,10 @@ class FBref(BaseScraper):
         
         # Navigate to the club details page
         club_url = f"{self.base_url}{club_link}"
-        club_response = self._fetch_page(club_url)
-        
-        if club_response.status_code != 200:
-            raise Exception(f"Error fetching club page: Status code {club_response.status_code}")
-        
+        club_response_html = self._get_page_html(club_url)
+
         # Parse the player statistics table
-        club_soup = BeautifulSoup(club_response.text, 'lxml')
+        club_soup = BeautifulSoup(club_response_html, 'lxml')
         player_tbody = club_soup.select_one('#stats_standard_9 > tbody')
         
         if player_tbody is None:
@@ -363,12 +366,8 @@ class FBref(BaseScraper):
         """
         # First, get the Premier League stats to find the club link
         url = f"{self.base_url}/en/comps/9/Premier-League-Stats"
-        response = self._fetch_page(url)
-        
-        if response.status_code != 200:
-            raise Exception(f"Error fetching Premier League page: Status code {response.status_code}")
-        
-        soup = BeautifulSoup(response.text, 'lxml')
+        league_stats_html = self._get_page_html(url)
+        soup = BeautifulSoup(league_stats_html, 'lxml')
         tbody = soup.select_one('#results2025-202691_overall > tbody')
         
         if tbody is None:
@@ -391,13 +390,10 @@ class FBref(BaseScraper):
         
         # Navigate to the club details page
         club_url = f"{self.base_url}{club_link}"
-        club_response = self._fetch_page(club_url)
-        
-        if club_response.status_code != 200:
-            raise Exception(f"Error fetching club page: Status code {club_response.status_code}")
-        
+        club_response_html = self._get_page_html(club_url)
+   
         # Parse the game statistics table
-        club_soup = BeautifulSoup(club_response.text, 'lxml')
+        club_soup = BeautifulSoup(club_response_html, 'lxml')
         game_tbody = club_soup.select_one('#matchlogs_for > tbody')
         
         if game_tbody is None:
