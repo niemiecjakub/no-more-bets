@@ -180,8 +180,9 @@ class Betclic(BaseScraper):
             # Fetch the page normally (uses caching if enabled)
             html = self._get_page_html(game_link)
  
-        return self._extract_events(str(html))
-        #return self._aggregate_events(events)
+        #return self._extract_events(str(html))
+        events = self._extract_events(str(html))
+        return self._aggregate_events(events)
     
     def _extract_events(self, html: str) -> List[BookmakerEvent]:
         """Extract all bookmaker events from HTML content.
@@ -503,9 +504,7 @@ class Betclic(BaseScraper):
                 options.append(EventOption(label=label, odds=odds))
         
         return options
-    
-
-    
+      
     def _parse_odds(self, odds_str: str) -> Optional[float]:
         """Parse odds string to float.
         
@@ -571,8 +570,7 @@ class Betclic(BaseScraper):
                 aggregated.append(merged_event)
         
         return aggregated
-    
-    
+       
     def _merge_events(self, events: List[BookmakerEvent]) -> BookmakerEvent:
         """Merge multiple events of the same type into a single event.
         

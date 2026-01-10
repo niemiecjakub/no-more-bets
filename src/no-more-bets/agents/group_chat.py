@@ -16,7 +16,6 @@ from .analytics_agent import ANALYTICS_AGENT_NAME, create_analytics_agent
 from .betting_agent import BETTING_AGENT_NAME, create_betting_agent
 from .critic_agent import CRITIC_AGENT_NAME, create_critic_agent
 from .filters import plugin_usage_logger_filter
-from models import ApprovedCoupon
 
 def create_kernel() -> Kernel:
     """Create a shared Kernel instance with OpenAI service.
@@ -218,7 +217,7 @@ def create_group_chat() -> AgentGroupChat:
     return chat
 
 
-async def run_betting_analysis(query: str, verbose: bool = True) -> ApprovedCoupon | str:
+async def run_betting_analysis(query: str, verbose: bool = True) -> str:
     """Run the betting analysis group chat for a given query.
     
     Parameters

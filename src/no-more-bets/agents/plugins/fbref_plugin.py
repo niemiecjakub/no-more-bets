@@ -51,12 +51,16 @@ class FBrefPlugin:
         club_name: Annotated[str, "Name of the club (e.g., 'Arsenal', 'Liverpool')"],
         epl_only: Annotated[bool, "If True, only return Premier League games. Default is True."] = True
     ) -> list[Game]:
-        """Get recent games for a specific club.
+        """Get 5 recent games for a specific club.
         
         Returns structured response with recent matches including results, scores, xG,
         possession, formations, and other match details.
         """
-        return self._fbref.get_club_games(club_name, epl_only=epl_only)
+
+        games = self._fbref.get_club_games(club_name, epl_only=epl_only)
+        games_with_result = [game for game in games if getattr(game, "result", None) is not None]
+        games_sorted = sorted(games_with_result, key=lambda x: getattr(x, "date", None), reverse=True)
+        return games_sorted[:5]
 
     
     @kernel_function(

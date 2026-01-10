@@ -34,7 +34,6 @@ def print_events(events: List[BookmakerEvent]) -> None:
     
     for idx, event in enumerate(events, 1):
         print(f"Event #{idx}")
-        print(f"  Type: {event.event_type}")
         print(f"  Title: {event.title}")
         
         print(f"  Options ({len(event.options)}):")
