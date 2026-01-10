@@ -18,6 +18,7 @@ class Betclic(BaseScraper):
         timeout: float = 15.0,
         store: bool = True,
         use_cache: bool = True,
+        cache_ttl: float = 3600.0,
     ):
         """Initialize Betclic scraper.
         
@@ -37,8 +38,10 @@ class Betclic(BaseScraper):
             Whether to save fetched HTML to cache folder. Default is True.
         use_cache : bool
             Whether to use cached HTML if available. Default is True.
+        cache_ttl : float
+            Cache time-to-live in seconds. Default is 3600.0 (1 hour).
         """
-        super().__init__(impersonate, delay, retry_count, retry_delay, timeout, store, use_cache)
+        super().__init__(impersonate, delay, retry_count, retry_delay, timeout, store, use_cache, cache_ttl)
         self.base_url = "https://www.betclic.pl"
     
     def get_premier_league_html(self) -> str:
