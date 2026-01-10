@@ -50,11 +50,10 @@ class Betclic(BaseScraper):
         Returns
         -------
         str
-            HTML content of the page.
+            HTML content of the page (uses caching if enabled).
         """
         url = f"{self.base_url}/football-sfootball/premier-league-c3"
-        response = self._get_page_response(url)
-        return response.text
+        return self._get_page_html(url)
     
     def get_upcoming_games(self) -> List[UpcomingGame]:
         """Get list of upcoming games from the Premier League page.
@@ -178,9 +177,8 @@ class Betclic(BaseScraper):
         if expand:
             html = self._fetch_and_expand_page(game_link)
         else:
-            # Fetch the page normally
-            response = self._get_page_response(game_link)
-            html = response.text
+            # Fetch the page normally (uses caching if enabled)
+            html = self._get_page_html(game_link)
  
         return self._extract_events(str(html))
         #return self._aggregate_events(events)

@@ -1,24 +1,19 @@
-from typing import List
-from pydantic import BaseModel, Field
+from typing import Annotated, List
+from pydantic import Field
+from .base_model import FrozenBaseModel
 
 
-class EventOption(BaseModel):
+class EventOption(FrozenBaseModel):
     """Represents a single betting option within an event."""
     
-    label: str = Field(..., description="Option description (e.g., 'Tak', 'Powyżej 2,5')")
-    odds: float = Field(..., description="Betting odds as float (e.g., 1.48)")
-    
-    class Config:
-        frozen = True
+    label: Annotated[str, Field(..., description="Option description (e.g., 'Tak', 'Powyżej 2,5')")]
+    odds: Annotated[float, Field(..., description="Betting odds as float (e.g., 1.48)")]
 
 
-class BookmakerEvent(BaseModel):
+class BookmakerEvent(FrozenBaseModel):
     """Base model for all bookmaker match events."""
     
-    event_type: str = Field(..., description="Event type identifier (e.g., 'both_teams_score', 'over_under')")
-    title: str = Field(..., description="Human-readable event name from HTML")
-    options: List[EventOption] = Field(..., description="Available betting options")
-    
-    class Config:
-        frozen = True
+    event_type: Annotated[str, Field(..., description="Event type identifier (e.g., 'both_teams_score', 'over_under')")]
+    title: Annotated[str, Field(..., description="Human-readable event name from HTML")]
+    options: Annotated[List[EventOption], Field(..., description="Available betting options")]
  

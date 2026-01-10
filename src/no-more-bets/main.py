@@ -1,48 +1,74 @@
-import re
-from services.fbref import FBref
-from services.betclic import Betclic
-from utils.utils import print_events, print_clubs, print_games, print_players
-from constants import PREMIER_LEAGUE 
+"""Main entry point for the No More Bets betting analysis system."""
+
+import asyncio
 from dotenv import load_dotenv
-from agents.sample_agent import Agent
-from services.web_search import WebSearch
 
-def main(): 
-    #agent = Agent()
-    #agent.run_conversation_loop()
-    #scraper = FBref(delay=10.0#)
-    #
-    #club_name = PREMIER_LEAGUE.ARSENAL
-    #league_stats = scraper.get_premier_league_stats()
-    #print_clubs(league_stats)
+from agents.group_chat import run_betting_analysis
+from models import ApprovedCoupon
+
+
+def run_analysis(query: str):
+    """Run a single betting analysis query.
     
-    #print(f"--------------------------------")
-
-    #players = scraper.get_club_players(club_name)
-    #print_players(players)
-    #print(f"--------------------------------")
-    #games = scraper.get_club_games(club_name, epl_only=True)
-    #print_games(games)
-    #print(f"--------------------------------")
-
-    # betclic = Betclic()
-    # upcomming_games = betclic.get_upcoming_games()
-    # for game in upcomming_games:
-    #     print(f'{game.away_team} vs {game.home_team} {game.time}')
-    #     events = betclic.get_match_events(game.url, expand=False)
-    #     print_events(events)
+    Parameters
+    ----------
+    query : str
+        The match query to analyze (e.g., "Analyze Arsenal vs Liverpool").
+    """
+    result = asyncio.run(run_betting_analysis(query, verbose=True))
     
-    # pprint(html)
+    # If result is an ApprovedCoupon, display it nicely
+    if isinstance(result, ApprovedCoupon):
+        print("\n" + "="*70)
+        print("APPROVED COUPON SUMMARY")
+        print("="*70)
+        print(f"\nQuery: {result.query}")
+        print(f"Analysis Date: {result.analysis_date}")
+        print(f"Total Bets: {result.total_bets}")
+        print(f"Total Stake: {result.total_stake} units")
+        if result.expected_return:
+            print(f"Expected Return: {result.expected_return:.2f} units")
+        if result.potential_profit:
+            print(f"Potential Profit: {result.potential_profit:.2f} units")
+        print(f"Risk Level: {result.overall_risk}")
+        
+        print("\n" + "-"*70)
+        print("BETTING SELECTIONS:")
+        print("-"*70)
+        for i, bet in enumerate(result.bets, 1):
+            print(f"\nBet {i}:")
+            print(f"  Match: {bet.match}")
+            print(f"  Type: {bet.bet_type}")
+            print(f"  Selection: {bet.selection}")
+            print(f"  Odds: {bet.odds:.2f}")
+            if bet.implied_probability:
+                print(f"  Implied Probability: {bet.implied_probability:.1f}%")
+            print(f"  Confidence: {bet.confidence}")
+            print(f"  Stake: {bet.stake} units")
+            print(f"  Reasoning: {bet.reasoning[:200]}..." if len(bet.reasoning) > 200 else f"  Reasoning: {bet.reasoning}")
+        
+        print("\n" + "-"*70)
+        print("CLOSING THOUGHTS:")
+        print("-"*70)
+        print(result.closing_thoughts)
+        
+        if result.research_summary or result.analytics_summary:
+            print("\n" + "-"*70)
+            print("ANALYSIS SUMMARY:")
+            print("-"*70)
+            if result.research_summary:
+                print(f"\nResearch: {result.research_summary[:300]}...")
+            if result.analytics_summary:
+                print(f"\nAnalytics: {result.analytics_summary[:300]}...")
+        
+        print("\n" + "="*70)
 
-    web_search = WebSearch(region="uk-en")
-    results = web_search.search("Leeds latest match in premier league", timelimit="d")
-    for result in results:
-        print(f"Title: {result.title}")
-        print(f"{result.body}")
-        print(f"URL: {result.href}")
-        # print(f"Date: {result.date}")
-        print(f"--------------------------------")
+
+def main():
+    """Main entry point with CLI argument support."""
+    load_dotenv()
+    run_analysis("Analyze Leeds vs Fulham")
+
 
 if __name__ == "__main__":
-    load_dotenv()
     main()
