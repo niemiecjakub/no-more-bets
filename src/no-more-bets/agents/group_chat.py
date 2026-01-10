@@ -1,7 +1,4 @@
 import os
-import re
-from datetime import datetime
-from typing import Optional, List
 
 from semantic_kernel import Kernel
 from semantic_kernel.agents import AgentGroupChat, ChatCompletionAgent
@@ -19,7 +16,7 @@ from .analytics_agent import ANALYTICS_AGENT_NAME, create_analytics_agent
 from .betting_agent import BETTING_AGENT_NAME, create_betting_agent
 from .critic_agent import CRITIC_AGENT_NAME, create_critic_agent
 from .filters import plugin_usage_logger_filter
-from models import ApprovedCoupon, BettingSelection
+from models import ApprovedCoupon
 
 def create_kernel() -> Kernel:
     """Create a shared Kernel instance with OpenAI service.
@@ -188,7 +185,7 @@ Otherwise, respond with: continue"""
         kernel=kernel,
         result_parser=lambda result: termination_keyword in str(result.value[0]).lower() if result.value and result.value[0] else False,
         history_variable_name="lastmessage",
-        maximum_iterations=12,
+        maximum_iterations=5,
         history_reducer=history_reducer,
     )
 

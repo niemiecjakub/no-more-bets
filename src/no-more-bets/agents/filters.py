@@ -1,8 +1,7 @@
-"""Semantic Kernel Filters for logging and monitoring plugin usage."""
-
 import os
 from typing import Awaitable, Callable
 from semantic_kernel.filters import FunctionInvocationContext
+from utils.utils import print_green
 
 async def plugin_usage_logger_filter(
     context: FunctionInvocationContext,
@@ -26,6 +25,6 @@ async def plugin_usage_logger_filter(
         plugin_name = context.function.plugin_name
         function_name = context.function.name   
         arguments = context.arguments
-        print(f"Calling: {plugin_name}: {function_name} with arguments: {arguments}")
+        print_green(f"Calling: {plugin_name}: {function_name} with arguments: {arguments}")
 
     await next(context)

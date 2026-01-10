@@ -5,6 +5,17 @@ from models.player import Player
 from models.game import Game
 
 
+def print_green(message: str) -> None:
+    """Print a message in green color to the console.
+    
+    Parameters
+    ----------
+    message : str
+        The message to print in green.
+    """
+    print(f"\033[92m{message}\033[0m")
+
+
 def print_events(events: List[BookmakerEvent]) -> None:
     """Print a list of bookmaker events in a nice, readable format.
     

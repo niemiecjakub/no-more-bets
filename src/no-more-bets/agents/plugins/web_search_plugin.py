@@ -1,15 +1,7 @@
-"""Web Search Plugin for Semantic Kernel agents."""
-
-import sys
-import os
 from typing import Annotated
-
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 from semantic_kernel.functions import kernel_function
 from services.web_search import WebSearch
-from models import FootballNewsSearchResponse, GeneralNewsSearchResponse, WebSearchResponse
+from models import TextSearchResult, NewsSearchResult
 
 
 class WebSearchPlugin:
@@ -31,23 +23,17 @@ class WebSearchPlugin:
         self,
         query: Annotated[str, "Search query for football news (e.g., 'Arsenal vs Liverpool preview')"],
         timelimit: Annotated[str, "Time limit: 'd' for day, 'w' for week, 'm' for month. Default is 'w'"] = "w"
-    ) -> FootballNewsSearchResponse:
+    ) -> list[TextSearchResult]:
         """Search for football news from major sports sites.
         
-        Returns structured response with search results from major football news sources.
+        Returns a list of TextSearchResult objects.
         """
-        results = self._web_search.football_search(
+        return self._web_search.football_search(
             query=query,
             timelimit=timelimit,
             max_results=8
         )
-        
-        return FootballNewsSearchResponse(
-            query=query,
-            timelimit=timelimit,
-            results=results if results else [],
-            result_count=len(results) if results else 0
-        )
+
     
     @kernel_function(
         name="search_news",
@@ -57,23 +43,16 @@ class WebSearchPlugin:
         self,
         query: Annotated[str, "Search query for news (e.g., 'Arsenal injuries January 2026')"],
         timelimit: Annotated[str, "Time limit: 'd' for day, 'w' for week, 'm' for month. Default is 'd'"] = "d"
-    ) -> GeneralNewsSearchResponse:
+    ) -> list[NewsSearchResult]:
         """Search for general news articles.
         
-        Returns structured response with news articles including titles, snippets, sources, and dates.
+        Returns a list of NewsSearchResult objects.
         """
-        results = self._web_search.news_search(
+        return self._web_search.news_search(
             query=query,
             timelimit=timelimit,
-            max_results=10
         )
-        
-        return GeneralNewsSearchResponse(
-            query=query,
-            timelimit=timelimit,
-            results=results if results else [],
-            result_count=len(results) if results else 0
-        )
+
     
     @kernel_function(
         name="search_web",
@@ -83,20 +62,13 @@ class WebSearchPlugin:
         self,
         query: Annotated[str, "Search query"],
         timelimit: Annotated[str, "Time limit: 'd' for day, 'w' for week, 'm' for month, 'y' for year. Default is 'w'"] = "w"
-    ) -> WebSearchResponse:
+    ) -> list[TextSearchResult]:
         """Perform a general web search.
         
-        Returns structured response with web search results including titles, snippets, and URLs.
+        Returns a list of TextSearchResult objects.
         """
-        results = self._web_search.search(
+        return self._web_search.search(
             query=query,
             timelimit=timelimit,
-            max_results=10
         )
-        
-        return WebSearchResponse(
-            query=query,
-            timelimit=timelimit,
-            results=results if results else [],
-            result_count=len(results) if results else 0
-        )
+

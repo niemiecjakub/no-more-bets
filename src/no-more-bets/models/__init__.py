@@ -6,16 +6,6 @@ from .upcoming_game import UpcomingGame
 from .bookmaker_event import BookmakerEvent, EventOption
 from .search_result import BaseSearchResult, TextSearchResult, NewsSearchResult
 from .approved_coupon import ApprovedCoupon, BettingSelection
-from .plugin_responses import (
-    FootballNewsSearchResponse,
-    GeneralNewsSearchResponse,
-    WebSearchResponse,
-    LeagueStandingsResponse,
-    ClubPlayersResponse,
-    ClubGamesResponse,
-    ClubComparisonMetrics,
-    ClubComparisonResponse,
-)
 
 __all__ = [
     "FrozenBaseModel",
@@ -30,13 +20,5 @@ __all__ = [
     "NewsSearchResult",
     "ApprovedCoupon",
     "BettingSelection",
-    "FootballNewsSearchResponse",
-    "GeneralNewsSearchResponse",
-    "WebSearchResponse",
-    "LeagueStandingsResponse",
-    "ClubPlayersResponse",
-    "ClubGamesResponse",
-    "ClubComparisonMetrics",
-    "ClubComparisonResponse",
 ]
 
