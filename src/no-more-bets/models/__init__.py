@@ -15,11 +15,6 @@ from .plugin_responses import (
     ClubGamesResponse,
     ClubComparisonMetrics,
     ClubComparisonResponse,
-    UpcomingMatchesResponse,
-    MatchBettingMarketsResponse,
-    MatchUrlResponse,
-    ValueBetOpportunity,
-    ValueBetsResponse,
 )
 
 __all__ = [
@@ -43,10 +38,5 @@ __all__ = [
     "ClubGamesResponse",
     "ClubComparisonMetrics",
     "ClubComparisonResponse",
-    "UpcomingMatchesResponse",
-    "MatchBettingMarketsResponse",
-    "MatchUrlResponse",
-    "ValueBetOpportunity",
-    "ValueBetsResponse",
 ]
 

@@ -15,10 +15,6 @@ from .upcoming_game import UpcomingGame
 from .bookmaker_event import BookmakerEvent
 
 
-# ============================================================================
-# WebSearchPlugin Response Models
-# ============================================================================
-
 class FootballNewsSearchResponse(FrozenBaseModel):
     """Response from searching football news on major sports sites.
     
@@ -59,11 +55,6 @@ class WebSearchResponse(FrozenBaseModel):
     results: Annotated[List[TextSearchResult], Field(..., description="List of web search results")]
     result_count: Annotated[int, Field(..., description="Number of results returned")]
     
-
-
-# ============================================================================
-# FBrefPlugin Response Models
-# ============================================================================
 
 class LeagueStandingsResponse(FrozenBaseModel):
     """Response containing Premier League standings and statistics.
@@ -132,78 +123,3 @@ class ClubComparisonResponse(FrozenBaseModel):
     club1: Annotated[ClubComparisonMetrics, Field(..., description="Statistics for the first club")]
     club2: Annotated[ClubComparisonMetrics, Field(..., description="Statistics for the second club")]
     
-
-
-# ============================================================================
-# BetclicPlugin Response Models
-# ============================================================================
-
-class UpcomingMatchesResponse(FrozenBaseModel):
-    """Response containing upcoming Premier League matches with odds.
-    
-    Provides list of scheduled matches with basic 1X2 odds
-    (home win, draw, away win) and match metadata.
-    """
-    
-    matches: Annotated[List[UpcomingGame], Field(..., description="List of upcoming matches")]
-    total_matches: Annotated[int, Field(..., description="Total number of matches")]
-    
-
-
-class MatchBettingMarketsResponse(FrozenBaseModel):
-    """Response containing all betting markets for a specific match.
-    
-    Provides comprehensive list of available betting markets including
-    over/under goals, both teams to score, exact score, handicaps,
-    goalscorer markets, and more.
-    """
-    
-    match_url: Annotated[str, Field(..., description="URL of the match")]
-    events: Annotated[List[BookmakerEvent], Field(..., description="List of betting market events")]
-    total_events: Annotated[int, Field(..., description="Total number of betting markets")]
-    
-
-
-class MatchUrlResponse(FrozenBaseModel):
-    """Response containing match URL and basic information.
-    
-    Provides the betting URL for a match found by team names,
-    along with basic match details and odds.
-    """
-    
-    home_team: Annotated[str, Field(..., description="Home team name")]
-    away_team: Annotated[str, Field(..., description="Away team name")]
-    date: Annotated[str, Field(..., description="Match date header")]
-    time: Annotated[str, Field(..., description="Match start time")]
-    url: Annotated[str, Field(..., description="Betting URL for the match")]
-    home_odds: Annotated[Optional[float], Field(None, description="Home team win odds")]
-    draw_odds: Annotated[Optional[float], Field(None, description="Draw odds")]
-    away_odds: Annotated[Optional[float], Field(None, description="Away team win odds")]
-    
-
-
-class ValueBetOpportunity(FrozenBaseModel):
-    """Represents a potential value betting opportunity.
-    
-    Identifies bets where odds may be mispriced relative to
-    the true probability of the outcome.
-    """
-    
-    market: Annotated[str, Field(..., description="Betting market name (e.g., 'Over/Under 2.5 Goals')")]
-    selection: Annotated[str, Field(..., description="Betting selection (e.g., 'Over 2.5')")]
-    odds: Annotated[float, Field(..., description="Current odds for this selection")]
-    implied_probability: Annotated[float, Field(..., description="Implied probability from odds (as percentage)")]
-    event_type: Annotated[str, Field(..., description="Type of betting event")]
-    
-
-
-class ValueBetsResponse(FrozenBaseModel):
-    """Response containing value bet analysis for a match.
-    
-    Provides analysis of betting markets to identify potential
-    value opportunities where odds may be mispriced.
-    """
-    
-    match_url: Annotated[str, Field(..., description="URL of the analyzed match")]
-    opportunities: Annotated[List[ValueBetOpportunity], Field(..., description="List of identified value bet opportunities")]
-    total_opportunities: Annotated[int, Field(..., description="Total number of value opportunities found")]
