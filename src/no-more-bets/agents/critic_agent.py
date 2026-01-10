@@ -1,5 +1,3 @@
-"""Critic Agent for validating, challenging, and approving betting coupons."""
-
 import os
 from semantic_kernel import Kernel
 from semantic_kernel.agents import ChatCompletionAgent

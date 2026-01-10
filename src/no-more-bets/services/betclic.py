@@ -217,7 +217,6 @@ class Betclic(BaseScraper):
         
         return events
 
-
     def _fetch_and_expand_page(self, url: str) -> str:
         """Fetch page using browser automation and click all "see more" buttons.
         
@@ -366,8 +365,7 @@ class Betclic(BaseScraper):
             return None
         
         title = title_elem.get_text(strip=True)
-        event_type = self._detect_event_type(title)
-        
+
         # Check for different market structures
         matrix_markets = market_element.find('sports-matrix-markets')
         split_cards = market_element.find_all('sports-split-card')
@@ -388,7 +386,6 @@ class Betclic(BaseScraper):
                 
                 if card_options:
                     events.append(BookmakerEvent(
-                        event_type="goalscorer",
                         title=f"{title} - {team_name}",
                         options=card_options
                     ))
@@ -396,7 +393,7 @@ class Betclic(BaseScraper):
             return events if events else None
         elif spaced_blocks:
             # Handicap market
-            options = self._parse_spaced_blocks_options(spaced_blocks)
+            options = self._parse_matrix_options(spaced_blocks)
         elif matrix_markets:
             # Standard matrix market
             options = self._parse_matrix_options(matrix_markets)
@@ -407,7 +404,6 @@ class Betclic(BaseScraper):
             return None
 
         return BookmakerEvent(
-            event_type=event_type,
             title=title,
             options=options,
         )
@@ -466,10 +462,7 @@ class Betclic(BaseScraper):
                 if odds is None:
                     continue
                 
-                event_type = "first_last_goal"
-                
                 events.append(BookmakerEvent(
-                    event_type=event_type,
                     title=f"{main_title}",
                     options=[EventOption(label=label, odds=odds)],
                 ))
@@ -511,58 +504,7 @@ class Betclic(BaseScraper):
         
         return options
     
-    def _parse_spaced_blocks_options(self, container) -> List[EventOption]:
-        """Parse options from a spaced blocks container (handicap).
-        
-        Parameters
-        ----------
-        container : Tag
-            BeautifulSoup tag containing handicap options.
-            
-        Returns
-        -------
-        List[EventOption]
-            List of parsed options.
-        """
-        return self._parse_matrix_options(container)
-    
-    def _detect_event_type(self, title: str) -> str:
-        """Detect event type from title.
-        
-        Parameters
-        ----------
-        title : str
-            Event title.
-            
-        Returns
-        -------
-        str
-            Event type identifier.
-        """
-        title_lower = title.lower()
-        
-        if "oba zespoły strzelą gola" in title_lower or "both teams to score" in title_lower:
-            return "both_teams_score"
-        elif "podwójna szansa" in title_lower or "double chance" in title_lower:
-            return "double_chance"
-        elif "gole powyżej" in title_lower or "gole poniżej" in title_lower:
-            if "liczba goli" in title_lower:
-                return "team_goals"
-            return "over_under_goals"
-        elif "liczba goli" in title_lower:
-            return "team_goals"
-        elif "handicap" in title_lower:
-            return "handicap"
-        elif "połowa wynik" in title_lower or "half result" in title_lower:
-            return "half_result"
-        elif "dokładny wynik" in title_lower or "exact score" in title_lower:
-            return "exact_score"
-        elif "strzelec" in title_lower or "goalscorer" in title_lower:
-            return "goalscorer"
-        elif "zdobędzie bramkę" in title_lower:
-            return "first_last_goal"
-        else:
-            return "unknown"
+
     
     def _parse_odds(self, odds_str: str) -> Optional[float]:
         """Parse odds string to float.
@@ -592,7 +534,7 @@ class Betclic(BaseScraper):
     def _aggregate_events(self, events: List[BookmakerEvent]) -> List[BookmakerEvent]:
         """Aggregate events of the same type into single events.
         
-        Groups events by event_type, then merges their options.
+        Groups events by title, then merges their options.
      
         Parameters
         ----------
@@ -610,8 +552,8 @@ class Betclic(BaseScraper):
         grouped = {}
         
         for event in events:
-            # Create a grouping key from event_type
-            group_key = (event.event_type)
+            # Create a grouping key from title
+            group_key = (event.title)
             
             if group_key not in grouped:
                 grouped[group_key] = []
@@ -670,7 +612,6 @@ class Betclic(BaseScraper):
         
         # Create merged event
         return BookmakerEvent(
-            event_type=base_event.event_type,
             title=original_title,
             options=sorted_options,
         )

@@ -1,5 +1,3 @@
-"""Base model class with common configuration for all models."""
-
 from pydantic import BaseModel
 
 

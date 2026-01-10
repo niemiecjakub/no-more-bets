@@ -5,7 +5,6 @@ from .game import Game
 from .upcoming_game import UpcomingGame
 from .bookmaker_event import BookmakerEvent, EventOption
 from .search_result import BaseSearchResult, TextSearchResult, NewsSearchResult
-from .approved_coupon import ApprovedCoupon, BettingSelection
 
 __all__ = [
     "FrozenBaseModel",
@@ -17,8 +16,6 @@ __all__ = [
     "EventOption",
     "BaseSearchResult",
     "TextSearchResult",
-    "NewsSearchResult",
-    "ApprovedCoupon",
-    "BettingSelection",
+    "NewsSearchResult"
 ]
 
