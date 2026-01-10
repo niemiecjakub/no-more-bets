@@ -2,7 +2,7 @@ from curl_cffi import requests
 from curl_cffi.requests.exceptions import ConnectionError, Timeout
 import time
 import random
-from .html_cache import HtmlCache
+from utils.html_cache import HtmlCache
 
 
 class BaseScraper:
