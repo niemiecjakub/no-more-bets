@@ -1,24 +1,29 @@
-from curl_cffi import requests
 from bs4 import BeautifulSoup
-from typing import List, Optional, Dict, Any
-import re
+from typing import List, Optional
 import time
 from models.upcoming_game import UpcomingGame
 from models.bookmaker_event import BookmakerEvent, EventOption
+from .base_scraper import BaseScraper
 
 
-class Betclic:
+class Betclic(BaseScraper):
     """Betclic scraper class for fetching data from betclic.pl."""
     
-    def __init__(self, impersonate: str = "chrome110"):
+    def __init__(self, impersonate: str = "chrome110", delay: float = 5.0, retry_count: int = 3, retry_delay: float = 2.0):
         """Initialize Betclic scraper.
         
         Parameters
         ----------
         impersonate : str
             Browser impersonation string for curl_cffi. Default is "chrome110".
+        delay : float
+            Minimum delay in seconds between page fetches. Default is 5.0.
+        retry_count : int
+            Number of retry attempts if request fails. Default is 3.
+        retry_delay : float
+            Delay in seconds between retry attempts. Default is 2.0.
         """
-        self.impersonate = impersonate
+        super().__init__(impersonate, delay, retry_count, retry_delay)
         self.base_url = "https://www.betclic.pl"
     
     def get_premier_league_html(self) -> str:
@@ -202,20 +207,6 @@ class Betclic:
         
         return events
 
-    def _fetch_page(self, url: str) -> requests.Response:
-        """Fetch a page from betclic.pl.
-        
-        Parameters
-        ----------
-        url : str
-            URL to fetch.
-            
-        Returns
-        -------
-        requests.Response
-            Response object from the request.
-        """
-        return requests.get(url, impersonate=self.impersonate)
 
     def _fetch_and_expand_page(self, url: str) -> str:
         """Fetch page using browser automation and click all "see more" buttons.

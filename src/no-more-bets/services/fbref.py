@@ -1,19 +1,25 @@
 from bs4 import BeautifulSoup
-from curl_cffi import requests
 from models import Club, Player, Game
+from .base_scraper import BaseScraper
 
-class FBref:
+class FBref(BaseScraper):
     """FBref scraper class for fetching and parsing data from fbref.com."""
     
-    def __init__(self, impersonate: str = "chrome110"):
+    def __init__(self, impersonate: str = "chrome110", delay: float = 5.0, retry_count: int = 3, retry_delay: float = 2.0):
         """Initialize FBref scraper.
         
         Parameters
         ----------
         impersonate : str
             Browser impersonation string for curl_cffi. Default is "chrome110".
+        delay : float
+            Minimum delay in seconds between page fetches. Default is 5.0.
+        retry_count : int
+            Number of retry attempts if request fails. Default is 3.
+        retry_delay : float
+            Delay in seconds between retry attempts. Default is 2.0.
         """
-        self.impersonate = impersonate
+        super().__init__(impersonate, delay, retry_count, retry_delay)
         self.base_url = "https://fbref.com"
      
     def get_premier_league_stats(self) -> list[Club]:
@@ -533,18 +539,3 @@ class FBref:
             games.append(game)
         
         return games
-
-    def _fetch_page(self, url: str) -> requests.Response:
-        """Fetch a page from fbref.com.
-        
-        Parameters
-        ----------
-        url : str
-            URL to fetch.
-            
-        Returns
-        -------
-        requests.Response
-            Response object from the request.
-        """
-        return requests.get(url, impersonate=self.impersonate)   

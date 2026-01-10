@@ -2,26 +2,25 @@ from services.fbref import FBref
 from services.betclic import Betclic
 from utils.utils import print_events, print_clubs, print_games, print_players
 from constants import PREMIER_LEAGUE 
-from pprint import pprint
 from dotenv import load_dotenv
 from agents.sample_agent import Agent
 
 def main(): 
     # agent = Agent()
     # agent.run_conversation_loop()
-    scraper = FBref()
+    scraper = FBref(delay=10.0)
     
     club_name = PREMIER_LEAGUE.ARSENAL
-    #league_stats = scraper.get_premier_league_stats()
-    #print_clubs(league_stats)
-    #print(f"--------------------------------")
+    league_stats = scraper.get_premier_league_stats()
+    print_clubs(league_stats)
+    print(f"--------------------------------")
 
     players = scraper.get_club_players(club_name)
     print_players(players)
     print(f"--------------------------------")
-    #games = scraper.get_club_games(club_name)
-    #print_games(games)
-    #print(f"--------------------------------")
+    games = scraper.get_club_games(club_name, epl_only=True)
+    print_games(games)
+    print(f"--------------------------------")
 
     # betclic = Betclic()
     # upcomming_games = betclic.get_upcoming_games()
