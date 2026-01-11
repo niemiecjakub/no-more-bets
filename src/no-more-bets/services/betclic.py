@@ -233,21 +233,78 @@ class Betclic(BaseScraper):
         soup = BeautifulSoup(html, 'lxml')
         events = []
         
-        # Find all market elements
-        market_elements = soup.find_all(['sports-markets-single-market', 'sports-grouped-markets'], 
-                                       class_='marketElement')
+        # Find all marketBox elements directly
+        market_boxes = soup.find_all('div', class_='marketBox')
         
-        for market_element in market_elements:
+        for market_box in market_boxes:
+            # Extract title
+            title_elem = market_box.find('h2', class_='marketBox_headTitle')
+            if not title_elem:
+                continue
+            
+            title = title_elem.get_text(strip=True)
+            
             # Determine market type and parse accordingly
-            if market_element.name == 'sports-grouped-markets':
-                events.extend(self._parse_grouped_market(market_element))
+            # Check for split-card markets (goalscorer markets)
+            split_cards = market_box.find_all('sports-split-card')
+            if split_cards:
+                # Goalscorer market - split by teams, create separate events per team
+                for split_card in split_cards:
+                    team_title_elem = split_card.find('div', class_='marketBox_bodyTitle')
+                    if not team_title_elem:
+                        continue
+                    
+                    team_name = team_title_elem.get_text(strip=True)
+                    card_options = self._parse_matrix_options(split_card)
+                    
+                    if card_options:
+                        events.append(BookmakerEvent(
+                            title=f"{title} - {team_name}",
+                            options=card_options
+                        ))
+                continue
+            
+            # Check for grouped markets
+            if 'is-groupedMarket' in market_box.get('class', []) or market_box.find('div', class_='marketBox_list'):
+                # Parse as grouped market
+                grouped_events = self._parse_grouped_market_from_box(market_box, title)
+                events.extend(grouped_events)
+                continue
+            
+            # Check for simple/matrix markets
+            # Look for containers: sports-matrix-markets, sports-spaced-blocks, or sports-simple-markets
+            matrix_markets = market_box.find('sports-matrix-markets')
+            spaced_blocks = market_box.find('sports-spaced-blocks')
+            simple_markets = market_box.find('sports-simple-markets')
+            
+            container = None
+            if matrix_markets:
+                container = matrix_markets
+            elif spaced_blocks:
+                container = spaced_blocks
+            elif simple_markets:
+                # For sports-simple-markets, look for marketBox_body inside
+                container = simple_markets.find('div', class_='marketBox_body')
+                if not container:
+                    container = simple_markets
+            
+            if container:
+                options = self._parse_matrix_options(container)
+                if options:
+                    events.append(BookmakerEvent(
+                        title=title,
+                        options=options
+                    ))
             else:
-                parsed_events = self._parse_single_market(market_element)
-                if parsed_events:
-                    if isinstance(parsed_events, list):
-                        events.extend(parsed_events)
-                    else:
-                        events.append(parsed_events)
+                # Fallback: try to parse directly from marketBox_body
+                market_box_body = market_box.find('div', class_='marketBox_body')
+                if market_box_body:
+                    options = self._parse_matrix_options(market_box_body)
+                    if options:
+                        events.append(BookmakerEvent(
+                            title=title,
+                            options=options
+                        ))
         
         return events
 
@@ -503,6 +560,62 @@ class Betclic(BaseScraper):
         
         return events
     
+    def _parse_grouped_market_from_box(self, market_box, title: str) -> List[BookmakerEvent]:
+        """Parse a grouped market from a marketBox element.
+        
+        Parameters
+        ----------
+        market_box : Tag
+            BeautifulSoup tag for a marketBox element with grouped market structure.
+        title : str
+            The market title (already extracted).
+            
+        Returns
+        -------
+        List[BookmakerEvent]
+            List of parsed events from the grouped market.
+        """
+        events = []
+        
+        # Extract sub-market types
+        sub_market_items = market_box.find_all('span', class_='marketBox_itemValue')
+        sub_markets = [item.get_text(strip=True) for item in sub_market_items]
+        
+        # Extract options by row
+        line_selections = market_box.find_all('div', class_='marketBox_lineSelection')
+        
+        for line_selection in line_selections:
+            label_elem = line_selection.find('p', class_='marketBox_label')
+            if not label_elem:
+                continue
+            
+            label = label_elem.get_text(strip=True)
+            
+            # Get odds for each sub-market
+            market_items = line_selection.find_all('div', class_='marketBox_item')
+            if len(market_items) != len(sub_markets):
+                continue
+            
+            for i, market_item in enumerate(market_items):
+                if i >= len(sub_markets):
+                    break
+                
+                odds_elem = market_item.find('span', class_='btn_label')
+                if not odds_elem:
+                    continue
+                
+                odds_str = odds_elem.get_text(strip=True)
+                odds = self._parse_odds(odds_str)
+                if odds is None:
+                    continue
+                
+                events.append(BookmakerEvent(
+                    title=title,
+                    options=[EventOption(label=label, odds=odds)],
+                ))
+        
+        return events
+    
     def _parse_matrix_options(self, container) -> List[EventOption]:
         """Parse options from a matrix markets container.
         
@@ -522,12 +635,29 @@ class Betclic(BaseScraper):
         for line_selection in line_selections:
             label_elem = line_selection.find('p', class_='marketBox_label')
             if not label_elem:
+                # For some markets, label might be in btn_label with is-top class
+                # Try to find it from button structure
+                button = line_selection.find('button', class_='btn')
+                if button:
+                    top_label_spans = button.find_all('span', class_='btn_label')
+                    for span in top_label_spans:
+                        if 'is-top' in span.get('class', []):
+                            label_elem = span
+                            break
+            
+            if not label_elem:
                 continue
             
             label = label_elem.get_text(strip=True)
             
-            # Find odds button
-            odds_elem = line_selection.find('span', class_='btn_label')
+            # Find odds button - exclude spans with is-top class
+            odds_elem = None
+            label_spans = line_selection.find_all('span', class_='btn_label')
+            for span in label_spans:
+                if 'is-top' not in span.get('class', []):
+                    odds_elem = span
+                    break
+            
             if not odds_elem:
                 continue
             

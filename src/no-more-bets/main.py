@@ -10,10 +10,15 @@ from utils.utils import print_events
 def main():
     betclic = Betclic(cache_ttl=9999999999999999999999999999999999999999999, delay=10, retry_delay=20, n_retries=10, timeout=60)
     games = betclic.get_upcoming_games()
-    pprint(games)
+    pprint("Upcoming games: " + str(len(games)))
+    all_events = []
     for game in games:
         events = betclic.get_match_events(game.url, expand=False)
-        print(game.url, len(events))
+        all_events.extend(events)
+        print("Game: " + game.url + " - Events: " + str(len(events)))
+
+    print_events(all_events[:3])
+    # Now all_events contains all events from all games
         #print_events(events)
     #load_dotenv()
     #result = asyncio.run(run_betting_analysis("Analyze Leeds vs Fulham", verbose=True))
