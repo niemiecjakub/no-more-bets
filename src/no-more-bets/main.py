@@ -11,7 +11,8 @@ import os
 
 def soccer():
     soccerdata = SoccerData()
-    soccerdata.get_country()
+    soccerdata.get_matches(league_id=PREMIER_LEAGUE.SOCCERDATA_PREMIER_LEAGUE_ID, season=PREMIER_LEAGUE.SOCCERDATA_CURRENT_SEASON)
+    soccerdata.get_player(61793)
 
 def main():
     betclic = Betclic(cache_ttl=9999999999999999999999999999999999999999999, delay=10, retry_delay=20, n_retries=10, timeout=60)

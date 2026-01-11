@@ -223,3 +223,224 @@ class SoccerData:
         except Exception as e:
             logger.error(f"Error fetching country data: {e}")
             raise
+    
+    def get_league(self, country_id: Optional[int] = None) -> Dict[str, Any]:
+        """Get league data from the SoccerData API.
+        
+        Parameters
+        ----------
+        country_id : Optional[int]
+            Country ID to filter by. If provided, will be added to query parameters.
+            
+        Returns
+        -------
+        Dict[str, Any]
+            JSON response containing league data.
+            
+        Raises
+        ------
+        RequestException
+            If the API request fails.
+        """
+        try:
+            params = {'country_id': country_id} if country_id is not None else None
+            return self._make_request('/league/', params=params)
+        except Exception as e:
+            logger.error(f"Error fetching league data: {e}")
+            raise
+    
+    def get_season(self, league_id: int) -> Dict[str, Any]:
+        """Get season data from the SoccerData API.
+        
+        Parameters
+        ----------
+        league_id : int
+            League ID to get seasons for. Required parameter.
+            
+        Returns
+        -------
+        Dict[str, Any]
+            JSON response containing season data.
+            
+        Raises
+        ------
+        RequestException
+            If the API request fails.
+        """
+        try:
+            params = {'league_id': league_id}
+            return self._make_request('/season/', params=params)
+        except Exception as e:
+            logger.error(f"Error fetching season data: {e}")
+            raise
+    
+    def get_match_previews_upcoming(self) -> Dict[str, Any]:
+        """Get upcoming match previews from the SoccerData API.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            JSON response containing upcoming match previews.
+            
+        Raises
+        ------
+        RequestException
+            If the API request fails.
+        """
+        try:
+            return self._make_request('/match-previews-upcoming/')
+        except Exception as e:
+            logger.error(f"Error fetching match previews upcoming: {e}")
+            raise
+    
+    def get_match_preview(self, match_id: int) -> Dict[str, Any]:
+        """Get match preview from the SoccerData API.
+        
+        Parameters
+        ----------
+        match_id : int
+            Match ID to get preview for. Required parameter.
+            
+        Returns
+        -------
+        Dict[str, Any]
+            JSON response containing match preview data.
+            
+        Raises
+        ------
+        RequestException
+            If the API request fails.
+        """
+        try:
+            params = {'match_id': match_id}
+            return self._make_request('/match-preview/', params=params)
+        except Exception as e:
+            logger.error(f"Error fetching match preview: {e}")
+            raise
+    
+    def get_head_to_head(self, team_1_id: int, team_2_id: int) -> Dict[str, Any]:
+        """Get head-to-head data from the SoccerData API.
+        
+        Parameters
+        ----------
+        team_1_id : int
+            First team ID. Required parameter.
+        team_2_id : int
+            Second team ID. Required parameter.
+            
+        Returns
+        -------
+        Dict[str, Any]
+            JSON response containing head-to-head data.
+            
+        Raises
+        ------
+        RequestException
+            If the API request fails.
+        """
+        try:
+            params = {
+                'team_1_id': team_1_id,
+                'team_2_id': team_2_id
+            }
+            return self._make_request('/head-to-head/', params=params)
+        except Exception as e:
+            logger.error(f"Error fetching head-to-head data: {e}")
+            raise
+    
+    def get_team(self, team_id: int) -> Dict[str, Any]:
+        """Get team data from the SoccerData API.
+        
+        Parameters
+        ----------
+        team_id : int
+            Team ID to get data for. Required parameter.
+            
+        Returns
+        -------
+        Dict[str, Any]
+            JSON response containing team data.
+            
+        Raises
+        ------
+        RequestException
+            If the API request fails.
+        """
+        try:
+            params = {'team_id': team_id}
+            return self._make_request('/team/', params=params)
+        except Exception as e:
+            logger.error(f"Error fetching team data: {e}")
+            raise
+    
+    def get_matches(
+        self,
+        date: Optional[str] = None,
+        league_id: Optional[int] = None,
+        season: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get matches from the SoccerData API.
+        
+        Parameters can be used in the following combinations:
+        - date alone: Get matches by date
+        - league_id alone: Get matches by league_id for current season
+        - league_id + season: Get matches by league and season
+        - league_id + date: Get matches by league and date
+        
+        Parameters
+        ----------
+        date : Optional[str]
+            Date to filter matches by. Can be used alone or with league_id.
+        league_id : Optional[int]
+            League ID to filter matches by. Can be used alone, with season, or with date.
+        season : Optional[str]
+            Season to filter matches by. Must be used together with league_id.
+            
+        Returns
+        -------
+        Dict[str, Any]
+            JSON response containing matches data.
+            
+        Raises
+        ------
+        RequestException
+            If the API request fails.
+        """
+        try:
+            params = {}
+            if date is not None:
+                params['date'] = date
+            if league_id is not None:
+                params['league_id'] = league_id
+            if season is not None:
+                params['season'] = season
+            
+            return self._make_request('/matches/', params=params if params else None)
+        except Exception as e:
+            logger.error(f"Error fetching matches: {e}")
+            raise
+    
+    def get_player(self, player_id: int) -> Dict[str, Any]:
+        """Get player data from the SoccerData API.
+        
+        Parameters
+        ----------
+        player_id : int
+            Player ID to get data for. Required parameter.
+            
+        Returns
+        -------
+        Dict[str, Any]
+            JSON response containing player data.
+            
+        Raises
+        ------
+        RequestException
+            If the API request fails.
+        """
+        try:
+            params = {'player_id': player_id}
+            return self._make_request('/player/', params=params)
+        except Exception as e:
+            logger.error(f"Error fetching player data: {e}")
+            raise
