@@ -1,6 +1,6 @@
 from typing import Annotated, Optional
 from pydantic import Field
-from .base_model import FrozenBaseModel
+from ..base_model import FrozenBaseModel
 
 
 class Game(FrozenBaseModel):
@@ -25,4 +25,3 @@ class Game(FrozenBaseModel):
     opp_formation: Annotated[Optional[str], Field(None, description="Opponent formation (e.g., '3-4-3')")]
     referee: Annotated[Optional[str], Field(None, description="Referee name")]
     notes: Annotated[Optional[str], Field(None, description="Additional notes")]
-

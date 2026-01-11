@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-from models import Club, Player, Game
+from models.fbref import Club, Player, Game
 from .base_scraper import BaseScraper
 
 class FBref(BaseScraper):

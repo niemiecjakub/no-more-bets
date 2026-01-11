@@ -1,7 +1,7 @@
 from typing import Annotated
 from semantic_kernel.functions import kernel_function
 from services.web_search import WebSearch
-from models import TextSearchResult, NewsSearchResult
+from models.web import TextSearchResult, NewsSearchResult
 
 
 class WebSearchPlugin:

@@ -1,10 +1,7 @@
 from .base_model import FrozenBaseModel
-from .club import Club
-from .player import Player
-from .game import Game
-from .upcoming_game import UpcomingGame
-from .bookmaker_event import BookmakerEvent, EventOption
-from .search_result import BaseSearchResult, TextSearchResult, NewsSearchResult
+from .betclic import UpcomingGame, BookmakerEvent, EventOption
+from .fbref import Club, Player, Game
+from .web import BaseSearchResult, TextSearchResult, NewsSearchResult
 from .soccerdata import (
     HeadToHead,
     HeadToHeadStats,
@@ -27,7 +24,7 @@ from .soccerdata import (
     LeagueMatches,
     Stage,
     Season,
-    Match,
+    Match as SoccerDataMatch,
     MatchEvent,
     Goals,
     Odds,
@@ -35,7 +32,7 @@ from .soccerdata import (
     OverUnderOdds,
     HandicapOdds,
     MatchPreviewInfo,
-    Player
+    Player as SoccerDataPlayer
 )
 
 __all__ = [
@@ -70,7 +67,7 @@ __all__ = [
     "LeagueMatches",
     "Stage",
     "Season",
-    "Match",
+    "SoccerDataMatch",
     "MatchEvent",
     "Goals",
     "Odds",
@@ -78,6 +75,6 @@ __all__ = [
     "OverUnderOdds",
     "HandicapOdds",
     "MatchPreviewInfo",
-    "Player"
+    "SoccerDataPlayer"
 ]
 

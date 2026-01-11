@@ -1,6 +1,6 @@
 from typing import Annotated, Optional
 from pydantic import Field
-from .base_model import FrozenBaseModel
+from ..base_model import FrozenBaseModel
 
 
 class UpcomingGame(FrozenBaseModel):

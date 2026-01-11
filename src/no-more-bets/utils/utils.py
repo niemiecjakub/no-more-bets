@@ -1,8 +1,6 @@
 from typing import List
-from models.bookmaker_event import BookmakerEvent
-from models.club import Club
-from models.player import Player
-from models.game import Game
+from models.betclic import BookmakerEvent
+from models.fbref import Club, Player, Game
 
 
 def print_green(message: str) -> None:

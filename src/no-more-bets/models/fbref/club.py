@@ -1,6 +1,6 @@
 from typing import Annotated, Optional
 from pydantic import Field
-from .base_model import FrozenBaseModel
+from ..base_model import FrozenBaseModel
 
 
 class Club(FrozenBaseModel):
@@ -26,4 +26,3 @@ class Club(FrozenBaseModel):
     top_team_scorers: Annotated[str, Field(..., description="Top team scorers")]
     top_keeper: Annotated[str, Field(..., description="Top goalkeeper")]
     notes: Annotated[Optional[str], Field(None, description="Additional notes")]
-

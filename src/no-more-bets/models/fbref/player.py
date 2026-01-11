@@ -1,6 +1,6 @@
 from typing import Annotated
 from pydantic import Field
-from .base_model import FrozenBaseModel
+from ..base_model import FrozenBaseModel
 
 
 class Player(FrozenBaseModel):
@@ -39,4 +39,3 @@ class Player(FrozenBaseModel):
     xg_xg_assist_per90: Annotated[float, Field(..., description="xG + xA per 90 minutes")]
     npxg_per90: Annotated[float, Field(..., description="Non-penalty xG per 90 minutes")]
     npxg_xg_assist_per90: Annotated[float, Field(..., description="Non-penalty xG + xA per 90 minutes")]
-

@@ -2,8 +2,7 @@ from bs4 import BeautifulSoup
 from typing import List, Optional
 import time
 import random
-from models.upcoming_game import UpcomingGame
-from models.bookmaker_event import BookmakerEvent, EventOption
+from models.betclic import UpcomingGame, BookmakerEvent, EventOption
 from .base_scraper import BaseScraper
 
 

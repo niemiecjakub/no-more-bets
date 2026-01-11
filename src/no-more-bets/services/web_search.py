@@ -1,6 +1,6 @@
 from typing import Optional
 from ddgs import DDGS
-from models import TextSearchResult, NewsSearchResult
+from models.web import TextSearchResult, NewsSearchResult
 import logging
 
 logger = logging.getLogger(__name__)

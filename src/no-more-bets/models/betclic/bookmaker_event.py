@@ -1,6 +1,6 @@
 from typing import Annotated, List
 from pydantic import Field
-from .base_model import FrozenBaseModel
+from ..base_model import FrozenBaseModel
 
 
 class EventOption(FrozenBaseModel):
@@ -15,4 +15,3 @@ class BookmakerEvent(FrozenBaseModel):
     
     title: Annotated[str, Field(..., description="Event name")]
     options: Annotated[List[EventOption], Field(..., description="Available bet options")]
- 

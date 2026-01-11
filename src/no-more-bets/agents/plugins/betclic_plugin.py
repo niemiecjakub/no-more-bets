@@ -1,8 +1,7 @@
 from typing import Annotated
 from semantic_kernel.functions import kernel_function
 from services.betclic import Betclic
-from models import BookmakerEvent
-from models.upcoming_game import UpcomingGame
+from models.betclic import BookmakerEvent, UpcomingGame
 from typing import List
 
 

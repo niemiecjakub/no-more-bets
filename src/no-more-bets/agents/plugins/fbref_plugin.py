@@ -1,7 +1,7 @@
 from typing import Annotated
 from semantic_kernel.functions import kernel_function
 from services.fbref import FBref
-from models import Club, Player, Game
+from models.fbref import Club, Player, Game
 
 
 class FBrefPlugin:

@@ -1,6 +1,6 @@
 from typing import Annotated, Optional
 from pydantic import Field
-from .base_model import FrozenBaseModel
+from ..base_model import FrozenBaseModel
 
 
 class BaseSearchResult(FrozenBaseModel):
@@ -14,6 +14,7 @@ class TextSearchResult(BaseSearchResult):
     """Represents a search result from text/web search (DDGS().text())."""
     
     href: Annotated[str, Field(..., description="URL/href of the search result")]
+    date: Annotated[Optional[str], Field(None, description="Publication date if available")]
 
 
 class NewsSearchResult(BaseSearchResult):
