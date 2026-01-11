@@ -8,13 +8,13 @@ from pprint import pprint
 from utils.utils import print_events
 
 def main():
-    betclic = Betclic()
+    betclic = Betclic(cache_ttl=9999999999999999999999999999999999999999999, delay=10, retry_delay=20, n_retries=10, timeout=60)
     games = betclic.get_upcoming_games()
     pprint(games)
-    for game in games[:1]:
-        print(game.url)
+    for game in games:
         events = betclic.get_match_events(game.url, expand=False)
-        print_events(events)
+        print(game.url, len(events))
+        #print_events(events)
     #load_dotenv()
     #result = asyncio.run(run_betting_analysis("Analyze Leeds vs Fulham", verbose=True))
     #print(result)

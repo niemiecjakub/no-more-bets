@@ -246,3 +246,29 @@ class HtmlCache:
         except Exception as e:
             # Don't fail the request if saving fails
             print(f"Warning: Failed to save HTML to {filepath}: {e}")
+    
+    def clear(self, url: str) -> int:
+        """Clear all cached files for a specific URL.
+        
+        Parameters
+        ----------
+        url : str
+            URL to clear cache for.
+            
+        Returns
+        -------
+        int
+            Number of files removed.
+        """
+        cached_files = self._find_cached_files(url)
+        removed_count = 0
+        
+        for filepath in cached_files:
+            try:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                    removed_count += 1
+            except Exception as e:
+                print(f"Warning: Failed to remove cache file {filepath}: {e}")
+        
+        return removed_count

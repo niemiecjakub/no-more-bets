@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 from typing import List, Optional
 import time
+import random
 from models.upcoming_game import UpcomingGame
 from models.bookmaker_event import BookmakerEvent, EventOption
 from .base_scraper import BaseScraper
@@ -19,6 +20,7 @@ class Betclic(BaseScraper):
         store: bool = True,
         use_cache: bool = True,
         cache_ttl: float = 3600.0,
+        n_retries: int = 5,
     ):
         """Initialize Betclic scraper.
         
@@ -40,9 +42,12 @@ class Betclic(BaseScraper):
             Whether to use cached HTML if available. Default is True.
         cache_ttl : float
             Cache time-to-live in seconds. Default is 3600.0 (1 hour).
+        n_retries : int
+            Number of retry attempts when empty results are returned. Default is 5.
         """
         super().__init__(impersonate, delay, retry_count, retry_delay, timeout, store, use_cache, cache_ttl)
         self.base_url = "https://www.betclic.pl"
+        self.n_retries = n_retries
     
     def get_premier_league_html(self) -> str:
         """Get HTML content from the Premier League page on Betclic.
@@ -59,97 +64,112 @@ class Betclic(BaseScraper):
         """Get list of upcoming games from the Premier League page.
         
         Extracts the first div with class 'groupEvents' and parses all games
-        from it.
+        from it. If the result is empty, clears cache and retries up to n_retries times.
         
         Returns
         -------
         List[UpcomingGame]
             List of upcoming games with team names, time, odds, and URL.
         """
-        html = self.get_premier_league_html()
-        soup = BeautifulSoup(html, 'lxml')
+        url = f"{self.base_url}/football-sfootball/premier-league-c3"
         
-        # Find the first div with class 'groupEvents'
-        group_events = soup.find('div', class_='groupEvents')
-        if not group_events:
-            return []
-        
-        # Extract date from the header
-        date_header = group_events.find('h2', class_='groupEvents_headTitle')
-        date = date_header.get_text(strip=True) if date_header else ""
-        
-        # Find all game cards
-        game_cards = group_events.find_all('sports-events-event-card', class_='groupEvents_card')
-        games = []
-        
-        for card in game_cards:
-            # Extract URL
-            link = card.find('a', class_='cardEvent')
-            url = ""
-            if link and link.get('href'):
-                url = f"{self.base_url}{link['href']}"
+        for attempt in range(self.n_retries):
+            html = self._get_page_html(url)
+            soup = BeautifulSoup(html, 'lxml')
             
-            # Extract team names
-            home_team_elem = card.find('div', {'data-qa': 'contestant-1-label'})
-            away_team_elem = card.find('div', {'data-qa': 'contestant-2-label'})
-            home_team = home_team_elem.get_text(strip=True) if home_team_elem else ""
-            away_team = away_team_elem.get_text(strip=True) if away_team_elem else ""
-            
-            # Extract time
-            time_elem = card.find('div', class_='scoreboard_hour')
-            time = time_elem.get_text(strip=True) if time_elem else ""
-            
-            # Extract odds from .market_odds div (three buttons: home, draw, away)
-            market_odds_div = card.find('div', class_='market_odds')
-            home_odds = None
-            draw_odds = None
-            away_odds = None
-            
-            if market_odds_div:
-                # Find all buttons within market_odds div
-                odds_buttons = market_odds_div.find_all('button', class_='btn')
+            # Find the first div with class 'groupEvents'
+            group_events = soup.find('div', class_='groupEvents')
+            if not group_events:
+                games = []
+            else:
+                # Extract date from the header
+                date_header = group_events.find('h2', class_='groupEvents_headTitle')
+                date = date_header.get_text(strip=True) if date_header else ""
+                
+                # Find all game cards
+                game_cards = group_events.find_all('sports-events-event-card', class_='groupEvents_card')
+                games = []
+                
+                for card in game_cards:
+                    # Extract URL
+                    link = card.find('a', class_='cardEvent')
+                    card_url = ""
+                    if link and link.get('href'):
+                        card_url = f"{self.base_url}{link['href']}"
+                    
+                    # Extract team names
+                    home_team_elem = card.find('div', {'data-qa': 'contestant-1-label'})
+                    away_team_elem = card.find('div', {'data-qa': 'contestant-2-label'})
+                    home_team = home_team_elem.get_text(strip=True) if home_team_elem else ""
+                    away_team = away_team_elem.get_text(strip=True) if away_team_elem else ""
+                    
+                    # Extract time
+                    time_elem = card.find('div', class_='scoreboard_hour')
+                    time = time_elem.get_text(strip=True) if time_elem else ""
+                    
+                    # Extract odds from .market_odds div (three buttons: home, draw, away)
+                    market_odds_div = card.find('div', class_='market_odds')
+                    home_odds = None
+                    draw_odds = None
+                    away_odds = None
+                    
+                    if market_odds_div:
+                        # Find all buttons within market_odds div
+                        odds_buttons = market_odds_div.find_all('button', class_='btn')
 
-                if len(odds_buttons) >= 3:
-                    # 1st button is home, 2nd is draw, 3rd is away
-                    # Each button has two spans with btn_label: one with is-top (team name) and one without (odds)
-                    for i, button in enumerate(odds_buttons[:3]):
-                        # Find all spans with btn_label and get the one without is-top class (the odds value)
-                        label_spans = button.find_all('span', class_='btn_label')
-                        odds_value = None
-                        for span in label_spans:
-                            if 'is-top' not in span.get('class', []):
-                                odds_value = span.get_text(strip=True)
-                                break
+                        if len(odds_buttons) >= 3:
+                            # 1st button is home, 2nd is draw, 3rd is away
+                            # Each button has two spans with btn_label: one with is-top (team name) and one without (odds)
+                            for i, button in enumerate(odds_buttons[:3]):
+                                # Find all spans with btn_label and get the one without is-top class (the odds value)
+                                label_spans = button.find_all('span', class_='btn_label')
+                                odds_value = None
+                                for span in label_spans:
+                                    if 'is-top' not in span.get('class', []):
+                                        odds_value = span.get_text(strip=True)
+                                        break
 
-                        if odds_value:
-                            try:
-                                odds_float = float(odds_value.replace(',', '.'))
-                                if i == 0:
-                                    home_odds = odds_float
-                                elif i == 1:
-                                    draw_odds = odds_float
-                                elif i == 2:
-                                    away_odds = odds_float
-                            except (ValueError, AttributeError):
-                                pass
+                                if odds_value:
+                                    try:
+                                        odds_float = float(odds_value.replace(',', '.'))
+                                        if i == 0:
+                                            home_odds = odds_float
+                                        elif i == 1:
+                                            draw_odds = odds_float
+                                        elif i == 2:
+                                            away_odds = odds_float
+                                    except (ValueError, AttributeError):
+                                        pass
+                    
+                    games.append(UpcomingGame(
+                        date=date,
+                        home_team=home_team,
+                        away_team=away_team,
+                        time=time,
+                        home_odds=home_odds,
+                        draw_odds=draw_odds,
+                        away_odds=away_odds,
+                        url=card_url
+                    ))
             
-            games.append(UpcomingGame(
-                date=date,
-                home_team=home_team,
-                away_team=away_team,
-                time=time,
-                home_odds=home_odds,
-                draw_odds=draw_odds,
-                away_odds=away_odds,
-                url=url
-            ))
+            # If games list is not empty, return it
+            if games:
+                return games
+            
+            # If empty and retries remaining, clear cache and retry
+            if attempt < self.n_retries - 1:
+                self.clear_cache(url)
+                wait_time = random.uniform(3, 10)
+                time.sleep(wait_time)
         
+        # Return empty list if all retries exhausted
         return games
     
     def get_match_events(self, game_link: str, expand: bool = False) -> List[BookmakerEvent]:
         """Get all bookmaker events for a specific match.
         
         Fetches the match page and extracts all events from the verticalScroller_list container.
+        If the result is empty, clears cache and retries up to n_retries times.
         
         Parameters
         ----------
@@ -171,18 +191,31 @@ class Betclic(BaseScraper):
         ImportError
             If expand=True but selenium is not installed.
         """
-
+        events = []
         
-        # If expand is True, use browser automation to click "see more" buttons
-        if expand:
-            html = self._fetch_and_expand_page(game_link)
-        else:
-            # Fetch the page normally (uses caching if enabled)
-            html = self._get_page_html(game_link)
- 
-        #return self._extract_events(str(html))
-        events = self._extract_events(str(html))
-        return self._aggregate_events(events)
+        for attempt in range(self.n_retries):
+            # If expand is True, use browser automation to click "see more" buttons
+            if expand:
+                html = self._fetch_and_expand_page(game_link)
+            else:
+                # Fetch the page normally (uses caching if enabled)
+                html = self._get_page_html_selenium(game_link)
+            
+            events = self._extract_events(str(html))
+            events = self._aggregate_events(events)
+            
+            # If events list is not empty, return it
+            if events:
+                return events
+            
+            # If empty and retries remaining, clear cache and retry
+            if attempt < self.n_retries - 1:
+                self.clear_cache(game_link)
+                wait_time = random.uniform(8, 20)
+                time.sleep(wait_time)
+        
+        # Return empty list if all retries exhausted
+        return events
     
     def _extract_events(self, html: str) -> List[BookmakerEvent]:
         """Extract all bookmaker events from HTML content.
@@ -331,7 +364,7 @@ class Betclic(BaseScraper):
                     # Try to click using JavaScript (more reliable for dynamic content)
                     driver.execute_script("arguments[0].click();", button)
                     time.sleep(0.5)  # Wait for content to expand
-                except (TimeoutException, Exception) as e:
+                except (TimeoutException, Exception):
                     # Continue if button click fails (might be already clicked or not clickable)
                     continue
             
