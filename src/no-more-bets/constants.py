@@ -23,6 +23,9 @@ class PREMIER_LEAGUE:
     BURNLEY = "Burnley"
     WOLVES = "Wolves"
     
+
+    SOCCERDATA_ENGLAND_ID = 8
+
     ALL_CLUBS = [
         ARSENAL,
         MANCHESTER_CITY,

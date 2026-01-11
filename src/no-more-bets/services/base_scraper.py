@@ -28,7 +28,6 @@ class BaseScraper:
         
         # Initialize HTML cache
         self.cache = HtmlCache(
-            store_folder="html_cache",
             store=store,
             use_cache=use_cache,
             cache_ttl=cache_ttl,

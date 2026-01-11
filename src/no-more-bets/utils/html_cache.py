@@ -1,10 +1,12 @@
 import os
 import re
 import time
+from typing import Optional
 from urllib.parse import urlparse, quote
+from .base_cache import BaseCache
 
 
-class HtmlCache:
+class HtmlCache(BaseCache):
     """HTML cache manager with TTL support.
     
     Handles saving and loading HTML content from disk cache with
@@ -13,7 +15,7 @@ class HtmlCache:
     
     def __init__(
         self,
-        store_folder: str = "html_cache",
+        store_folder: str = "cache/html",
         store: bool = True,
         use_cache: bool = True,
         cache_ttl: float = 3600.0,
@@ -23,7 +25,7 @@ class HtmlCache:
         Parameters
         ----------
         store_folder : str
-            Folder where cached HTML files are stored. Default is "html_cache".
+            Folder where cached HTML files are stored. Default is "cache/html".
         store : bool
             Whether to save fetched HTML to cache folder. Default is True.
         use_cache : bool
@@ -31,14 +33,7 @@ class HtmlCache:
         cache_ttl : float
             Cache time-to-live in seconds. Default is 3600.0 (1 hour).
         """
-        self.store_folder = store_folder
-        self.store = store
-        self.use_cache = use_cache
-        self.cache_ttl = cache_ttl
-        
-        # Create store folder if storing or caching is enabled
-        if self.store or self.use_cache:
-            os.makedirs(self.store_folder, exist_ok=True)
+        super().__init__(store_folder, store, use_cache, cache_ttl)
     
     def _url_to_filename(self, url: str, include_timestamp: bool = False) -> str:
         """Convert URL to a safe filename.
@@ -80,7 +75,29 @@ class HtmlCache:
         
         return filename
     
-    def _extract_timestamp_from_filename(self, filename: str) -> int | None:
+    def _get_cache_key_to_filename(self, key: str, timestamp: Optional[int] = None) -> str:
+        """Generate cache filename from URL key.
+        
+        Parameters
+        ----------
+        key : str
+            URL to convert to filename.
+        timestamp : Optional[int]
+            Unix timestamp. If None, uses current time.
+            
+        Returns
+        -------
+        str
+            Cache filename.
+        """
+        if timestamp is None:
+            timestamp = int(time.time())
+        # Use _url_to_filename with timestamp included
+        base_filename = self._url_to_filename(key, include_timestamp=False)
+        base_name_without_ext = base_filename.replace(".html", "")
+        return f"{base_name_without_ext}-{timestamp}.html"
+    
+    def _extract_timestamp_from_filename(self, filename: str) -> Optional[int]:
         """Extract timestamp from filename.
         
         Parameters
@@ -90,7 +107,7 @@ class HtmlCache:
             
         Returns
         -------
-        int | None
+        Optional[int]
             Timestamp if found, None otherwise.
         """
         # Match pattern: {base}-{timestamp}.html
@@ -117,12 +134,12 @@ class HtmlCache:
         """
         return self._url_to_filename(url, include_timestamp=False)
     
-    def _find_cached_files(self, url: str) -> list[str]:
+    def _find_cached_files(self, key: str) -> list[str]:
         """Find all cached files matching the base filename for a URL.
         
         Parameters
         ----------
-        url : str
+        key : str
             URL to find cached files for.
             
         Returns
@@ -130,7 +147,7 @@ class HtmlCache:
         list[str]
             List of full filepaths to cached files.
         """
-        base_filename = self._get_base_filename(url)
+        base_filename = self._get_base_filename(key)
         base_name_without_ext = base_filename.replace(".html", "")
         
         cached_files = []
@@ -142,6 +159,35 @@ class HtmlCache:
                     cached_files.append(filepath)
         
         return cached_files
+    
+    def _read_file(self, filepath: str) -> str:
+        """Read HTML file content.
+        
+        Parameters
+        ----------
+        filepath : str
+            Path to the cached file.
+            
+        Returns
+        -------
+        str
+            HTML content.
+        """
+        with open(filepath, 'r', encoding='utf-8') as f:
+            return f.read()
+    
+    def _write_file(self, filepath: str, data: str):
+        """Write HTML content to file.
+        
+        Parameters
+        ----------
+        filepath : str
+            Path where to save the file.
+        data : str
+            HTML content to write.
+        """
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(data)
     
     def _get_cached_filepath(self, url: str, include_timestamp: bool = True) -> str:
         """Get the filepath for a cached URL.
@@ -161,7 +207,7 @@ class HtmlCache:
         filename = self._url_to_filename(url, include_timestamp=include_timestamp)
         return os.path.join(self.store_folder, filename)
     
-    def load(self, url: str) -> str | None:
+    def load(self, url: str) -> Optional[str]:
         """Load HTML from cache if available and not expired.
         
         Parameters
@@ -171,48 +217,11 @@ class HtmlCache:
             
         Returns
         -------
-        str | None
+        Optional[str]
             Cached HTML content if found and valid, None otherwise.
         """
-        if not self.use_cache:
-            return None
-        
-        # Find all cached files for this URL
-        cached_files = self._find_cached_files(url)
-        
-        if not cached_files:
-            return None
-        
-        # Find the most recent valid cache file
-        current_time = time.time()
-        valid_filepath = None
-        best_timestamp = None
-        
-        for filepath in cached_files:
-            filename = os.path.basename(filepath)
-            timestamp = self._extract_timestamp_from_filename(filename)
-            
-            if timestamp is None:
-                continue
-            
-            # Check if cache is still valid (within TTL)
-            age = current_time - timestamp
-            if age < self.cache_ttl:
-                # Cache is valid, use the most recent one
-                if best_timestamp is None or timestamp > best_timestamp:
-                    valid_filepath = filepath
-                    best_timestamp = timestamp
-        
-        if valid_filepath:
-            try:
-                with open(valid_filepath, 'r', encoding='utf-8') as f:
-                    return f.read()
-            except Exception as e:
-                # If reading cache fails, continue with network request
-                print(f"Warning: Failed to read cache from {valid_filepath}: {e}")
-                return None
-        
-        return None
+        result = super().load(url)
+        return result if isinstance(result, str) else None
     
     def save(self, url: str, html: str):
         """Save HTML content to file if storing is enabled.
@@ -226,26 +235,7 @@ class HtmlCache:
         html : str
             HTML content to save.
         """
-        if not self.store:
-            return
-        
-        # Remove old cached files for this URL
-        old_files = self._find_cached_files(url)
-        for old_file in old_files:
-            try:
-                os.remove(old_file)
-            except Exception as e:
-                print(f"Warning: Failed to remove old cache file {old_file}: {e}")
-        
-        # Save new file with timestamp
-        filepath = self._get_cached_filepath(url, include_timestamp=True)
-        
-        try:
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(html)
-        except Exception as e:
-            # Don't fail the request if saving fails
-            print(f"Warning: Failed to save HTML to {filepath}: {e}")
+        super().save(url, html)
     
     def clear(self, url: str) -> int:
         """Clear all cached files for a specific URL.
@@ -260,15 +250,4 @@ class HtmlCache:
         int
             Number of files removed.
         """
-        cached_files = self._find_cached_files(url)
-        removed_count = 0
-        
-        for filepath in cached_files:
-            try:
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-                    removed_count += 1
-            except Exception as e:
-                print(f"Warning: Failed to remove cache file {filepath}: {e}")
-        
-        return removed_count
+        return super().clear(url)

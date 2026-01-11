@@ -6,6 +6,12 @@ from services.betclic import Betclic
 from constants import PREMIER_LEAGUE
 from pprint import pprint
 from utils.utils import print_events
+from services.soccerdata import SoccerData
+import os
+
+def soccer():
+    soccerdata = SoccerData()
+    soccerdata.get_country()
 
 def main():
     betclic = Betclic(cache_ttl=9999999999999999999999999999999999999999999, delay=10, retry_delay=20, n_retries=10, timeout=60)
@@ -26,4 +32,5 @@ def main():
 
 if __name__ == "__main__":
     load_dotenv()
-    main()
+    #main()
+    soccer()
