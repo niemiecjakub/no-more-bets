@@ -3,7 +3,7 @@ import time
 import json
 import re
 import logging
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union, List
 from .base_cache import BaseCache
 
 logger = logging.getLogger(__name__)
@@ -104,7 +104,7 @@ class SoccerDataCache(BaseCache):
         
         return cached_files
     
-    def _read_file(self, filepath: str) -> Dict[str, Any]:
+    def _read_file(self, filepath: str) -> Union[Dict[str, Any], List[Any]]:
         """Read and parse JSON file content.
         
         Parameters
@@ -114,26 +114,26 @@ class SoccerDataCache(BaseCache):
             
         Returns
         -------
-        Dict[str, Any]
-            Parsed JSON content.
+        Union[Dict[str, Any], List[Any]]
+            Parsed JSON content (can be a dict or list).
         """
         with open(filepath, 'r', encoding='utf-8') as f:
             return json.load(f)
     
-    def _write_file(self, filepath: str, data: Dict[str, Any]):
+    def _write_file(self, filepath: str, data: Union[Dict[str, Any], List[Any]]):
         """Write JSON data to file.
         
         Parameters
         ----------
         filepath : str
             Path where to save the file.
-        data : Dict[str, Any]
-            JSON data to write.
+        data : Union[Dict[str, Any], List[Any]]
+            JSON data to write (can be a dict or list).
         """
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
     
-    def load(self, cache_key: str) -> Optional[Dict[str, Any]]:
+    def load(self, cache_key: str) -> Optional[Union[Dict[str, Any], List[Any]]]:
         """Load cached response if available and not expired.
         
         Parameters
@@ -143,13 +143,14 @@ class SoccerDataCache(BaseCache):
             
         Returns
         -------
-        Optional[Dict[str, Any]]
-            Cached JSON response if found and valid, None otherwise.
+        Optional[Union[Dict[str, Any], List[Any]]]
+            Cached JSON response (dict or list) if found and valid, None otherwise.
         """
         result = super().load(cache_key)
-        return result if isinstance(result, dict) else None
+        # Accept both dicts and lists (some endpoints return lists, e.g., /matches/)
+        return result if isinstance(result, (dict, list)) else None
     
-    def save(self, cache_key: str, data: Dict[str, Any]):
+    def save(self, cache_key: str, data: Union[Dict[str, Any], List[Any]]):
         """Save response to cache.
         
         Removes old cached files for the same cache key before saving new one.
@@ -158,8 +159,8 @@ class SoccerDataCache(BaseCache):
         ----------
         cache_key : str
             Cache key for the endpoint.
-        data : Dict[str, Any]
-            JSON response data to cache.
+        data : Union[Dict[str, Any], List[Any]]
+            JSON response data to cache (can be a dict or list).
         """
         super().save(cache_key, data)
     
