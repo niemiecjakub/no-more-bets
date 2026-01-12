@@ -10,9 +10,8 @@ from utils.utils import print_events
 from services.soccerdata import SoccerData
 import os
 
-# Configure logging to display logs in console
 logging.basicConfig(
-    level=logging.DEBUG,  # Set to logging.DEBUG for more verbose output
+    level=logging.DEBUG, 
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
@@ -32,8 +31,7 @@ def main():
         print("Game: " + game.url + " - Events: " + str(len(events)))
 
     print_events(all_events[:3])
-    # Now all_events contains all events from all games
-        #print_events(events)
+    #print_events(events)
     #load_dotenv()
     #result = asyncio.run(run_betting_analysis("Analyze Leeds vs Fulham", verbose=True))
     #print(result)
