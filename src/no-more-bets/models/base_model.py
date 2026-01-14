@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class FrozenBaseModel(BaseModel):
@@ -8,5 +8,7 @@ class FrozenBaseModel(BaseModel):
     to ensure consistent immutability across the codebase.
     """
     
-    class Config:
-        frozen = True
+    model_config = ConfigDict(
+        frozen=True,
+        extra='ignore' 
+    )

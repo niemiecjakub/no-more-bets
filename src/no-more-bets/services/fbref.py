@@ -1,3 +1,4 @@
+from datetime import datetime
 from bs4 import BeautifulSoup
 from models.fbref import Club, Player, Game
 from .base_scraper import BaseScraper
@@ -349,7 +350,7 @@ class FBref(BaseScraper):
         
         return players
 
-    def get_club_games(self, club_name: str, epl_only: bool = False) -> list[Game]:
+    def get_club_games(self, club_name: str, epl_only: bool = False, limit: int | None = None) -> list[Game]:
         """Get game/match statistics for a specific club.
         
         Finds the club in the Premier League table, navigates to its details page,
@@ -361,6 +362,9 @@ class FBref(BaseScraper):
             Name of the club to get games for.
         epl_only : bool, optional
             If True, only return Premier League games. Default is False.
+        limit : int, optional
+            If provided, return only this number of games sorted from newest.
+            Default is None (return all games).
             
         Returns
         -------
@@ -536,5 +540,20 @@ class FBref(BaseScraper):
             )
             
             games.append(game)
+        
+        # Sort games by date (newest first)
+        def parse_date(date_str: str) -> datetime:
+            """Parse date string to datetime for sorting."""
+            try:
+                return datetime.strptime(date_str, '%Y-%m-%d')
+            except ValueError:
+                # If date format is different, return a very old date to put it at the end
+                return datetime.min
+        
+        games.sort(key=lambda g: parse_date(g.date), reverse=True)
+        
+        # Apply limit if provided
+        if limit is not None and limit > 0:
+            games = games[:limit]
         
         return games

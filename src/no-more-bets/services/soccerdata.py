@@ -6,7 +6,7 @@ from typing import Optional, Dict, Any, List
 import requests
 from requests.exceptions import ConnectionError, Timeout, RequestException
 from utils.soccerdata_cache import SoccerDataCache
-from models.soccerdata import HeadToHead, MatchPreview, MatchPreviewsUpcoming, LeagueMatches
+from models.soccerdata import HeadToHead, MatchPreview, LeagueMatchPreviews, LeagueMatches
 
 logger = logging.getLogger(__name__)
 
@@ -71,13 +71,18 @@ class SoccerData:
             'Content-Type': 'application/json'
         }
     
-    def get_match_previews_upcoming(self) -> MatchPreviewsUpcoming:
+    def get_match_previews_upcoming(self, league_id: Optional[int] = None) -> List[LeagueMatchPreviews]:
         """Get upcoming match previews from the SoccerData API.
+        
+        Parameters
+        ----------
+        league_id : Optional[int]
+            If provided, only return matches for this league ID. Default is None (return all matches).
         
         Returns
         -------
-        MatchPreviewsUpcoming
-            Match previews upcoming model containing count, updated timestamp, and results grouped by league.
+        List[LeagueMatchPreviews]
+            List of league match previews grouped by league.
             
         Raises
         ------
@@ -86,7 +91,23 @@ class SoccerData:
         """
         try:
             response = self._make_request('/match-previews-upcoming/')
-            return MatchPreviewsUpcoming(**response)
+            results = []
+            for idx, item in enumerate(response.get('results', [])):
+                try:
+                    league_preview = LeagueMatchPreviews(**item)
+                    results.append(league_preview)
+                except Exception as parse_error:
+                    logger.warning(f"Failed to parse league item {idx}: {parse_error}")
+            
+            # Filter by league_id if provided
+            if league_id is not None:
+                filtered = [
+                    league_preview for league_preview in results
+                    if league_preview.league_id == league_id
+                ]
+                return filtered
+            
+            return results
         except Exception as e:
             logger.error(f"Error fetching match previews upcoming: {e}")
             raise

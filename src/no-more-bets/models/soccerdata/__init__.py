@@ -20,7 +20,6 @@ from .matchpreview import (
     PreviewContentItem
 )
 from .matchpreviewsupcoming import (
-    MatchPreviewsUpcoming,
     LeagueMatchPreviews,
     UpcomingMatchPreview
 )
@@ -55,7 +54,6 @@ __all__ = [
     "LeagueInfo",
     "StageInfo",
     "PreviewContentItem",
-    "MatchPreviewsUpcoming",
     "LeagueMatchPreviews",
     "UpcomingMatchPreview",
     "LeagueMatches",
