@@ -200,11 +200,13 @@ class Rotowire(BaseScraper):
                 lineup_type = "Predicted Lineup"
         
         # Track if we've reached the injuries section
+        # All players BEFORE the "Injuries" separator are in the lineup
+        # All players AFTER the "Injuries" separator are injuries only
         in_injuries_section = False
         
         # Parse all list items
         for li in lineup_list.find_all('li'):
-            # Check if this is the injuries header
+            # Check if this is the injuries header separator
             if 'lineup__title' in li.get('class', []) and 'Injuries' in li.get_text():
                 in_injuries_section = True
                 continue
@@ -223,21 +225,22 @@ class Rotowire(BaseScraper):
                     position = pos_elem.get_text(strip=True)
                     player_name = name_elem.get_text(strip=True)
                     
-                    if injury_elem:
-                        # This is an injury entry
-                        status = injury_elem.get_text(strip=True)
-                        injuries.append(InjuryEntry(
-                            player=player_name,
-                            position=position,
-                            status=status
-                        ))
-                    else:
-                        # This is a regular player in the lineup
-                        if not in_injuries_section:
-                            players.append(PlayerInLineup(
+                    if in_injuries_section:
+                        # After the separator: these are injury entries only
+                        if injury_elem:
+                            status = injury_elem.get_text(strip=True)
+                            injuries.append(InjuryEntry(
+                                player=player_name,
                                 position=position,
-                                player_name=player_name
+                                status=status
                             ))
+                    else:
+                        # Before the separator: these are all lineup players
+                        # (even if they have an injury status, they're still in the lineup)
+                        players.append(PlayerInLineup(
+                            position=position,
+                            player_name=player_name
+                        ))
         
         return TeamLineup(
             team_name=team_name,
