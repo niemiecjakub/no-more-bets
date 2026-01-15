@@ -42,6 +42,16 @@ from .soccerdata import (
     MatchPreviewInfo,
     Player as SoccerDataPlayer
 )
+from .match_analysis import (
+    MatchInfo,
+    TeamLineupData,
+    LineupData,
+    HeadToHeadData,
+    PredictionData,
+    WeatherData,
+    MatchPreviewData,
+    MatchAnalysis,
+)
 
 __all__ = [
     "FrozenBaseModel",
@@ -92,5 +102,13 @@ __all__ = [
     "GameOdds",
     "WeatherInfo",
     "GameLineup",
+    "MatchInfo",
+    "TeamLineupData",
+    "LineupData",
+    "HeadToHeadData",
+    "PredictionData",
+    "WeatherData",
+    "MatchPreviewData",
+    "MatchAnalysis",
 ]
 
