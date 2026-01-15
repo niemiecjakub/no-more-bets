@@ -5,11 +5,12 @@ import re
 import logging
 from typing import Optional, Dict, Any, Union, List
 from .base_cache import BaseCache
+from .utils import get_project_root
 
 logger = logging.getLogger(__name__)
 
 
-class SoccerDataCache(BaseCache):
+class JsonCache(BaseCache):
     """SoccerData cache manager with TTL support.
     
     Handles saving and loading JSON responses from disk cache with
@@ -18,7 +19,7 @@ class SoccerDataCache(BaseCache):
     
     def __init__(
         self,
-        store_folder: str = "cache/soccerdata",
+        store_folder: Optional[str] = None,
         store: bool = True,
         use_cache: bool = True,
         cache_ttl: float = 86400.0,
@@ -27,8 +28,9 @@ class SoccerDataCache(BaseCache):
         
         Parameters
         ----------
-        store_folder : str
-            Folder where cached JSON files are stored. Default is "cache/soccerdata".
+        store_folder : Optional[str]
+            Folder where cached JSON files are stored. If None, defaults to
+            "{project_root}/src/no-more-bets/cache/json" where project_root is the workspace root.
         store : bool
             Whether to save fetched responses to cache folder. Default is True.
         use_cache : bool
@@ -36,6 +38,9 @@ class SoccerDataCache(BaseCache):
         cache_ttl : float
             Cache time-to-live in seconds. Default is 86400.0 (1 day).
         """
+        if store_folder is None:
+            project_root = get_project_root()
+            store_folder = os.path.join(project_root, "src", "no-more-bets", "cache", "json")
         super().__init__(store_folder, store, use_cache, cache_ttl)
     
     def _get_cache_key_to_filename(self, key: str, timestamp: Optional[int] = None) -> str:

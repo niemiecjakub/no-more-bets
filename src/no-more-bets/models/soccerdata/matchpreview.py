@@ -55,7 +55,6 @@ class MatchPreview(FrozenBaseModel):
     id: Annotated[int, Field(..., description="Match ID")]
     date: Annotated[str, Field(..., description="Match date (e.g., '11-01-2026')")]
     time: Annotated[str, Field(..., description="Match time (e.g., '16:30')")]
-    word_count: Annotated[int, Field(..., description="Word count of the preview")]
     country: Annotated[CountryInfo, Field(..., description="Country information")]
     league: Annotated[LeagueInfo, Field(..., description="League information")]
     stage: Annotated[StageInfo, Field(..., description="Stage information")]

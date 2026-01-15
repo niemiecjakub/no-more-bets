@@ -1,6 +1,23 @@
+import os
+from pathlib import Path
 from typing import List
 from models.betclic import BookmakerEvent
 from models.fbref import Club, Player, Game
+
+
+def get_project_root() -> str:
+    """Get the project root directory (workspace root).
+    
+    Returns
+    -------
+    str
+        Absolute path to the project root directory.
+    """
+    # Start from this file's location: src/no-more-bets/utils/utils.py
+    # Go up 3 levels to get to the workspace root
+    current_file = Path(__file__).resolve()
+    project_root = current_file.parent.parent.parent.parent
+    return str(project_root)
 
 
 def print_green(message: str) -> None:

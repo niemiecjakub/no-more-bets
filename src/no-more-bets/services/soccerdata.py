@@ -5,7 +5,7 @@ import logging
 from typing import Optional, Dict, Any, List
 import requests
 from requests.exceptions import ConnectionError, Timeout, RequestException
-from utils.soccerdata_cache import SoccerDataCache
+from utils.json_cache import JsonCache
 from models.soccerdata import HeadToHead, MatchPreview, LeagueMatchPreviews, LeagueMatches
 
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class SoccerData:
         self.timeout = timeout
         
         # Initialize cache
-        self.cache = SoccerDataCache(
+        self.cache = JsonCache(
             store=store_cache,
             use_cache=use_cache,
             cache_ttl=cache_ttl,

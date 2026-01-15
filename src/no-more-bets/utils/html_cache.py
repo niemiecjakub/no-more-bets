@@ -4,6 +4,7 @@ import time
 from typing import Optional
 from urllib.parse import urlparse, quote
 from .base_cache import BaseCache
+from .utils import get_project_root
 
 
 class HtmlCache(BaseCache):
@@ -15,7 +16,7 @@ class HtmlCache(BaseCache):
     
     def __init__(
         self,
-        store_folder: str = "cache/html",
+        store_folder: Optional[str] = None,
         store: bool = True,
         use_cache: bool = True,
         cache_ttl: float = 3600.0,
@@ -24,8 +25,9 @@ class HtmlCache(BaseCache):
         
         Parameters
         ----------
-        store_folder : str
-            Folder where cached HTML files are stored. Default is "cache/html".
+        store_folder : Optional[str]
+            Folder where cached HTML files are stored. If None, defaults to
+            "{project_root}/src/no-more-bets/cache/html" where project_root is the workspace root.
         store : bool
             Whether to save fetched HTML to cache folder. Default is True.
         use_cache : bool
@@ -33,6 +35,9 @@ class HtmlCache(BaseCache):
         cache_ttl : float
             Cache time-to-live in seconds. Default is 3600.0 (1 hour).
         """
+        if store_folder is None:
+            project_root = get_project_root()
+            store_folder = os.path.join(project_root, "src", "no-more-bets", "cache", "html")
         super().__init__(store_folder, store, use_cache, cache_ttl)
     
     def _url_to_filename(self, url: str, include_timestamp: bool = False) -> str:
