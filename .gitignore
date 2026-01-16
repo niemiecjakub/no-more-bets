@@ -1,5 +1,6 @@
 # VS Code
 .vs/
+.vscode/
 .cursor/
 
 # Build outputs
@@ -9,6 +10,8 @@ obj/
 # Python
 __pycache__/
 venv/
+.coverage
+.pytest_cache/
 
 # Resources
 src/NoMoreBets/NoMoreBets.Data/Resources/*

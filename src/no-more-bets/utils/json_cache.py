@@ -76,8 +76,9 @@ class JsonCache(BaseCache):
         Optional[int]
             Timestamp if found, None otherwise.
         """
-        # Match pattern: {cache_key}_{timestamp}.json
-        match = re.search(r'_(\d+)\.json$', filename)
+        # Match pattern: {cache_key}_{timestamp}.{extension}
+        # Extract timestamp regardless of file extension
+        match = re.search(r'_(\d+)(?:\.\w+)?$', filename)
         if match:
             try:
                 return int(match.group(1))
@@ -102,8 +103,10 @@ class JsonCache(BaseCache):
         if not os.path.exists(self.store_folder):
             return cached_files
         
+        # Pattern: {key}_\d+\.json (exact prefix match followed by timestamp)
+        pattern = re.compile(rf'^{re.escape(key)}_\d+\.json$')
         for filename in os.listdir(self.store_folder):
-            if filename.startswith(f"{key}_") and filename.endswith(".json"):
+            if pattern.match(filename):
                 filepath = os.path.join(self.store_folder, filename)
                 cached_files.append(filepath)
         
