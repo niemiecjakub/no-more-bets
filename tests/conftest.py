@@ -1,12 +1,9 @@
 """Shared pytest fixtures for cache utility tests."""
 import os
 import json
-import tempfile
-import shutil
-from pathlib import Path
-from typing import Generator
+from pathlib import Path 
 import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 
 @pytest.fixture
@@ -26,7 +23,6 @@ def temp_cache_dir(tmp_path: Path) -> str:
     cache_dir = tmp_path / "cache"
     cache_dir.mkdir()
     yield str(cache_dir)
-    # Cleanup is handled by pytest's tmp_path fixture
 
 
 @pytest.fixture
@@ -111,10 +107,6 @@ def create_test_file(filepath: str, content: str) -> None:
     with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
 
-
-# ============================================================================
-# Service-specific fixture fixtures
-# ============================================================================
 
 @pytest.fixture
 def betclic_premier_league_html(fixtures_dir):
