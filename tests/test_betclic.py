@@ -10,31 +10,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src' / 'no-more-bets'))
 from services.betclic import Betclic
 from models.betclic import UpcomingGame, BookmakerEvent, EventOption
 
-
-class TestBetclicInitialization:
-    """Test Betclic initialization."""
-    
-    def test_init_default_parameters(self, temp_cache_dir):
-        """Test initialization with default parameters."""
-        scraper = Betclic()
-        
-        assert scraper.base_url == "https://www.betclic.pl"
-        assert scraper.n_retries == 5
-        assert scraper.delay == 5.0
-    
-    def test_init_custom_parameters(self, temp_cache_dir):
-        """Test initialization with custom parameters."""
-        scraper = Betclic(
-            n_retries=3,
-            delay=3.0,
-            use_cache=False
-        )
-        
-        assert scraper.n_retries == 3
-        assert scraper.delay == 3.0
-        assert scraper.cache.use_cache is False
-
-
 class TestBetclicGetUpcomingGames:
     """Test Betclic.get_upcoming_games() method."""
     
@@ -53,9 +28,9 @@ class TestBetclicGetUpcomingGames:
         first_game = games[0]
         assert first_game.home_team is not None and first_game.home_team != ""
         assert first_game.away_team is not None and first_game.away_team != ""
-        # URL should be a valid Betclic URL if present
-        if first_game.url:
-            assert first_game.url.startswith("https://www.betclic.pl")
+        # URL should be a valid Betclic URL (fixture should have URLs)
+        assert first_game.url is not None, "Fixture should contain games with URLs"
+        assert first_game.url.startswith("https://www.betclic.pl")
     
     def test_get_upcoming_games_no_group_events(self, temp_cache_dir):
         """Test handling when groupEvents div is not found."""

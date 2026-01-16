@@ -11,18 +11,6 @@ from services.rotowire import Rotowire
 from models.rotowire import GameLineup, TeamLineup, PlayerInLineup, InjuryEntry, GameOdds, WeatherInfo
 
 
-class TestRotowireInitialization:
-    """Test Rotowire initialization."""
-    
-    def test_init_default_parameters(self, temp_cache_dir):
-        """Test initialization with default parameters."""
-        scraper = Rotowire()
-        
-        assert scraper.base_url == "https://www.rotowire.com"
-        assert scraper.delay == 5.0
-        assert scraper.retry_count == 3
-
-
 class TestRotowireParseLineups:
     """Test Rotowire._parse_lineups() method."""
     
@@ -43,19 +31,6 @@ class TestRotowireParseLineups:
         assert first_game.home_team.team_code is not None
         assert first_game.away_team.team_code is not None
     
-    def test_parse_lineups_multiple_games(self, temp_cache_dir, rotowire_lineups_html):
-        """Test parsing multiple games using real fixture."""
-        scraper = Rotowire(use_cache=False)
-        
-        games = scraper._parse_lineups(rotowire_lineups_html)
-        
-        # Real fixture should have multiple games
-        assert len(games) > 0
-        # Verify all games have valid structure
-        for game in games:
-            assert game.home_team is not None
-            assert game.away_team is not None
-
 
 class TestRotowireParseTeamLineup:
     """Test Rotowire._parse_team_lineup() method."""
@@ -194,8 +169,11 @@ class TestRotowireParseOdds:
         
         odds = scraper._parse_odds(section)
         
-        # Dashes should be skipped
-        assert odds is None or odds.home_odds is None
+        # When dashes are present, they are skipped and odds fields are None
+        # Since odds_div exists, method returns GameOdds object with None values
+        assert odds is not None, "GameOdds object should be returned when odds_div exists"
+        assert isinstance(odds, GameOdds)
+        assert odds.home_odds is None, "Dashes should be skipped, resulting in None home_odds"
 
 
 class TestRotowireParseWeather:

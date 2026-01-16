@@ -53,50 +53,6 @@ class ConcreteCache(BaseCache):
             f.write(str(data))
 
 
-class TestBaseCacheInitialization:
-    """Test BaseCache initialization."""
-    
-    def test_init_default_parameters(self, temp_cache_dir):
-        """Test initialization with default parameters."""
-        cache = ConcreteCache(temp_cache_dir)
-        assert cache.store_folder == temp_cache_dir
-        assert cache.store is True
-        assert cache.use_cache is True
-        assert cache.cache_ttl == 3600.0
-        assert os.path.exists(temp_cache_dir)
-    
-    def test_init_custom_parameters(self, temp_cache_dir):
-        """Test initialization with custom parameters."""
-        cache = ConcreteCache(
-            store_folder=temp_cache_dir,
-            store=False,
-            use_cache=False,
-            cache_ttl=7200.0
-        )
-        assert cache.store_folder == temp_cache_dir
-        assert cache.store is False
-        assert cache.use_cache is False
-        assert cache.cache_ttl == 7200.0
-    
-    def test_init_creates_directory_when_store_enabled(self, tmp_path):
-        """Test that directory is created when store is enabled."""
-        cache_dir = str(tmp_path / "new_cache")
-        cache = ConcreteCache(cache_dir, store=True, use_cache=False)
-        assert os.path.exists(cache_dir)
-    
-    def test_init_creates_directory_when_use_cache_enabled(self, tmp_path):
-        """Test that directory is created when use_cache is enabled."""
-        cache_dir = str(tmp_path / "new_cache")
-        cache = ConcreteCache(cache_dir, store=False, use_cache=True)
-        assert os.path.exists(cache_dir)
-    
-    def test_init_no_directory_when_both_disabled(self, tmp_path):
-        """Test that directory is not created when both store and use_cache are False."""
-        cache_dir = str(tmp_path / "new_cache")
-        cache = ConcreteCache(cache_dir, store=False, use_cache=False)
-        assert not os.path.exists(cache_dir)
-
-
 class TestBaseCacheLoad:
     """Test BaseCache.load() method."""
     

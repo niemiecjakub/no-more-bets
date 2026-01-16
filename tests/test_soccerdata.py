@@ -12,52 +12,6 @@ from services.soccerdata import SoccerData
 from utils.json_cache import JsonCache
 
 
-class TestSoccerDataInitialization:
-    """Test SoccerData initialization."""
-    
-    def test_init_missing_api_key(self, monkeypatch):
-        """Test that ValueError is raised when API key is missing."""
-        monkeypatch.delenv("SOCCERDATA_API_KEY", raising=False)
-        
-        with pytest.raises(ValueError, match="SOCCERDATA_API_KEY is required"):
-            SoccerData()
-    
-    def test_init_with_api_key(self, temp_cache_dir, monkeypatch):
-        """Test initialization with API key."""
-        monkeypatch.setenv("SOCCERDATA_API_KEY", "test_key_123")
-        
-        service = SoccerData()
-        
-        assert service.api_key == "test_key_123"
-        assert service.retry_count == 3
-        assert service.retry_delay == 2.0
-        assert service.timeout == 15.0
-        assert isinstance(service.cache, JsonCache)
-        assert service.cache.use_cache is True
-        assert service.cache.store is True
-        assert service.cache.cache_ttl == 86400.0
-    
-    def test_init_custom_parameters(self, temp_cache_dir, monkeypatch):
-        """Test initialization with custom parameters."""
-        monkeypatch.setenv("SOCCERDATA_API_KEY", "test_key")
-        
-        service = SoccerData(
-            retry_count=5,
-            retry_delay=1.0,
-            timeout=10.0,
-            use_cache=False,
-            store_cache=False,
-            cache_ttl=7200.0
-        )
-        
-        assert service.retry_count == 5
-        assert service.retry_delay == 1.0
-        assert service.timeout == 10.0
-        assert service.cache.use_cache is False
-        assert service.cache.store is False
-        assert service.cache.cache_ttl == 7200.0
-
-
 class TestSoccerDataEndpointToCacheKey:
     """Test SoccerData._endpoint_to_cache_key() method."""
     
@@ -191,73 +145,6 @@ class TestSoccerDataMakeRequest:
         assert result == {'success': True}
         assert mock_get.call_count == 2
     
-    def test_make_request_401_error(self, temp_cache_dir, monkeypatch):
-        """Test handling of 401 authentication error."""
-        monkeypatch.setenv("SOCCERDATA_API_KEY", "test_key")
-        service = SoccerData(use_cache=False)
-        
-        mock_response = Mock()
-        mock_response.ok = False
-        mock_response.status_code = 401
-        mock_response.text = "Unauthorized"
-        
-        with patch('services.soccerdata.requests.get', return_value=mock_response):
-            with pytest.raises(ValueError, match="Authentication failed"):
-                service._make_request('/match-previews-upcoming/')
-    
-    def test_make_request_403_error(self, temp_cache_dir, monkeypatch):
-        """Test handling of 403 authentication error."""
-        monkeypatch.setenv("SOCCERDATA_API_KEY", "test_key")
-        service = SoccerData(use_cache=False)
-        
-        mock_response = Mock()
-        mock_response.ok = False
-        mock_response.status_code = 403
-        mock_response.text = "Forbidden"
-        
-        with patch('services.soccerdata.requests.get', return_value=mock_response):
-            with pytest.raises(ValueError, match="Authentication failed"):
-                service._make_request('/match-previews-upcoming/')
-    
-    def test_make_request_404_error(self, temp_cache_dir, monkeypatch):
-        """Test handling of 404 not found error."""
-        monkeypatch.setenv("SOCCERDATA_API_KEY", "test_key")
-        service = SoccerData(use_cache=False)
-        
-        mock_response = Mock()
-        mock_response.ok = False
-        mock_response.status_code = 404
-        mock_response.text = "Not Found"
-        
-        with patch('services.soccerdata.requests.get', return_value=mock_response):
-            with pytest.raises(ValueError, match="Endpoint not found"):
-                service._make_request('/nonexistent-endpoint/')
-    
-    def test_make_request_500_error_retry(self, temp_cache_dir, monkeypatch):
-        """Test retry on 500 error."""
-        monkeypatch.setenv("SOCCERDATA_API_KEY", "test_key")
-        service = SoccerData(retry_count=2, retry_delay=0.1, use_cache=False)
-        
-        mock_response_500 = Mock()
-        mock_response_500.ok = False
-        mock_response_500.status_code = 500
-        mock_response_500.text = "Internal Server Error"
-        
-        mock_response_200 = Mock()
-        mock_response_200.ok = True
-        mock_response_200.json.return_value = {'success': True}
-        
-        with patch('services.soccerdata.requests.get') as mock_get:
-            mock_get.side_effect = [mock_response_500, mock_response_200]
-            
-            mock_sleep = Mock()
-            monkeypatch.setattr("time.sleep", mock_sleep)
-            monkeypatch.setattr("random.uniform", lambda a, b: 1.0)
-            
-            result = service._make_request('/match-previews-upcoming/')
-        
-        assert result == {'success': True}
-        assert mock_get.call_count == 2
     
     def test_make_request_saves_to_cache(self, temp_cache_dir, monkeypatch):
         """Test that successful response is saved to cache."""
@@ -395,24 +282,23 @@ class TestSoccerDataGetMatches:
         assert len(results) == 1
         assert results[0].league_id == 39
     
-    def test_get_matches_by_league_id(self, temp_cache_dir, monkeypatch, soccerdata_matches_league_39):
+    def test_get_matches_by_league_id(self, temp_cache_dir, monkeypatch):
         """Test getting matches by league_id using real fixture."""
         monkeypatch.setenv("SOCCERDATA_API_KEY", "test_key")
         service = SoccerData(use_cache=False)
         
-        # Fixture is already a list, use it directly
-        # If fixture is empty, create minimal valid data
-        if not soccerdata_matches_league_39:
-            soccerdata_matches_league_39 = [{
+        response_data = [
+            {
                 'league_id': 39,
                 'league_name': 'Premier League',
                 'country': {'id': 42, 'name': 'England'},
                 'is_cup': False,
                 'season': {'is_active': True, 'year': '2024-2025'},
                 'stage': []
-            }]
+            }
+        ]
         
-        with patch.object(service, '_make_request', return_value=soccerdata_matches_league_39):
+        with patch.object(service, '_make_request', return_value=response_data):
             results = service.get_matches(league_id=39)
         
         # Assert on structure

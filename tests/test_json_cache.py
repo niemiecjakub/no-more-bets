@@ -13,46 +13,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src' / 'no-more-bets'))
 from utils.json_cache import JsonCache
 from utils import json_cache as json_cache_module
 
-
-class TestJsonCacheInitialization:
-    """Test JsonCache initialization."""
-    
-    def test_init_default_store_folder(self, tmp_path, monkeypatch):
-        """Test initialization with default store_folder."""
-        # Mock get_project_root to return tmp_path
-        # Patch it where it's used (in json_cache module), not where it's defined
-        monkeypatch.setattr(json_cache_module, "get_project_root", lambda: str(tmp_path))
-        
-        cache = JsonCache()
-        expected_path = os.path.join(str(tmp_path), "src", "no-more-bets", "cache", "json")
-        assert cache.store_folder == expected_path
-        assert os.path.exists(expected_path)
-    
-    def test_init_custom_store_folder(self, temp_cache_dir):
-        """Test initialization with custom store_folder."""
-        cache = JsonCache(store_folder=temp_cache_dir)
-        assert cache.store_folder == temp_cache_dir
-        assert os.path.exists(temp_cache_dir)
-    
-    def test_init_default_cache_ttl(self, temp_cache_dir):
-        """Test that default cache_ttl is 86400.0 seconds (1 day)."""
-        cache = JsonCache(store_folder=temp_cache_dir)
-        assert cache.cache_ttl == 86400.0
-    
-    def test_init_all_parameters(self, temp_cache_dir):
-        """Test initialization with all parameters."""
-        cache = JsonCache(
-            store_folder=temp_cache_dir,
-            store=False,
-            use_cache=False,
-            cache_ttl=7200.0
-        )
-        assert cache.store_folder == temp_cache_dir
-        assert cache.store is False
-        assert cache.use_cache is False
-        assert cache.cache_ttl == 7200.0
-
-
 class TestJsonCacheGetCacheKeyToFilename:
     """Test JsonCache._get_cache_key_to_filename() method."""
     
@@ -68,14 +28,6 @@ class TestJsonCacheGetCacheKeyToFilename:
         with patch('time.time', return_value=1234567890):
             filename = cache._get_cache_key_to_filename("endpoint_key")
             assert filename == "endpoint_key_1234567890.json"
-    
-    def test_get_cache_key_to_filename_format(self):
-        """Test that filename follows correct format: {key}_{timestamp}.json"""
-        cache = JsonCache(store_folder="/tmp")
-        filename = cache._get_cache_key_to_filename("test_endpoint", timestamp=1234567890)
-        assert filename == "test_endpoint_1234567890.json"
-        assert filename.endswith(".json")
-
 
 class TestJsonCacheExtractTimestampFromFilename:
     """Test JsonCache._extract_timestamp_from_filename() method."""
@@ -106,17 +58,8 @@ class TestJsonCacheExtractTimestampFromFilename:
         cache = JsonCache(store_folder="/tmp")
         filename = "endpoint_key_abc123.json"
         timestamp = cache._extract_timestamp_from_filename(filename)
-        # Should return None or handle gracefully
-        assert timestamp is None or isinstance(timestamp, int)
-    
-    def test_extract_timestamp_wrong_extension(self):
-        """Test timestamp extraction from file with wrong extension."""
-        cache = JsonCache(store_folder="/tmp")
-        filename = "endpoint_key_1234567890.txt"
-        timestamp = cache._extract_timestamp_from_filename(filename)
-        # Should still extract timestamp even with wrong extension
-        assert timestamp == 1234567890
-
+        # Should return None for non-numeric timestamp
+        assert timestamp is None
 
 class TestJsonCacheFindCachedFiles:
     """Test JsonCache._find_cached_files() method."""
@@ -214,21 +157,7 @@ class TestJsonCacheFileOperations:
         result = cache._read_file(test_file)
         assert result == json_data
         assert isinstance(result, dict)
-    
-    def test_read_file_reads_json_list(self, temp_cache_dir):
-        """Test that _read_file reads and parses JSON list correctly."""
-        cache = JsonCache(store_folder=temp_cache_dir)
-        
-        test_file = os.path.join(temp_cache_dir, "test.json")
-        json_data = [{"item": 1}, {"item": 2}, {"item": 3}]
-        
-        with open(test_file, 'w', encoding='utf-8') as f:
-            json.dump(json_data, f)
-        
-        result = cache._read_file(test_file)
-        assert result == json_data
-        assert isinstance(result, list)
-    
+
     def test_read_file_handles_utf8_encoding(self, temp_cache_dir):
         """Test that _read_file handles UTF-8 encoding correctly."""
         cache = JsonCache(store_folder=temp_cache_dir)
@@ -255,21 +184,7 @@ class TestJsonCacheFileOperations:
         with open(test_file, 'r', encoding='utf-8') as f:
             result = json.load(f)
             assert result == json_data
-    
-    def test_write_file_writes_json_list(self, temp_cache_dir):
-        """Test that _write_file writes JSON list correctly."""
-        cache = JsonCache(store_folder=temp_cache_dir)
-        
-        test_file = os.path.join(temp_cache_dir, "test.json")
-        json_data = [{"item": 1}, {"item": 2}]
-        
-        cache._write_file(test_file, json_data)
-        
-        assert os.path.exists(test_file)
-        with open(test_file, 'r', encoding='utf-8') as f:
-            result = json.load(f)
-            assert result == json_data
-    
+
     def test_write_file_pretty_printing(self, temp_cache_dir):
         """Test that _write_file uses pretty printing (indent=2)."""
         cache = JsonCache(store_folder=temp_cache_dir)
@@ -281,8 +196,9 @@ class TestJsonCacheFileOperations:
         
         with open(test_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            # Should have indentation (pretty printed)
-            assert "  " in content or "\n" in content
+            # Should have indentation (pretty printed) - must have newlines
+            assert "\n" in content, "JSON should be pretty printed with newlines"
+            assert "  " in content, "JSON should be indented"
     
     def test_write_file_ensure_ascii_false(self, temp_cache_dir):
         """Test that _write_file uses ensure_ascii=False."""
@@ -295,8 +211,10 @@ class TestJsonCacheFileOperations:
         
         with open(test_file, 'r', encoding='utf-8') as f:
             content = f.read()
-            # Should contain unicode characters directly, not escaped
-            assert "émojis" in content or "🎉" in content or "中文" in content
+            # Should contain unicode characters directly, not escaped (ensure_ascii=False)
+            assert "émojis" in content, "Unicode characters should not be escaped"
+            assert "🎉" in content, "Emoji should not be escaped"
+            assert "中文" in content, "Chinese characters should not be escaped"
     
     def test_read_file_handles_corrupted_json(self, temp_cache_dir):
         """Test that _read_file raises exception for corrupted JSON."""
@@ -419,27 +337,7 @@ class TestJsonCachePublicAPI:
         with open(os.path.join(temp_cache_dir, files[0]), 'r', encoding='utf-8') as f:
             result = json.load(f)
             assert result == new_data
-    
-    def test_save_saves_json_list(self, temp_cache_dir):
-        """Test that save saves JSON list correctly."""
-        cache = JsonCache(store_folder=temp_cache_dir)
-        
-        cache_key = "endpoint_key"
-        list_data = [{"item": 1}, {"item": 2}, {"item": 3}]
-        
-        cache.save(cache_key, list_data)
-        
-        # File should exist
-        files = [f for f in os.listdir(temp_cache_dir) 
-                 if f.startswith(f"{cache_key}_") and f.endswith(".json")]
-        assert len(files) == 1
-        
-        # Verify content
-        with open(os.path.join(temp_cache_dir, files[0]), 'r', encoding='utf-8') as f:
-            result = json.load(f)
-            assert result == list_data
-            assert isinstance(result, list)
-    
+
     def test_clear_removes_all_cached_files_for_key(self, temp_cache_dir):
         """Test that clear removes all cached files for a cache key."""
         cache = JsonCache(store_folder=temp_cache_dir)

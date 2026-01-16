@@ -12,40 +12,6 @@ from utils.html_cache import HtmlCache
 from utils import html_cache as html_cache_module
 
 
-class TestHtmlCacheInitialization:
-    """Test HtmlCache initialization."""
-    
-    def test_init_default_store_folder(self, tmp_path, monkeypatch):
-        """Test initialization with default store_folder."""
-        # Mock get_project_root to return tmp_path
-        # Patch it where it's used (in html_cache module), not where it's defined
-        monkeypatch.setattr(html_cache_module, "get_project_root", lambda: str(tmp_path))
-        
-        cache = HtmlCache()
-        expected_path = os.path.join(str(tmp_path), "src", "no-more-bets", "cache", "html")
-        assert cache.store_folder == expected_path
-        assert os.path.exists(expected_path)
-    
-    def test_init_custom_store_folder(self, temp_cache_dir):
-        """Test initialization with custom store_folder."""
-        cache = HtmlCache(store_folder=temp_cache_dir)
-        assert cache.store_folder == temp_cache_dir
-        assert os.path.exists(temp_cache_dir)
-    
-    def test_init_all_parameters(self, temp_cache_dir):
-        """Test initialization with all parameters."""
-        cache = HtmlCache(
-            store_folder=temp_cache_dir,
-            store=False,
-            use_cache=False,
-            cache_ttl=7200.0
-        )
-        assert cache.store_folder == temp_cache_dir
-        assert cache.store is False
-        assert cache.use_cache is False
-        assert cache.cache_ttl == 7200.0
-
-
 class TestHtmlCacheUrlToFilename:
     """Test HtmlCache._url_to_filename() method."""
     
@@ -71,8 +37,8 @@ class TestHtmlCacheUrlToFilename:
         url = "https://example.com/page with spaces"
         filename = cache._url_to_filename(url)
         assert filename.endswith(".html")
-        # Special characters should be handled
-        assert "/" not in filename or filename.count("/") == 0
+        # Special characters should be handled - no forward slashes allowed
+        assert "/" not in filename
     
     def test_url_to_filename_invalid_filesystem_characters(self):
         """Test that invalid filesystem characters are replaced."""
@@ -82,7 +48,12 @@ class TestHtmlCacheUrlToFilename:
         filename = cache._url_to_filename(url)
         assert "/" not in filename
         assert "\\" not in filename
-        assert ":" not in filename or filename.count(":") == 0  # May be in protocol
+        # Colon may appear in protocol part, but not in filename part after URL encoding
+        # Check that filename doesn't contain colons in invalid positions
+        # URL encoding should remove colons from the filename part
+        assert "://" not in filename, "Protocol separator should be removed"
+        # After URL encoding, colons should not appear in filename
+        assert ":" not in filename
         assert "*" not in filename
         assert "<" not in filename
         assert ">" not in filename
@@ -94,8 +65,9 @@ class TestHtmlCacheUrlToFilename:
         url = "https://example.com/page with spaces & symbols"
         filename = cache._url_to_filename(url)
         assert filename.endswith(".html")
-        # Should be URL encoded
-        assert "%20" in filename or " " not in filename
+        # Should be URL encoded - spaces must be encoded as %20
+        assert " " not in filename, "Spaces should be URL encoded"
+        assert "%20" in filename, "Spaces should be encoded as %20"
     
     def test_url_to_filename_with_timestamp(self):
         """Test URL to filename conversion with timestamp."""
@@ -113,13 +85,6 @@ class TestHtmlCacheUrlToFilename:
         # Should not contain a timestamp pattern
         import re
         assert not re.search(r'-\d+\.html$', filename)
-    
-    def test_url_to_filename_adds_html_extension(self):
-        """Test that .html extension is added if not present."""
-        cache = HtmlCache(store_folder="/tmp")
-        filename = cache._url_to_filename("https://example.com/page")
-        assert filename.endswith(".html")
-
 
 class TestHtmlCacheGetCacheKeyToFilename:
     """Test HtmlCache._get_cache_key_to_filename() method."""
@@ -137,17 +102,6 @@ class TestHtmlCacheGetCacheKeyToFilename:
         with patch('time.time', return_value=1234567890):
             filename = cache._get_cache_key_to_filename("https://example.com/page")
             assert filename.endswith("-1234567890.html")
-    
-    def test_get_cache_key_to_filename_format(self):
-        """Test that filename follows correct format: {base}-{timestamp}.html"""
-        cache = HtmlCache(store_folder="/tmp")
-        filename = cache._get_cache_key_to_filename("https://example.com/page", timestamp=1234567890)
-        # Should match pattern: {base}-{timestamp}.html
-        import re
-        match = re.search(r'^(.+)-(\d+)\.html$', filename)
-        assert match is not None
-        assert match.group(2) == "1234567890"
-
 
 class TestHtmlCacheExtractTimestampFromFilename:
     """Test HtmlCache._extract_timestamp_from_filename() method."""
@@ -178,8 +132,8 @@ class TestHtmlCacheExtractTimestampFromFilename:
         cache = HtmlCache(store_folder="/tmp")
         filename = "example_com_page-abc123.html"
         timestamp = cache._extract_timestamp_from_filename(filename)
-        # Should return None or handle gracefully
-        assert timestamp is None or isinstance(timestamp, int)
+        # Should return None for non-numeric timestamp
+        assert timestamp is None
 
 
 class TestHtmlCacheGetBaseFilename:

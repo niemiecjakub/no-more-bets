@@ -306,14 +306,12 @@ class Rotowire(BaseScraper):
                 if not away_odds:
                     away_odds = all_selected[2].get_text(strip=True) if all_selected[2].get_text(strip=True) not in ['–', '-'] else None
         
-        if home_odds or draw_odds or away_odds:
-            return GameOdds(
-                home_odds=home_odds,
-                draw_odds=draw_odds,
-                away_odds=away_odds
-            )
-        
-        return None
+        # Return GameOdds object when odds_div exists, even if all odds are None (e.g., dashes)
+        return GameOdds(
+            home_odds=home_odds,
+            draw_odds=draw_odds,
+            away_odds=away_odds
+        )
     
     def _parse_weather(self, section) -> Optional[WeatherInfo]:
         """Parse weather information from the game section."""

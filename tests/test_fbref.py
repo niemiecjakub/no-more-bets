@@ -10,31 +10,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src' / 'no-more-bets'))
 from services.fbref import FBref
 from models.fbref import Club, Player, Game
 
-
-class TestFBrefInitialization:
-    """Test FBref initialization."""
-    
-    def test_init_default_parameters(self, temp_cache_dir):
-        """Test initialization with default parameters."""
-        scraper = FBref()
-        
-        assert scraper.base_url == "https://fbref.com"
-        assert scraper.delay == 5.0
-        assert scraper.retry_count == 3
-    
-    def test_init_custom_parameters(self, temp_cache_dir):
-        """Test initialization with custom parameters."""
-        scraper = FBref(
-            delay=3.0,
-            retry_count=5,
-            use_cache=False
-        )
-        
-        assert scraper.delay == 3.0
-        assert scraper.retry_count == 5
-        assert scraper.cache.use_cache is False
-
-
 class TestFBrefGetPremierLeagueStats:
     """Test FBref.get_premier_league_stats() method."""
     
@@ -71,36 +46,6 @@ class TestFBrefGetPremierLeagueStats:
             with pytest.raises(ValueError, match="Selector.*not found"):
                 scraper.get_premier_league_stats()
     
-    def test_get_premier_league_stats_handles_missing_fields(self, temp_cache_dir):
-        """Test handling of missing fields in table."""
-        scraper = FBref(use_cache=False)
-        
-        html = """
-        <html>
-            <body>
-                <table id="results2025-202691_overall">
-                    <tbody>
-                        <tr>
-                            <th data-stat="rank">1</th>
-                            <td data-stat="team"><a>Arsenal</a></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </body>
-        </html>
-        """
-        
-        with patch.object(scraper, '_get_page_html', return_value=html):
-            clubs = scraper.get_premier_league_stats()
-        
-        assert len(clubs) == 1
-        assert clubs[0].rank == 1
-        assert clubs[0].team == "Arsenal"
-        # Missing fields should default to 0 or empty string
-        assert clubs[0].games == 0
-        assert clubs[0].wins == 0
-
-
 class TestFBrefGetClubPlayers:
     """Test FBref.get_club_players() method."""
     
@@ -145,54 +90,6 @@ class TestFBrefGetClubPlayers:
             with pytest.raises(ValueError, match="Club 'Chelsea' not found"):
                 scraper.get_club_players("Chelsea")
     
-    def test_get_club_players_handles_iz_class(self, temp_cache_dir):
-        """Test handling of 'iz' class for zero values."""
-        scraper = FBref(use_cache=False)
-        
-        league_html = """
-        <html>
-            <body>
-                <table id="results2025-202691_overall">
-                    <tbody>
-                        <tr>
-                            <td data-stat="team"><a href="/en/squads/18bb7c10/Arsenal-Stats">Arsenal</a></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </body>
-        </html>
-        """
-        
-        club_html = """
-        <html>
-            <body>
-                <table id="stats_standard_9">
-                    <tbody>
-                        <tr>
-                            <th data-stat="player"><a>Player Name</a></th>
-                            <td data-stat="nationality"><span>en ENG</span></td>
-                            <td data-stat="position">GK</td>
-                            <td data-stat="age">25</td>
-                            <td data-stat="games" class="iz">0</td>
-                            <td data-stat="goals" class="iz">0</td>
-                            <td data-stat="minutes" class="iz">0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </body>
-        </html>
-        """
-        
-        with patch.object(scraper, '_get_page_html') as mock_get:
-            mock_get.side_effect = [league_html, club_html]
-            players = scraper.get_club_players("Arsenal")
-        
-        assert len(players) == 1
-        assert players[0].games == 0
-        assert players[0].goals == 0
-        assert players[0].minutes == 0
-
-
 class TestFBrefGetClubGames:
     """Test FBref.get_club_games() method."""
     

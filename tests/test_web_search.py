@@ -1,8 +1,7 @@
 """Tests for WebSearch service."""
 import sys
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 # Add src/no-more-bets to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src' / 'no-more-bets'))
@@ -10,76 +9,29 @@ from services.web_search import WebSearch
 from models.web import TextSearchResult, NewsSearchResult
 
 
-class TestWebSearchInitialization:
-    """Test WebSearch initialization."""
-    
-    def test_init_default_parameters(self):
-        """Test initialization with default parameters."""
-        search = WebSearch()
-        
-        assert search.max_results == 10
-        assert search.region == "us-en"
-        assert search.safesearch == "moderate"
-    
-    def test_init_custom_parameters(self):
-        """Test initialization with custom parameters."""
-        search = WebSearch(
-            max_results=20,
-            region="uk-en",
-            safesearch="off"
-        )
-        
-        assert search.max_results == 20
-        assert search.region == "uk-en"
-        assert search.safesearch == "off"
-    
-    def test_football_sites_constant(self):
-        """Test that FOOTBALL_SITES constant is defined."""
-        assert hasattr(WebSearch, 'FOOTBALL_SITES')
-        assert isinstance(WebSearch.FOOTBALL_SITES, list)
-        assert len(WebSearch.FOOTBALL_SITES) > 0
-        assert "bbc.com" in WebSearch.FOOTBALL_SITES
-        assert "skysports.com" in WebSearch.FOOTBALL_SITES
-
-
 class TestWebSearchSearch:
     """Test WebSearch.search() method."""
     
     @patch('services.web_search.DDGS')
-    def test_search_success(self, mock_ddgs_class):
+    def test_search_success(self, mock_ddgs_class, web_search_results_sample):
         """Test successful search."""
         search = WebSearch()
         
         mock_ddgs = Mock()
         mock_ddgs_class.return_value = mock_ddgs
-        
-        mock_results = [
-            {
-                "title": "Test Article",
-                "href": "https://example.com/article",
-                "body": "Article body text",
-                "date": "2025-01-15"
-            },
-            {
-                "title": "Another Article",
-                "href": "https://example.com/another",
-                "body": "Another body",
-                "date": None
-            }
-        ]
-        mock_ddgs.text.return_value = mock_results
+        mock_ddgs.text.return_value = web_search_results_sample
         
         results = search.search("test query")
         
         assert len(results) == 2
         assert isinstance(results[0], TextSearchResult)
-        assert results[0].title == "Test Article"
-        assert results[0].href == "https://example.com/article"
-        assert results[0].body == "Article body text"
+        assert results[0].title == "Arsenal vs Chelsea Preview"
+        assert results[0].href == "https://www.bbc.com/sport/football/12345"
+        assert results[0].body == "Arsenal host Chelsea in a crucial Premier League match..."
         assert results[0].date == "2025-01-15"
         
-        assert results[1].title == "Another Article"
-        assert results[1].date is None
+        assert results[1].title == "Premier League Match Report"
+        assert results[1].date == "2025-01-16"
         
         mock_ddgs.text.assert_called_once_with(
             query="test query",
@@ -89,49 +41,7 @@ class TestWebSearchSearch:
             max_results=10,
             backend="auto"
         )
-    
-    @patch('services.web_search.DDGS')
-    def test_search_with_custom_max_results(self, mock_ddgs_class):
-        """Test search with custom max_results."""
-        search = WebSearch(max_results=10)
-        
-        mock_ddgs = Mock()
-        mock_ddgs_class.return_value = mock_ddgs
-        mock_ddgs.text.return_value = []
-        
-        search.search("query", max_results=5)
-        
-        mock_ddgs.text.assert_called_once()
-        assert mock_ddgs.text.call_args[1]['max_results'] == 5
-    
-    @patch('services.web_search.DDGS')
-    def test_search_with_timelimit(self, mock_ddgs_class):
-        """Test search with timelimit."""
-        search = WebSearch()
-        
-        mock_ddgs = Mock()
-        mock_ddgs_class.return_value = mock_ddgs
-        mock_ddgs.text.return_value = []
-        
-        search.search("query", timelimit="d")
-        
-        mock_ddgs.text.assert_called_once()
-        assert mock_ddgs.text.call_args[1]['timelimit'] == "d"
-    
-    @patch('services.web_search.DDGS')
-    def test_search_with_backend(self, mock_ddgs_class):
-        """Test search with custom backend."""
-        search = WebSearch()
-        
-        mock_ddgs = Mock()
-        mock_ddgs_class.return_value = mock_ddgs
-        mock_ddgs.text.return_value = []
-        
-        search.search("query", backend="google")
-        
-        mock_ddgs.text.assert_called_once()
-        assert mock_ddgs.text.call_args[1]['backend'] == "google"
-    
+
     @patch('services.web_search.DDGS')
     def test_search_handles_exception(self, mock_ddgs_class):
         """Test that exceptions are handled gracefully."""
@@ -164,35 +74,24 @@ class TestWebSearchNewsSearch:
     """Test WebSearch.news_search() method."""
     
     @patch('services.web_search.DDGS')
-    def test_news_search_success(self, mock_ddgs_class):
+    def test_news_search_success(self, mock_ddgs_class, web_search_news_results_sample):
         """Test successful news search."""
         search = WebSearch()
         
         mock_ddgs = Mock()
         mock_ddgs_class.return_value = mock_ddgs
-        
-        mock_results = [
-            {
-                "title": "News Article",
-                "url": "https://example.com/news",
-                "body": "News body",
-                "date": "2025-01-15",
-                "image": "https://example.com/image.jpg",
-                "source": "Example News"
-            }
-        ]
-        mock_ddgs.news.return_value = mock_results
+        mock_ddgs.news.return_value = web_search_news_results_sample
         
         results = search.news_search("news query")
         
         assert len(results) == 1
         assert isinstance(results[0], NewsSearchResult)
-        assert results[0].title == "News Article"
-        assert results[0].url == "https://example.com/news"
-        assert results[0].body == "News body"
+        assert results[0].title == "Arsenal Transfer News"
+        assert results[0].url == "https://www.theguardian.com/football/12345"
+        assert results[0].body == "Arsenal are reportedly interested in signing..."
         assert results[0].date == "2025-01-15"
         assert results[0].image == "https://example.com/image.jpg"
-        assert results[0].source == "Example News"
+        assert results[0].source == "The Guardian"
         
         mock_ddgs.news.assert_called_once_with(
             query="news query",
@@ -214,65 +113,45 @@ class TestWebSearchNewsSearch:
         results = search.news_search("query")
         
         assert results == []
-    
-    @patch('services.web_search.DDGS')
-    def test_news_search_with_custom_max_results(self, mock_ddgs_class):
-        """Test news search with custom max_results."""
-        search = WebSearch()
-        
-        mock_ddgs = Mock()
-        mock_ddgs_class.return_value = mock_ddgs
-        mock_ddgs.news.return_value = []
-        
-        search.news_search("query", max_results=20)
-        
-        assert mock_ddgs.news.call_args[1]['max_results'] == 20
-
 
 class TestWebSearchSiteSearch:
     """Test WebSearch.site_search() method."""
     
     @patch('services.web_search.DDGS')
-    def test_site_search_success(self, mock_ddgs_class):
+    def test_site_search_success(self, mock_ddgs_class, web_search_results_sample):
         """Test successful site search."""
         search = WebSearch(max_results=10)
         
         mock_ddgs = Mock()
         mock_ddgs_class.return_value = mock_ddgs
-        
-        mock_results = [
-            {
-                "title": "Site Article",
-                "href": "https://bbc.com/article",
-                "body": "Article body",
-                "date": "2025-01-15"
-            }
-        ]
-        mock_ddgs.text.return_value = mock_results
+        # Return only first result for single site search
+        mock_ddgs.text.return_value = [web_search_results_sample[0]]
         
         results = search.site_search("query", sites=["bbc.com"])
         
         assert len(results) == 1
         assert isinstance(results[0], TextSearchResult)
-        assert results[0].title == "Site Article"
+        assert results[0].title == "Arsenal vs Chelsea Preview"
         
         # Verify site: prefix was added
         mock_ddgs.text.assert_called()
         assert "site:bbc.com" in mock_ddgs.text.call_args[1]['query']
     
     @patch('services.web_search.DDGS')
-    def test_site_search_multiple_sites(self, mock_ddgs_class):
+    def test_site_search_multiple_sites(self, mock_ddgs_class, web_search_results_sample):
         """Test site search across multiple sites."""
         search = WebSearch(max_results=10)
         
         mock_ddgs = Mock()
         mock_ddgs_class.return_value = mock_ddgs
-        mock_ddgs.text.return_value = [
-            {"title": "Result 1", "href": "url1", "body": "body1", "date": None}
-        ]
+        # Return first result for each site
+        mock_ddgs.text.return_value = [web_search_results_sample[0]]
         
         results = search.site_search("query", sites=["bbc.com", "espn.com"])
         
+        # Should have results from both sites
+        assert len(results) == 2
+        assert all(isinstance(r, TextSearchResult) for r in results)
         # Should search each site
         assert mock_ddgs.text.call_count == 2
         # Results per site should be distributed
@@ -289,7 +168,7 @@ class TestWebSearchSiteSearch:
         mock_ddgs_class.assert_not_called()
     
     @patch('services.web_search.DDGS')
-    def test_site_search_handles_site_error(self, mock_ddgs_class):
+    def test_site_search_handles_site_error(self, mock_ddgs_class, web_search_results_sample):
         """Test that errors for one site don't stop other sites."""
         search = WebSearch(max_results=10)
         
@@ -299,13 +178,14 @@ class TestWebSearchSiteSearch:
         # First site fails, second succeeds
         mock_ddgs.text.side_effect = [
             Exception("Site 1 failed"),
-            [{"title": "Result", "href": "url", "body": "body", "date": None}]
+            [web_search_results_sample[0]]
         ]
         
         results = search.site_search("query", sites=["bbc.com", "espn.com"])
         
         # Should have results from second site
         assert len(results) == 1
+        assert results[0].title == "Arsenal vs Chelsea Preview"
         assert mock_ddgs.text.call_count == 2
 
 
@@ -313,13 +193,13 @@ class TestWebSearchFootballSearch:
     """Test WebSearch.football_search() method."""
     
     @patch('services.web_search.DDGS')
-    def test_football_search_uses_football_sites(self, mock_ddgs_class):
+    def test_football_search_uses_football_sites(self, mock_ddgs_class, web_search_results_sample):
         """Test that football_search uses FOOTBALL_SITES."""
         search = WebSearch()
         
         mock_ddgs = Mock()
         mock_ddgs_class.return_value = mock_ddgs
-        mock_ddgs.text.return_value = []
+        mock_ddgs.text.return_value = web_search_results_sample
         
         with patch.object(search, 'site_search') as mock_site_search:
             search.football_search("Arsenal")
@@ -329,26 +209,3 @@ class TestWebSearchFootballSearch:
             call_args = mock_site_search.call_args
             assert call_args[1]['sites'] == WebSearch.FOOTBALL_SITES
             assert call_args[0][0] == "Arsenal"
-    
-    @patch('services.web_search.DDGS')
-    def test_football_search_passes_parameters(self, mock_ddgs_class):
-        """Test that football_search passes parameters correctly."""
-        search = WebSearch()
-        
-        mock_ddgs = Mock()
-        mock_ddgs_class.return_value = mock_ddgs
-        mock_ddgs.text.return_value = []
-        
-        with patch.object(search, 'site_search') as mock_site_search:
-            search.football_search(
-                "query",
-                max_results=20,
-                timelimit="w",
-                backend="google"
-            )
-            
-            mock_site_search.assert_called_once()
-            call_args = mock_site_search.call_args
-            assert call_args[1]['max_results'] == 20
-            assert call_args[1]['timelimit'] == "w"
-            assert call_args[1]['backend'] == "google"

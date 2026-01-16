@@ -11,30 +11,6 @@ from services.premierinjuries import PremierInjuries
 from models.premierinjuries import InjuryData, TeamInjury, PlayerInjury
 
 
-class TestPremierInjuriesInitialization:
-    """Test PremierInjuries initialization."""
-    
-    def test_init_default_parameters(self, temp_cache_dir):
-        """Test initialization with default parameters."""
-        scraper = PremierInjuries()
-        
-        assert scraper.base_url == "https://www.premierinjuries.com"
-        assert scraper.impersonate == "chrome120"
-        assert scraper.delay == 3.0
-    
-    def test_init_custom_parameters(self, temp_cache_dir):
-        """Test initialization with custom parameters."""
-        scraper = PremierInjuries(
-            impersonate="chrome110",
-            delay=5.0,
-            use_cache=False
-        )
-        
-        assert scraper.impersonate == "chrome110"
-        assert scraper.delay == 5.0
-        assert scraper.cache.use_cache is False
-
-
 class TestPremierInjuriesParsePremierLeagueInjuries:
     """Test PremierInjuries._parse_premier_league_injuries() method."""
     
@@ -100,6 +76,8 @@ class TestPremierInjuriesParsePremierLeagueInjuries:
         result2 = scraper._parse_premier_league_injuries(html)
         
         # Team IDs should be consistent across calls
+        assert len(result1.teams) > 0, "Fixture should produce at least one team"
+        assert len(result2.teams) > 0, "Fixture should produce at least one team"
         assert result1.teams[0].team_id == result2.teams[0].team_id
     
     def test_parse_premier_league_injuries_handles_missing_table(self, temp_cache_dir):

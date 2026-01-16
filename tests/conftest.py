@@ -79,7 +79,7 @@ def load_fixture_html(fixture_path: Path) -> str:
     return fixture_path.read_text(encoding='utf-8')
 
 
-def load_fixture_json(fixture_path: Path) -> dict:
+def load_fixture_json(fixture_path: Path):
     """Load JSON fixture from file.
     
     Parameters
@@ -89,8 +89,8 @@ def load_fixture_json(fixture_path: Path) -> dict:
         
     Returns
     -------
-    dict
-        JSON content from fixture file.
+    dict | list
+        JSON content from fixture file (can be dict or list).
     """
     if not fixture_path.exists():
         pytest.skip(f"Fixture file not found: {fixture_path}")
@@ -183,4 +183,18 @@ def soccerdata_head_to_head(fixtures_dir):
 def soccerdata_matches_league_39(fixtures_dir):
     """Load real SoccerData matches for league JSON."""
     fixture_path = fixtures_dir / "soccerdata" / "matches_league.json"
+    return load_fixture_json(fixture_path)
+
+
+@pytest.fixture
+def web_search_results_sample(fixtures_dir):
+    """Load real web search results sample JSON."""
+    fixture_path = fixtures_dir / "web_search" / "search_results_sample.json"
+    return load_fixture_json(fixture_path)
+
+
+@pytest.fixture
+def web_search_news_results_sample(fixtures_dir):
+    """Load real web search news results sample JSON."""
+    fixture_path = fixtures_dir / "web_search" / "news_results_sample.json"
     return load_fixture_json(fixture_path)

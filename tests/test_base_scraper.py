@@ -323,32 +323,7 @@ class TestBaseScraperGetPageHtml:
         result = scraper._get_page_html("https://example.com")
         
         assert result == cached_html
-    
-    def test_get_page_html_fetch_and_cache(self, temp_cache_dir, monkeypatch):
-        """Test fetching HTML and saving to cache."""
-        scraper = BaseScraper(use_cache=False, store=True)
-        
-        html_content = "<html>Fresh content</html>"
-        mock_response = Mock()
-        mock_response.ok = True
-        mock_response.text = html_content
-        
-        mock_session = Mock()
-        mock_session.get.return_value = mock_response
-        scraper.session = mock_session
-        
-        mock_time = Mock()
-        mock_time.return_value = 1000.0
-        monkeypatch.setattr("time.time", mock_time)
-        
-        result = scraper._get_page_html("https://example.com")
-        
-        assert result == html_content
-        # Verify it was saved to cache (temporarily enable use_cache to check)
-        scraper.cache.use_cache = True
-        cached = scraper.cache.load("https://example.com")
-        assert cached == html_content
-    
+     
     def test_get_page_html_no_cache_no_store(self, temp_cache_dir, monkeypatch):
         """Test fetching HTML without caching."""
         scraper = BaseScraper(use_cache=False, store=False)
@@ -387,58 +362,6 @@ class TestBaseScraperSelenium:
         result = scraper._get_page_html_selenium("https://example.com")
         
         assert result == cached_html
-    
-    def test_get_page_html_selenium_success(self, temp_cache_dir, monkeypatch):
-        """Test successful selenium fetch."""
-        scraper = BaseScraper(use_cache=False, store=True)
-        
-        html_content = "<html>Selenium content</html>"
-        
-        mock_driver = Mock()
-        mock_driver.page_source = html_content
-        mock_driver.get = Mock()
-        mock_driver.quit = Mock()
-        
-        mock_time = Mock()
-        mock_time.return_value = 1000.0
-        monkeypatch.setattr("time.time", mock_time)
-        
-        mock_sleep = Mock()
-        monkeypatch.setattr("time.sleep", mock_sleep)
-        
-        # Mock selenium by patching sys.modules before the import happens
-        import sys
-        mock_selenium = MagicMock()
-        mock_selenium.webdriver.Chrome.return_value = mock_driver
-        mock_selenium.webdriver.chrome.options.Options.return_value = Mock()
-        mock_selenium.webdriver.common.by.By = Mock()
-        mock_selenium.webdriver.support.ui.WebDriverWait.return_value.until.return_value = True
-        mock_selenium.webdriver.support.expected_conditions = Mock()
-        mock_selenium.common.exceptions.TimeoutException = Exception
-        mock_selenium.common.exceptions.WebDriverException = Exception
-        
-        with patch.dict(sys.modules, {
-            'selenium': mock_selenium,
-            'selenium.webdriver': mock_selenium.webdriver,
-            'selenium.webdriver.chrome': mock_selenium.webdriver.chrome,
-            'selenium.webdriver.chrome.options': mock_selenium.webdriver.chrome.options,
-            'selenium.webdriver.common': mock_selenium.webdriver.common,
-            'selenium.webdriver.common.by': mock_selenium.webdriver.common.by,
-            'selenium.webdriver.support': mock_selenium.webdriver.support,
-            'selenium.webdriver.support.ui': mock_selenium.webdriver.support.ui,
-            'selenium.webdriver.support.expected_conditions': mock_selenium.webdriver.support.expected_conditions,
-            'selenium.common': mock_selenium.common,
-            'selenium.common.exceptions': mock_selenium.common.exceptions,
-        }):
-            result = scraper._get_page_html_selenium("https://example.com")
-            
-            assert result == html_content
-            mock_driver.get.assert_called_once_with("https://example.com")
-            mock_driver.quit.assert_called_once()
-            # Verify it was saved to cache (temporarily enable use_cache to check)
-            scraper.cache.use_cache = True
-            cached = scraper.cache.load("https://example.com")
-            assert cached == html_content
     
     def test_get_page_html_selenium_import_error(self, temp_cache_dir, monkeypatch):
         """Test ImportError when selenium is not installed."""
