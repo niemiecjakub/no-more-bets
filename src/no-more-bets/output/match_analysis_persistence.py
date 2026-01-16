@@ -23,7 +23,7 @@ class MatchAnalysisPersistence:
         """
         if output_dir is None:
             package_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-            output_dir = os.path.join(package_dir, "cache", "no-more-bets", "output")
+            output_dir = os.path.join(package_dir, "no-more-bets", "cache", "output")
         
         self.output_dir = output_dir
     

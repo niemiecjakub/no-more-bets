@@ -25,7 +25,7 @@ def main() -> List[MatchAnalysis]:
     bookmaker = Betclic(cache_ttl=9999999999999999999999999999999999999999999, delay=10, retry_delay=20, n_retries=10, timeout=60)
     fbref = FBref(cache_ttl=36000000000)
     persistence = MatchAnalysisPersistence()
-    output = SilentOutput()
+    output = ConsoleOutput()
 
     orchestrator = MatchAnalysisOrchestrator(
         rotowire=rotowire,
