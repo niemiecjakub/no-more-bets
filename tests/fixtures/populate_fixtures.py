@@ -10,8 +10,17 @@ Note: This requires valid API keys and network access.
 """
 import sys
 import os
+import logging
 from pathlib import Path
 from dotenv import load_dotenv
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
+logger = logging.getLogger(__name__)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -29,7 +38,7 @@ from services.web_search import WebSearch
 
 def populate_betclic_fixtures(fixtures_dir: Path):
     """Populate Betclic fixtures."""
-    print("Populating Betclic fixtures...")
+    logger.info("Populating Betclic fixtures...")
     betclic_dir = fixtures_dir / "betclic"
     betclic_dir.mkdir(exist_ok=True)
     
@@ -39,21 +48,21 @@ def populate_betclic_fixtures(fixtures_dir: Path):
         # Get Premier League page
         html = scraper.get_premier_league_html()
         (betclic_dir / "premier_league_page.html").write_text(html, encoding='utf-8')
-        print("  [OK] Saved premier_league_page.html")
+        logger.info("  [OK] Saved premier_league_page.html")
         
         # Get upcoming games to find a match URL
         games = scraper.get_upcoming_games()
         if games and games[0].url:
             match_html = scraper._get_page_html_selenium(games[0].url)
             (betclic_dir / "match_page.html").write_text(match_html, encoding='utf-8')
-            print(f"  [OK] Saved match_page.html (from {games[0].url})")
+            logger.info(f"  [OK] Saved match_page.html (from {games[0].url})")
     except Exception as e:
-        print(f"  [ERROR] Error populating Betclic fixtures: {e}")
+        logger.error(f"  [ERROR] Error populating Betclic fixtures: {e}")
 
 
 def populate_fbref_fixtures(fixtures_dir: Path):
     """Populate FBref fixtures."""
-    print("Populating FBref fixtures...")
+    logger.info("Populating FBref fixtures...")
     fbref_dir = fixtures_dir / "fbref"
     fbref_dir.mkdir(exist_ok=True)
     
@@ -64,7 +73,7 @@ def populate_fbref_fixtures(fixtures_dir: Path):
         url = f"{scraper.base_url}/en/comps/9/Premier-League-Stats"
         html = scraper._get_page_html(url)
         (fbref_dir / "premier_league_stats.html").write_text(html, encoding='utf-8')
-        print("  [OK] Saved premier_league_stats.html")
+        logger.info("  [OK] Saved premier_league_stats.html")
         
         # Get club page for Arsenal
         clubs = scraper.get_premier_league_stats()
@@ -83,25 +92,25 @@ def populate_fbref_fixtures(fixtures_dir: Path):
                             club_url = f"{scraper.base_url}{team_link.get('href')}"
                             club_html = scraper._get_page_html(club_url)
                             (fbref_dir / "club_page_arsenal.html").write_text(club_html, encoding='utf-8')
-                            print("  [OK] Saved club_page_arsenal.html")
+                            logger.info("  [OK] Saved club_page_arsenal.html")
                             
                             # Get players
                             players = scraper.get_club_players("Arsenal")
                             if players:
-                                print(f"  [OK] Found {len(players)} players for Arsenal")
+                                logger.info(f"  [OK] Found {len(players)} players for Arsenal")
                             
                             # Get games
                             games = scraper.get_club_games("Arsenal", limit=5)
                             if games:
-                                print(f"  [OK] Found {len(games)} games for Arsenal")
+                                logger.info(f"  [OK] Found {len(games)} games for Arsenal")
                             break
     except Exception as e:
-        print(f"  [ERROR] Error populating FBref fixtures: {e}")
+        logger.error(f"  [ERROR] Error populating FBref fixtures: {e}")
 
 
 def populate_premierinjuries_fixtures(fixtures_dir: Path):
     """Populate PremierInjuries fixtures."""
-    print("Populating PremierInjuries fixtures...")
+    logger.info("Populating PremierInjuries fixtures...")
     injuries_dir = fixtures_dir / "premierinjuries"
     injuries_dir.mkdir(exist_ok=True)
     
@@ -112,22 +121,22 @@ def populate_premierinjuries_fixtures(fixtures_dir: Path):
         url = "https://www.premierleague.com/en/latest-player-injuries"
         html = scraper._get_page_html(url)
         (injuries_dir / "premier_league_injuries.html").write_text(html, encoding='utf-8')
-        print("  [OK] Saved premier_league_injuries.html")
+        logger.info("  [OK] Saved premier_league_injuries.html")
         
         # Get injury table
         try:
             injury_data = scraper.get_injury_table()
             if injury_data.teams:
-                print(f"  [OK] Found {len(injury_data.teams)} teams in injury table")
+                logger.info(f"  [OK] Found {len(injury_data.teams)} teams in injury table")
         except Exception as e:
-            print(f"  [WARN] Could not fetch injury table: {e}")
+            logger.warning(f"  [WARN] Could not fetch injury table: {e}")
     except Exception as e:
-        print(f"  [ERROR] Error populating PremierInjuries fixtures: {e}")
+        logger.error(f"  [ERROR] Error populating PremierInjuries fixtures: {e}")
 
 
 def populate_rotowire_fixtures(fixtures_dir: Path):
     """Populate Rotowire fixtures."""
-    print("Populating Rotowire fixtures...")
+    logger.info("Populating Rotowire fixtures...")
     rotowire_dir = fixtures_dir / "rotowire"
     rotowire_dir.mkdir(exist_ok=True)
     
@@ -137,14 +146,14 @@ def populate_rotowire_fixtures(fixtures_dir: Path):
         url = f"{scraper.base_url}/soccer/lineups.php"
         html = scraper._get_page_html(url)
         (rotowire_dir / "lineups_page.html").write_text(html, encoding='utf-8')
-        print("  [OK] Saved lineups_page.html")
+        logger.info("  [OK] Saved lineups_page.html")
     except Exception as e:
-        print(f"  [ERROR] Error populating Rotowire fixtures: {e}")
+        logger.error(f"  [ERROR] Error populating Rotowire fixtures: {e}")
 
 
 def populate_soccerdata_fixtures(fixtures_dir: Path):
     """Populate SoccerData fixtures."""
-    print("Populating SoccerData fixtures...")
+    logger.info("Populating SoccerData fixtures...")
     soccerdata_dir = fixtures_dir / "soccerdata"
     soccerdata_dir.mkdir(exist_ok=True)
     
@@ -153,7 +162,7 @@ def populate_soccerdata_fixtures(fixtures_dir: Path):
     # Check for API key from .env file or use hardcoded fallback
     api_key = os.getenv("SOCCERDATA_API_KEY")
     if not api_key:
-        print("  [WARN] SOCCERDATA_API_KEY not set, skipping SoccerData fixtures")
+        logger.warning("  [WARN] SOCCERDATA_API_KEY not set, skipping SoccerData fixtures")
         return
     
     # Set the API key as environment variable for SoccerData service
@@ -170,7 +179,7 @@ def populate_soccerdata_fixtures(fixtures_dir: Path):
                 json.dumps(previews_data, indent=2, default=str),
                 encoding='utf-8'
             )
-            print("  [OK] Saved match_previews_upcoming.json")
+            logger.info("  [OK] Saved match_previews_upcoming.json")
             
             # Get a specific match preview if available
             if previews and previews[0].match_previews and previews[0].match_previews[0].id:
@@ -181,9 +190,9 @@ def populate_soccerdata_fixtures(fixtures_dir: Path):
                         json.dumps(match_preview.model_dump(), indent=2, default=str),
                         encoding='utf-8'
                     )
-                    print("  [OK] Saved match_preview.json")
+                    logger.info("  [OK] Saved match_preview.json")
                 except Exception as e:
-                    print(f"  [WARN] Could not fetch match preview {match_id}: {e}")
+                    logger.warning(f"  [WARN] Could not fetch match preview {match_id}: {e}")
         
         # Get head-to-head if we have team IDs
         # Using example team IDs (Arsenal=2916, Chelsea=4148)
@@ -193,9 +202,9 @@ def populate_soccerdata_fixtures(fixtures_dir: Path):
                 json.dumps(h2h.model_dump(), indent=2, default=str),
                 encoding='utf-8'
             )
-            print("  [OK] Saved head_to_head.json")
+            logger.info("  [OK] Saved head_to_head.json")
         except Exception as e:
-            print(f"  [WARN] Could not fetch head-to-head: {e}")
+            logger.warning(f"  [WARN] Could not fetch head-to-head: {e}")
         
         # Get matches for Premier League (league_id=39)
         try:
@@ -205,16 +214,16 @@ def populate_soccerdata_fixtures(fixtures_dir: Path):
                 json.dumps(matches_data, indent=2, default=str),
                 encoding='utf-8'
             )
-            print("  [OK] Saved matches_league.json")
+            logger.info("  [OK] Saved matches_league.json")
         except Exception as e:
-            print(f"  [WARN] Could not fetch matches: {e}")
+            logger.warning(f"  [WARN] Could not fetch matches: {e}")
     except Exception as e:
-        print(f"  [ERROR] Error populating SoccerData fixtures: {e}")
+        logger.error(f"  [ERROR] Error populating SoccerData fixtures: {e}")
 
 
 def populate_web_search_fixtures(fixtures_dir: Path):
     """Populate WebSearch fixtures (using sample data)."""
-    print("Populating WebSearch fixtures...")
+    logger.info("Populating WebSearch fixtures...")
     web_search_dir = fixtures_dir / "web_search"
     web_search_dir.mkdir(exist_ok=True)
     
@@ -251,45 +260,45 @@ def populate_web_search_fixtures(fixtures_dir: Path):
         json.dumps(sample_text_results, indent=2),
         encoding='utf-8'
     )
-    print("  [OK] Saved search_results_sample.json")
+    logger.info("  [OK] Saved search_results_sample.json")
     
     (web_search_dir / "news_results_sample.json").write_text(
         json.dumps(sample_news_results, indent=2),
         encoding='utf-8'
     )
-    print("  [OK] Saved news_results_sample.json")
+    logger.info("  [OK] Saved news_results_sample.json")
 
 
 def main():
     """Main function to populate all fixtures."""
     fixtures_dir = Path(__file__).parent
     
-    print("=" * 60)
-    print("Populating Test Fixtures")
-    print("=" * 60)
-    print()
+    logger.info("=" * 60)
+    logger.info("Populating Test Fixtures")
+    logger.info("=" * 60)
+    logger.info("")
     
     populate_betclic_fixtures(fixtures_dir)
-    print()
+    logger.info("")
     
     populate_fbref_fixtures(fixtures_dir)
-    print()
+    logger.info("")
     
     populate_premierinjuries_fixtures(fixtures_dir)
-    print()
+    logger.info("")
     
     populate_rotowire_fixtures(fixtures_dir)
-    print()
+    logger.info("")
     
     populate_soccerdata_fixtures(fixtures_dir)
-    print()
+    logger.info("")
     
     populate_web_search_fixtures(fixtures_dir)
-    print()
+    logger.info("")
     
-    print("=" * 60)
-    print("Fixture population complete!")
-    print("=" * 60)
+    logger.info("=" * 60)
+    logger.info("Fixture population complete!")
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":

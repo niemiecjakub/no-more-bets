@@ -2,8 +2,11 @@ from bs4 import BeautifulSoup
 from typing import List, Optional
 import time
 import random
+import logging
 from models.betclic import UpcomingGame, BookmakerEvent, EventOption
 from .base_scraper import BaseScraper
+
+logger = logging.getLogger(__name__)
 
 
 class Betclic(BaseScraper):
@@ -367,14 +370,14 @@ class Betclic(BaseScraper):
                         time.sleep(0.2)
                         buttons[1].click()
                         consent_clicked = True
-                        print("Privacy consent clicked")
+                        logger.info("Privacy consent clicked")
                         time.sleep(2)
             except (NoSuchElementException, IndexError):
                 # Privacy container not found or doesn't have enough buttons, continue
                 pass
             
             if not consent_clicked:
-                print("Privacy consent not found or not clicked")
+                logger.debug("Privacy consent not found or not clicked")
             
             # Handle modal if present
             modal_clicked = False
@@ -388,14 +391,14 @@ class Betclic(BaseScraper):
                         time.sleep(0.2)
                         modal_buttons[0].click()
                         modal_clicked = True
-                        print("Modal clicked")
+                        logger.info("Modal clicked")
                         time.sleep(2)
             except (NoSuchElementException, IndexError):
                 # Modal not found or doesn't have buttons, continue
                 pass
             
             if not modal_clicked:
-                print("Modal not found or not clicked")
+                logger.debug("Modal not found or not clicked")
             
             # Find all "see more" buttons (buttons with class containing 'seeMore' or 'is-seeMore')
             see_more_buttons = driver.find_elements(
@@ -403,7 +406,7 @@ class Betclic(BaseScraper):
                 "button.is-seeMore, button[class*='seeMore'], button[class*='see-more']"
             )
             
-            print(f"Found {len(see_more_buttons)} 'see more' button(s)")
+            logger.info(f"Found {len(see_more_buttons)} 'see more' button(s)")
             
             # Click all "see more" buttons
             for button in see_more_buttons:
