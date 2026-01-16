@@ -104,7 +104,7 @@ class Betclic(BaseScraper):
                     
                     # Extract time
                     time_elem = card.find('div', class_='scoreboard_hour')
-                    time = time_elem.get_text(strip=True) if time_elem else ""
+                    match_time = time_elem.get_text(strip=True) if time_elem else ""
                     
                     # Extract odds from .market_odds div (three buttons: home, draw, away)
                     market_odds_div = card.find('div', class_='market_odds')
@@ -144,7 +144,7 @@ class Betclic(BaseScraper):
                         date=date,
                         home_team=home_team,
                         away_team=away_team,
-                        time=time,
+                        time=match_time,
                         home_odds=home_odds,
                         draw_odds=draw_odds,
                         away_odds=away_odds,

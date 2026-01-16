@@ -212,7 +212,14 @@ class SoccerData:
                 params['season'] = season
             
             response = self._make_request('/matches/', params=params if params else None)
-            return [LeagueMatches(**item) for item in response]
+            results = []
+            for idx, item in enumerate(response):
+                try:
+                    league_matches = LeagueMatches(**item)
+                    results.append(league_matches)
+                except Exception as parse_error:
+                    logger.warning(f"Failed to parse league matches item {idx}: {parse_error}")
+            return results
         except Exception as e:
             logger.error(f"Error fetching matches: {e}")
             raise
@@ -242,6 +249,9 @@ class SoccerData:
             if filtered_params:
                 param_str = '_'.join(f"{k}_{v}" for k, v in sorted(filtered_params.items()))
                 endpoint_clean = f"{endpoint_clean}_{param_str}"
+        else:
+            # Add trailing underscore when no params
+            endpoint_clean = f"{endpoint_clean}_"
         
         return endpoint_clean
     

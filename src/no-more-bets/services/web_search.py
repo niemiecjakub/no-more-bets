@@ -225,7 +225,7 @@ class WebSearch:
             List of TextSearchResult objects from football news/analytics sites.
         """
         return self.site_search(
-            query=query,
+            query,
             sites=self.FOOTBALL_SITES,
             max_results=max_results,
             timelimit=timelimit,

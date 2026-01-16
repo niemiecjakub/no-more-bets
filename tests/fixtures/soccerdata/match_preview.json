@@ -1,0 +1,74 @@
+{
+  "id": 955509,
+  "date": "16-01-2026",
+  "time": "19:45",
+  "country": {
+    "id": 13,
+    "name": "belgium"
+  },
+  "league": {
+    "id": 212,
+    "name": "First Division A"
+  },
+  "stage": {
+    "id": 13924,
+    "name": "First Division A",
+    "is_active": true
+  },
+  "teams": {
+    "home": {
+      "id": 2963,
+      "name": "Club Brugge"
+    },
+    "away": {
+      "id": 6476,
+      "name": "RAAL La Louviere"
+    }
+  },
+  "match_data": {
+    "weather": {
+      "temp_f": 46.4,
+      "temp_c": 8.0,
+      "description": "partly cloudy "
+    },
+    "excitement_rating": 9.13,
+    "prediction": {
+      "type": "over_under",
+      "choice": "under"
+    }
+  },
+  "preview_content": [
+    {
+      "name": "p1",
+      "content": "Club Brugge KV is set to host RAAL La Louviere at the iconic Jan Breydel Stadion this Friday, January 16, 19:45 (UTC), in a Belgium First Division A clash that promises a measured but strategic contest. Nestled in Brugge, a city known for its medieval architecture and bustling port that sustains much of its economy, the match day atmosphere often carries the same measured intensity\u2014methodical, yet charged\u2014akin to the steady flow of ships navigating the North Sea. The temperature will hover around a crisp 46 degrees Fahrenheit under partly cloudy skies, conditions that favor tactical discipline over wild flair, a style reflected historically in Club Brugge\u2019s disciplined approach to controlling matches. The two sides last met in September 2025, with RAAL La Louviere edging a narrow 1-0 victory, suggesting that Club Brugge will be eager to leverage home advantage on familiar turf amid a passionate local crowd accustomed to keen, calculated play."
+    },
+    {
+      "name": "h1",
+      "content": "R. Vermant leads Club Brugge\u2019s charge with four goals in three, echoing the Black and Blues\u2019 relentless canal-side precision."
+    },
+    {
+      "name": "p2",
+      "content": "At Jan Breydel Stadion, Club Brugge KV has maintained a measured rhythm, combining steady ball circulation with sharp transitional play that has yielded six goals across five home fixtures. Sitting second in the Belgian Pro League with 41 points from 20 games, their approach reflects the precision and discipline often associated with Flemish football\u2014balancing calculated build-up phases with sudden bursts of intensity that energize the local fans, whose chants create a pulsating backdrop. Against peers in the table, Brugge\u2019s tactical rigidity becomes evident, averaging a goal per match while maintaining a compact defensive line that challenges opponents to break their shape. Midfielder R. Vermant has recently injected a surge into their midfield engine, netting four goals in his last three appearances and providing an attacking focal point that could define their upcoming contest."
+    },
+    {
+      "name": "h2",
+      "content": "RAAL La Louviere seeks breakthrough as they face tough test away from the gritty streets of Brugge's Veneti\u00eb fans."
+    },
+    {
+      "name": "p3",
+      "content": "RAAL La Louviere heads into their next fixture having struggled to find consistency, with just one win in their last five games and two draws among the setbacks. Their recent 0-0 stalemate against Leuven saw chances come and go but neither side managed to break the deadlock. On the road, they have shown an ability to find the net, netting six goals across their last five matches, suggesting moments of attacking promise amid their uneven results. Against teams of similar standing this season, La Louviere have tended to share points rather than dominate, scoring roughly once per game while conceding slightly less than a goal on average. Sitting 14th with 20 points from 20 games \u2014 four victories, eight draws, and eight defeats \u2014 they\u2019ll be looking to translate their sporadic goal-scoring into a more decisive outcome in this next challenge."
+    },
+    {
+      "name": "p4",
+      "content": "The approaching fixture between Club Brugge KV and RAAL La Louviere is set against a backdrop of tightly contested encounters, with their most recent meeting yielding a solitary goal. Over 15 meetings, Club Brugge has frequently found the net, securing 11 victories and settling for three draws, while RAAL La Louviere has managed a solitary triumph. This history suggests a match where Club Brugge will look to assert control early, likely pressing high and seeking to break down a defence accustomed to their style. Meanwhile, RAAL La Louviere may adopt a cautious approach, probing for opportunities to exploit counterattacks or set-piece situations. Expect a game shaped as much by tactical discipline as moments of incremental gain, with the balance likely tipping towards Club Brugge to extend their favourable record."
+    },
+    {
+      "name": "h3",
+      "content": "Club Brugge\u2019s disciplined blue-and-black brigade eyes summit spot in Belgium\u2019s First Division A standings tonight."
+    },
+    {
+      "name": "p5",
+      "content": "With 41 points on the board, Club Brugge KV stands poised to overtake Royale Union SG atop the First Division A, a moment that feels as charged as the historic Belfry bells ringing through Markt square on market day. The team\u2019s rhythm on the pitch mirrors the intricate lacework Brugge is famed for\u2014each pass and run interwoven with purpose and precision, echoing the city\u2019s craftsmanship rather than mere flair. This looming shift at the summit stirs a quiet urgency, visible in the players\u2019 sharpened focus and relentless probing of defenses, reminiscent of a canal boat navigating Brugge\u2019s tight waterways\u2014seeking openings, creating pressure, and building momentum not with bluster, but with deliberate, measured strokes. In a league where every goal is fought for like treasured Belgian chocolate, Club Brugge understands the weight of this opportunity, and their unfolding play suggests a crescendo of calculated aggression rather than reckless ambition, a poised bid to reclaim leadership grounded in the city\u2019s meticulous spirit and tactical"
+    }
+  ]
+}

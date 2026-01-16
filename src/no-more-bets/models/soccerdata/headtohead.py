@@ -51,3 +51,13 @@ class HeadToHead(FrozenBaseModel):
     team1: Annotated[TeamInfo, Field(..., description="First team information")]
     team2: Annotated[TeamInfo, Field(..., description="Second team information")]
     stats: Annotated[HeadToHeadStats, Field(..., description="Head-to-head statistics")]
+    
+    @property
+    def team_1(self) -> TeamInfo:
+        """Alias for team1."""
+        return self.team1
+    
+    @property
+    def team_2(self) -> TeamInfo:
+        """Alias for team2."""
+        return self.team2
