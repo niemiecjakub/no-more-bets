@@ -4,6 +4,7 @@ from .base_model import FrozenBaseModel
 from .rotowire import PlayerInLineup, InjuryEntry
 from .soccerdata import TeamInfo, OverallStats, Team1AtHomeStats, Team2AtHomeStats, PreviewContentItem
 from .betclic import BookmakerEvent
+from .fbref import Club, Game
 
 
 class MatchInfo(FrozenBaseModel):
@@ -66,6 +67,13 @@ class MatchPreviewData(FrozenBaseModel):
     preview_content: Annotated[List[PreviewContentItem], Field(default_factory=list, description="Preview content items")]
 
 
+class FBrefTeamData(FrozenBaseModel):
+    """Represents FBref data for a team."""
+    
+    club_stats: Annotated[Optional[Club], Field(None, description="Club league statistics")]
+    recent_games: Annotated[List[Game], Field(default_factory=list, description="Recent games for the team")]
+
+
 class MatchAnalysis(FrozenBaseModel):
     """Comprehensive model representing all data for a match analysis.
     
@@ -75,6 +83,7 @@ class MatchAnalysis(FrozenBaseModel):
     - Head-to-head statistics from SoccerData
     - Match preview from SoccerData
     - Betting events from Betclic
+    - FBref statistics and recent games
     """
     
     match_info: Annotated[MatchInfo, Field(..., description="Basic match information")]
@@ -82,6 +91,8 @@ class MatchAnalysis(FrozenBaseModel):
     head_to_head: Annotated[Optional[HeadToHeadData], Field(None, description="Head-to-head statistics")]
     match_preview: Annotated[Optional[MatchPreviewData], Field(None, description="Match preview data")]
     betting_events: Annotated[Optional[List[BookmakerEvent]], Field(None, description="Betting events data")]
+    fbref_home: Annotated[Optional[FBrefTeamData], Field(None, description="FBref data for home team")]
+    fbref_away: Annotated[Optional[FBrefTeamData], Field(None, description="FBref data for away team")]
 
 
 __all__ = [
@@ -92,5 +103,6 @@ __all__ = [
     "PredictionData",
     "WeatherData",
     "MatchPreviewData",
+    "FBrefTeamData",
     "MatchAnalysis",
 ]

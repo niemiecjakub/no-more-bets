@@ -350,7 +350,7 @@ class FBref(BaseScraper):
         
         return players
 
-    def get_club_games(self, club_name: str, epl_only: bool = False, limit: int | None = None) -> list[Game]:
+    def get_club_games(self, club_name: str, epl_only: bool = False, limit: int | None = None, only_finished: bool = False) -> list[Game]:
         """Get game/match statistics for a specific club.
         
         Finds the club in the Premier League table, navigates to its details page,
@@ -552,6 +552,9 @@ class FBref(BaseScraper):
         
         games.sort(key=lambda g: parse_date(g.date), reverse=True)
         
+        if only_finished is not None and only_finished:
+            games = [game for game in games if game.result is not None]
+            
         # Apply limit if provided
         if limit is not None and limit > 0:
             games = games[:limit]

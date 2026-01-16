@@ -50,6 +50,7 @@ from .match_analysis import (
     PredictionData,
     WeatherData,
     MatchPreviewData,
+    FBrefTeamData,
     MatchAnalysis,
 )
 
@@ -109,6 +110,7 @@ __all__ = [
     "PredictionData",
     "WeatherData",
     "MatchPreviewData",
+    "FBrefTeamData",
     "MatchAnalysis",
 ]
 

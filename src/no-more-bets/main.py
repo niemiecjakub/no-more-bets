@@ -20,7 +20,9 @@ from models.match_analysis import (
     MatchPreviewData,
     PredictionData,
     WeatherData,
+    FBrefTeamData,
 )
+from models.fbref import Club, Game
 from services.betclic import Betclic
 from services.fbref import FBref
 from services.premierinjuries import PremierInjuries
@@ -29,7 +31,7 @@ from services.soccerdata import SoccerData
 from utils.utils import print_events
 
 logging.basicConfig(
-    level=logging.DEBUG, 
+    level=logging.ERROR, 
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
@@ -97,6 +99,32 @@ def find_matching_soccerdata_match(
     return None
 
 
+def find_matching_fbref_club(team_name: str, fbref_clubs: List[Club]) -> Optional[Club]:
+    """Find matching club from FBref clubs by team name using fuzzy matching."""
+    # Normalize team name for better matching
+    normalized_search = team_name.lower().strip()
+    
+    # Exact match first (case-insensitive)
+    for club in fbref_clubs:
+        if club.team.lower().strip() == normalized_search:
+            return club
+    
+    # Try partial match (if search name is contained in club name or vice versa)
+    for club in fbref_clubs:
+        normalized_club = club.team.lower().strip()
+        if normalized_search in normalized_club or normalized_club in normalized_search:
+            return club
+    
+    # Fuzzy matching with lower threshold for better matching
+    candidates = {club.team: club for club in fbref_clubs}
+    result = process.extractOne(team_name, candidates.keys(), score_cutoff=70)
+    if result:
+        logging.debug(f"Fuzzy matched '{team_name}' to '{result[0]}' (score: {result[1]:.1f})")
+        return candidates[result[0]]
+    
+    return None
+
+
 def soccer() -> List[MatchAnalysis]:
     rotowire = Rotowire()
     lineups = rotowire.get_soccer_lineups()
@@ -107,6 +135,15 @@ def soccer() -> List[MatchAnalysis]:
 
     bookmaker = Betclic(cache_ttl=9999999999999999999999999999999999999999999, delay=10, retry_delay=20, n_retries=10, timeout=60)
     bookmaker_matches = bookmaker.get_upcoming_games()
+    
+    # Initialize FBref and get Premier League stats once
+    fbref = FBref(cache_ttl=36000000000)
+    try:
+        fbref_clubs = fbref.get_premier_league_stats()
+        logging.info(f"Loaded {len(fbref_clubs)} FBref clubs")
+    except Exception as e:
+        logging.error(f"Failed to load FBref Premier League stats: {e}")
+        fbref_clubs = []
     
     results: List[MatchAnalysis] = []
     
@@ -289,6 +326,43 @@ def soccer() -> List[MatchAnalysis]:
         else:
             betting_events_data = None
         
+        # Fetch FBref data for both teams
+        fbref_home_data = None
+        fbref_away_data = None
+        
+        if fbref_clubs:
+            # Find home team club stats
+            home_club = find_matching_fbref_club(home_team_name, fbref_clubs)
+            if home_club:
+                try:
+                    home_recent_games = fbref.get_club_games(home_club.team, epl_only=True, limit=5, only_finished=True)
+                    fbref_home_data = FBrefTeamData(
+                        club_stats=home_club,
+                        recent_games=home_recent_games
+                    )
+                    logging.info(f"FBref data loaded for {home_team_name}: {len(home_recent_games)} recent games")
+                except Exception as e:
+                    logging.error(f"Failed to get FBref games for {home_team_name}: {e}")
+                    fbref_home_data = FBrefTeamData(club_stats=home_club, recent_games=[])
+            else:
+                logging.warning(f"FBref club not found for {home_team_name}")
+            
+            # Find away team club stats
+            away_club = find_matching_fbref_club(away_team_name, fbref_clubs)
+            if away_club:
+                try:
+                    away_recent_games = fbref.get_club_games(away_club.team, epl_only=True, limit=5, only_finished=True)
+                    fbref_away_data = FBrefTeamData(
+                        club_stats=away_club,
+                        recent_games=away_recent_games
+                    )
+                    logging.info(f"FBref data loaded for {away_team_name}: {len(away_recent_games)} recent games")
+                except Exception as e:
+                    logging.error(f"Failed to get FBref games for {away_team_name}: {e}")
+                    fbref_away_data = FBrefTeamData(club_stats=away_club, recent_games=[])
+            else:
+                logging.warning(f"FBref club not found for {away_team_name}")
+        
         print()
         
         match_analysis = MatchAnalysis(
@@ -296,7 +370,9 @@ def soccer() -> List[MatchAnalysis]:
             lineup=lineup_data,
             head_to_head=head_to_head_data,
             match_preview=match_preview_data,
-            betting_events=betting_events_data
+            betting_events=betting_events_data,
+            fbref_home=fbref_home_data,
+            fbref_away=fbref_away_data
         )
         results.append(match_analysis)
     
