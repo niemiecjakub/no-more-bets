@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import List
 from dotenv import load_dotenv
@@ -10,7 +11,7 @@ from services.soccerdata import SoccerData
 from services.match_analysis_orchestrator import MatchAnalysisOrchestrator
 from output.match_analysis_persistence import MatchAnalysisPersistence
 from output.match_analysis_output import ConsoleOutput, SilentOutput
-
+from agents.group_chat import create_group_chat
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -39,7 +40,21 @@ def main() -> List[MatchAnalysis]:
     
     return orchestrator.analyze_matches()
 
+async def run_group_chat() -> None:
+    chat = create_group_chat()
+    query = "Analyze Arsenal vs Liverpool match"
+    
+    await chat.add_chat_message(message=query)
+
+    async for response in chat.invoke():
+        if response is None or not response.name:
+            continue
+        
+        print(f"\n[{response.name.upper()}]")
+        print(response.content)
+        print()
 
 if __name__ == "__main__":
     load_dotenv()
+    #asyncio.run(run_group_chat())
     main()

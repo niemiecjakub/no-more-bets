@@ -156,8 +156,8 @@ class MatchAnalysisOrchestrator:
         
         # Create match info
         match_info = MatchInfo(
-            home_team=match.home_team,
-            away_team=match.away_team,
+            home=match.home_team,
+            away=match.away_team,
             date=match.date,
             time=match.time
         )
@@ -269,13 +269,13 @@ class MatchAnalysisOrchestrator:
             # Print lineup
             self.output_handler.print_lineup(
                 LineupData(
-                    home_team=TeamLineupData(
+                    home=TeamLineupData(
                         team_name=lineup.home_team.team_name,
                         lineup_type=lineup.home_team.lineup_type,
                         players=lineup.home_team.players,
                         injuries=lineup.home_team.injuries
                     ),
-                    away_team=TeamLineupData(
+                    away=TeamLineupData(
                         team_name=lineup.away_team.team_name,
                         lineup_type=lineup.away_team.lineup_type,
                         players=lineup.away_team.players,
@@ -287,13 +287,13 @@ class MatchAnalysisOrchestrator:
             )
             
             return LineupData(
-                home_team=TeamLineupData(
+                home=TeamLineupData(
                     team_name=lineup.home_team.team_name,
                     lineup_type=lineup.home_team.lineup_type,
                     players=lineup.home_team.players,
                     injuries=lineup.home_team.injuries
                 ),
-                away_team=TeamLineupData(
+                away=TeamLineupData(
                     team_name=lineup.away_team.team_name,
                     lineup_type=lineup.away_team.lineup_type,
                     players=lineup.away_team.players,

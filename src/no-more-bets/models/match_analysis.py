@@ -10,8 +10,8 @@ from .fbref import Club, Game
 class MatchInfo(FrozenBaseModel):
     """Represents basic match information."""
     
-    home_team: Annotated[str, Field(..., description="Home team name")]
-    away_team: Annotated[str, Field(..., description="Away team name")]
+    home: Annotated[str, Field(..., description="Home team name")]
+    away: Annotated[str, Field(..., description="Away team name")]
     date: Annotated[str, Field(..., description="Match date")]
     time: Annotated[str, Field(..., description="Match time")]
 
@@ -28,8 +28,8 @@ class TeamLineupData(FrozenBaseModel):
 class LineupData(FrozenBaseModel):
     """Represents lineup data for both teams."""
     
-    home_team: Annotated[TeamLineupData, Field(..., description="Home team lineup data")]
-    away_team: Annotated[TeamLineupData, Field(..., description="Away team lineup data")]
+    home: Annotated[TeamLineupData, Field(..., description="Home team lineup data")]
+    away: Annotated[TeamLineupData, Field(..., description="Away team lineup data")]
 
 
 class HeadToHeadData(FrozenBaseModel):

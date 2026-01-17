@@ -137,13 +137,6 @@ def fbref_club_page_arsenal_html(fixtures_dir):
 
 
 @pytest.fixture
-def premierinjuries_premier_league_html(fixtures_dir):
-    """Load real Premier League injuries HTML."""
-    fixture_path = fixtures_dir / "premierinjuries" / "premier_league_injuries.html"
-    return load_fixture_html(fixture_path)
-
-
-@pytest.fixture
 def rotowire_lineups_html(fixtures_dir):
     """Load real Rotowire lineups page HTML."""
     fixture_path = fixtures_dir / "rotowire" / "lineups_page.html"

@@ -2,7 +2,6 @@ from .base_model import FrozenBaseModel
 from .betclic import UpcomingGame, BookmakerEvent, EventOption
 from .fbref import Club, Player, Game
 from .web import BaseSearchResult, TextSearchResult, NewsSearchResult
-from .premierinjuries import PlayerInjury, TeamInjury, InjuryData
 from .rotowire import (
     PlayerInLineup,
     InjuryEntry,
@@ -94,9 +93,6 @@ __all__ = [
     "HandicapOdds",
     "MatchPreviewInfo",
     "SoccerDataPlayer",
-    "PlayerInjury",
-    "TeamInjury",
-    "InjuryData",
     "PlayerInLineup",
     "InjuryEntry",
     "TeamLineup",

@@ -82,18 +82,18 @@ class ConsoleOutput(MatchAnalysisOutput):
     
     def print_match_header(self, match_info: MatchInfo) -> None:
         """Print match header information."""
-        print(f"{match_info.home_team} (H) vs {match_info.away_team} (A) - {match_info.date} @ {match_info.time}")
+        print(f"{match_info.home} (H) vs {match_info.away} (A) - {match_info.date} @ {match_info.time}")
     
     def print_lineup(self, lineup_data: LineupData, home_team_name: str, away_team_name: str) -> None:
         """Print lineup information."""
-        home_players = lineup_data.home_team.players
-        away_players = lineup_data.away_team.players
+        home_players = lineup_data.home.players
+        away_players = lineup_data.away.players
         home_count = len(home_players)
         away_count = len(away_players)
         
         max_players = max(home_count, away_count)
-        home_header = f"{home_team_name} ({lineup_data.home_team.lineup_type})"
-        away_header = f"{away_team_name} ({lineup_data.away_team.lineup_type})"
+        home_header = f"{home_team_name} ({lineup_data.home.lineup_type})"
+        away_header = f"{away_team_name} ({lineup_data.away.lineup_type})"
         print(f"  {home_header:<40} {away_header:<40}")
         print(f"  {'-' * 40} {'-' * 40}")
         
@@ -108,8 +108,8 @@ class ConsoleOutput(MatchAnalysisOutput):
         
         print()
         
-        home_injuries = lineup_data.home_team.injuries
-        away_injuries = lineup_data.away_team.injuries
+        home_injuries = lineup_data.home.injuries
+        away_injuries = lineup_data.away.injuries
         home_injury_count = len(home_injuries)
         away_injury_count = len(away_injuries)
         

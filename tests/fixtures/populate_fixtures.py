@@ -30,7 +30,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src' / 'no-more-be
 
 from services.betclic import Betclic
 from services.fbref import FBref
-from services.premierinjuries import PremierInjuries
 from services.rotowire import Rotowire
 from services.soccerdata import SoccerData
 from services.web_search import WebSearch
@@ -106,32 +105,6 @@ def populate_fbref_fixtures(fixtures_dir: Path):
                             break
     except Exception as e:
         logger.error(f"  [ERROR] Error populating FBref fixtures: {e}")
-
-
-def populate_premierinjuries_fixtures(fixtures_dir: Path):
-    """Populate PremierInjuries fixtures."""
-    logger.info("Populating PremierInjuries fixtures...")
-    injuries_dir = fixtures_dir / "premierinjuries"
-    injuries_dir.mkdir(exist_ok=True)
-    
-    scraper = PremierInjuries(use_cache=False, store=False)
-    
-    try:
-        # Get Premier League injuries page
-        url = "https://www.premierleague.com/en/latest-player-injuries"
-        html = scraper._get_page_html(url)
-        (injuries_dir / "premier_league_injuries.html").write_text(html, encoding='utf-8')
-        logger.info("  [OK] Saved premier_league_injuries.html")
-        
-        # Get injury table
-        try:
-            injury_data = scraper.get_injury_table()
-            if injury_data.teams:
-                logger.info(f"  [OK] Found {len(injury_data.teams)} teams in injury table")
-        except Exception as e:
-            logger.warning(f"  [WARN] Could not fetch injury table: {e}")
-    except Exception as e:
-        logger.error(f"  [ERROR] Error populating PremierInjuries fixtures: {e}")
 
 
 def populate_rotowire_fixtures(fixtures_dir: Path):
@@ -282,9 +255,6 @@ def main():
     logger.info("")
     
     populate_fbref_fixtures(fixtures_dir)
-    logger.info("")
-    
-    populate_premierinjuries_fixtures(fixtures_dir)
     logger.info("")
     
     populate_rotowire_fixtures(fixtures_dir)

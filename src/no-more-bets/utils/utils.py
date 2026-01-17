@@ -13,3 +13,7 @@ def get_project_root() -> str:
     current_file = Path(__file__).resolve()
     project_root = current_file.parent.parent.parent.parent
     return str(project_root)
+
+def print_green(text):
+    return f"\033[32m{text}\033[0m"
+
