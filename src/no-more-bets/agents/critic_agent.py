@@ -1,7 +1,7 @@
-import os
 from semantic_kernel import Kernel
 from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.connectors.ai.open_ai import OpenAIChatCompletion
+from config import Config
 
 # Agent name constant for use in group chat
 CRITIC_AGENT_NAME = "CriticAgent"
@@ -117,8 +117,8 @@ def create_critic_kernel() -> Kernel:
     """
     kernel = Kernel()
     kernel.add_service(OpenAIChatCompletion(
-        api_key=os.getenv("OPENAI_API_KEY"),
-        ai_model_id=os.getenv("OPENAI_MODEL", "gpt-4o")
+        api_key=Config.OPENAI_API_KEY,
+        ai_model_id=Config.OPENAI_MODEL
     ))
     
     return kernel

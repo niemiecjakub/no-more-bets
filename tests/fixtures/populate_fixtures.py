@@ -9,10 +9,8 @@ Usage:
 Note: This requires valid API keys and network access.
 """
 import sys
-import os
 import logging
 from pathlib import Path
-from dotenv import load_dotenv
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,9 +20,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-# Load environment variables from .env file
-load_dotenv()
-
 # Add src/no-more-bets to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src' / 'no-more-bets'))
 
@@ -32,6 +27,7 @@ from services.betclic import Betclic
 from services.rotowire import Rotowire
 from services.soccerdata import SoccerData
 from services.web_search import WebSearch
+from config import Config
 
 
 def populate_betclic_fixtures(fixtures_dir: Path):
@@ -83,14 +79,11 @@ def populate_soccerdata_fixtures(fixtures_dir: Path):
     
     import json
     
-    # Check for API key from .env file or use hardcoded fallback
-    api_key = os.getenv("SOCCERDATA_API_KEY")
+    # Check for API key from Config
+    api_key = Config.SOCCERDATA_API_KEY
     if not api_key:
         logger.warning("  [WARN] SOCCERDATA_API_KEY not set, skipping SoccerData fixtures")
         return
-    
-    # Set the API key as environment variable for SoccerData service
-    os.environ["SOCCERDATA_API_KEY"] = api_key
     
     try:
         service = SoccerData(use_cache=False, store_cache=False)

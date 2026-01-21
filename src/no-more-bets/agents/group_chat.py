@@ -1,5 +1,3 @@
-import os
-
 from semantic_kernel import Kernel
 from semantic_kernel.agents import AgentGroupChat, ChatCompletionAgent
 from semantic_kernel.agents.strategies import (
@@ -16,6 +14,7 @@ from .analytics_agent import ANALYTICS_AGENT_NAME, create_analytics_agent
 from .betting_agent import BETTING_AGENT_NAME, create_betting_agent
 from .critic_agent import CRITIC_AGENT_NAME, create_critic_agent
 from .filters import plugin_usage_logger_filter
+from config import Config
 
 def create_kernel() -> Kernel:
     """Create a shared Kernel instance with OpenAI service.
@@ -28,8 +27,8 @@ def create_kernel() -> Kernel:
     kernel = Kernel()
     kernel.add_filter('function_invocation', plugin_usage_logger_filter)
     kernel.add_service(OpenAIChatCompletion(
-        api_key=os.getenv("OPENAI_API_KEY"),
-        ai_model_id=os.getenv("OPENAI_MODEL")
+        api_key=Config.OPENAI_API_KEY,
+        ai_model_id=Config.OPENAI_MODEL
     ))
     return kernel
 

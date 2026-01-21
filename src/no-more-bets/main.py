@@ -1,8 +1,8 @@
 import asyncio
 import logging
 from typing import List
-from dotenv import load_dotenv
 from constants import PREMIER_LEAGUE
+from config import Config
 from models.match_analysis import MatchAnalysis
 from services.betclic import Betclic
 from services.fotmob import FotMob
@@ -56,6 +56,6 @@ async def run_group_chat() -> None:
         print()
  
 if __name__ == "__main__":
-    load_dotenv()
+    # Config is imported above and will load .env automatically
     #asyncio.run(run_group_chat())
     main()

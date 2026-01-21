@@ -1,4 +1,3 @@
-import os
 import time
 import random
 import logging
@@ -7,6 +6,7 @@ import requests
 from requests.exceptions import ConnectionError, Timeout, RequestException
 from utils.json_cache import JsonCache
 from models.soccerdata import HeadToHead, MatchPreview, LeagueMatchPreviews, LeagueMatches
+from config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class SoccerData:
         ValueError
             If SOCCERDATA_API_KEY is not set in environment variables.
         """
-        self.api_key = os.getenv("SOCCERDATA_API_KEY")
+        self.api_key = Config.SOCCERDATA_API_KEY
         if not self.api_key:
             raise ValueError(
                 "SOCCERDATA_API_KEY is required. "

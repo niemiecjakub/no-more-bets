@@ -1,7 +1,7 @@
-import os
 from typing import Awaitable, Callable
 from semantic_kernel.filters import FunctionInvocationContext
 from utils.utils import print_green
+from config import Config
 
 async def plugin_usage_logger_filter(
     context: FunctionInvocationContext,
@@ -19,7 +19,7 @@ async def plugin_usage_logger_filter(
         The next filter or function in the pipeline.
     """
     
-    log_calls = os.getenv("LOG_AGENT_FUNCTION_CALLS", "false").lower() == "true"
+    log_calls = Config.LOG_AGENT_FUNCTION_CALLS
     
     if log_calls:
         plugin_name = context.function.plugin_name
