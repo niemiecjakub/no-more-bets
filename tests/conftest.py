@@ -183,3 +183,38 @@ def web_search_news_results_sample(fixtures_dir):
     """Load real web search news results sample JSON."""
     fixture_path = fixtures_dir / "web_search" / "news_results_sample.json"
     return load_fixture_json(fixture_path)
+
+
+@pytest.fixture
+def fotmob_table_html(fixtures_dir):
+    """Load real FotMob Premier League table HTML."""
+    fixture_path = fixtures_dir / "fotmob" / "table.html"
+    return load_fixture_html(fixture_path)
+
+
+@pytest.fixture
+def fotmob_home_html(fixtures_dir):
+    """Load real FotMob Premier League home stats HTML."""
+    fixture_path = fixtures_dir / "fotmob" / "home.html"
+    return load_fixture_html(fixture_path)
+
+
+@pytest.fixture
+def fotmob_away_html(fixtures_dir):
+    """Load real FotMob Premier League away stats HTML."""
+    fixture_path = fixtures_dir / "fotmob" / "away.html"
+    return load_fixture_html(fixture_path)
+
+
+@pytest.fixture
+def fotmob_last_5_games_html(fixtures_dir):
+    """Load real FotMob Premier League last 5 games stats HTML."""
+    fixture_path = fixtures_dir / "fotmob" / "last_5_games.html"
+    return load_fixture_html(fixture_path)
+
+
+@pytest.fixture
+def fotmob_xg_html(fixtures_dir):
+    """Load real FotMob Premier League xG stats HTML."""
+    fixture_path = fixtures_dir / "fotmob" / "xg.html"
+    return load_fixture_html(fixture_path)

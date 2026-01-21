@@ -12,6 +12,7 @@ from services.match_analysis_orchestrator import MatchAnalysisOrchestrator
 from output.match_analysis_persistence import MatchAnalysisPersistence
 from output.match_analysis_output import ConsoleOutput, SilentOutput
 from agents.group_chat import create_group_chat
+from services.fotmob import FotMob
 
 logging.basicConfig(
     level=logging.INFO, 
@@ -28,8 +29,15 @@ def main() -> List[MatchAnalysis]:
     persistence = MatchAnalysisPersistence()
     output = SilentOutput()
 
-    events = bookmaker.get_match_events('https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/bournemouth-liverpool-m905675307745280')
-    print(events)
+    fotmob = FotMob()
+    print(len(fotmob.get_premier_league_table())>0)
+    print(len(fotmob.get_xg_stats())>0)
+    print(len(fotmob.get_home_stats())>0)
+    print(len(fotmob.get_away_stats())>0)
+    print(len(fotmob.get_lat_5_games_stats()) >0)
+
+    #events = bookmaker.get_match_events('https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/bournemouth-liverpool-m905675307745280')
+    #print(events)
     #orchestrator = MatchAnalysisOrchestrator(
     #    rotowire=rotowire,
     #    soccerdata=soccerdata,
