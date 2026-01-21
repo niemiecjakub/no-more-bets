@@ -1,11 +1,10 @@
-from typing import Annotated, List, Optional
+from typing import Annotated, List, Optional, Any
 from pydantic import Field
 from .base_model import FrozenBaseModel
 from .rotowire import PlayerInLineup, InjuryEntry
 from .soccerdata import TeamInfo, OverallStats, Team1AtHomeStats, Team2AtHomeStats, PreviewContentItem
 from .betclic import BookmakerEvent
 from .fotmob import Club
-from .fbref import Game
 
 
 class MatchInfo(FrozenBaseModel):
@@ -72,7 +71,7 @@ class FBrefTeamData(FrozenBaseModel):
     """Represents FBref data for a team."""
     
     club_stats: Annotated[Optional[Club], Field(None, description="Club league statistics")]
-    recent_games: Annotated[List[Game], Field(default_factory=list, description="Recent games for the team")]
+    recent_games: Annotated[List[Any], Field(default_factory=list, description="Recent games for the team")]
 
 
 class MatchAnalysis(FrozenBaseModel):

@@ -4,7 +4,7 @@ from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.connectors.ai.open_ai import  OpenAIPromptExecutionSettings
 from semantic_kernel.connectors.ai import FunctionChoiceBehavior
 from semantic_kernel.functions import KernelArguments
-from .plugins import BetclicPlugin, FBrefPlugin
+from .plugins import BetclicPlugin
 
 # Agent name constant for use in group chat
 BETTING_AGENT_NAME = "BettingAgent"
@@ -80,19 +80,18 @@ def create_betting_agent(kernel: Kernel) -> ChatCompletionAgent:
     Parameters
     ----------
     kernel : Kernel
-        The Semantic Kernel instance to use (should already have BetclicPlugin and FBrefPlugin added).
+        The Semantic Kernel instance to use (should already have BetclicPlugin added).
         
     Returns
     -------
     ChatCompletionAgent
-        Configured betting agent with BetclicPlugin and FBrefPlugin.
+        Configured betting agent with BetclicPlugin.
     """
     # Configure execution settings for function calling
     settings = OpenAIPromptExecutionSettings()
     settings.function_choice_behavior = FunctionChoiceBehavior.Auto()
     
     kernel.add_plugin(BetclicPlugin(), plugin_name="Betclic")
-    kernel.add_plugin(FBrefPlugin(), plugin_name="FBref")
 
     # Create the agent
     agent = ChatCompletionAgent(

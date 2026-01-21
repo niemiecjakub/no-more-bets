@@ -123,20 +123,6 @@ def betclic_match_page_html(fixtures_dir):
 
 
 @pytest.fixture
-def fbref_premier_league_stats_html(fixtures_dir):
-    """Load real FBref Premier League stats HTML."""
-    fixture_path = fixtures_dir / "fbref" / "premier_league_stats.html"
-    return load_fixture_html(fixture_path)
-
-
-@pytest.fixture
-def fbref_club_page_arsenal_html(fixtures_dir):
-    """Load real FBref Arsenal club page HTML."""
-    fixture_path = fixtures_dir / "fbref" / "club_page_arsenal.html"
-    return load_fixture_html(fixture_path)
-
-
-@pytest.fixture
 def rotowire_lineups_html(fixtures_dir):
     """Load real Rotowire lineups page HTML."""
     fixture_path = fixtures_dir / "rotowire" / "lineups_page.html"

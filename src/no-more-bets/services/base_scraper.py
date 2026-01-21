@@ -3,7 +3,12 @@ from curl_cffi.requests.exceptions import ConnectionError, Timeout
 import time
 import random
 from utils.html_cache import HtmlCache
-
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException, WebDriverException
 
 class BaseScraper:
     def __init__(
@@ -134,21 +139,7 @@ class BaseScraper:
             cached_html = self.cache.load(url)
             if cached_html is not None:
                 return cached_html
-        
-        # Import selenium here to avoid requiring it if not used
-        try:
-            from selenium import webdriver
-            from selenium.webdriver.chrome.options import Options
-            from selenium.webdriver.common.by import By
-            from selenium.webdriver.support.ui import WebDriverWait
-            from selenium.webdriver.support import expected_conditions as EC
-            from selenium.common.exceptions import TimeoutException, WebDriverException
-        except ImportError:
-            raise ImportError(
-                "selenium is required for _get_page_html_selenium. "
-                "Install it with: pip install selenium"
-            )
-        
+                
         last_exception = None
         driver = None
         

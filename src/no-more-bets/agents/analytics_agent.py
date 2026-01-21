@@ -3,7 +3,6 @@ from semantic_kernel.agents import ChatCompletionAgent
 from semantic_kernel.connectors.ai.open_ai import  OpenAIPromptExecutionSettings
 from semantic_kernel.connectors.ai import FunctionChoiceBehavior
 from semantic_kernel.functions import KernelArguments
-from .plugins import FBrefPlugin
 
 # Agent name constant for use in group chat
 ANALYTICS_AGENT_NAME = "AnalyticsAgent"
@@ -60,17 +59,15 @@ def create_analytics_agent(kernel: Kernel) -> ChatCompletionAgent:
     Parameters
     ----------
     kernel : Kernel
-        The Semantic Kernel instance to use (should already have FBrefPlugin added).
+        The Semantic Kernel instance to use.
         
     Returns
     -------
     ChatCompletionAgent
-        Configured analytics agent with FBrefPlugin.
+        Configured analytics agent.
     """
     settings = OpenAIPromptExecutionSettings()
     settings.function_choice_behavior = FunctionChoiceBehavior.Auto()
-    
-    kernel.add_plugin(FBrefPlugin(), plugin_name="FBref")
 
     agent = ChatCompletionAgent(
         kernel=kernel,

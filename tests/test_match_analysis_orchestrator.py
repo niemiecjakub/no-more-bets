@@ -10,7 +10,7 @@ from models.betclic import UpcomingGame
 from models.match_analysis import MatchAnalysis, MatchInfo
 from models.rotowire import GameLineup, TeamLineup, PlayerInLineup
 from models.soccerdata import UpcomingMatchPreview, Teams, TeamInfo, LeagueMatchPreviews
-from models.fbref import Club
+from models.fotmob import Club
 from services.match_analysis_orchestrator import MatchAnalysisOrchestrator
 from output.match_analysis_output import SilentOutput
 from output.match_analysis_persistence import MatchAnalysisPersistence
@@ -50,10 +50,10 @@ def mock_bookmaker():
 
 
 @pytest.fixture
-def mock_fbref():
-    """Create mock FBref service."""
+def mock_fotmob():
+    """Create mock FotMob service."""
     mock = Mock()
-    mock.get_premier_league_stats.return_value = []
+    mock.get_premier_league_table.return_value = []
     return mock
 
 
@@ -70,13 +70,13 @@ def mock_persistence(tmp_path):
 
 
 @pytest.fixture
-def orchestrator(mock_rotowire, mock_soccerdata, mock_bookmaker, mock_fbref, mock_output_handler, mock_persistence):
+def orchestrator(mock_rotowire, mock_soccerdata, mock_bookmaker, mock_fotmob, mock_output_handler, mock_persistence):
     """Create orchestrator instance with mocked dependencies."""
     return MatchAnalysisOrchestrator(
         rotowire=mock_rotowire,
         soccerdata=mock_soccerdata,
         bookmaker=mock_bookmaker,
-        fbref=mock_fbref,
+        fotmob=mock_fotmob,
         league_id=39,
         output_handler=mock_output_handler,
         persistence=mock_persistence,
@@ -91,10 +91,10 @@ class TestMatchAnalysisOrchestrator:
         assert orchestrator.rotowire is not None
         assert orchestrator.soccerdata is not None
         assert orchestrator.bookmaker is not None
-        assert orchestrator.fbref is not None
+        assert orchestrator.fotmob is not None
         assert orchestrator.league_id == 39
     
-    def test_fetch_initial_data(self, orchestrator, mock_rotowire, mock_soccerdata, mock_fbref):
+    def test_fetch_initial_data(self, orchestrator, mock_rotowire, mock_soccerdata, mock_fotmob):
         """Test fetching initial data."""
         mock_rotowire.get_soccer_lineups.return_value = [
             GameLineup(
@@ -115,26 +115,26 @@ class TestMatchAnalysisOrchestrator:
             )
         ]
         
-        lineup_index, upcoming_matches, fbref_clubs = orchestrator._fetch_initial_data()
+        lineup_index, upcoming_matches, fotmob_clubs = orchestrator._fetch_initial_data()
         
         assert len(lineup_index) == 1
         mock_rotowire.get_soccer_lineups.assert_called_once()
         mock_soccerdata.get_match_previews_upcoming.assert_called_once_with(league_id=39)
-        mock_fbref.get_premier_league_stats.assert_called_once()
+        mock_fotmob.get_premier_league_table.assert_called_once()
     
     def test_analyze_matches_returns_list(self, orchestrator):
         """Test that analyze_matches returns a list."""
         results = orchestrator.analyze_matches()
         assert isinstance(results, list)
     
-    def test_analyze_matches_calls_services(self, orchestrator, mock_rotowire, mock_soccerdata, mock_bookmaker, mock_fbref):
+    def test_analyze_matches_calls_services(self, orchestrator, mock_rotowire, mock_soccerdata, mock_bookmaker, mock_fotmob):
         """Test that analyze_matches calls all required services."""
         orchestrator.analyze_matches()
         
         mock_rotowire.get_soccer_lineups.assert_called_once()
         mock_soccerdata.get_match_previews_upcoming.assert_called_once()
         mock_bookmaker.get_upcoming_games.assert_called_once()
-        mock_fbref.get_premier_league_stats.assert_called_once()
+        mock_fotmob.get_premier_league_table.assert_called_once()
     
     def test_analyze_matches_saves_results(self, orchestrator, mock_persistence):
         """Test that analyze_matches saves results."""
@@ -155,9 +155,9 @@ class TestMatchAnalysisOrchestrator:
         
         lineup_index = {}
         upcoming_matches = []
-        fbref_clubs = []
+        fotmob_clubs = []
         
-        result = orchestrator._collect_match_data(match, lineup_index, upcoming_matches, fbref_clubs)
+        result = orchestrator._collect_match_data(match, lineup_index, upcoming_matches, fotmob_clubs)
         
         assert isinstance(result, MatchAnalysis)
         assert result.match_info.home_team == "Arsenal"
@@ -176,14 +176,3 @@ class TestMatchAnalysisOrchestrator:
         )
         
         assert result is None
-    
-    def test_get_fbref_data_handles_empty_clubs(self, orchestrator):
-        """Test that _get_fbref_data handles empty clubs list."""
-        home_data, away_data = orchestrator._get_fbref_data(
-            home_team_name="Arsenal",
-            away_team_name="Chelsea",
-            fbref_clubs=[],
-        )
-        
-        assert home_data is None
-        assert away_data is None

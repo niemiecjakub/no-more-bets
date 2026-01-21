@@ -29,7 +29,6 @@ load_dotenv()
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / 'src' / 'no-more-bets'))
 
 from services.betclic import Betclic
-from services.fbref import FBref
 from services.rotowire import Rotowire
 from services.soccerdata import SoccerData
 from services.web_search import WebSearch
@@ -57,54 +56,6 @@ def populate_betclic_fixtures(fixtures_dir: Path):
             logger.info(f"  [OK] Saved match_page.html (from {games[0].url})")
     except Exception as e:
         logger.error(f"  [ERROR] Error populating Betclic fixtures: {e}")
-
-
-def populate_fbref_fixtures(fixtures_dir: Path):
-    """Populate FBref fixtures."""
-    logger.info("Populating FBref fixtures...")
-    fbref_dir = fixtures_dir / "fbref"
-    fbref_dir.mkdir(exist_ok=True)
-    
-    scraper = FBref(use_cache=False, store=False)
-    
-    try:
-        # Get Premier League stats page
-        url = f"{scraper.base_url}/en/comps/9/Premier-League-Stats"
-        html = scraper._get_page_html(url)
-        (fbref_dir / "premier_league_stats.html").write_text(html, encoding='utf-8')
-        logger.info("  [OK] Saved premier_league_stats.html")
-        
-        # Get club page for Arsenal
-        clubs = scraper.get_premier_league_stats()
-        arsenal = next((c for c in clubs if "Arsenal" in c.team), None)
-        if arsenal:
-            # Find the club link from the stats page
-            from bs4 import BeautifulSoup
-            soup = BeautifulSoup(html, 'lxml')
-            tbody = soup.select_one('#results2025-202691_overall > tbody')
-            if tbody:
-                for row in tbody.find_all('tr'):
-                    team_elem = row.find('td', {'data-stat': 'team'})
-                    if team_elem:
-                        team_link = team_elem.find('a')
-                        if team_link and "Arsenal" in team_link.text:
-                            club_url = f"{scraper.base_url}{team_link.get('href')}"
-                            club_html = scraper._get_page_html(club_url)
-                            (fbref_dir / "club_page_arsenal.html").write_text(club_html, encoding='utf-8')
-                            logger.info("  [OK] Saved club_page_arsenal.html")
-                            
-                            # Get players
-                            players = scraper.get_club_players("Arsenal")
-                            if players:
-                                logger.info(f"  [OK] Found {len(players)} players for Arsenal")
-                            
-                            # Get games
-                            games = scraper.get_club_games("Arsenal", limit=5)
-                            if games:
-                                logger.info(f"  [OK] Found {len(games)} games for Arsenal")
-                            break
-    except Exception as e:
-        logger.error(f"  [ERROR] Error populating FBref fixtures: {e}")
 
 
 def populate_rotowire_fixtures(fixtures_dir: Path):
@@ -252,9 +203,6 @@ def main():
     logger.info("")
     
     populate_betclic_fixtures(fixtures_dir)
-    logger.info("")
-    
-    populate_fbref_fixtures(fixtures_dir)
     logger.info("")
     
     populate_rotowire_fixtures(fixtures_dir)

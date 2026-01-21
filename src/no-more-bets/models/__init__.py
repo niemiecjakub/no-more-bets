@@ -1,6 +1,5 @@
 from .base_model import FrozenBaseModel
 from .betclic import UpcomingGame, BookmakerEvent, EventOption
-from .fbref import Club, Player, Game
 from .fotmob import Club as FotMobClub, XgStats as FotMobXgStats
 from .web import BaseSearchResult, TextSearchResult, NewsSearchResult
 from .rotowire import (
@@ -56,9 +55,6 @@ from .match_analysis import (
 
 __all__ = [
     "FrozenBaseModel",
-    "Club",
-    "Player",
-    "Game",
     "FotMobClub",
     "FotMobXgStats",
     "UpcomingGame",

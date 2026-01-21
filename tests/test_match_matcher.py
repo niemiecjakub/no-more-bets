@@ -7,7 +7,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src' / 'no-more-bets'))
 from models.rotowire import GameLineup, TeamLineup, PlayerInLineup
 from models.soccerdata import UpcomingMatchPreview, Teams, TeamInfo, LeagueMatchPreviews
-from models.fbref import Club
 from utils.match_matcher import MatchMatcher
 
 
@@ -63,16 +62,6 @@ def sample_match_preview():
             away=TeamInfo(id=2, name="Chelsea")
         )
     )
-
-
-@pytest.fixture
-def sample_fbref_clubs():
-    """Create sample FBref clubs for testing."""
-    return [
-        Club(team="Arsenal", url="https://fbref.com/arsenal"),
-        Club(team="Chelsea", url="https://fbref.com/chelsea"),
-        Club(team="Liverpool", url="https://fbref.com/liverpool"),
-    ]
 
 
 class TestMatchMatcher:
@@ -157,20 +146,3 @@ class TestMatchMatcher:
         
         match = MatchMatcher.find_soccerdata_match("Team A", "Team B", league_matches)
         assert match is None
-    
-    def test_find_fbref_club_exact_match(self, sample_fbref_clubs):
-        """Test finding FBref club with exact match."""
-        club = MatchMatcher.find_fbref_club("Arsenal", sample_fbref_clubs)
-        assert club is not None
-        assert club.team == "Arsenal"
-    
-    def test_find_fbref_club_case_insensitive(self, sample_fbref_clubs):
-        """Test finding FBref club is case-insensitive."""
-        club = MatchMatcher.find_fbref_club("arsenal", sample_fbref_clubs)
-        assert club is not None
-        assert club.team == "Arsenal"
-    
-    def test_find_fbref_club_no_match(self, sample_fbref_clubs):
-        """Test finding FBref club when no match exists."""
-        club = MatchMatcher.find_fbref_club("NonExistent Team", sample_fbref_clubs)
-        assert club is None
