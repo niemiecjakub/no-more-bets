@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from constants import PREMIER_LEAGUE
 from models.match_analysis import MatchAnalysis
 from services.betclic import Betclic
-from services.fbref import FBref
+from services.fotmob import FotMob
 from services.rotowire import Rotowire
 from services.soccerdata import SoccerData
 from services.match_analysis_orchestrator import MatchAnalysisOrchestrator
@@ -25,30 +25,21 @@ def main() -> List[MatchAnalysis]:
     rotowire = Rotowire()
     soccerdata = SoccerData()
     bookmaker = Betclic(cache_ttl=9999999999999999999999999999999999999999999, n_retries=1, )
-    fbref = FBref(cache_ttl=36000000000)
+    fotmob = FotMob(cache_ttl=9999999999999999999999999999999999999999999)
     persistence = MatchAnalysisPersistence()
     output = SilentOutput()
 
-    fotmob = FotMob()
-    print(len(fotmob.get_premier_league_table())>0)
-    print(len(fotmob.get_xg_stats())>0)
-    print(len(fotmob.get_home_stats())>0)
-    print(len(fotmob.get_away_stats())>0)
-    print(len(fotmob.get_lat_5_games_stats()) >0)
-
-    #events = bookmaker.get_match_events('https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/bournemouth-liverpool-m905675307745280')
-    #print(events)
-    #orchestrator = MatchAnalysisOrchestrator(
-    #    rotowire=rotowire,
-    #    soccerdata=soccerdata,
-    #    bookmaker=bookmaker,
-    #    fbref=fbref,
-    #    output_handler=output,
-    #    persistence=persistence,
-    #    league_id=PREMIER_LEAGUE.SOCCERDATA_PREMIER_LEAGUE_ID,
-    #)
-    #
-    #return orchestrator.analyze_matches()
+    orchestrator = MatchAnalysisOrchestrator(
+        rotowire=rotowire,
+        soccerdata=soccerdata,
+        bookmaker=bookmaker,
+        fotmob=fotmob,
+        output_handler=output,
+        persistence=persistence,
+        league_id=PREMIER_LEAGUE.SOCCERDATA_PREMIER_LEAGUE_ID,
+    )
+    
+    return orchestrator.analyze_matches()
 
 async def run_group_chat() -> None:
     chat = create_group_chat()
@@ -63,7 +54,7 @@ async def run_group_chat() -> None:
         print(f"\n[{response.name.upper()}]")
         print(response.content)
         print()
-
+ 
 if __name__ == "__main__":
     load_dotenv()
     #asyncio.run(run_group_chat())

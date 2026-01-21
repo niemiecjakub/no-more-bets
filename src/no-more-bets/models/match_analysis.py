@@ -4,7 +4,8 @@ from .base_model import FrozenBaseModel
 from .rotowire import PlayerInLineup, InjuryEntry
 from .soccerdata import TeamInfo, OverallStats, Team1AtHomeStats, Team2AtHomeStats, PreviewContentItem
 from .betclic import BookmakerEvent
-from .fbref import Club, Game
+from .fotmob import Club
+from .fbref import Game
 
 
 class MatchInfo(FrozenBaseModel):

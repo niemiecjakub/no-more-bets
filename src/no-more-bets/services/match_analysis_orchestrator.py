@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Tuple
 from models.betclic import UpcomingGame
 from models.rotowire import GameLineup
 from models.soccerdata import UpcomingMatchPreview, Teams, TeamInfo, LeagueMatchPreviews
-from models.fbref import Club
+from models.fotmob import Club
 from models.match_analysis import (
     MatchAnalysis,
     MatchInfo,
@@ -19,7 +19,7 @@ from models.match_analysis import (
 from services.rotowire import Rotowire
 from services.soccerdata import SoccerData
 from services.betclic import Betclic
-from services.fbref import FBref
+from services.fotmob import FotMob
 from utils.match_matcher import MatchMatcher
 from output.match_analysis_output import MatchAnalysisOutput, ConsoleOutput
 from output.match_analysis_persistence import MatchAnalysisPersistence
@@ -35,7 +35,7 @@ class MatchAnalysisOrchestrator:
         rotowire: Rotowire,
         soccerdata: SoccerData,
         bookmaker: Betclic,
-        fbref: FBref,
+        fotmob: FotMob,
         league_id: int,
         output_handler: Optional[MatchAnalysisOutput] = None,
         persistence: Optional[MatchAnalysisPersistence] = None,
@@ -50,8 +50,8 @@ class MatchAnalysisOrchestrator:
             SoccerData service for match previews and head-to-head data.
         bookmaker : Betclic
             Betclic service for upcoming matches and betting events.
-        fbref : FBref
-            FBref service for team statistics and recent games.
+        fotmob : FotMob
+            FotMob service for team statistics.
         league_id : int
             League ID for fetching upcoming matches.
         output_handler : Optional[MatchAnalysisOutput]
@@ -62,7 +62,7 @@ class MatchAnalysisOrchestrator:
         self.rotowire = rotowire
         self.soccerdata = soccerdata
         self.bookmaker = bookmaker
-        self.fbref = fbref
+        self.fotmob = fotmob
         self.league_id = league_id
         self.output_handler = output_handler or ConsoleOutput()
         self.persistence = persistence or MatchAnalysisPersistence()
@@ -77,7 +77,7 @@ class MatchAnalysisOrchestrator:
             List of match analysis results.
         """
         # Fetch initial data
-        lineup_index, upcoming_league_matches, fbref_clubs = self._fetch_initial_data()
+        lineup_index, upcoming_league_matches, fotmob_clubs = self._fetch_initial_data()
         
         # Get bookmaker matches
         bookmaker_matches = self.bookmaker.get_upcoming_games()
@@ -90,7 +90,7 @@ class MatchAnalysisOrchestrator:
                 match=match,
                 lineup_index=lineup_index,
                 upcoming_league_matches=upcoming_league_matches,
-                fbref_clubs=fbref_clubs,
+                fotmob_clubs=fotmob_clubs,
             )
             results.append(match_analysis)
         
@@ -107,7 +107,7 @@ class MatchAnalysisOrchestrator:
         Returns
         -------
         Tuple[Dict[frozenset[str], GameLineup], List[LeagueMatchPreviews], List[Club]]
-            Tuple containing lineup index, upcoming league matches, and FBref clubs.
+            Tuple containing lineup index, upcoming league matches, and FotMob clubs.
         """
         # Fetch lineups
         lineups = self.rotowire.get_soccer_lineups()
@@ -116,22 +116,22 @@ class MatchAnalysisOrchestrator:
         # Fetch upcoming league matches
         upcoming_league_matches = self.soccerdata.get_match_previews_upcoming(league_id=self.league_id)
         
-        # Fetch FBref clubs
+        # Fetch FotMob clubs
         try:
-            fbref_clubs = self.fbref.get_premier_league_stats()
-            logger.info(f"Loaded {len(fbref_clubs)} FBref clubs")
+            fotmob_clubs = self.fotmob.get_premier_league_table()
+            logger.info(f"Loaded {len(fotmob_clubs)} FotMob clubs")
         except Exception as e:
-            logger.error(f"Failed to load FBref Premier League stats: {e}")
-            fbref_clubs = []
+            logger.error(f"Failed to load FotMob Premier League table: {e}")
+            fotmob_clubs = []
         
-        return lineup_index, upcoming_league_matches, fbref_clubs
+        return lineup_index, upcoming_league_matches, fotmob_clubs
     
     def _collect_match_data(
         self,
         match: UpcomingGame,
         lineup_index: Dict[frozenset[str], GameLineup],
         upcoming_league_matches: List[LeagueMatchPreviews],
-        fbref_clubs: List[Club],
+        fotmob_clubs: List[Club],
     ) -> MatchAnalysis:
         """Collect all data for a single match.
         
@@ -143,8 +143,8 @@ class MatchAnalysisOrchestrator:
             Index of lineups by team keys.
         upcoming_league_matches : List[LeagueMatchPreviews]
             List of upcoming league matches.
-        fbref_clubs : List[Club]
-            List of FBref clubs.
+        fotmob_clubs : List[Club]
+            List of FotMob clubs.
             
         Returns
         -------
@@ -187,16 +187,16 @@ class MatchAnalysisOrchestrator:
             match_preview_data = self._get_match_preview_data(soccerdata_match)
         
         # Get betting events
-        events = self.bookmaker.get_match_events(match.url, expand=False)
+        events = self.bookmaker.get_match_events(match.url, expand=True)
         betting_events_data = events if events else None
         if betting_events_data:
             self.output_handler.print_betting_events(betting_events_data)
         
-        # Get FBref data
-        fbref_home_data, fbref_away_data = self._get_fbref_data(
+        # Get FotMob data
+        fotmob_home_data, fotmob_away_data = self._get_fotmob_data(
             home_team_name=home_team_name,
             away_team_name=away_team_name,
-            fbref_clubs=fbref_clubs,
+            fotmob_clubs=fotmob_clubs,
         )
         
         self.output_handler.print_empty_line()
@@ -208,8 +208,8 @@ class MatchAnalysisOrchestrator:
             head_to_head=head_to_head_data,
             match_preview=match_preview_data,
             betting_events=betting_events_data,
-            fbref_home=fbref_home_data,
-            fbref_away=fbref_away_data
+            fbref_home=fotmob_home_data,
+            fbref_away=fotmob_away_data
         )
         
         return match_analysis
@@ -395,13 +395,13 @@ class MatchAnalysisOrchestrator:
         
         return None
     
-    def _get_fbref_data(
+    def _get_fotmob_data(
         self,
         home_team_name: str,
         away_team_name: str,
-        fbref_clubs: List[Club],
+        fotmob_clubs: List[Club],
     ) -> Tuple[Optional[FBrefTeamData], Optional[FBrefTeamData]]:
-        """Get FBref data for both teams.
+        """Get FotMob data for both teams.
         
         Parameters
         ----------
@@ -409,54 +409,44 @@ class MatchAnalysisOrchestrator:
             Home team name.
         away_team_name : str
             Away team name.
-        fbref_clubs : List[Club]
-            List of FBref clubs.
+        fotmob_clubs : List[Club]
+            List of FotMob clubs.
             
         Returns
         -------
         Tuple[Optional[FBrefTeamData], Optional[FBrefTeamData]]
-            Tuple of (home team FBref data, away team FBref data).
+            Tuple of (home team FotMob data, away team FotMob data).
         """
-        fbref_home_data = None
-        fbref_away_data = None
+        fotmob_home_data = None
+        fotmob_away_data = None
         
-        if not fbref_clubs:
-            return fbref_home_data, fbref_away_data
+        if not fotmob_clubs:
+            return fotmob_home_data, fotmob_away_data
         
         # Find home team club stats
-        home_club = self.matcher.find_fbref_club(home_team_name, fbref_clubs)
+        home_club = self.matcher.find_fotmob_club(home_team_name, fotmob_clubs)
         if home_club:
-            try:
-                home_recent_games = self.fbref.get_club_games(
-                    home_club.team, epl_only=True, limit=5, only_finished=True
-                )
-                fbref_home_data = FBrefTeamData(
-                    club_stats=home_club,
-                    recent_games=home_recent_games
-                )
-                logger.info(f"FBref data loaded for {home_team_name}: {len(home_recent_games)} recent games")
-            except Exception as e:
-                logger.error(f"Failed to get FBref games for {home_team_name}: {e}")
-                fbref_home_data = FBrefTeamData(club_stats=home_club, recent_games=[])
+            # FotMob does not support recent games data - set to empty list with warning
+            logger.warning(f"FotMob does not support recent games data. Setting recent_games to empty list for {home_team_name}")
+            fotmob_home_data = FBrefTeamData(
+                club_stats=home_club,
+                recent_games=[]
+            )
+            logger.info(f"FotMob data loaded for {home_team_name}")
         else:
-            logger.warning(f"FBref club not found for {home_team_name}")
+            logger.warning(f"FotMob club not found for {home_team_name}")
         
         # Find away team club stats
-        away_club = self.matcher.find_fbref_club(away_team_name, fbref_clubs)
+        away_club = self.matcher.find_fotmob_club(away_team_name, fotmob_clubs)
         if away_club:
-            try:
-                away_recent_games = self.fbref.get_club_games(
-                    away_club.team, epl_only=True, limit=5, only_finished=True
-                )
-                fbref_away_data = FBrefTeamData(
-                    club_stats=away_club,
-                    recent_games=away_recent_games
-                )
-                logger.info(f"FBref data loaded for {away_team_name}: {len(away_recent_games)} recent games")
-            except Exception as e:
-                logger.error(f"Failed to get FBref games for {away_team_name}: {e}")
-                fbref_away_data = FBrefTeamData(club_stats=away_club, recent_games=[])
+            # FotMob does not support recent games data - set to empty list with warning
+            logger.warning(f"FotMob does not support recent games data. Setting recent_games to empty list for {away_team_name}")
+            fotmob_away_data = FBrefTeamData(
+                club_stats=away_club,
+                recent_games=[]
+            )
+            logger.info(f"FotMob data loaded for {away_team_name}")
         else:
-            logger.warning(f"FBref club not found for {away_team_name}")
+            logger.warning(f"FotMob club not found for {away_team_name}")
         
-        return fbref_home_data, fbref_away_data
+        return fotmob_home_data, fotmob_away_data

@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Mapping
 from rapidfuzz import process
 from models.rotowire import GameLineup
 from models.soccerdata import UpcomingMatchPreview, LeagueMatchPreviews
-from models.fbref import Club
+from models.fotmob import Club
 
 logger = logging.getLogger(__name__)
 
@@ -133,15 +133,15 @@ class MatchMatcher:
         return None
     
     @staticmethod
-    def find_fbref_club(team_name: str, fbref_clubs: List[Club]) -> Optional[Club]:
-        """Find matching club from FBref clubs by team name using fuzzy matching.
+    def find_fotmob_club(team_name: str, fotmob_clubs: List[Club]) -> Optional[Club]:
+        """Find matching club from FotMob clubs by team name using fuzzy matching.
         
         Parameters
         ----------
         team_name : str
             Team name to search for.
-        fbref_clubs : List[Club]
-            List of FBref clubs to search.
+        fotmob_clubs : List[Club]
+            List of FotMob clubs to search.
             
         Returns
         -------
@@ -152,18 +152,18 @@ class MatchMatcher:
         normalized_search = team_name.lower().strip()
         
         # Exact match first (case-insensitive)
-        for club in fbref_clubs:
-            if club.team.lower().strip() == normalized_search:
+        for club in fotmob_clubs:
+            if club.team_name.lower().strip() == normalized_search:
                 return club
         
         # Try partial match (if search name is contained in club name or vice versa)
-        for club in fbref_clubs:
-            normalized_club = club.team.lower().strip()
+        for club in fotmob_clubs:
+            normalized_club = club.team_name.lower().strip()
             if normalized_search in normalized_club or normalized_club in normalized_search:
                 return club
         
         # Fuzzy matching with lower threshold for better matching
-        candidates = {club.team: club for club in fbref_clubs}
+        candidates = {club.team_name: club for club in fotmob_clubs}
         result = process.extractOne(team_name, candidates.keys(), score_cutoff=70)
         if result:
             logger.debug(f"Fuzzy matched '{team_name}' to '{result[0]}' (score: {result[1]:.1f})")

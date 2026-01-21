@@ -210,7 +210,7 @@ class Betclic(BaseScraper):
                 html = self._fetch_and_expand_page(game_link)
             else:
                 # Fetch the page normally (uses caching if enabled)
-                html = self._get_page_html_selenium(game_link)
+                html = self._get_page_html_selenium(game_link)     
                    
             events = self._extract_events(html)
             events = self._aggregate_events(events)
@@ -433,6 +433,10 @@ class Betclic(BaseScraper):
             
             # Get the final HTML
             html = driver.page_source
+            
+            # Save HTML if storing is enabled
+            if self.cache.store:
+                self.cache.save(url, html)
             
             return html
             
