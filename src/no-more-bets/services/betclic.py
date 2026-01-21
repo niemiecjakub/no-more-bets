@@ -337,6 +337,11 @@ class Betclic(BaseScraper):
         ImportError
             If selenium is not installed.
         """
+        if self.cache.use_cache:
+            cached_html = self.cache.load(url)
+            if cached_html is not None:
+                return cached_html
+
         # Setup Chrome options for headless browsing
         chrome_options = Options()
         #chrome_options.add_argument('--headless')
