@@ -3,8 +3,17 @@ from typing import List, Optional
 import time
 import random
 import logging
+from pathlib import Path
 from models.betclic import UpcomingGame, BookmakerEvent, EventOption
 from .base_scraper import BaseScraper
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.chrome.options import Options
+from selenium.common.exceptions import TimeoutException, NoSuchElementException
+
+        
 
 logger = logging.getLogger(__name__)
 
@@ -123,8 +132,8 @@ class Betclic(BaseScraper):
                             # 1st button is home, 2nd is draw, 3rd is away
                             # Each button has two spans with btn_label: one with is-top (team name) and one without (odds)
                             for i, button in enumerate(odds_buttons[:3]):
-                                # Find all spans with btn_label and get the one without is-top class (the odds value)
-                                label_spans = button.find_all('span', class_='btn_label')
+                                # Find all spans/bcdk-bet-button-label with btn_label and get the one without is-top class (the odds value)
+                                label_spans = button.find_all(['span', 'bcdk-bet-button-label'], class_='btn_label')
                                 odds_value = None
                                 for span in label_spans:
                                     if 'is-top' not in span.get('class', []):
@@ -202,8 +211,8 @@ class Betclic(BaseScraper):
             else:
                 # Fetch the page normally (uses caching if enabled)
                 html = self._get_page_html_selenium(game_link)
-            
-            events = self._extract_events(str(html))
+                   
+            events = self._extract_events(html)
             events = self._aggregate_events(events)
             
             # If events list is not empty, return it
@@ -258,7 +267,6 @@ class Betclic(BaseScraper):
                     
                     team_name = team_title_elem.get_text(strip=True)
                     card_options = self._parse_matrix_options(split_card)
-                    
                     if card_options:
                         events.append(BookmakerEvent(
                             title=f"{title} - {team_name}",
@@ -267,7 +275,8 @@ class Betclic(BaseScraper):
                 continue
             
             # Check for grouped markets
-            if 'is-groupedMarket' in market_box.get('class', []) or market_box.find('div', class_='marketBox_list'):
+            is_grouped = 'is-groupedMarket' in market_box.get('class', []) or market_box.find('div', class_='marketBox_list')
+            if is_grouped:
                 # Parse as grouped market
                 grouped_events = self._parse_grouped_market_from_box(market_box, title)
                 events.extend(grouped_events)
@@ -328,17 +337,9 @@ class Betclic(BaseScraper):
         ImportError
             If selenium is not installed.
         """
-        from selenium import webdriver
-        from selenium.webdriver.common.by import By
-        from selenium.webdriver.support.ui import WebDriverWait
-        from selenium.webdriver.support import expected_conditions as EC
-        from selenium.webdriver.chrome.options import Options
-        from selenium.common.exceptions import TimeoutException, NoSuchElementException
-
-        
         # Setup Chrome options for headless browsing
         chrome_options = Options()
-        chrome_options.add_argument('--headless')
+        #chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
@@ -350,7 +351,7 @@ class Betclic(BaseScraper):
             driver.get(url)
             
             # Wait for page to load
-            WebDriverWait(driver, 5).until(
+            WebDriverWait(driver, random.uniform(3, 5)).until(
                 EC.presence_of_element_located((By.TAG_NAME, "body"))
             )
             
@@ -367,11 +368,11 @@ class Betclic(BaseScraper):
                     if len(buttons) >= 2:
                         # Click the 2nd button (index 1)
                         driver.execute_script("arguments[0].scrollIntoView(true);", buttons[1])
-                        time.sleep(0.2)
+                        time.sleep(random.uniform(0, 2))
                         buttons[1].click()
                         consent_clicked = True
                         logger.info("Privacy consent clicked")
-                        time.sleep(2)
+                        time.sleep(random.uniform(0, 2))
             except (NoSuchElementException, IndexError):
                 # Privacy container not found or doesn't have enough buttons, continue
                 pass
@@ -388,11 +389,11 @@ class Betclic(BaseScraper):
                     modal_buttons = modal.find_elements(By.TAG_NAME, 'button')
                     if len(modal_buttons) >= 1:
                         driver.execute_script("arguments[0].scrollIntoView(true);", modal_buttons[0])
-                        time.sleep(0.2)
+                        time.sleep(random.uniform(1, 4))
                         modal_buttons[0].click()
                         modal_clicked = True
                         logger.info("Modal clicked")
-                        time.sleep(2)
+                        time.sleep(random.uniform(1, 3))
             except (NoSuchElementException, IndexError):
                 # Modal not found or doesn't have buttons, continue
                 pass
@@ -412,7 +413,7 @@ class Betclic(BaseScraper):
             for button in see_more_buttons:
                 try:
                     # Wait for button to be clickable
-                    WebDriverWait(driver, 1).until(
+                    WebDriverWait(driver, time.sleep(random.uniform(0, 2))).until(
                         EC.element_to_be_clickable(button)
                     )
                     
@@ -546,7 +547,8 @@ class Betclic(BaseScraper):
                 if i >= len(sub_markets):
                     break
                 
-                odds_elem = market_item.find('span', class_='btn_label')
+                # Try both span and bcdk-bet-button-label elements
+                odds_elem = market_item.find(['span', 'bcdk-bet-button-label'], class_='btn_label')
                 if not odds_elem:
                     continue
                 
@@ -602,7 +604,8 @@ class Betclic(BaseScraper):
                 if i >= len(sub_markets):
                     break
                 
-                odds_elem = market_item.find('span', class_='btn_label')
+                # Try both span and bcdk-bet-button-label elements
+                odds_elem = market_item.find(['span', 'bcdk-bet-button-label'], class_='btn_label')
                 if not odds_elem:
                     continue
                 
@@ -641,10 +644,11 @@ class Betclic(BaseScraper):
                 # Try to find it from button structure
                 button = line_selection.find('button', class_='btn')
                 if button:
-                    top_label_spans = button.find_all('span', class_='btn_label')
-                    for span in top_label_spans:
-                        if 'is-top' in span.get('class', []):
-                            label_elem = span
+                    # Try both span and bcdk-bet-button-label elements
+                    top_label_spans = button.find_all(['span', 'bcdk-bet-button-label'], class_='btn_label')
+                    for elem in top_label_spans:
+                        if 'is-top' in elem.get('class', []):
+                            label_elem = elem
                             break
             
             if not label_elem:
@@ -652,12 +656,13 @@ class Betclic(BaseScraper):
             
             label = label_elem.get_text(strip=True)
             
-            # Find odds button - exclude spans with is-top class
+            # Find odds button - exclude elements with is-top class
+            # Try both span and bcdk-bet-button-label elements
             odds_elem = None
-            label_spans = line_selection.find_all('span', class_='btn_label')
-            for span in label_spans:
-                if 'is-top' not in span.get('class', []):
-                    odds_elem = span
+            label_elements = line_selection.find_all(['span', 'bcdk-bet-button-label'], class_='btn_label')
+            for elem in label_elements:
+                if 'is-top' not in elem.get('class', []):
+                    odds_elem = elem
                     break
             
             if not odds_elem:
@@ -718,7 +723,6 @@ class Betclic(BaseScraper):
         for event in events:
             # Create a grouping key from title
             group_key = (event.title)
-            
             if group_key not in grouped:
                 grouped[group_key] = []
             grouped[group_key].append(event)

@@ -1,7 +1,11 @@
 """Tests for match analysis output handlers."""
+import sys
+from pathlib import Path
 import pytest
 from io import StringIO
-import sys
+
+# Add src/no-more-bets to path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src' / 'no-more-bets'))
 from models.match_analysis import (
     MatchInfo,
     LineupData,

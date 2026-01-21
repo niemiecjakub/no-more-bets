@@ -1,6 +1,11 @@
 """Tests for MatchAnalysisOrchestrator."""
+import sys
+from pathlib import Path
 import pytest
 from unittest.mock import Mock, MagicMock, patch
+
+# Add src/no-more-bets to path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src' / 'no-more-bets'))
 from models.betclic import UpcomingGame
 from models.match_analysis import MatchAnalysis, MatchInfo
 from models.rotowire import GameLineup, TeamLineup, PlayerInLineup

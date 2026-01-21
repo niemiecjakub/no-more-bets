@@ -23,22 +23,24 @@ logging.basicConfig(
 def main() -> List[MatchAnalysis]:
     rotowire = Rotowire()
     soccerdata = SoccerData()
-    bookmaker = Betclic(cache_ttl=9999999999999999999999999999999999999999999, delay=10, retry_delay=20, n_retries=10, timeout=60)
+    bookmaker = Betclic(cache_ttl=9999999999999999999999999999999999999999999, n_retries=1, )
     fbref = FBref(cache_ttl=36000000000)
     persistence = MatchAnalysisPersistence()
-    output = ConsoleOutput()
+    output = SilentOutput()
 
-    orchestrator = MatchAnalysisOrchestrator(
-        rotowire=rotowire,
-        soccerdata=soccerdata,
-        bookmaker=bookmaker,
-        fbref=fbref,
-        output_handler=output,
-        persistence=persistence,
-        league_id=PREMIER_LEAGUE.SOCCERDATA_PREMIER_LEAGUE_ID,
-    )
-    
-    return orchestrator.analyze_matches()
+    events = bookmaker.get_match_events('https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/bournemouth-liverpool-m905675307745280')
+    print(events)
+    #orchestrator = MatchAnalysisOrchestrator(
+    #    rotowire=rotowire,
+    #    soccerdata=soccerdata,
+    #    bookmaker=bookmaker,
+    #    fbref=fbref,
+    #    output_handler=output,
+    #    persistence=persistence,
+    #    league_id=PREMIER_LEAGUE.SOCCERDATA_PREMIER_LEAGUE_ID,
+    #)
+    #
+    #return orchestrator.analyze_matches()
 
 async def run_group_chat() -> None:
     chat = create_group_chat()

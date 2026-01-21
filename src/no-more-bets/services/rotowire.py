@@ -239,7 +239,7 @@ class Rotowire(BaseScraper):
                         # (even if they have an injury status, they're still in the lineup)
                         players.append(PlayerInLineup(
                             position=position,
-                            player_name=player_name
+                            player=player_name
                         ))
         
         return TeamLineup(

@@ -1,5 +1,10 @@
 """Tests for MatchMatcher utility class."""
+import sys
+from pathlib import Path
 import pytest
+
+# Add src/no-more-bets to path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src' / 'no-more-bets'))
 from models.rotowire import GameLineup, TeamLineup, PlayerInLineup
 from models.soccerdata import UpcomingMatchPreview, Teams, TeamInfo, LeagueMatchPreviews
 from models.fbref import Club

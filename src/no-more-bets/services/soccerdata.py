@@ -293,7 +293,6 @@ class SoccerData:
         # Check cache first
         cached_response = self.cache.load(cache_key)
         if cached_response is not None:
-            logger.info(f"Cache hit for endpoint: {endpoint} (cache_key: {cache_key})")
             return cached_response
         
         url = f"{self.BASE_URL}{endpoint}"

@@ -178,7 +178,7 @@ class BaseCache(ABC):
         if valid_filepath:
             try:
                 data = self._read_file(valid_filepath)
-                logger.debug(f"Cache loaded from {valid_filepath}")
+                logger.info(f"Cache loaded for key: {key}")
                 return data
             except Exception as e:
                 logger.warning(f"Failed to load cache from {valid_filepath}: {e}")

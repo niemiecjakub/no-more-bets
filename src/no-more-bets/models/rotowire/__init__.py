@@ -7,14 +7,12 @@ class PlayerInLineup(FrozenBaseModel):
     """Represents a player in a lineup."""
     
     position: Annotated[str, Field(..., description="Player position (e.g., 'GK', 'DL', 'DC', 'DR', 'DMC', 'AML', 'AMC', 'AMR', 'FW')")]
-    player_name: Annotated[str, Field(..., description="Player name")]
+    player: Annotated[str, Field(..., description="Player name")]
 
 
-class InjuryEntry(FrozenBaseModel):
+class InjuryEntry(PlayerInLineup):
     """Represents an injury entry for a player."""
     
-    player: Annotated[str, Field(..., description="Player name")]
-    position: Annotated[str, Field(..., description="Player position")]
     status: Annotated[str, Field(..., description="Injury status (e.g., 'QUES', 'OUT', 'SUS')")]
 
 

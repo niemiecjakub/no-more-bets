@@ -101,8 +101,8 @@ class ConsoleOutput(MatchAnalysisOutput):
             home_player = home_players[i] if i < home_count else None
             away_player = away_players[i] if i < away_count else None
             
-            home_str = f"[{home_player.position}] {home_player.player_name}" if home_player else ""
-            away_str = f"[{away_player.position}] {away_player.player_name}" if away_player else ""
+            home_str = f"[{home_player.position}] {home_player.player}" if home_player else ""
+            away_str = f"[{away_player.position}] {away_player.player}" if away_player else ""
             
             print(f"  {home_str:<40} {away_str:<40}")
         
