@@ -1,49 +1,31 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
 class PREMIER_LEAGUE:
     """Premier League club name constants."""
-    
-    # Club names as they appear on fbref.com
+
+    # Club names as they appear in SoccerData API
     ARSENAL = "Arsenal"
     MANCHESTER_CITY = "Manchester City"
     ASTON_VILLA = "Aston Villa"
     LIVERPOOL = "Liverpool"
     BRENTFORD = "Brentford"
-    NEWCASTLE_UTD = "Newcastle Utd"
-    MANCHESTER_UTD = "Manchester Utd"
+    NEWCASTLE_UTD = "Newcastle United"
+    MANCHESTER_UTD = "Manchester United"
     CHELSEA = "Chelsea"
     FULHAM = "Fulham"
     SUNDERLAND = "Sunderland"
-    BRIGHTON = "Brighton"
+    BRIGHTON = "Brighton & Hove Albion"
     EVERTON = "Everton"
     CRYSTAL_PALACE = "Crystal Palace"
-    TOTTENHAM = "Tottenham"
-    BOURNEMOUTH = "Bournemouth"
+    TOTTENHAM = "Tottenham Hotspur"
+    BOURNEMOUTH = "AFC Bournemouth"
     LEEDS_UNITED = "Leeds United"
-    NOTTINGHAM_FOREST = "Nott'ham Forest"
-    WEST_HAM = "West Ham"
+    NOTTINGHAM_FOREST = "Nottingham Forest"
+    WEST_HAM = "West Ham United"
     BURNLEY = "Burnley"
-    WOLVES = "Wolves"
-    
-    # Club names as they appear in SoccerData API
-    ARSENAL_SOCCERDATA = "Arsenal"
-    MANCHESTER_CITY_SOCCERDATA = "Manchester City"
-    ASTON_VILLA_SOCCERDATA = "Aston Villa"
-    LIVERPOOL_SOCCERDATA = "Liverpool"
-    BRENTFORD_SOCCERDATA = "Brentford"
-    NEWCASTLE_UTD_SOCCERDATA = "Newcastle United"
-    MANCHESTER_UTD_SOCCERDATA = "Manchester United"
-    CHELSEA_SOCCERDATA = "Chelsea"
-    FULHAM_SOCCERDATA = "Fulham"
-    SUNDERLAND_SOCCERDATA = "Sunderland"
-    BRIGHTON_SOCCERDATA = "Brighton & Hove Albion"
-    EVERTON_SOCCERDATA = "Everton"
-    CRYSTAL_PALACE_SOCCERDATA = "Crystal Palace"
-    TOTTENHAM_SOCCERDATA = "Tottenham Hotspur"
-    BOURNEMOUTH_SOCCERDATA = "AFC Bournemouth"
-    LEEDS_UNITED_SOCCERDATA = "Leeds United"
-    NOTTINGHAM_FOREST_SOCCERDATA = "Nottingham Forest"
-    WEST_HAM_SOCCERDATA = "West Ham United"
-    BURNLEY_SOCCERDATA = "Burnley"
-    WOLVES_SOCCERDATA = "Wolverhampton Wanderers"
+    WOLVES = "Wolverhampton Wanderers"
     
     SOCCERDATA_CURRENT_SEASON = "2025-2026"
     SOCCERDATA_ENGLAND_ID = 8
@@ -71,54 +53,52 @@ class PREMIER_LEAGUE:
         BURNLEY,
         WOLVES,
     ]
-    
-    ALL_CLUBS_SOCCERDATA = [
-        ARSENAL_SOCCERDATA,
-        MANCHESTER_CITY_SOCCERDATA,
-        ASTON_VILLA_SOCCERDATA,
-        LIVERPOOL_SOCCERDATA,
-        BRENTFORD_SOCCERDATA,
-        NEWCASTLE_UTD_SOCCERDATA,
-        MANCHESTER_UTD_SOCCERDATA,
-        CHELSEA_SOCCERDATA,
-        FULHAM_SOCCERDATA,
-        SUNDERLAND_SOCCERDATA,
-        BRIGHTON_SOCCERDATA,
-        EVERTON_SOCCERDATA,
-        CRYSTAL_PALACE_SOCCERDATA,
-        TOTTENHAM_SOCCERDATA,
-        BOURNEMOUTH_SOCCERDATA,
-        LEEDS_UNITED_SOCCERDATA,
-        NOTTINGHAM_FOREST_SOCCERDATA,
-        WEST_HAM_SOCCERDATA,
-        BURNLEY_SOCCERDATA,
-        WOLVES_SOCCERDATA,
-    ]
-    
-    # Mapping from FBref names to SoccerData names
-    FBREF_TO_SOCCERDATA = {
-        ARSENAL: ARSENAL_SOCCERDATA,
-        MANCHESTER_CITY: MANCHESTER_CITY_SOCCERDATA,
-        ASTON_VILLA: ASTON_VILLA_SOCCERDATA,
-        LIVERPOOL: LIVERPOOL_SOCCERDATA,
-        BRENTFORD: BRENTFORD_SOCCERDATA,
-        NEWCASTLE_UTD: NEWCASTLE_UTD_SOCCERDATA,
-        MANCHESTER_UTD: MANCHESTER_UTD_SOCCERDATA,
-        CHELSEA: CHELSEA_SOCCERDATA,
-        FULHAM: FULHAM_SOCCERDATA,
-        SUNDERLAND: SUNDERLAND_SOCCERDATA,
-        BRIGHTON: BRIGHTON_SOCCERDATA,
-        EVERTON: EVERTON_SOCCERDATA,
-        CRYSTAL_PALACE: CRYSTAL_PALACE_SOCCERDATA,
-        TOTTENHAM: TOTTENHAM_SOCCERDATA,
-        BOURNEMOUTH: BOURNEMOUTH_SOCCERDATA,
-        LEEDS_UNITED: LEEDS_UNITED_SOCCERDATA,
-        NOTTINGHAM_FOREST: NOTTINGHAM_FOREST_SOCCERDATA,
-        WEST_HAM: WEST_HAM_SOCCERDATA,
-        BURNLEY: BURNLEY_SOCCERDATA,
-        WOLVES: WOLVES_SOCCERDATA,
+
+class FOOTBALL:
+    """
+    Provides utilities for football position code mapping and lookup.
+    """
+
+    POSITIONS_MAP = {
+        "GK": "Goalkeeper",
+        "DL": "Left Back / Left Defender",
+        "DR": "Right Back / Right Defender",
+        "DC": "Center Back / Central Defender",
+        "DMC": "Defensive Midfielder / Central Defensive Midfielder",
+        "DM": "Defensive Midfielder",
+        "ML": "Left Midfielder / Left Wing Midfielder",
+        "MR": "Right Midfielder / Right Wing Midfielder",
+        "MC": "Central Midfielder",
+        "AMC": "Attacking Midfielder / Central Attacking Midfielder",
+        "AML": "Attacking Midfielder / Left Attacking Midfielder",
+        "AMR": "Attacking Midfielder / Right Attacking Midfielder",
+        "LW": "Left Winger / Left Forward",
+        "RW": "Right Winger / Right Forward",
+        "FW": "Forward / Striker",
+        "ST": "Striker / Center Forward",
+        "M": "Midfielder",
+        "D": "Defender",
+        "F": "Forward",
+        "F/M": "Forward / Midfielder",
+        "G": "Goalkeeper"
     }
     
-    # Reverse mapping from SoccerData names to FBref names
-    SOCCERDATA_TO_FBREF = {v: k for k, v in FBREF_TO_SOCCERDATA.items()}
+    @classmethod
+    def get(cls, acronym: str) -> str:
+        """
+        Return the full position name for a given football position acronym.
 
+        Parameters
+        ----------
+        acronym : str
+            The position acronym (e.g., "GK", "DL", "ST").
+
+        Returns
+        -------
+        str
+            The full descriptive name of the position if found, otherwise returns the acronym.
+        """
+        if acronym not in cls.POSITIONS_MAP:
+            logger.error(f"No matching position found for acronym: {acronym}")
+            return acronym
+        return cls.POSITIONS_MAP[acronym]
