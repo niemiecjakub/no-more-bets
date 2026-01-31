@@ -1,8 +1,15 @@
+using NoMoreBets.Infrastructure.Storage;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.Configure<JsonCacheOptions>(builder.Configuration.GetSection("StorageCache:JsonCache"));
+builder.Services.Configure<HtmlCacheOptions>(builder.Configuration.GetSection("StorageCache:HtmlCache"));
+builder.Services.AddSingleton<IJsonCache, JsonCache>();
+builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
 
 var app = builder.Build();
 
