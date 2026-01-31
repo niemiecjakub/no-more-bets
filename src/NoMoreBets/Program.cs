@@ -1,3 +1,4 @@
+using NoMoreBets.Infrastructure.ExternalClients;
 using NoMoreBets.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -8,8 +9,10 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.Configure<JsonCacheOptions>(builder.Configuration.GetSection("StorageCache:JsonCache"));
 builder.Services.Configure<HtmlCacheOptions>(builder.Configuration.GetSection("StorageCache:HtmlCache"));
+builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection("Scraper"));
 builder.Services.AddSingleton<IJsonCache, JsonCache>();
 builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
+builder.Services.AddSingleton<IPageFetcher, PlaywrightPageFetcher>();
 
 var app = builder.Build();
 
