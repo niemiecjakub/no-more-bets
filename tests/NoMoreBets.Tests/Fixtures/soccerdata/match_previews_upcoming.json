@@ -1,0 +1,3886 @@
+[
+  {
+    "league_id": 212,
+    "league_name": "First Division A",
+    "match_previews": [
+      {
+        "id": 955509,
+        "date": "16/01/2026",
+        "time": "19:45",
+        "excitement_rating": 9.13,
+        "teams": {
+          "home": {
+            "id": 2963,
+            "name": "Club Brugge"
+          },
+          "away": {
+            "id": 6476,
+            "name": "RAAL La Louviere"
+          }
+        }
+      },
+      {
+        "id": 955506,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 7.89,
+        "teams": {
+          "home": {
+            "id": 2821,
+            "name": "Zulte Waregem"
+          },
+          "away": {
+            "id": 3427,
+            "name": "Genk"
+          }
+        }
+      },
+      {
+        "id": 955508,
+        "date": "17/01/2026",
+        "time": "17:15",
+        "excitement_rating": 6.65,
+        "teams": {
+          "home": {
+            "id": 3015,
+            "name": "Westerlo"
+          },
+          "away": {
+            "id": 2941,
+            "name": "Cercle Brugge"
+          }
+        }
+      },
+      {
+        "id": 955505,
+        "date": "17/01/2026",
+        "time": "19:45",
+        "excitement_rating": 8.8,
+        "teams": {
+          "home": {
+            "id": 3911,
+            "name": "Union Saint-Gilloise"
+          },
+          "away": {
+            "id": 3906,
+            "name": "Mechelen"
+          }
+        }
+      },
+      {
+        "id": 955507,
+        "date": "18/01/2026",
+        "time": "12:30",
+        "excitement_rating": 6.38,
+        "teams": {
+          "home": {
+            "id": 2991,
+            "name": "Gent"
+          },
+          "away": {
+            "id": 3193,
+            "name": "Anderlecht"
+          }
+        }
+      },
+      {
+        "id": 955512,
+        "date": "18/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.38,
+        "teams": {
+          "home": {
+            "id": 5831,
+            "name": "Dender"
+          },
+          "away": {
+            "id": 2994,
+            "name": "Antwerp"
+          }
+        }
+      },
+      {
+        "id": 955510,
+        "date": "18/01/2026",
+        "time": "17:30",
+        "excitement_rating": 7.79,
+        "teams": {
+          "home": {
+            "id": 2958,
+            "name": "Sporting Charleroi"
+          },
+          "away": {
+            "id": 3905,
+            "name": "Standard Liege"
+          }
+        }
+      },
+      {
+        "id": 955511,
+        "date": "18/01/2026",
+        "time": "18:15",
+        "excitement_rating": 9.01,
+        "teams": {
+          "home": {
+            "id": 3000,
+            "name": "Sint-Truiden"
+          },
+          "away": {
+            "id": 3194,
+            "name": "OH Leuven"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 223,
+    "league_name": "First Division",
+    "match_previews": [
+      {
+        "id": 966434,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 5.68,
+        "teams": {
+          "home": {
+            "id": 3349,
+            "name": "Ethnikos Achna"
+          },
+          "away": {
+            "id": 2951,
+            "name": "Aris Limassol"
+          }
+        }
+      },
+      {
+        "id": 966435,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.19,
+        "teams": {
+          "home": {
+            "id": 3351,
+            "name": "Akritas"
+          },
+          "away": {
+            "id": 3781,
+            "name": "AEL"
+          }
+        }
+      },
+      {
+        "id": 966432,
+        "date": "17/01/2026",
+        "time": "17:00",
+        "excitement_rating": 8.76,
+        "teams": {
+          "home": {
+            "id": 3352,
+            "name": "Olympiakos Nicosia"
+          },
+          "away": {
+            "id": 2923,
+            "name": "Pafos"
+          }
+        }
+      },
+      {
+        "id": 966433,
+        "date": "18/01/2026",
+        "time": "14:00",
+        "excitement_rating": 7.0,
+        "teams": {
+          "home": {
+            "id": 3629,
+            "name": "Omonia Nicosia"
+          },
+          "away": {
+            "id": 3496,
+            "name": "Anorthosis"
+          }
+        }
+      },
+      {
+        "id": 966431,
+        "date": "18/01/2026",
+        "time": "17:00",
+        "excitement_rating": 6.83,
+        "teams": {
+          "home": {
+            "id": 2922,
+            "name": "Apollon"
+          },
+          "away": {
+            "id": 3343,
+            "name": "APOEL"
+          }
+        }
+      },
+      {
+        "id": 966436,
+        "date": "19/01/2026",
+        "time": "17:00",
+        "excitement_rating": 4.28,
+        "teams": {
+          "home": {
+            "id": 6496,
+            "name": "Omonia Aradippou"
+          },
+          "away": {
+            "id": 3347,
+            "name": "Enosis"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 229,
+    "league_name": "Championship",
+    "match_previews": [
+      {
+        "id": 959804,
+        "date": "16/01/2026",
+        "time": "20:00",
+        "excitement_rating": 5.69,
+        "teams": {
+          "home": {
+            "id": 4144,
+            "name": "West Bromwich Albion"
+          },
+          "away": {
+            "id": 4150,
+            "name": "Middlesbrough"
+          }
+        }
+      },
+      {
+        "id": 957781,
+        "date": "17/01/2026",
+        "time": "12:30",
+        "excitement_rating": 6.56,
+        "teams": {
+          "home": {
+            "id": 4157,
+            "name": "Ipswich Town"
+          },
+          "away": {
+            "id": 2908,
+            "name": "Blackburn Rovers"
+          }
+        }
+      },
+      {
+        "id": 959807,
+        "date": "17/01/2026",
+        "time": "12:30",
+        "excitement_rating": 5.33,
+        "teams": {
+          "home": {
+            "id": 4161,
+            "name": "Coventry City"
+          },
+          "away": {
+            "id": 3768,
+            "name": "Leicester City"
+          }
+        }
+      },
+      {
+        "id": 957788,
+        "date": "17/01/2026",
+        "time": "12:30",
+        "excitement_rating": 9.23,
+        "teams": {
+          "home": {
+            "id": 2826,
+            "name": "Watford"
+          },
+          "away": {
+            "id": 3308,
+            "name": "Millwall"
+          }
+        }
+      },
+      {
+        "id": 957792,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.65,
+        "teams": {
+          "home": {
+            "id": 4160,
+            "name": "Charlton Athletic"
+          },
+          "away": {
+            "id": 4146,
+            "name": "Sheffield United"
+          }
+        }
+      },
+      {
+        "id": 959803,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.29,
+        "teams": {
+          "home": {
+            "id": 4154,
+            "name": "Preston North End"
+          },
+          "away": {
+            "id": 3064,
+            "name": "Derby County"
+          }
+        }
+      },
+      {
+        "id": 959806,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 4.78,
+        "teams": {
+          "home": {
+            "id": 4152,
+            "name": "Sheffield Wednesday"
+          },
+          "away": {
+            "id": 4165,
+            "name": "Portsmouth"
+          }
+        }
+      },
+      {
+        "id": 957784,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.3,
+        "teams": {
+          "home": {
+            "id": 4142,
+            "name": "Southampton"
+          },
+          "away": {
+            "id": 4153,
+            "name": "Hull City"
+          }
+        }
+      },
+      {
+        "id": 957791,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.56,
+        "teams": {
+          "home": {
+            "id": 4143,
+            "name": "Stoke City"
+          },
+          "away": {
+            "id": 4155,
+            "name": "Queens Park Rangers"
+          }
+        }
+      },
+      {
+        "id": 959805,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 7.23,
+        "teams": {
+          "home": {
+            "id": 4168,
+            "name": "Oxford United"
+          },
+          "away": {
+            "id": 4151,
+            "name": "Bristol City"
+          }
+        }
+      },
+      {
+        "id": 957783,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 7.0,
+        "teams": {
+          "home": {
+            "id": 5063,
+            "name": "Wrexham"
+          },
+          "away": {
+            "id": 3311,
+            "name": "Norwich City"
+          }
+        }
+      },
+      {
+        "id": 957786,
+        "date": "17/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.5,
+        "teams": {
+          "home": {
+            "id": 3318,
+            "name": "Swansea City"
+          },
+          "away": {
+            "id": 3063,
+            "name": "Birmingham City"
+          }
+        }
+      },
+      {
+        "id": 957806,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 5.35,
+        "teams": {
+          "home": {
+            "id": 4160,
+            "name": "Charlton Athletic"
+          },
+          "away": {
+            "id": 3064,
+            "name": "Derby County"
+          }
+        }
+      },
+      {
+        "id": 957794,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 8.9,
+        "teams": {
+          "home": {
+            "id": 4154,
+            "name": "Preston North End"
+          },
+          "away": {
+            "id": 4153,
+            "name": "Hull City"
+          }
+        }
+      },
+      {
+        "id": 957796,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 8.68,
+        "teams": {
+          "home": {
+            "id": 4161,
+            "name": "Coventry City"
+          },
+          "away": {
+            "id": 3308,
+            "name": "Millwall"
+          }
+        }
+      },
+      {
+        "id": 957798,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 5.41,
+        "teams": {
+          "home": {
+            "id": 3318,
+            "name": "Swansea City"
+          },
+          "away": {
+            "id": 2908,
+            "name": "Blackburn Rovers"
+          }
+        }
+      },
+      {
+        "id": 959808,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 6.35,
+        "teams": {
+          "home": {
+            "id": 4144,
+            "name": "West Bromwich Albion"
+          },
+          "away": {
+            "id": 3311,
+            "name": "Norwich City"
+          }
+        }
+      },
+      {
+        "id": 959809,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 5.94,
+        "teams": {
+          "home": {
+            "id": 4168,
+            "name": "Oxford United"
+          },
+          "away": {
+            "id": 4155,
+            "name": "Queens Park Rangers"
+          }
+        }
+      },
+      {
+        "id": 959811,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 5.97,
+        "teams": {
+          "home": {
+            "id": 4152,
+            "name": "Sheffield Wednesday"
+          },
+          "away": {
+            "id": 3063,
+            "name": "Birmingham City"
+          }
+        }
+      },
+      {
+        "id": 959812,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 7.26,
+        "teams": {
+          "home": {
+            "id": 4157,
+            "name": "Ipswich Town"
+          },
+          "away": {
+            "id": 4151,
+            "name": "Bristol City"
+          }
+        }
+      },
+      {
+        "id": 959810,
+        "date": "20/01/2026",
+        "time": "20:00",
+        "excitement_rating": 6.06,
+        "teams": {
+          "home": {
+            "id": 5063,
+            "name": "Wrexham"
+          },
+          "away": {
+            "id": 3768,
+            "name": "Leicester City"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 231,
+    "league_name": "League One",
+    "match_previews": [
+      {
+        "id": 957888,
+        "date": "17/01/2026",
+        "time": "12:30",
+        "excitement_rating": 8.99,
+        "teams": {
+          "home": {
+            "id": 3075,
+            "name": "Bradford City"
+          },
+          "away": {
+            "id": 3285,
+            "name": "Cardiff City"
+          }
+        }
+      },
+      {
+        "id": 957894,
+        "date": "17/01/2026",
+        "time": "12:30",
+        "excitement_rating": 6.69,
+        "teams": {
+          "home": {
+            "id": 3320,
+            "name": "Wigan Athletic"
+          },
+          "away": {
+            "id": 4156,
+            "name": "Bolton Wanderers"
+          }
+        }
+      },
+      {
+        "id": 957887,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.65,
+        "teams": {
+          "home": {
+            "id": 4196,
+            "name": "Leyton Orient"
+          },
+          "away": {
+            "id": 3430,
+            "name": "Reading"
+          }
+        }
+      },
+      {
+        "id": 957890,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.0,
+        "teams": {
+          "home": {
+            "id": 4174,
+            "name": "AFC Wimbledon"
+          },
+          "away": {
+            "id": 4166,
+            "name": "Doncaster Rovers"
+          }
+        }
+      },
+      {
+        "id": 959659,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.75,
+        "teams": {
+          "home": {
+            "id": 3305,
+            "name": "Burton Albion"
+          },
+          "away": {
+            "id": 4141,
+            "name": "Huddersfield Town"
+          }
+        }
+      },
+      {
+        "id": 957892,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 9.34,
+        "teams": {
+          "home": {
+            "id": 4158,
+            "name": "Luton Town"
+          },
+          "away": {
+            "id": 4177,
+            "name": "Lincoln City"
+          }
+        }
+      },
+      {
+        "id": 957895,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.31,
+        "teams": {
+          "home": {
+            "id": 2790,
+            "name": "Northampton Town"
+          },
+          "away": {
+            "id": 4162,
+            "name": "Wycombe Wanderers"
+          }
+        }
+      },
+      {
+        "id": 957889,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 7.0,
+        "teams": {
+          "home": {
+            "id": 4159,
+            "name": "Barnsley"
+          },
+          "away": {
+            "id": 3309,
+            "name": "Blackpool"
+          }
+        }
+      },
+      {
+        "id": 957893,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.48,
+        "teams": {
+          "home": {
+            "id": 4183,
+            "name": "Exeter City"
+          },
+          "away": {
+            "id": 4188,
+            "name": "Stevenage"
+          }
+        }
+      },
+      {
+        "id": 957891,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.56,
+        "teams": {
+          "home": {
+            "id": 4187,
+            "name": "Mansfield Town"
+          },
+          "away": {
+            "id": 4184,
+            "name": "Port Vale"
+          }
+        }
+      },
+      {
+        "id": 957886,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 7.09,
+        "teams": {
+          "home": {
+            "id": 4163,
+            "name": "Peterborough United"
+          },
+          "away": {
+            "id": 4164,
+            "name": "Plymouth Argyle"
+          }
+        }
+      },
+      {
+        "id": 957682,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 9.33,
+        "teams": {
+          "home": {
+            "id": 4188,
+            "name": "Stevenage"
+          },
+          "away": {
+            "id": 4156,
+            "name": "Bolton Wanderers"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 232,
+    "league_name": "League Two",
+    "match_previews": [
+      {
+        "id": 959327,
+        "date": "17/01/2026",
+        "time": "12:30",
+        "excitement_rating": 9.15,
+        "teams": {
+          "home": {
+            "id": 5977,
+            "name": "Chesterfield"
+          },
+          "away": {
+            "id": 6170,
+            "name": "Bromley"
+          }
+        }
+      },
+      {
+        "id": 959328,
+        "date": "17/01/2026",
+        "time": "12:30",
+        "excitement_rating": 6.25,
+        "teams": {
+          "home": {
+            "id": 4179,
+            "name": "Tranmere Rovers"
+          },
+          "away": {
+            "id": 4175,
+            "name": "Walsall"
+          }
+        }
+      },
+      {
+        "id": 959326,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 9.17,
+        "teams": {
+          "home": {
+            "id": 2713,
+            "name": "Swindon Town"
+          },
+          "away": {
+            "id": 4195,
+            "name": "Salford City"
+          }
+        }
+      },
+      {
+        "id": 959329,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.81,
+        "teams": {
+          "home": {
+            "id": 4190,
+            "name": "Oldham Athletic"
+          },
+          "away": {
+            "id": 3453,
+            "name": "Cheltenham Town"
+          }
+        }
+      },
+      {
+        "id": 959330,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.35,
+        "teams": {
+          "home": {
+            "id": 4170,
+            "name": "Accrington Stanley"
+          },
+          "away": {
+            "id": 4178,
+            "name": "Milton Keynes Dons"
+          }
+        }
+      },
+      {
+        "id": 959331,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 7.39,
+        "teams": {
+          "home": {
+            "id": 3450,
+            "name": "Grimsby Town"
+          },
+          "away": {
+            "id": 5972,
+            "name": "Barnet"
+          }
+        }
+      },
+      {
+        "id": 959337,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.0,
+        "teams": {
+          "home": {
+            "id": 4167,
+            "name": "Fleetwood Town"
+          },
+          "away": {
+            "id": 4181,
+            "name": "Cambridge United"
+          }
+        }
+      },
+      {
+        "id": 959333,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.88,
+        "teams": {
+          "home": {
+            "id": 4169,
+            "name": "Gillingham"
+          },
+          "away": {
+            "id": 3065,
+            "name": "Newport County"
+          }
+        }
+      },
+      {
+        "id": 959332,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.18,
+        "teams": {
+          "home": {
+            "id": 3303,
+            "name": "Bristol Rovers"
+          },
+          "away": {
+            "id": 3066,
+            "name": "Colchester United"
+          }
+        }
+      },
+      {
+        "id": 959335,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.1,
+        "teams": {
+          "home": {
+            "id": 4180,
+            "name": "Crewe Alexandra"
+          },
+          "away": {
+            "id": 4197,
+            "name": "Barrow"
+          }
+        }
+      },
+      {
+        "id": 959334,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.31,
+        "teams": {
+          "home": {
+            "id": 4172,
+            "name": "Shrewsbury Town"
+          },
+          "away": {
+            "id": 2701,
+            "name": "Harrogate Town"
+          }
+        }
+      },
+      {
+        "id": 959336,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.24,
+        "teams": {
+          "home": {
+            "id": 4191,
+            "name": "Crawley Town"
+          },
+          "away": {
+            "id": 4193,
+            "name": "Notts County"
+          }
+        }
+      },
+      {
+        "id": 959323,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 6.56,
+        "teams": {
+          "home": {
+            "id": 3450,
+            "name": "Grimsby Town"
+          },
+          "away": {
+            "id": 4195,
+            "name": "Salford City"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 228,
+    "league_name": "Premier League",
+    "match_previews": [
+      {
+        "id": 954579,
+        "date": "17/01/2026",
+        "time": "12:30",
+        "excitement_rating": 7.08,
+        "teams": {
+          "home": {
+            "id": 4137,
+            "name": "Manchester United"
+          },
+          "away": {
+            "id": 4136,
+            "name": "Manchester City"
+          }
+        }
+      },
+      {
+        "id": 954580,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 6.34,
+        "teams": {
+          "home": {
+            "id": 4147,
+            "name": "Leeds United"
+          },
+          "away": {
+            "id": 4145,
+            "name": "Fulham"
+          }
+        }
+      },
+      {
+        "id": 954581,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 8.61,
+        "teams": {
+          "home": {
+            "id": 2916,
+            "name": "Chelsea"
+          },
+          "away": {
+            "id": 4148,
+            "name": "Brentford"
+          }
+        }
+      },
+      {
+        "id": 954584,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.81,
+        "teams": {
+          "home": {
+            "id": 2909,
+            "name": "Tottenham Hotspur"
+          },
+          "away": {
+            "id": 3059,
+            "name": "West Ham United"
+          }
+        }
+      },
+      {
+        "id": 954585,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.58,
+        "teams": {
+          "home": {
+            "id": 4138,
+            "name": "Liverpool"
+          },
+          "away": {
+            "id": 3104,
+            "name": "Burnley"
+          }
+        }
+      },
+      {
+        "id": 954577,
+        "date": "17/01/2026",
+        "time": "15:00",
+        "excitement_rating": 4.81,
+        "teams": {
+          "home": {
+            "id": 3073,
+            "name": "Sunderland"
+          },
+          "away": {
+            "id": 4140,
+            "name": "Crystal Palace"
+          }
+        }
+      },
+      {
+        "id": 954586,
+        "date": "17/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.18,
+        "teams": {
+          "home": {
+            "id": 4149,
+            "name": "Nottingham Forest"
+          },
+          "away": {
+            "id": 3068,
+            "name": "Arsenal"
+          }
+        }
+      },
+      {
+        "id": 954578,
+        "date": "18/01/2026",
+        "time": "14:00",
+        "excitement_rating": 7.19,
+        "teams": {
+          "home": {
+            "id": 3074,
+            "name": "Wolverhampton Wanderers"
+          },
+          "away": {
+            "id": 3071,
+            "name": "Newcastle United"
+          }
+        }
+      },
+      {
+        "id": 954582,
+        "date": "18/01/2026",
+        "time": "16:30",
+        "excitement_rating": 5.94,
+        "teams": {
+          "home": {
+            "id": 2912,
+            "name": "Aston Villa"
+          },
+          "away": {
+            "id": 4139,
+            "name": "Everton"
+          }
+        }
+      },
+      {
+        "id": 954583,
+        "date": "19/01/2026",
+        "time": "20:00",
+        "excitement_rating": 6.49,
+        "teams": {
+          "home": {
+            "id": 3200,
+            "name": "Brighton & Hove Albion"
+          },
+          "away": {
+            "id": 3072,
+            "name": "AFC Bournemouth"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 235,
+    "league_name": "Ligue 1",
+    "match_previews": [
+      {
+        "id": 958223,
+        "date": "16/01/2026",
+        "time": "18:00",
+        "excitement_rating": 6.91,
+        "teams": {
+          "home": {
+            "id": 4234,
+            "name": "Monaco"
+          },
+          "away": {
+            "id": 4239,
+            "name": "Lorient"
+          }
+        }
+      },
+      {
+        "id": 958210,
+        "date": "16/01/2026",
+        "time": "20:00",
+        "excitement_rating": 9.0,
+        "teams": {
+          "home": {
+            "id": 4228,
+            "name": "PSG"
+          },
+          "away": {
+            "id": 4229,
+            "name": "Lille"
+          }
+        }
+      },
+      {
+        "id": 958208,
+        "date": "17/01/2026",
+        "time": "16:00",
+        "excitement_rating": 6.46,
+        "teams": {
+          "home": {
+            "id": 3295,
+            "name": "Lens"
+          },
+          "away": {
+            "id": 3002,
+            "name": "Auxerre"
+          }
+        }
+      },
+      {
+        "id": 958217,
+        "date": "17/01/2026",
+        "time": "18:00",
+        "excitement_rating": 4.21,
+        "teams": {
+          "home": {
+            "id": 3129,
+            "name": "Toulouse"
+          },
+          "away": {
+            "id": 3027,
+            "name": "Nice"
+          }
+        }
+      },
+      {
+        "id": 958221,
+        "date": "17/01/2026",
+        "time": "20:05",
+        "excitement_rating": 6.35,
+        "teams": {
+          "home": {
+            "id": 2849,
+            "name": "Angers"
+          },
+          "away": {
+            "id": 3769,
+            "name": "Marseille"
+          }
+        }
+      },
+      {
+        "id": 958215,
+        "date": "18/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.3,
+        "teams": {
+          "home": {
+            "id": 4231,
+            "name": "Strasbourg"
+          },
+          "away": {
+            "id": 4238,
+            "name": "Metz"
+          }
+        }
+      },
+      {
+        "id": 958213,
+        "date": "18/01/2026",
+        "time": "16:15",
+        "excitement_rating": 7.47,
+        "teams": {
+          "home": {
+            "id": 4232,
+            "name": "Nantes"
+          },
+          "away": {
+            "id": 4241,
+            "name": "Paris FC"
+          }
+        }
+      },
+      {
+        "id": 958220,
+        "date": "18/01/2026",
+        "time": "16:15",
+        "excitement_rating": 7.22,
+        "teams": {
+          "home": {
+            "id": 3001,
+            "name": "Rennes"
+          },
+          "away": {
+            "id": 3139,
+            "name": "Le Havre"
+          }
+        }
+      },
+      {
+        "id": 958212,
+        "date": "18/01/2026",
+        "time": "19:45",
+        "excitement_rating": 6.06,
+        "teams": {
+          "home": {
+            "id": 4230,
+            "name": "Lyon"
+          },
+          "away": {
+            "id": 3199,
+            "name": "Brest"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 236,
+    "league_name": "Ligue 2",
+    "match_previews": [
+      {
+        "id": 969738,
+        "date": "16/01/2026",
+        "time": "19:00",
+        "excitement_rating": 5.78,
+        "teams": {
+          "home": {
+            "id": 6406,
+            "name": "Boulogne"
+          },
+          "away": {
+            "id": 3375,
+            "name": "Montpellier"
+          }
+        }
+      },
+      {
+        "id": 958286,
+        "date": "16/01/2026",
+        "time": "19:00",
+        "excitement_rating": 7.2,
+        "teams": {
+          "home": {
+            "id": 4255,
+            "name": "Dunkerque"
+          },
+          "away": {
+            "id": 4254,
+            "name": "Pau"
+          }
+        }
+      },
+      {
+        "id": 958284,
+        "date": "16/01/2026",
+        "time": "19:00",
+        "excitement_rating": 5.06,
+        "teams": {
+          "home": {
+            "id": 4258,
+            "name": "Laval"
+          },
+          "away": {
+            "id": 4256,
+            "name": "Bastia"
+          }
+        }
+      },
+      {
+        "id": 958276,
+        "date": "16/01/2026",
+        "time": "19:00",
+        "excitement_rating": 5.7,
+        "teams": {
+          "home": {
+            "id": 4252,
+            "name": "Rodez"
+          },
+          "away": {
+            "id": 4253,
+            "name": "Le Mans"
+          }
+        }
+      },
+      {
+        "id": 958278,
+        "date": "16/01/2026",
+        "time": "19:00",
+        "excitement_rating": 5.87,
+        "teams": {
+          "home": {
+            "id": 4259,
+            "name": "Annecy"
+          },
+          "away": {
+            "id": 3471,
+            "name": "Amiens SC"
+          }
+        }
+      },
+      {
+        "id": 958272,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 4.48,
+        "teams": {
+          "home": {
+            "id": 3133,
+            "name": "Grenoble Foot 38"
+          },
+          "away": {
+            "id": 4250,
+            "name": "Red Star"
+          }
+        }
+      },
+      {
+        "id": 958274,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 8.89,
+        "teams": {
+          "home": {
+            "id": 3542,
+            "name": "Troyes"
+          },
+          "away": {
+            "id": 3354,
+            "name": "Reims"
+          }
+        }
+      },
+      {
+        "id": 958280,
+        "date": "17/01/2026",
+        "time": "19:55",
+        "excitement_rating": 7.5,
+        "teams": {
+          "home": {
+            "id": 3386,
+            "name": "Saint-Etienne"
+          },
+          "away": {
+            "id": 3294,
+            "name": "Clermont"
+          }
+        }
+      },
+      {
+        "id": 958282,
+        "date": "19/01/2026",
+        "time": "19:45",
+        "excitement_rating": 6.0,
+        "teams": {
+          "home": {
+            "id": 4246,
+            "name": "Nancy"
+          },
+          "away": {
+            "id": 4237,
+            "name": "Guingamp"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 244,
+    "league_name": "3. Liga",
+    "match_previews": [
+      {
+        "id": 963534,
+        "date": "16/01/2026",
+        "time": "18:00",
+        "excitement_rating": 7.37,
+        "teams": {
+          "home": {
+            "id": 3109,
+            "name": "Jahn Regensburg"
+          },
+          "away": {
+            "id": 4284,
+            "name": "Ingolstadt"
+          }
+        }
+      },
+      {
+        "id": 963535,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 8.97,
+        "teams": {
+          "home": {
+            "id": 4308,
+            "name": "Verl"
+          },
+          "away": {
+            "id": 4297,
+            "name": "Waldhof Mannheim"
+          }
+        }
+      },
+      {
+        "id": 963530,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 5.62,
+        "teams": {
+          "home": {
+            "id": 6030,
+            "name": "Ulm"
+          },
+          "away": {
+            "id": 4288,
+            "name": "Wehen Wiesbaden"
+          }
+        }
+      },
+      {
+        "id": 963531,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 6.42,
+        "teams": {
+          "home": {
+            "id": 4291,
+            "name": "Hansa Rostock"
+          },
+          "away": {
+            "id": 3342,
+            "name": "Erzgebirge Aue"
+          }
+        }
+      },
+      {
+        "id": 963536,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 8.75,
+        "teams": {
+          "home": {
+            "id": 4296,
+            "name": "1860 Munchen"
+          },
+          "away": {
+            "id": 3340,
+            "name": "Rot-Weiss Essen"
+          }
+        }
+      },
+      {
+        "id": 963529,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 7.11,
+        "teams": {
+          "home": {
+            "id": 4307,
+            "name": "Saarbrucken"
+          },
+          "away": {
+            "id": 6216,
+            "name": "Energie Cottbus"
+          }
+        }
+      },
+      {
+        "id": 963532,
+        "date": "17/01/2026",
+        "time": "15:30",
+        "excitement_rating": 5.48,
+        "teams": {
+          "home": {
+            "id": 5669,
+            "name": "Alemannia Aachen"
+          },
+          "away": {
+            "id": 4287,
+            "name": "Osnabruck"
+          }
+        }
+      },
+      {
+        "id": 963537,
+        "date": "18/01/2026",
+        "time": "12:30",
+        "excitement_rating": 8.75,
+        "teams": {
+          "home": {
+            "id": 5880,
+            "name": "Stuttgart II"
+          },
+          "away": {
+            "id": 4286,
+            "name": "MSV Duisburg"
+          }
+        }
+      },
+      {
+        "id": 963528,
+        "date": "18/01/2026",
+        "time": "15:30",
+        "excitement_rating": 4.32,
+        "teams": {
+          "home": {
+            "id": 5940,
+            "name": "Schweinfurt"
+          },
+          "away": {
+            "id": 4299,
+            "name": "Viktoria Koln"
+          }
+        }
+      },
+      {
+        "id": 963533,
+        "date": "18/01/2026",
+        "time": "18:30",
+        "excitement_rating": 5.45,
+        "teams": {
+          "home": {
+            "id": 4314,
+            "name": "Havelse"
+          },
+          "away": {
+            "id": 5876,
+            "name": "Hoffenheim II"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 241,
+    "league_name": "Bundesliga",
+    "match_previews": [
+      {
+        "id": 960757,
+        "date": "16/01/2026",
+        "time": "19:30",
+        "excitement_rating": 5.82,
+        "teams": {
+          "home": {
+            "id": 4273,
+            "name": "Werder Bremen"
+          },
+          "away": {
+            "id": 2998,
+            "name": "Eintracht Frankfurt"
+          }
+        }
+      },
+      {
+        "id": 960749,
+        "date": "17/01/2026",
+        "time": "14:30",
+        "excitement_rating": 7.35,
+        "teams": {
+          "home": {
+            "id": 3204,
+            "name": "Borussia Dortmund"
+          },
+          "away": {
+            "id": 3339,
+            "name": "St. Pauli"
+          }
+        }
+      },
+      {
+        "id": 960763,
+        "date": "17/01/2026",
+        "time": "14:30",
+        "excitement_rating": 5.58,
+        "teams": {
+          "home": {
+            "id": 3336,
+            "name": "FC Cologne"
+          },
+          "away": {
+            "id": 3003,
+            "name": "Mainz"
+          }
+        }
+      },
+      {
+        "id": 960751,
+        "date": "17/01/2026",
+        "time": "14:30",
+        "excitement_rating": 6.12,
+        "teams": {
+          "home": {
+            "id": 3338,
+            "name": "Hamburg"
+          },
+          "away": {
+            "id": 4272,
+            "name": "Borussia M'gladbach"
+          }
+        }
+      },
+      {
+        "id": 960755,
+        "date": "17/01/2026",
+        "time": "14:30",
+        "excitement_rating": 7.81,
+        "teams": {
+          "home": {
+            "id": 3297,
+            "name": "Hoffenheim"
+          },
+          "away": {
+            "id": 4271,
+            "name": "Bayer Leverkusen"
+          }
+        }
+      },
+      {
+        "id": 960747,
+        "date": "17/01/2026",
+        "time": "14:30",
+        "excitement_rating": 7.19,
+        "teams": {
+          "home": {
+            "id": 2983,
+            "name": "Wolfsburg"
+          },
+          "away": {
+            "id": 4280,
+            "name": "Heidenheim"
+          }
+        }
+      },
+      {
+        "id": 960759,
+        "date": "17/01/2026",
+        "time": "17:30",
+        "excitement_rating": 9.25,
+        "teams": {
+          "home": {
+            "id": 3292,
+            "name": "RB Leipzig"
+          },
+          "away": {
+            "id": 4270,
+            "name": "Bayern Munich"
+          }
+        }
+      },
+      {
+        "id": 960761,
+        "date": "18/01/2026",
+        "time": "14:30",
+        "excitement_rating": 6.57,
+        "teams": {
+          "home": {
+            "id": 4276,
+            "name": "Stuttgart"
+          },
+          "away": {
+            "id": 3775,
+            "name": "Union Berlin"
+          }
+        }
+      },
+      {
+        "id": 960753,
+        "date": "18/01/2026",
+        "time": "16:30",
+        "excitement_rating": 5.88,
+        "teams": {
+          "home": {
+            "id": 3116,
+            "name": "Augsburg"
+          },
+          "away": {
+            "id": 4274,
+            "name": "Freiburg"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 245,
+    "league_name": "Super League 1",
+    "match_previews": [
+      {
+        "id": 964003,
+        "date": "17/01/2026",
+        "time": "13:30",
+        "excitement_rating": 4.81,
+        "teams": {
+          "home": {
+            "id": 5066,
+            "name": "Panserraikos"
+          },
+          "away": {
+            "id": 5065,
+            "name": "Kifisia"
+          }
+        }
+      },
+      {
+        "id": 964006,
+        "date": "17/01/2026",
+        "time": "16:30",
+        "excitement_rating": 5.28,
+        "teams": {
+          "home": {
+            "id": 4319,
+            "name": "Asteras Tripolis"
+          },
+          "away": {
+            "id": 3544,
+            "name": "Olympiakos"
+          }
+        }
+      },
+      {
+        "id": 964007,
+        "date": "18/01/2026",
+        "time": "15:00",
+        "excitement_rating": 5.39,
+        "teams": {
+          "home": {
+            "id": 4318,
+            "name": "Larissa"
+          },
+          "away": {
+            "id": 2900,
+            "name": "Aris Women"
+          }
+        }
+      },
+      {
+        "id": 964009,
+        "date": "18/01/2026",
+        "time": "17:00",
+        "excitement_rating": 9.23,
+        "teams": {
+          "home": {
+            "id": 3493,
+            "name": "PAOK"
+          },
+          "away": {
+            "id": 3524,
+            "name": "OFI"
+          }
+        }
+      },
+      {
+        "id": 964005,
+        "date": "18/01/2026",
+        "time": "19:00",
+        "excitement_rating": 9.08,
+        "teams": {
+          "home": {
+            "id": 3181,
+            "name": "AEK Athens"
+          },
+          "away": {
+            "id": 2822,
+            "name": "Panathinaikos"
+          }
+        }
+      },
+      {
+        "id": 964004,
+        "date": "19/01/2026",
+        "time": "16:00",
+        "excitement_rating": 6.24,
+        "teams": {
+          "home": {
+            "id": 3095,
+            "name": "Panaitolikos"
+          },
+          "away": {
+            "id": 3495,
+            "name": "Levadiakos"
+          }
+        }
+      },
+      {
+        "id": 964008,
+        "date": "19/01/2026",
+        "time": "18:00",
+        "excitement_rating": 4.34,
+        "teams": {
+          "home": {
+            "id": 2906,
+            "name": "Volos NFC"
+          },
+          "away": {
+            "id": 3115,
+            "name": "Atromitos"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 252,
+    "league_name": "Ligat Ha'al",
+    "match_previews": [
+      {
+        "id": 959504,
+        "date": "18/01/2026",
+        "time": "18:30",
+        "excitement_rating": 8.78,
+        "teams": {
+          "home": {
+            "id": 3201,
+            "name": "Maccabi Haifa"
+          },
+          "away": {
+            "id": 3384,
+            "name": "Maccabi Tel Aviv"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 253,
+    "league_name": "Serie A",
+    "match_previews": [
+      {
+        "id": 954195,
+        "date": "16/01/2026",
+        "time": "19:45",
+        "excitement_rating": 6.0,
+        "teams": {
+          "home": {
+            "id": 3388,
+            "name": "Pisa"
+          },
+          "away": {
+            "id": 2950,
+            "name": "Atalanta"
+          }
+        }
+      },
+      {
+        "id": 954197,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.2,
+        "teams": {
+          "home": {
+            "id": 3206,
+            "name": "Udinese"
+          },
+          "away": {
+            "id": 3296,
+            "name": "Inter Milan"
+          }
+        }
+      },
+      {
+        "id": 954193,
+        "date": "17/01/2026",
+        "time": "17:00",
+        "excitement_rating": 6.0,
+        "teams": {
+          "home": {
+            "id": 2984,
+            "name": "Napoli"
+          },
+          "away": {
+            "id": 4408,
+            "name": "Sassuolo"
+          }
+        }
+      },
+      {
+        "id": 954190,
+        "date": "17/01/2026",
+        "time": "19:45",
+        "excitement_rating": 5.75,
+        "teams": {
+          "home": {
+            "id": 4410,
+            "name": "Cagliari"
+          },
+          "away": {
+            "id": 4406,
+            "name": "Juventus"
+          }
+        }
+      },
+      {
+        "id": 954194,
+        "date": "18/01/2026",
+        "time": "11:30",
+        "excitement_rating": 5.19,
+        "teams": {
+          "home": {
+            "id": 4409,
+            "name": "Parma"
+          },
+          "away": {
+            "id": 4411,
+            "name": "Genoa"
+          }
+        }
+      },
+      {
+        "id": 954189,
+        "date": "18/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.38,
+        "teams": {
+          "home": {
+            "id": 2820,
+            "name": "Bologna"
+          },
+          "away": {
+            "id": 2969,
+            "name": "Fiorentina"
+          }
+        }
+      },
+      {
+        "id": 954196,
+        "date": "18/01/2026",
+        "time": "17:00",
+        "excitement_rating": 5.13,
+        "teams": {
+          "home": {
+            "id": 3062,
+            "name": "Torino"
+          },
+          "away": {
+            "id": 3767,
+            "name": "Roma"
+          }
+        }
+      },
+      {
+        "id": 954188,
+        "date": "18/01/2026",
+        "time": "19:45",
+        "excitement_rating": 8.78,
+        "teams": {
+          "home": {
+            "id": 4407,
+            "name": "AC Milan"
+          },
+          "away": {
+            "id": 2978,
+            "name": "Lecce"
+          }
+        }
+      },
+      {
+        "id": 954191,
+        "date": "19/01/2026",
+        "time": "17:30",
+        "excitement_rating": 4.58,
+        "teams": {
+          "home": {
+            "id": 2981,
+            "name": "Cremonese"
+          },
+          "away": {
+            "id": 2982,
+            "name": "Verona"
+          }
+        }
+      },
+      {
+        "id": 954192,
+        "date": "19/01/2026",
+        "time": "19:45",
+        "excitement_rating": 5.7,
+        "teams": {
+          "home": {
+            "id": 3582,
+            "name": "Lazio"
+          },
+          "away": {
+            "id": 2975,
+            "name": "Como"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 254,
+    "league_name": "Serie B",
+    "match_previews": [
+      {
+        "id": 967152,
+        "date": "16/01/2026",
+        "time": "19:30",
+        "excitement_rating": 7.84,
+        "teams": {
+          "home": {
+            "id": 2979,
+            "name": "Sampdoria"
+          },
+          "away": {
+            "id": 4426,
+            "name": "Virtus Entella"
+          }
+        }
+      },
+      {
+        "id": 967153,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.41,
+        "teams": {
+          "home": {
+            "id": 4423,
+            "name": "Calcio Padova"
+          },
+          "away": {
+            "id": 7671,
+            "name": "Mantova"
+          }
+        }
+      },
+      {
+        "id": 967154,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 8.87,
+        "teams": {
+          "home": {
+            "id": 4416,
+            "name": "Venezia"
+          },
+          "away": {
+            "id": 2988,
+            "name": "Catanzaro"
+          }
+        }
+      },
+      {
+        "id": 967149,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 8.79,
+        "teams": {
+          "home": {
+            "id": 2976,
+            "name": "Monza"
+          },
+          "away": {
+            "id": 3045,
+            "name": "Frosinone"
+          }
+        }
+      },
+      {
+        "id": 967151,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.59,
+        "teams": {
+          "home": {
+            "id": 7078,
+            "name": "Avellino"
+          },
+          "away": {
+            "id": 3238,
+            "name": "Carrarese"
+          }
+        }
+      },
+      {
+        "id": 967155,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.65,
+        "teams": {
+          "home": {
+            "id": 2970,
+            "name": "Empoli"
+          },
+          "away": {
+            "id": 4433,
+            "name": "Sudtirol"
+          }
+        }
+      },
+      {
+        "id": 967157,
+        "date": "17/01/2026",
+        "time": "16:15",
+        "excitement_rating": 6.06,
+        "teams": {
+          "home": {
+            "id": 2987,
+            "name": "Reggiana"
+          },
+          "away": {
+            "id": 7101,
+            "name": "Cesena"
+          }
+        }
+      },
+      {
+        "id": 967150,
+        "date": "17/01/2026",
+        "time": "18:30",
+        "excitement_rating": 5.7,
+        "teams": {
+          "home": {
+            "id": 4432,
+            "name": "Bari"
+          },
+          "away": {
+            "id": 4428,
+            "name": "Juve Stabia"
+          }
+        }
+      },
+      {
+        "id": 967156,
+        "date": "18/01/2026",
+        "time": "14:00",
+        "excitement_rating": 5.91,
+        "teams": {
+          "home": {
+            "id": 4417,
+            "name": "Pescara"
+          },
+          "away": {
+            "id": 2990,
+            "name": "Modena"
+          }
+        }
+      },
+      {
+        "id": 967158,
+        "date": "18/01/2026",
+        "time": "16:15",
+        "excitement_rating": 6.21,
+        "teams": {
+          "home": {
+            "id": 2985,
+            "name": "Palermo"
+          },
+          "away": {
+            "id": 2817,
+            "name": "Spezia"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 269,
+    "league_name": "Eerste Divisie",
+    "match_previews": [
+      {
+        "id": 958691,
+        "date": "16/01/2026",
+        "time": "19:00",
+        "excitement_rating": 6.61,
+        "teams": {
+          "home": {
+            "id": 4604,
+            "name": "VVV"
+          },
+          "away": {
+            "id": 4616,
+            "name": "AZ II"
+          }
+        }
+      },
+      {
+        "id": 958692,
+        "date": "16/01/2026",
+        "time": "19:00",
+        "excitement_rating": 6.18,
+        "teams": {
+          "home": {
+            "id": 4622,
+            "name": "Helmond Sport"
+          },
+          "away": {
+            "id": 3771,
+            "name": "Vitesse"
+          }
+        }
+      },
+      {
+        "id": 958694,
+        "date": "16/01/2026",
+        "time": "19:00",
+        "excitement_rating": 9.09,
+        "teams": {
+          "home": {
+            "id": 3289,
+            "name": "ADO Den Haag"
+          },
+          "away": {
+            "id": 2823,
+            "name": "Cambuur"
+          }
+        }
+      },
+      {
+        "id": 958696,
+        "date": "17/01/2026",
+        "time": "15:30",
+        "excitement_rating": 6.94,
+        "teams": {
+          "home": {
+            "id": 4618,
+            "name": "TOP Oss"
+          },
+          "away": {
+            "id": 4603,
+            "name": "Emmen"
+          }
+        }
+      },
+      {
+        "id": 958693,
+        "date": "18/01/2026",
+        "time": "11:15",
+        "excitement_rating": 6.57,
+        "teams": {
+          "home": {
+            "id": 2806,
+            "name": "Den Bosch"
+          },
+          "away": {
+            "id": 4617,
+            "name": "MVV"
+          }
+        }
+      },
+      {
+        "id": 958690,
+        "date": "18/01/2026",
+        "time": "13:30",
+        "excitement_rating": 7.0,
+        "teams": {
+          "home": {
+            "id": 4607,
+            "name": "RKC Waalwijk"
+          },
+          "away": {
+            "id": 4621,
+            "name": "Dordrecht"
+          }
+        }
+      },
+      {
+        "id": 958695,
+        "date": "18/01/2026",
+        "time": "13:30",
+        "excitement_rating": 9.51,
+        "teams": {
+          "home": {
+            "id": 2724,
+            "name": "Almere City"
+          },
+          "away": {
+            "id": 4611,
+            "name": "De Graafschap"
+          }
+        }
+      },
+      {
+        "id": 958697,
+        "date": "18/01/2026",
+        "time": "15:45",
+        "excitement_rating": 8.0,
+        "teams": {
+          "home": {
+            "id": 4615,
+            "name": "Eindhoven"
+          },
+          "away": {
+            "id": 4598,
+            "name": "Willem II"
+          }
+        }
+      },
+      {
+        "id": 958699,
+        "date": "19/01/2026",
+        "time": "19:00",
+        "excitement_rating": 6.76,
+        "teams": {
+          "home": {
+            "id": 4614,
+            "name": "Utrecht II"
+          },
+          "away": {
+            "id": 4620,
+            "name": "PSV II"
+          }
+        }
+      },
+      {
+        "id": 958698,
+        "date": "19/01/2026",
+        "time": "19:00",
+        "excitement_rating": 6.36,
+        "teams": {
+          "home": {
+            "id": 4612,
+            "name": "Ajax II"
+          },
+          "away": {
+            "id": 4619,
+            "name": "Roda JC"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 268,
+    "league_name": "Eredivisie",
+    "match_previews": [
+      {
+        "id": 969634,
+        "date": "17/01/2026",
+        "time": "15:30",
+        "excitement_rating": 7.3,
+        "teams": {
+          "home": {
+            "id": 2918,
+            "name": "Ajax"
+          },
+          "away": {
+            "id": 3100,
+            "name": "Go Ahead Eagles"
+          }
+        }
+      },
+      {
+        "id": 969637,
+        "date": "17/01/2026",
+        "time": "17:45",
+        "excitement_rating": 6.88,
+        "teams": {
+          "home": {
+            "id": 4605,
+            "name": "PEC Zwolle"
+          },
+          "away": {
+            "id": 2825,
+            "name": "AZ"
+          }
+        }
+      },
+      {
+        "id": 961644,
+        "date": "17/01/2026",
+        "time": "19:00",
+        "excitement_rating": 6.91,
+        "teams": {
+          "home": {
+            "id": 4610,
+            "name": "Excelsior"
+          },
+          "away": {
+            "id": 3447,
+            "name": "Telstar"
+          }
+        }
+      },
+      {
+        "id": 969633,
+        "date": "17/01/2026",
+        "time": "19:00",
+        "excitement_rating": 7.95,
+        "teams": {
+          "home": {
+            "id": 4606,
+            "name": "Fortuna Sittard"
+          },
+          "away": {
+            "id": 3770,
+            "name": "PSV"
+          }
+        }
+      },
+      {
+        "id": 969638,
+        "date": "17/01/2026",
+        "time": "20:00",
+        "excitement_rating": 6.15,
+        "teams": {
+          "home": {
+            "id": 4613,
+            "name": "NAC Breda"
+          },
+          "away": {
+            "id": 4608,
+            "name": "NEC"
+          }
+        }
+      },
+      {
+        "id": 969635,
+        "date": "18/01/2026",
+        "time": "11:15",
+        "excitement_rating": 6.95,
+        "teams": {
+          "home": {
+            "id": 3094,
+            "name": "Heerenveen"
+          },
+          "away": {
+            "id": 4601,
+            "name": "Groningen"
+          }
+        }
+      },
+      {
+        "id": 969631,
+        "date": "18/01/2026",
+        "time": "13:30",
+        "excitement_rating": 6.48,
+        "teams": {
+          "home": {
+            "id": 4609,
+            "name": "Volendam"
+          },
+          "away": {
+            "id": 4599,
+            "name": "Utrecht"
+          }
+        }
+      },
+      {
+        "id": 969632,
+        "date": "18/01/2026",
+        "time": "13:30",
+        "excitement_rating": 6.59,
+        "teams": {
+          "home": {
+            "id": 4600,
+            "name": "Heracles"
+          },
+          "away": {
+            "id": 3592,
+            "name": "Twente"
+          }
+        }
+      },
+      {
+        "id": 969636,
+        "date": "18/01/2026",
+        "time": "15:45",
+        "excitement_rating": 7.09,
+        "teams": {
+          "home": {
+            "id": 3203,
+            "name": "Feyenoord"
+          },
+          "away": {
+            "id": 4602,
+            "name": "Sparta Rotterdam"
+          }
+        }
+      },
+      {
+        "id": 969614,
+        "date": "21/01/2026",
+        "time": "17:45",
+        "excitement_rating": 7.35,
+        "teams": {
+          "home": {
+            "id": 2825,
+            "name": "AZ"
+          },
+          "away": {
+            "id": 4610,
+            "name": "Excelsior"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 280,
+    "league_name": "Primeira Liga",
+    "match_previews": [
+      {
+        "id": 964231,
+        "date": "16/01/2026",
+        "time": "20:15",
+        "excitement_rating": 7.06,
+        "teams": {
+          "home": {
+            "id": 4716,
+            "name": "Sporting Lisbon"
+          },
+          "away": {
+            "id": 3392,
+            "name": "Casa Pia"
+          }
+        }
+      },
+      {
+        "id": 964224,
+        "date": "17/01/2026",
+        "time": "15:30",
+        "excitement_rating": 6.36,
+        "teams": {
+          "home": {
+            "id": 3205,
+            "name": "Gil Vicente"
+          },
+          "away": {
+            "id": 2757,
+            "name": "Nacional"
+          }
+        }
+      },
+      {
+        "id": 964225,
+        "date": "17/01/2026",
+        "time": "18:00",
+        "excitement_rating": 6.19,
+        "teams": {
+          "home": {
+            "id": 6264,
+            "name": "Alverca"
+          },
+          "away": {
+            "id": 4717,
+            "name": "Moreirense"
+          }
+        }
+      },
+      {
+        "id": 964230,
+        "date": "17/01/2026",
+        "time": "18:00",
+        "excitement_rating": 6.09,
+        "teams": {
+          "home": {
+            "id": 5073,
+            "name": "AVS"
+          },
+          "away": {
+            "id": 2816,
+            "name": "Arouca"
+          }
+        }
+      },
+      {
+        "id": 964229,
+        "date": "17/01/2026",
+        "time": "20:30",
+        "excitement_rating": 7.08,
+        "teams": {
+          "home": {
+            "id": 3476,
+            "name": "Rio Ave"
+          },
+          "away": {
+            "id": 3217,
+            "name": "Benfica"
+          }
+        }
+      },
+      {
+        "id": 964226,
+        "date": "18/01/2026",
+        "time": "15:30",
+        "excitement_rating": 5.47,
+        "teams": {
+          "home": {
+            "id": 3780,
+            "name": "Santa Clara"
+          },
+          "away": {
+            "id": 4722,
+            "name": "Famalicao"
+          }
+        }
+      },
+      {
+        "id": 964232,
+        "date": "18/01/2026",
+        "time": "18:00",
+        "excitement_rating": 6.91,
+        "teams": {
+          "home": {
+            "id": 3215,
+            "name": "Tondela"
+          },
+          "away": {
+            "id": 3209,
+            "name": "Sporting Braga"
+          }
+        }
+      },
+      {
+        "id": 964228,
+        "date": "18/01/2026",
+        "time": "20:30",
+        "excitement_rating": 7.32,
+        "teams": {
+          "home": {
+            "id": 3368,
+            "name": "Vitoria Guimaraes"
+          },
+          "away": {
+            "id": 3216,
+            "name": "Porto"
+          }
+        }
+      },
+      {
+        "id": 964227,
+        "date": "19/01/2026",
+        "time": "20:15",
+        "excitement_rating": 7.51,
+        "teams": {
+          "home": {
+            "id": 4738,
+            "name": "Estrela"
+          },
+          "away": {
+            "id": 4724,
+            "name": "Estoril"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 281,
+    "league_name": "Segunda Liga",
+    "match_previews": [
+      {
+        "id": 965977,
+        "date": "16/01/2026",
+        "time": "18:00",
+        "excitement_rating": 7.08,
+        "teams": {
+          "home": {
+            "id": 4731,
+            "name": "Academico Viseu"
+          },
+          "away": {
+            "id": 5074,
+            "name": "Uniao de Leiria"
+          }
+        }
+      },
+      {
+        "id": 965973,
+        "date": "17/01/2026",
+        "time": "11:00",
+        "excitement_rating": 6.47,
+        "teams": {
+          "home": {
+            "id": 6343,
+            "name": "Felgueiras 1932"
+          },
+          "away": {
+            "id": 4728,
+            "name": "Leixoes"
+          }
+        }
+      },
+      {
+        "id": 965974,
+        "date": "17/01/2026",
+        "time": "11:00",
+        "excitement_rating": 5.79,
+        "teams": {
+          "home": {
+            "id": 4723,
+            "name": "Farense"
+          },
+          "away": {
+            "id": 4732,
+            "name": "UD Oliveirense"
+          }
+        }
+      },
+      {
+        "id": 965979,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 7.51,
+        "teams": {
+          "home": {
+            "id": 4729,
+            "name": "Penafiel"
+          },
+          "away": {
+            "id": 4719,
+            "name": "Portimonense"
+          }
+        }
+      },
+      {
+        "id": 965978,
+        "date": "17/01/2026",
+        "time": "18:00",
+        "excitement_rating": 6.86,
+        "teams": {
+          "home": {
+            "id": 2728,
+            "name": "Benfica II"
+          },
+          "away": {
+            "id": 2893,
+            "name": "Chaves"
+          }
+        }
+      },
+      {
+        "id": 965972,
+        "date": "18/01/2026",
+        "time": "14:00",
+        "excitement_rating": 8.65,
+        "teams": {
+          "home": {
+            "id": 6491,
+            "name": "Lusitania Lourosa"
+          },
+          "away": {
+            "id": 3372,
+            "name": "Maritimo"
+          }
+        }
+      },
+      {
+        "id": 965976,
+        "date": "19/01/2026",
+        "time": "18:00",
+        "excitement_rating": 7.22,
+        "teams": {
+          "home": {
+            "id": 3373,
+            "name": "Feirense"
+          },
+          "away": {
+            "id": 4730,
+            "name": "Porto II"
+          }
+        }
+      },
+      {
+        "id": 965975,
+        "date": "19/01/2026",
+        "time": "18:00",
+        "excitement_rating": 5.88,
+        "teams": {
+          "home": {
+            "id": 8300,
+            "name": "Sporting CP II"
+          },
+          "away": {
+            "id": 4739,
+            "name": "Torreense"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 286,
+    "league_name": "Liga I",
+    "match_previews": [
+      {
+        "id": 956374,
+        "date": "16/01/2026",
+        "time": "18:00",
+        "excitement_rating": 6.76,
+        "teams": {
+          "home": {
+            "id": 2824,
+            "name": "Arges"
+          },
+          "away": {
+            "id": 3177,
+            "name": "FCSB"
+          }
+        }
+      },
+      {
+        "id": 956370,
+        "date": "17/01/2026",
+        "time": "11:00",
+        "excitement_rating": 6.29,
+        "teams": {
+          "home": {
+            "id": 6983,
+            "name": "Unirea Slobozia"
+          },
+          "away": {
+            "id": 3525,
+            "name": "UTA Arad"
+          }
+        }
+      },
+      {
+        "id": 956369,
+        "date": "17/01/2026",
+        "time": "15:15",
+        "excitement_rating": 4.14,
+        "teams": {
+          "home": {
+            "id": 3630,
+            "name": "FCV Farul Constanta"
+          },
+          "away": {
+            "id": 3050,
+            "name": "Hermannstadt"
+          }
+        }
+      },
+      {
+        "id": 956367,
+        "date": "17/01/2026",
+        "time": "18:00",
+        "excitement_rating": 8.83,
+        "teams": {
+          "home": {
+            "id": 3142,
+            "name": "Rapid"
+          },
+          "away": {
+            "id": 6660,
+            "name": "Metaloglobus"
+          }
+        }
+      },
+      {
+        "id": 956371,
+        "date": "18/01/2026",
+        "time": "13:30",
+        "excitement_rating": 8.34,
+        "teams": {
+          "home": {
+            "id": 6224,
+            "name": "Csikszereda"
+          },
+          "away": {
+            "id": 4763,
+            "name": "Botosani"
+          }
+        }
+      },
+      {
+        "id": 956376,
+        "date": "18/01/2026",
+        "time": "15:45",
+        "excitement_rating": 7.28,
+        "teams": {
+          "home": {
+            "id": 3058,
+            "name": "CFR Cluj"
+          },
+          "away": {
+            "id": 5076,
+            "name": "Otelul"
+          }
+        }
+      },
+      {
+        "id": 956368,
+        "date": "18/01/2026",
+        "time": "18:30",
+        "excitement_rating": 8.89,
+        "teams": {
+          "home": {
+            "id": 4764,
+            "name": "Dinamo Bucuresti"
+          },
+          "away": {
+            "id": 4773,
+            "name": "Universitatea Cluj"
+          }
+        }
+      },
+      {
+        "id": 956372,
+        "date": "19/01/2026",
+        "time": "18:00",
+        "excitement_rating": 5.75,
+        "teams": {
+          "home": {
+            "id": 3522,
+            "name": "Petrolul 52"
+          },
+          "away": {
+            "id": 2804,
+            "name": "Universitatea Craiova"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 288,
+    "league_name": "Saudi League",
+    "match_previews": [
+      {
+        "id": 968943,
+        "date": "16/01/2026",
+        "time": "13:40",
+        "excitement_rating": 5.23,
+        "teams": {
+          "home": {
+            "id": 13719,
+            "name": "Al Najma"
+          },
+          "away": {
+            "id": 4796,
+            "name": "Al Fateh"
+          }
+        }
+      },
+      {
+        "id": 968947,
+        "date": "16/01/2026",
+        "time": "14:45",
+        "excitement_rating": 6.24,
+        "teams": {
+          "home": {
+            "id": 2965,
+            "name": "Al Khaleej"
+          },
+          "away": {
+            "id": 5077,
+            "name": "Al Akhdoud"
+          }
+        }
+      },
+      {
+        "id": 968945,
+        "date": "16/01/2026",
+        "time": "17:30",
+        "excitement_rating": 7.43,
+        "teams": {
+          "home": {
+            "id": 4797,
+            "name": "Al Ittihad"
+          },
+          "away": {
+            "id": 4798,
+            "name": "Al Ittifaq"
+          }
+        }
+      },
+      {
+        "id": 968948,
+        "date": "17/01/2026",
+        "time": "13:35",
+        "excitement_rating": 4.87,
+        "teams": {
+          "home": {
+            "id": 4799,
+            "name": "Al Feiha"
+          },
+          "away": {
+            "id": 4805,
+            "name": "Damak"
+          }
+        }
+      },
+      {
+        "id": 968944,
+        "date": "17/01/2026",
+        "time": "15:10",
+        "excitement_rating": 5.97,
+        "teams": {
+          "home": {
+            "id": 11862,
+            "name": "Al Kholood"
+          },
+          "away": {
+            "id": 4791,
+            "name": "Al Ahli"
+          }
+        }
+      },
+      {
+        "id": 968950,
+        "date": "17/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.97,
+        "teams": {
+          "home": {
+            "id": 4788,
+            "name": "Al Nassr"
+          },
+          "away": {
+            "id": 4792,
+            "name": "Al Shabab"
+          }
+        }
+      },
+      {
+        "id": 968949,
+        "date": "18/01/2026",
+        "time": "15:15",
+        "excitement_rating": 6.03,
+        "teams": {
+          "home": {
+            "id": 4800,
+            "name": "Al Hazm"
+          },
+          "away": {
+            "id": 4801,
+            "name": "Al-Qadsiah"
+          }
+        }
+      },
+      {
+        "id": 968946,
+        "date": "18/01/2026",
+        "time": "17:30",
+        "excitement_rating": 4.55,
+        "teams": {
+          "home": {
+            "id": 16613,
+            "name": "NEOM"
+          },
+          "away": {
+            "id": 4789,
+            "name": "Al Hilal"
+          }
+        }
+      },
+      {
+        "id": 968951,
+        "date": "18/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.0,
+        "teams": {
+          "home": {
+            "id": 5078,
+            "name": "Al Riyadh"
+          },
+          "away": {
+            "id": 4790,
+            "name": "Al Taawon"
+          }
+        }
+      },
+      {
+        "id": 968954,
+        "date": "20/01/2026",
+        "time": "15:05",
+        "excitement_rating": 5.94,
+        "teams": {
+          "home": {
+            "id": 4792,
+            "name": "Al Shabab"
+          },
+          "away": {
+            "id": 13719,
+            "name": "Al Najma"
+          }
+        }
+      },
+      {
+        "id": 968953,
+        "date": "20/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.7,
+        "teams": {
+          "home": {
+            "id": 4791,
+            "name": "Al Ahli"
+          },
+          "away": {
+            "id": 2965,
+            "name": "Al Khaleej"
+          }
+        }
+      },
+      {
+        "id": 968955,
+        "date": "20/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.14,
+        "teams": {
+          "home": {
+            "id": 4796,
+            "name": "Al Fateh"
+          },
+          "away": {
+            "id": 11862,
+            "name": "Al Kholood"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 289,
+    "league_name": "Premiership",
+    "match_previews": [
+      {
+        "id": 956580,
+        "date": "20/01/2026",
+        "time": "19:45",
+        "excitement_rating": 5.13,
+        "teams": {
+          "home": {
+            "id": 3407,
+            "name": "Livingston"
+          },
+          "away": {
+            "id": 4809,
+            "name": "St. Mirren"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 296,
+    "league_name": "PSL",
+    "match_previews": [
+      {
+        "id": 968373,
+        "date": "19/01/2026",
+        "time": "17:30",
+        "excitement_rating": 8.58,
+        "teams": {
+          "home": {
+            "id": 4859,
+            "name": "Mamelodi Sundowns"
+          },
+          "away": {
+            "id": 14456,
+            "name": "Orbit College"
+          }
+        }
+      },
+      {
+        "id": 968376,
+        "date": "20/01/2026",
+        "time": "17:30",
+        "excitement_rating": 4.93,
+        "teams": {
+          "home": {
+            "id": 4867,
+            "name": "Kaizer Chiefs"
+          },
+          "away": {
+            "id": 4868,
+            "name": "Golden Arrows"
+          }
+        }
+      },
+      {
+        "id": 968375,
+        "date": "20/01/2026",
+        "time": "17:30",
+        "excitement_rating": 8.83,
+        "teams": {
+          "home": {
+            "id": 4880,
+            "name": "Sekhukhune United"
+          },
+          "away": {
+            "id": 4875,
+            "name": "Stellenbosch"
+          }
+        }
+      },
+      {
+        "id": 968379,
+        "date": "21/01/2026",
+        "time": "17:30",
+        "excitement_rating": 5.94,
+        "teams": {
+          "home": {
+            "id": 4877,
+            "name": "TS Galaxy"
+          },
+          "away": {
+            "id": 4878,
+            "name": "Marumo Gallants"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 297,
+    "league_name": "La Liga",
+    "match_previews": [
+      {
+        "id": 961930,
+        "date": "16/01/2026",
+        "time": "20:00",
+        "excitement_rating": 5.26,
+        "teams": {
+          "home": {
+            "id": 4895,
+            "name": "Espanyol"
+          },
+          "away": {
+            "id": 2798,
+            "name": "Girona"
+          }
+        }
+      },
+      {
+        "id": 961934,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 6.88,
+        "teams": {
+          "home": {
+            "id": 4883,
+            "name": "Real Madrid"
+          },
+          "away": {
+            "id": 2914,
+            "name": "Levante"
+          }
+        }
+      },
+      {
+        "id": 961932,
+        "date": "17/01/2026",
+        "time": "15:15",
+        "excitement_rating": 5.29,
+        "teams": {
+          "home": {
+            "id": 2802,
+            "name": "Mallorca"
+          },
+          "away": {
+            "id": 4887,
+            "name": "Athletic Bilbao"
+          }
+        }
+      },
+      {
+        "id": 961933,
+        "date": "17/01/2026",
+        "time": "17:30",
+        "excitement_rating": 4.71,
+        "teams": {
+          "home": {
+            "id": 4888,
+            "name": "Osasuna"
+          },
+          "away": {
+            "id": 4901,
+            "name": "Real Oviedo"
+          }
+        }
+      },
+      {
+        "id": 961927,
+        "date": "17/01/2026",
+        "time": "20:00",
+        "excitement_rating": 9.07,
+        "teams": {
+          "home": {
+            "id": 4886,
+            "name": "Real Betis"
+          },
+          "away": {
+            "id": 2907,
+            "name": "Villarreal"
+          }
+        }
+      },
+      {
+        "id": 961931,
+        "date": "18/01/2026",
+        "time": "13:00",
+        "excitement_rating": 5.91,
+        "teams": {
+          "home": {
+            "id": 4891,
+            "name": "Getafe"
+          },
+          "away": {
+            "id": 4890,
+            "name": "Valencia"
+          }
+        }
+      },
+      {
+        "id": 961926,
+        "date": "18/01/2026",
+        "time": "15:15",
+        "excitement_rating": 5.81,
+        "teams": {
+          "home": {
+            "id": 4882,
+            "name": "Atletico Madrid"
+          },
+          "away": {
+            "id": 4892,
+            "name": "Alaves"
+          }
+        }
+      },
+      {
+        "id": 961928,
+        "date": "18/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.53,
+        "teams": {
+          "home": {
+            "id": 2911,
+            "name": "Celta Vigo"
+          },
+          "away": {
+            "id": 2910,
+            "name": "Rayo Vallecano"
+          }
+        }
+      },
+      {
+        "id": 961221,
+        "date": "18/01/2026",
+        "time": "20:00",
+        "excitement_rating": 6.71,
+        "teams": {
+          "home": {
+            "id": 18798,
+            "name": "None"
+          },
+          "away": {
+            "id": 18798,
+            "name": "None"
+          }
+        }
+      },
+      {
+        "id": 961929,
+        "date": "19/01/2026",
+        "time": "20:00",
+        "excitement_rating": 5.97,
+        "teams": {
+          "home": {
+            "id": 4893,
+            "name": "Elche"
+          },
+          "away": {
+            "id": 3019,
+            "name": "Sevilla"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 298,
+    "league_name": "Segunda Division",
+    "match_previews": [
+      {
+        "id": 962248,
+        "date": "16/01/2026",
+        "time": "19:30",
+        "excitement_rating": 8.94,
+        "teams": {
+          "home": {
+            "id": 4919,
+            "name": "Castellon"
+          },
+          "away": {
+            "id": 4897,
+            "name": "Leganes"
+          }
+        }
+      },
+      {
+        "id": 962249,
+        "date": "17/01/2026",
+        "time": "13:00",
+        "excitement_rating": 5.62,
+        "teams": {
+          "home": {
+            "id": 3459,
+            "name": "Ceuta"
+          },
+          "away": {
+            "id": 3121,
+            "name": "Real Valladolid"
+          }
+        }
+      },
+      {
+        "id": 962241,
+        "date": "17/01/2026",
+        "time": "15:15",
+        "excitement_rating": 5.91,
+        "teams": {
+          "home": {
+            "id": 6451,
+            "name": "Cultural Leonesa"
+          },
+          "away": {
+            "id": 4902,
+            "name": "Sporting Gijon"
+          }
+        }
+      },
+      {
+        "id": 962244,
+        "date": "17/01/2026",
+        "time": "17:30",
+        "excitement_rating": 7.35,
+        "teams": {
+          "home": {
+            "id": 4906,
+            "name": "Real Zaragoza"
+          },
+          "away": {
+            "id": 3140,
+            "name": "Real Sociedad B"
+          }
+        }
+      },
+      {
+        "id": 962242,
+        "date": "17/01/2026",
+        "time": "20:00",
+        "excitement_rating": 8.98,
+        "teams": {
+          "home": {
+            "id": 4898,
+            "name": "Almeria"
+          },
+          "away": {
+            "id": 4900,
+            "name": "Deportivo La Coruna"
+          }
+        }
+      },
+      {
+        "id": 962240,
+        "date": "18/01/2026",
+        "time": "13:00",
+        "excitement_rating": 5.76,
+        "teams": {
+          "home": {
+            "id": 2915,
+            "name": "Mirandes"
+          },
+          "away": {
+            "id": 3195,
+            "name": "FC Andorra"
+          }
+        }
+      },
+      {
+        "id": 962250,
+        "date": "18/01/2026",
+        "time": "15:15",
+        "excitement_rating": 9.09,
+        "teams": {
+          "home": {
+            "id": 4915,
+            "name": "Racing Santander"
+          },
+          "away": {
+            "id": 4903,
+            "name": "Las Palmas"
+          }
+        }
+      },
+      {
+        "id": 962246,
+        "date": "18/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.21,
+        "teams": {
+          "home": {
+            "id": 4920,
+            "name": "Burgos"
+          },
+          "away": {
+            "id": 3502,
+            "name": "Huesca"
+          }
+        }
+      },
+      {
+        "id": 962245,
+        "date": "18/01/2026",
+        "time": "17:30",
+        "excitement_rating": 6.03,
+        "teams": {
+          "home": {
+            "id": 3287,
+            "name": "Albacete"
+          },
+          "away": {
+            "id": 4889,
+            "name": "Cadiz"
+          }
+        }
+      },
+      {
+        "id": 962243,
+        "date": "18/01/2026",
+        "time": "20:00",
+        "excitement_rating": 8.1,
+        "teams": {
+          "home": {
+            "id": 4911,
+            "name": "Cordoba"
+          },
+          "away": {
+            "id": 4899,
+            "name": "Malaga"
+          }
+        }
+      },
+      {
+        "id": 962247,
+        "date": "19/01/2026",
+        "time": "19:30",
+        "excitement_rating": 5.82,
+        "teams": {
+          "home": {
+            "id": 3369,
+            "name": "Granada"
+          },
+          "away": {
+            "id": 4894,
+            "name": "Eibar"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 302,
+    "league_name": "Super League",
+    "match_previews": [
+      {
+        "id": 957027,
+        "date": "17/01/2026",
+        "time": "17:00",
+        "excitement_rating": 9.01,
+        "teams": {
+          "home": {
+            "id": 3128,
+            "name": "Winterthur"
+          },
+          "away": {
+            "id": 4945,
+            "name": "St.Gallen"
+          }
+        }
+      },
+      {
+        "id": 957031,
+        "date": "17/01/2026",
+        "time": "17:00",
+        "excitement_rating": 6.59,
+        "teams": {
+          "home": {
+            "id": 3633,
+            "name": "Luzern"
+          },
+          "away": {
+            "id": 3597,
+            "name": "Lugano"
+          }
+        }
+      },
+      {
+        "id": 957030,
+        "date": "17/01/2026",
+        "time": "19:30",
+        "excitement_rating": 5.94,
+        "teams": {
+          "home": {
+            "id": 3120,
+            "name": "Young Boys"
+          },
+          "away": {
+            "id": 3288,
+            "name": "Lausanne-Sport"
+          }
+        }
+      },
+      {
+        "id": 957029,
+        "date": "18/01/2026",
+        "time": "13:00",
+        "excitement_rating": 6.89,
+        "teams": {
+          "home": {
+            "id": 3786,
+            "name": "Servette"
+          },
+          "away": {
+            "id": 4946,
+            "name": "Zurich"
+          }
+        }
+      },
+      {
+        "id": 957026,
+        "date": "18/01/2026",
+        "time": "15:30",
+        "excitement_rating": 6.58,
+        "teams": {
+          "home": {
+            "id": 4947,
+            "name": "Grasshoppers"
+          },
+          "away": {
+            "id": 3125,
+            "name": "Thun"
+          }
+        }
+      },
+      {
+        "id": 957028,
+        "date": "18/01/2026",
+        "time": "15:30",
+        "excitement_rating": 5.87,
+        "teams": {
+          "home": {
+            "id": 3286,
+            "name": "Basel"
+          },
+          "away": {
+            "id": 3293,
+            "name": "Sion"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "league_id": 305,
+    "league_name": "Super Lig",
+    "match_previews": [
+      {
+        "id": 964532,
+        "date": "17/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.51,
+        "teams": {
+          "home": {
+            "id": 3004,
+            "name": "Istanbul Basaksehir"
+          },
+          "away": {
+            "id": 3021,
+            "name": "Fatih Karagumruk"
+          }
+        }
+      },
+      {
+        "id": 964531,
+        "date": "17/01/2026",
+        "time": "17:00",
+        "excitement_rating": 5.09,
+        "teams": {
+          "home": {
+            "id": 4976,
+            "name": "Galatasaray"
+          },
+          "away": {
+            "id": 3018,
+            "name": "Gaziantep FK"
+          }
+        }
+      },
+      {
+        "id": 964538,
+        "date": "18/01/2026",
+        "time": "11:30",
+        "excitement_rating": 6.86,
+        "teams": {
+          "home": {
+            "id": 3013,
+            "name": "Kasimpasa"
+          },
+          "away": {
+            "id": 3284,
+            "name": "Antalyaspor"
+          }
+        }
+      },
+      {
+        "id": 964533,
+        "date": "18/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.53,
+        "teams": {
+          "home": {
+            "id": 3009,
+            "name": "Genclerbirligi"
+          },
+          "away": {
+            "id": 2966,
+            "name": "Samsunspor"
+          }
+        }
+      },
+      {
+        "id": 964536,
+        "date": "18/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.0,
+        "teams": {
+          "home": {
+            "id": 3025,
+            "name": "Kocaelispor"
+          },
+          "away": {
+            "id": 3022,
+            "name": "Trabzonspor"
+          }
+        }
+      },
+      {
+        "id": 964537,
+        "date": "18/01/2026",
+        "time": "17:00",
+        "excitement_rating": 9.12,
+        "teams": {
+          "home": {
+            "id": 3346,
+            "name": "Alanyaspor"
+          },
+          "away": {
+            "id": 3494,
+            "name": "Fenerbahce"
+          }
+        }
+      },
+      {
+        "id": 964535,
+        "date": "19/01/2026",
+        "time": "14:00",
+        "excitement_rating": 6.55,
+        "teams": {
+          "home": {
+            "id": 3538,
+            "name": "Konyaspor"
+          },
+          "away": {
+            "id": 3023,
+            "name": "Eyupspor"
+          }
+        }
+      },
+      {
+        "id": 964534,
+        "date": "19/01/2026",
+        "time": "17:00",
+        "excitement_rating": 6.63,
+        "teams": {
+          "home": {
+            "id": 4978,
+            "name": "Goztepe"
+          },
+          "away": {
+            "id": 3028,
+            "name": "Rizespor"
+          }
+        }
+      },
+      {
+        "id": 964530,
+        "date": "19/01/2026",
+        "time": "17:00",
+        "excitement_rating": 6.85,
+        "teams": {
+          "home": {
+            "id": 3069,
+            "name": "Besiktas"
+          },
+          "away": {
+            "id": 3279,
+            "name": "Kayserispor"
+          }
+        }
+      }
+    ]
+  }
+]

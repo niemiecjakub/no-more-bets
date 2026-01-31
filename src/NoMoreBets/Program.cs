@@ -13,6 +13,7 @@ builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection(
 builder.Services.AddSingleton<IJsonCache, JsonCache>();
 builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
 builder.Services.AddSingleton<IPageFetcher, PlaywrightPageFetcher>();
+builder.Services.AddSingleton<IRotowireScraper, RotowireScraper>();
 
 var app = builder.Build();
 

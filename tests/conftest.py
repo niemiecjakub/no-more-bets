@@ -47,14 +47,14 @@ def mock_time(monkeypatch):
 
 @pytest.fixture
 def fixtures_dir() -> Path:
-    """Get the path to the fixtures directory.
+    """Get the path to the fixtures directory (shared with NoMoreBets.Tests).
     
     Returns
     -------
     Path
-        Path to tests/fixtures directory.
+        Path to tests/NoMoreBets.Tests/Fixtures directory.
     """
-    return Path(__file__).parent / "fixtures"
+    return Path(__file__).parent / "NoMoreBets.Tests" / "Fixtures"
 
 
 def load_fixture_html(fixture_path: Path) -> str:

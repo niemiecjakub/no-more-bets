@@ -187,8 +187,8 @@ def populate_web_search_fixtures(fixtures_dir: Path):
 
 
 def main():
-    """Main function to populate all fixtures."""
-    fixtures_dir = Path(__file__).parent
+    """Main function to populate all fixtures (writes to tests/NoMoreBets.Tests/Fixtures)."""
+    fixtures_dir = Path(__file__).parent.parent / "NoMoreBets.Tests" / "Fixtures"
     
     logger.info("=" * 60)
     logger.info("Populating Test Fixtures")
