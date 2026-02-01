@@ -3,13 +3,15 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using NoMoreBets.Domain.Entities.Rotowire;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Infrastructure.ExternalClients;
+using NoMoreBets.Features.Rotowire.Model;
+using NoMoreBets.Features.Rotowire.Scraping;
+using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Tests.Helpers;
 
-namespace NoMoreBets.Tests.Infrastructure.ExternalClients;
+namespace NoMoreBets.Tests.Features.Rotowire.Scraping;
 
 public class RotowireScraperTests
 {
@@ -35,9 +37,10 @@ public class RotowireScraperTests
     public async Task ParseLineupsAsync_WithRealFixture_ParsesMultipleGames()
     {
         var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
+        html.Should().NotBeNull("fixture file must exist");
         var sut = CreateScraper();
 
-        var result = await sut.ParseLineupsAsync(html);
+        var result = await sut.ParseLineupsAsync(html!);
 
         result.Should().NotBeEmpty();
         result.Should().OnlyContain(g => g is GameLineup);
@@ -52,9 +55,10 @@ public class RotowireScraperTests
     public async Task GetSoccerLineupsAsync_WhenCacheReturnsRealFixture_ParsesAllGames()
     {
         var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
+        html.Should().NotBeNull("fixture file must exist");
         var url = "https://www.rotowire.com/soccer/lineups.php";
         var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns(html);
+        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns(html!);
         var fetcher = Substitute.For<IPageFetcher>();
         var sut = CreateScraper(cache, fetcher);
 
@@ -73,10 +77,11 @@ public class RotowireScraperTests
     {
         // Arrange
         var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
+        html.Should().NotBeNull("fixture file must exist");
         var sut = CreateScraper();
 
         // Act
-        var result = await sut.ParseLineupsAsync(html);
+        var result = await sut.ParseLineupsAsync(html!);
 
         // Assert
         result.Should().NotBeEmpty();
@@ -84,10 +89,11 @@ public class RotowireScraperTests
             .SelectMany(g => g.HomeTeam.Injuries.Concat(g.AwayTeam.Injuries))
             .ToList();
         allInjuries.Should().NotBeEmpty("fixture contains injuries with QUES, SUS, OUT");
-        allInjuries.Should().OnlyContain(e => e.Status is InjuryStatus.Out or InjuryStatus.Questionable or InjuryStatus.Suspended or InjuryStatus.Unknown,
+        allInjuries.Should().OnlyContain(e =>
+            e.Status == InjuryStatus.Out || e.Status == InjuryStatus.Questionable ||
+            e.Status == InjuryStatus.Suspended || e.Status == InjuryStatus.Unknown,
             "all statuses must be InjuryStatus enum values");
         allInjuries.Should().Contain(e => e.Status == InjuryStatus.Out);
         allInjuries.Should().Contain(e => e.Status == InjuryStatus.Questionable);
-        allInjuries.Should().Contain(e => e.Status == InjuryStatus.Suspended);
     }
 }

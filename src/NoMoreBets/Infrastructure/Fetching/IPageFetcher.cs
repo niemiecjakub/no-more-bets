@@ -1,4 +1,6 @@
-namespace NoMoreBets.Infrastructure.ExternalClients;
+using NoMoreBets.Infrastructure.Scraping;
+
+namespace NoMoreBets.Infrastructure.Fetching;
 
 /// <summary>
 /// Fetches page HTML from a URL (e.g. via Playwright).

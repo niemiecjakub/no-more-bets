@@ -1,4 +1,4 @@
-namespace NoMoreBets.Infrastructure.ExternalClients;
+namespace NoMoreBets.Infrastructure.Scraping;
 
 /// <summary>
 /// Thrown when a fetch fails with a permanent HTTP status (403, 404, 410).

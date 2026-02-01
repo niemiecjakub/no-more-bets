@@ -1,6 +1,6 @@
 using MediatR;
-using NoMoreBets.Domain.Entities.Rotowire;
-using NoMoreBets.Infrastructure.ExternalClients;
+using NoMoreBets.Features.Rotowire.Model;
+using NoMoreBets.Features.Rotowire.Scraping;
 
 namespace NoMoreBets.Features.Rotowire.GetRotowireLineups;
 

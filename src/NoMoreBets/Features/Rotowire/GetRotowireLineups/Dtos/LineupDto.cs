@@ -1,20 +1,21 @@
 using System.Linq;
-using NoMoreBets.Domain.Entities.Rotowire;
+using NoMoreBets.Domain.Enums;
+using NoMoreBets.Features.Rotowire.Model;
 
-namespace NoMoreBets.Common;
+namespace NoMoreBets.Features.Rotowire.GetRotowireLineups.Dtos;
 
 /// <summary>API response DTO for a player in a lineup.</summary>
-public record PlayerInLineupDto(string Name, PositionDto Position)
+public record PlayerInLineupDto(string Name, PlayerPositionDto Position)
 {
   public static PlayerInLineupDto From(PlayerInLineup source) =>
-      new(source.Player, PositionDto.From(source.Position));
+      new(source.Player, PlayerPositionDto.From(source.Position));
 }
 
 /// <summary>API response DTO for an injury entry.</summary>
-public record InjuryEntryDto(string Name, PositionDto Position, StatusDto Status)
+public record InjuryEntryDto(string Name, PlayerPositionDto Position, InjuryStatusDto Status)
 {
   public static InjuryEntryDto From(InjuryEntry source) =>
-      new(source.Player, PositionDto.From(source.Position), StatusDto.From(source.Status));
+      new(source.Player, PlayerPositionDto.From(source.Position), InjuryStatusDto.From(source.Status));
 }
 
 /// <summary>API response DTO for a team lineup.</summary>
@@ -29,7 +30,7 @@ public record TeamLineupDto(
       new(
           source.TeamName,
           source.TeamCode,
-          source.LineupType,
+          LineupTypes.GetDisplayName(source.LineupType),
           source.Players.Select(PlayerInLineupDto.From).ToList(),
           source.Injuries.Select(InjuryEntryDto.From).ToList());
 }

@@ -1,6 +1,6 @@
-using NoMoreBets.Domain.Entities.Rotowire;
+using NoMoreBets.Features.Rotowire.Model;
 
-namespace NoMoreBets.Infrastructure.ExternalClients;
+namespace NoMoreBets.Features.Rotowire.Scraping;
 
 /// <summary>
 /// Fetches and parses soccer lineups from RotoWire (rotowire.com).

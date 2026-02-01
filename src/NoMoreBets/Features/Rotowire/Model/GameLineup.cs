@@ -1,4 +1,4 @@
-namespace NoMoreBets.Domain.Entities.Rotowire;
+namespace NoMoreBets.Features.Rotowire.Model;
 
 /// <summary>
 /// Represents a complete game with lineups.

@@ -1,5 +1,5 @@
 using MediatR;
-using NoMoreBets.Domain.Entities.Rotowire;
+using NoMoreBets.Features.Rotowire.Model;
 
 namespace NoMoreBets.Features.Rotowire.GetRotowireLineups;
 

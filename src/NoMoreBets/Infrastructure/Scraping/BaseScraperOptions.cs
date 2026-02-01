@@ -1,4 +1,4 @@
-namespace NoMoreBets.Infrastructure.ExternalClients;
+namespace NoMoreBets.Infrastructure.Scraping;
 
 /// <summary>
 /// Options for base scraper: rate limiting, retry, and timeout.

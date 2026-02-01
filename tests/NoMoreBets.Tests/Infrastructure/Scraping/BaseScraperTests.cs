@@ -4,10 +4,11 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NSubstitute.Core;
-using NoMoreBets.Infrastructure.ExternalClients;
+using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
 
-namespace NoMoreBets.Tests.Infrastructure.ExternalClients;
+namespace NoMoreBets.Tests.Infrastructure.Scraping;
 
 public class BaseScraperTests
 {

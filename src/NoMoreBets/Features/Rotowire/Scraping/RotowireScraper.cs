@@ -3,11 +3,13 @@ using AngleSharp;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Domain.Entities.Rotowire;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Features.Rotowire.Model;
+using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
 
-namespace NoMoreBets.Infrastructure.ExternalClients;
+namespace NoMoreBets.Features.Rotowire.Scraping;
 
 /// <summary>
 /// RotoWire scraper for fetching and parsing soccer lineup data from rotowire.com.
@@ -114,7 +116,7 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
     {
         var players = new List<PlayerInLineup>();
         var injuries = new List<InjuryEntry>();
-        var lineupType = "Predicted Lineup";
+        var lineupType = LineupType.Unknown;
 
         var homeTeamElem = section.QuerySelector("div.lineup__team.is-home");
         var isHome = false;
@@ -155,10 +157,8 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
         if (statusElem is not null)
         {
             var statusText = statusElem.TextContent.Trim();
-            if (statusText.Contains("Confirmed Lineup", StringComparison.Ordinal))
-                lineupType = "Confirmed Lineup";
-            else if (statusText.Contains("Predicted Lineup", StringComparison.Ordinal))
-                lineupType = "Predicted Lineup";
+            if (LineupTypes.TryParseFromStatusText(statusText, out var parsed))
+                lineupType = parsed;
         }
 
         var inInjuriesSection = false;

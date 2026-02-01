@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Storage;
 
-namespace NoMoreBets.Infrastructure.ExternalClients;
+namespace NoMoreBets.Infrastructure.Scraping;
 
 /// <summary>
 /// Base scraper with cache-first fetch, rate limiting, and retry with exponential backoff.

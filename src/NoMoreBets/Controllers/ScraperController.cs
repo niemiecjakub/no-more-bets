@@ -1,8 +1,8 @@
 using System.Linq;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using NoMoreBets.Common;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups;
+using NoMoreBets.Features.Rotowire.GetRotowireLineups.Dtos;
 
 namespace NoMoreBets.Controllers;
 

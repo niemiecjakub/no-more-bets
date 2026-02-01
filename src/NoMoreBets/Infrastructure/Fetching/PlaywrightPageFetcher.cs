@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
+using NoMoreBets.Infrastructure.Scraping;
 
-namespace NoMoreBets.Infrastructure.ExternalClients;
+namespace NoMoreBets.Infrastructure.Fetching;
 
 /// <summary>
 /// Fetches page HTML using Playwright with WaitUntilState.NetworkIdle.

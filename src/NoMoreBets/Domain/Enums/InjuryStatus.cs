@@ -37,7 +37,8 @@ public static class InjuryStatuses
         {
             { InjuryStatus.Unknown, new("?", "Unknown") },
             { InjuryStatus.Out, new("OUT", "Out") },
-            { InjuryStatus.Questionable, new("QUES", "Questionable", "Questionable") }
+            { InjuryStatus.Questionable, new("QUES", "Questionable", "Questionable") },
+            { InjuryStatus.Suspended, new("SUS", "Suspended") }
         };
 
     /// <summary>

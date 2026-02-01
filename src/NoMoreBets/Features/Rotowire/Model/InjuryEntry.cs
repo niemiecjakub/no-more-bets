@@ -1,6 +1,6 @@
 using NoMoreBets.Domain.Enums;
 
-namespace NoMoreBets.Domain.Entities.Rotowire;
+namespace NoMoreBets.Features.Rotowire.Model;
 
 /// <summary>
 /// Represents an injury entry for a player (e.g. QUES, OUT, SUS).

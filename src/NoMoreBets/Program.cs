@@ -1,4 +1,6 @@
-using NoMoreBets.Infrastructure.ExternalClients;
+using NoMoreBets.Features.Rotowire.Scraping;
+using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
 
 var builder = WebApplication.CreateBuilder(args);
