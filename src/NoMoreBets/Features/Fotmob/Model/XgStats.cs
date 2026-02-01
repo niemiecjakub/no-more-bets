@@ -8,8 +8,8 @@ public class XgStats
     /// <summary>League position/rank.</summary>
     public int Position { get; init; }
 
-    /// <summary>Change in position (positive for up, negative for down, null if no change).</summary>
-    public int? PositionChange { get; init; }
+    /// <summary>Change in position as display string (e.g. "+3", "-2", null if no change).</summary>
+    public string? PositionChange { get; init; }
 
     /// <summary>Team ID extracted from URL.</summary>
     public int TeamId { get; init; }

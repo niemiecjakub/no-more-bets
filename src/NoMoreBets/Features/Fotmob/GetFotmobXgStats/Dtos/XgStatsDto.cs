@@ -5,7 +5,7 @@ namespace NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 /// <summary>API response DTO for xG statistics.</summary>
 public record XgStatsDto(
     int Position,
-    int? PositionChange,
+    string? PositionChange,
     int TeamId,
     string TeamName,
     string TeamShortname,

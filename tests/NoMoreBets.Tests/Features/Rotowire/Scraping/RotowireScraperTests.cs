@@ -18,10 +18,12 @@ public class RotowireScraperTests
     private static RotowireScraper CreateScraper(
         IHtmlCache? cache = null,
         IPageFetcher? fetcher = null,
+        IInteractivePageFetcher? interactiveFetcher = null,
         BaseScraperOptions? options = null)
     {
         cache ??= Substitute.For<IHtmlCache>();
         fetcher ??= Substitute.For<IPageFetcher>();
+        interactiveFetcher ??= Substitute.For<IInteractivePageFetcher>();
         var opts = Options.Create(options ?? new BaseScraperOptions
         {
             DelaySeconds = 0,
@@ -30,7 +32,7 @@ public class RotowireScraperTests
             TimeoutSeconds = 15
         });
         var logger = NullLogger<RotowireScraper>.Instance;
-        return new RotowireScraper(cache, fetcher, opts, logger);
+        return new RotowireScraper(cache, fetcher, interactiveFetcher, opts, logger);
     }
 
     [Fact]

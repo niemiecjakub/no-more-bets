@@ -20,9 +20,10 @@ public class BaseScraperTests
         public TestableScraper(
             IHtmlCache cache,
             IPageFetcher fetcher,
+            IInteractivePageFetcher interactiveFetcher,
             IOptions<BaseScraperOptions> options,
             ILogger logger)
-            : base(cache, fetcher, options, logger)
+            : base(cache, fetcher, interactiveFetcher, options, logger)
         {
         }
 
@@ -41,11 +42,13 @@ public class BaseScraperTests
     private static TestableScraper CreateSut(
         IHtmlCache cache,
         IPageFetcher fetcher,
-        BaseScraperOptions? options = null)
+        BaseScraperOptions? options = null,
+        IInteractivePageFetcher? interactiveFetcher = null)
     {
         var opts = Options.Create(options ?? DefaultOptions());
         var logger = NullLogger<TestableScraper>.Instance;
-        return new TestableScraper(cache, fetcher, opts, logger);
+        var interactive = interactiveFetcher ?? Substitute.For<IInteractivePageFetcher>();
+        return new TestableScraper(cache, fetcher, interactive, opts, logger);
     }
 
     [Fact]

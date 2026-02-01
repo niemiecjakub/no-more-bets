@@ -13,6 +13,7 @@ public abstract class BaseScraper
 {
     private readonly IHtmlCache _cache;
     private readonly IPageFetcher _fetcher;
+    private readonly IInteractivePageFetcher _interactiveFetcher;
     private readonly BaseScraperOptions _options;
     private readonly ILogger _logger;
     private readonly SemaphoreSlim _fetchLock = new(1, 1);
@@ -21,11 +22,13 @@ public abstract class BaseScraper
     protected BaseScraper(
         IHtmlCache cache,
         IPageFetcher fetcher,
+        IInteractivePageFetcher interactiveFetcher,
         IOptions<BaseScraperOptions> options,
         ILogger logger)
     {
         _cache = cache;
         _fetcher = fetcher;
+        _interactiveFetcher = interactiveFetcher;
         _options = options.Value;
         _logger = logger;
     }
@@ -92,6 +95,29 @@ public abstract class BaseScraper
     /// <returns>Number of cache files removed.</returns>
     public Task<int> ClearCacheAsync(string url, CancellationToken cancellationToken = default) =>
         _cache.ClearAsync(url, cancellationToken);
+
+    /// <summary>
+    /// Gets page HTML after interactions: cache-first, then interactive fetch and save to cache.
+    /// </summary>
+    /// <param name="url">URL to fetch.</param>
+    /// <param name="steps">Ordered list of interactions (e.g. click by selector).</param>
+    /// <param name="timeout">Optional navigation timeout.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>HTML content after interactions.</returns>
+    protected async Task<string> GetHtmlAfterInteractionsAsync(
+        string url,
+        IReadOnlyList<InteractionStep> steps,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+    {
+        var cached = await _cache.LoadAsync(url, cancellationToken).ConfigureAwait(false);
+        if (cached is not null)
+            return cached;
+
+        var html = await _interactiveFetcher.GetHtmlAfterInteractionsAsync(url, steps, timeout, cancellationToken).ConfigureAwait(false);
+        await _cache.SaveAsync(url, html, cancellationToken).ConfigureAwait(false);
+        return html;
+    }
 
     /// <summary>
     /// Loads HTML from cache if available (e.g. before using interactive fetcher).

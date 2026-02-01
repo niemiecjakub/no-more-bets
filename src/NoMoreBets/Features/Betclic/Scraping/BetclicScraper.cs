@@ -18,7 +18,6 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
   private const string BaseUrl = "https://www.betclic.pl";
   private const string PremierLeagueUrl = BaseUrl + "/football-sfootball/premier-league-c3";
 
-  private readonly IInteractivePageFetcher _interactiveFetcher;
   private readonly BetclicScraperOptions _betclicOptions;
   private readonly ILogger<BetclicScraper> _logger;
 
@@ -36,9 +35,8 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
       IOptions<BaseScraperOptions> options,
       IOptions<BetclicScraperOptions> betclicOptions,
       ILogger<BetclicScraper> logger)
-      : base(cache, fetcher, options, logger)
+      : base(cache, fetcher, interactiveFetcher, options, logger)
   {
-    _interactiveFetcher = interactiveFetcher;
     _betclicOptions = betclicOptions.Value;
     _logger = logger;
   }
@@ -71,23 +69,9 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
     {
       string html;
       if (expand)
-      {
-        var cached = await LoadFromCacheAsync(gameUrl, cancellationToken).ConfigureAwait(false);
-        if (cached is not null)
-        {
-          html = cached;
-        }
-        else
-        {
-          var timeout = TimeSpan.FromSeconds(15);
-          html = await _interactiveFetcher.GetHtmlAfterInteractionsAsync(gameUrl, ExpandSteps, timeout, cancellationToken).ConfigureAwait(false);
-          await SaveToCacheAsync(gameUrl, html, cancellationToken).ConfigureAwait(false);
-        }
-      }
+        html = await GetHtmlAfterInteractionsAsync(gameUrl, ExpandSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
       else
-      {
         html = await GetPageHtmlAsync(gameUrl, cancellationToken).ConfigureAwait(false);
-      }
 
       var extracted = await ExtractEventsAsync(html).ConfigureAwait(false);
       events = AggregateEvents(extracted);

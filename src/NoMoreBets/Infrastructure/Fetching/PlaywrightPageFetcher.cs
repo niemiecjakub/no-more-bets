@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 using NoMoreBets.Infrastructure.Scraping;
 
@@ -27,8 +26,30 @@ public class PlaywrightPageFetcher : IPageFetcher, IInteractivePageFetcher
     var timeoutMs = timeout.HasValue ? (int)timeout.Value.TotalMilliseconds : (int)TimeSpan.FromSeconds(15).TotalMilliseconds;
 
     using var playwright = await Playwright.CreateAsync().ConfigureAwait(false);
-    await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions { Headless = true }).ConfigureAwait(false);
-    var page = await browser.NewPageAsync().ConfigureAwait(false);
+
+    await using var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    {
+      Headless = true,
+      Args =
+        [
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--disable-dev-shm-usage"
+        ]
+    }).ConfigureAwait(false);
+
+    await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
+    {
+      UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+                    "AppleWebKit/537.36 (KHTML, like Gecko) " +
+                    "Chrome/117.0.0.0 Safari/537.36",
+      ViewportSize = new ViewportSize { Width = 1366, Height = 768 },
+      Locale = "pl-PL",
+      TimezoneId = "Europe/Warsaw",
+      ScreenSize = new ScreenSize { Width = 1366, Height = 768 }
+    }).ConfigureAwait(false);
+
+    var page = await context.NewPageAsync().ConfigureAwait(false);
     try
     {
       IResponse? response = null;

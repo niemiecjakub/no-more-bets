@@ -27,9 +27,10 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
     public RotowireScraper(
         IHtmlCache cache,
         IPageFetcher fetcher,
+        IInteractivePageFetcher interactiveFetcher,
         IOptions<BaseScraperOptions> options,
         ILogger<RotowireScraper> logger)
-        : base(cache, fetcher, options, logger)
+        : base(cache, fetcher, interactiveFetcher, options, logger)
     {
         _logger = logger;
     }
