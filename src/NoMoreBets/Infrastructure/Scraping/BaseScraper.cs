@@ -93,6 +93,18 @@ public abstract class BaseScraper
     public Task<int> ClearCacheAsync(string url, CancellationToken cancellationToken = default) =>
         _cache.ClearAsync(url, cancellationToken);
 
+    /// <summary>
+    /// Loads HTML from cache if available (e.g. before using interactive fetcher).
+    /// </summary>
+    protected Task<string?> LoadFromCacheAsync(string url, CancellationToken cancellationToken = default) =>
+        _cache.LoadAsync(url, cancellationToken);
+
+    /// <summary>
+    /// Saves HTML to cache (e.g. after fetching via an interactive fetcher).
+    /// </summary>
+    protected Task SaveToCacheAsync(string url, string html, CancellationToken cancellationToken = default) =>
+        _cache.SaveAsync(url, html, cancellationToken);
+
     private async Task RateLimitAsync(CancellationToken cancellationToken)
     {
         if (_lastFetchTime is null)

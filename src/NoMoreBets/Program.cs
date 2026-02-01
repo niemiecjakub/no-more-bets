@@ -1,3 +1,4 @@
+using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Features.Rotowire.Scraping;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
@@ -13,10 +14,14 @@ builder.Services.AddSwaggerGen();
 builder.Services.Configure<JsonCacheOptions>(builder.Configuration.GetSection("StorageCache:JsonCache"));
 builder.Services.Configure<HtmlCacheOptions>(builder.Configuration.GetSection("StorageCache:HtmlCache"));
 builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection("Scraper"));
+builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection("Scraper:Betclic"));
 builder.Services.AddSingleton<IJsonCache, JsonCache>();
 builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
-builder.Services.AddSingleton<IPageFetcher, PlaywrightPageFetcher>();
+builder.Services.AddSingleton<PlaywrightPageFetcher>();
+builder.Services.AddSingleton<IPageFetcher>(sp => sp.GetRequiredService<PlaywrightPageFetcher>());
+builder.Services.AddSingleton<IInteractivePageFetcher>(sp => sp.GetRequiredService<PlaywrightPageFetcher>());
 builder.Services.AddSingleton<IRotowireScraper, RotowireScraper>();
+builder.Services.AddSingleton<IBetclicScraper, BetclicScraper>();
 
 var app = builder.Build();
 
