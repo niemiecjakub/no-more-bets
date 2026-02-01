@@ -1,7 +1,7 @@
 namespace NoMoreBets.Domain.Entities.Rotowire;
 
 /// <summary>
-/// Represents a complete game with lineups, odds, and weather.
+/// Represents a complete game with lineups.
 /// </summary>
 public record GameLineup
 {
@@ -9,6 +9,4 @@ public record GameLineup
     public string? Time { get; init; }
     public required TeamLineup HomeTeam { get; init; }
     public required TeamLineup AwayTeam { get; init; }
-    public GameOdds? Odds { get; init; }
-    public WeatherInfo? Weather { get; init; }
 }

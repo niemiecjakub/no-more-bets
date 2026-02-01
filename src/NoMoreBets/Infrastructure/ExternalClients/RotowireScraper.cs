@@ -4,6 +4,7 @@ using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Domain.Entities.Rotowire;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Infrastructure.Storage;
 
 namespace NoMoreBets.Infrastructure.ExternalClients;
@@ -18,9 +19,6 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
 
     private static readonly Regex DateRegex = new(@"(\w+\s+\d+)", RegexOptions.Compiled);
     private static readonly Regex TimeRegex = new(@"(\d+:\d+\s+(?:AM|PM)\s+ET)", RegexOptions.Compiled);
-    private static readonly Regex PrecipRegex = new(@"(\d+)%\s*Precipitation", RegexOptions.Compiled);
-    private static readonly Regex TempRegex = new(@"(\d+)°", RegexOptions.Compiled);
-    private static readonly Regex WindRegex = new(@"Wind\s+(\d+\s*mph)", RegexOptions.Compiled);
 
     private readonly ILogger<RotowireScraper> _logger;
 
@@ -99,8 +97,6 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
 
         var homeLineup = ParseTeamLineup(section, homeCode, homeTeamName ?? $"Team {homeCode}");
         var awayLineup = ParseTeamLineup(section, awayCode, awayTeamName ?? $"Team {awayCode}");
-        var odds = ParseOdds(section);
-        var weather = ParseWeather(section);
 
         if (string.IsNullOrEmpty(date))
             date = "Unknown";
@@ -110,9 +106,7 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
             Date = date,
             Time = time,
             HomeTeam = homeLineup,
-            AwayTeam = awayLineup,
-            Odds = odds,
-            Weather = weather
+            AwayTeam = awayLineup
         };
     }
 
@@ -190,15 +184,23 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
             if (posElem is null || nameElem is null)
                 continue;
 
-            var position = posElem.TextContent.Trim();
+            var acronym = posElem.TextContent.Trim();
             var playerName = nameElem.TextContent.Trim();
+            FootballPositions.TryParseFromAcronym(acronym, out var position);
+            if (position == FootballPosition.Unknown)
+                _logger.LogError("Unknown position acronym \"{Acronym}\" for player {Player}", acronym, playerName);
 
             if (inInjuriesSection)
             {
                 if (injuryElem is not null)
                 {
-                    var status = injuryElem.TextContent.Trim();
-                    injuries.Add(new InjuryEntry(position, playerName, status));
+                    var statusText = injuryElem.TextContent.Trim();
+                    if (!InjuryStatuses.TryParseFromCode(statusText, out var injuryStatus))
+                    {
+                        _logger.LogWarning("Unknown injury status \"{Status}\" for player {Player}", statusText, playerName);
+                        injuryStatus = InjuryStatus.Unknown;
+                    }
+                    injuries.Add(new InjuryEntry(position, playerName, injuryStatus));
                 }
             }
             else
@@ -214,117 +216,6 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
             LineupType = lineupType,
             Players = players,
             Injuries = injuries
-        };
-    }
-
-    private GameOdds? ParseOdds(IElement section)
-    {
-        var oddsDiv = section.QuerySelector("div.lineup__odds");
-        if (oddsDiv is null)
-            return null;
-
-        string? homeCode = null;
-        string? awayCode = null;
-        var homeTeamElem = section.QuerySelector("div.lineup__team.is-home");
-        var awayTeamElem = section.QuerySelector("div.lineup__team.is-visit");
-        if (homeTeamElem is not null)
-        {
-            var homeAbbr = homeTeamElem.QuerySelector("div.lineup__abbr");
-            if (homeAbbr is not null)
-                homeCode = homeAbbr.TextContent.Trim();
-        }
-        if (awayTeamElem is not null)
-        {
-            var awayAbbr = awayTeamElem.QuerySelector("div.lineup__abbr");
-            if (awayAbbr is not null)
-                awayCode = awayAbbr.TextContent.Trim();
-        }
-
-        string? homeOdds = null;
-        string? drawOdds = null;
-        string? awayOdds = null;
-
-        foreach (var item in oddsDiv.QuerySelectorAll("div.lineup__odds-item"))
-        {
-            var itemText = item.TextContent;
-            var selectedSpan = item.QuerySelector("span.is-selected");
-            if (selectedSpan is null)
-                continue;
-
-            var oddsValue = selectedSpan.TextContent.Trim();
-            if (oddsValue is "–" or "-")
-                continue;
-
-            if (itemText.Contains("Draw:", StringComparison.Ordinal))
-                drawOdds = oddsValue;
-            else if (homeCode is { } hc && itemText.Contains(hc, StringComparison.Ordinal))
-                homeOdds = oddsValue;
-            else if (awayCode is { } ac && itemText.Contains(ac, StringComparison.Ordinal))
-                awayOdds = oddsValue;
-        }
-
-        if (homeOdds is null || drawOdds is null || awayOdds is null)
-        {
-            var allSelected = oddsDiv.QuerySelectorAll("span.is-selected").ToList();
-            if (allSelected.Count >= 3)
-            {
-                static string? OrNull(string s) => s is "–" or "-" ? null : s;
-                if (homeOdds is null)
-                    homeOdds = OrNull(allSelected[0].TextContent.Trim());
-                if (drawOdds is null)
-                    drawOdds = OrNull(allSelected[1].TextContent.Trim());
-                if (awayOdds is null)
-                    awayOdds = OrNull(allSelected[2].TextContent.Trim());
-            }
-        }
-
-        return new GameOdds
-        {
-            HomeOdds = homeOdds,
-            DrawOdds = drawOdds,
-            AwayOdds = awayOdds
-        };
-    }
-
-    private WeatherInfo? ParseWeather(IElement section)
-    {
-        var weatherDiv = section.QuerySelector("div.lineup__weather");
-        if (weatherDiv is null)
-            return null;
-
-        string? condition = null;
-        string? precipitation = null;
-        string? temperature = null;
-        string? wind = null;
-
-        var weatherIcon = weatherDiv.QuerySelector("img.lineup__weather-icon");
-        if (weatherIcon?.GetAttribute("alt") is { } alt)
-            condition = alt;
-
-        var weatherTextElem = weatherDiv.QuerySelector("div.lineup__weather-text");
-        if (weatherTextElem is not null)
-        {
-            var weatherText = weatherTextElem.TextContent;
-            var precipMatch = PrecipRegex.Match(weatherText);
-            if (precipMatch.Success)
-                precipitation = precipMatch.Groups[1].Value + "%";
-            var tempMatch = TempRegex.Match(weatherText);
-            if (tempMatch.Success)
-                temperature = tempMatch.Groups[1].Value + "°";
-            var windMatch = WindRegex.Match(weatherText);
-            if (windMatch.Success)
-                wind = windMatch.Groups[1].Value;
-        }
-
-        if (condition is null && precipitation is null && temperature is null && wind is null)
-            return null;
-
-        return new WeatherInfo
-        {
-            Condition = condition,
-            Precipitation = precipitation,
-            Temperature = temperature,
-            Wind = wind
         };
     }
 }

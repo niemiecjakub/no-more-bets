@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace NoMoreBets.Tests.Helpers;
 
 /// <summary>
@@ -13,7 +15,13 @@ public static class FixtureHelper
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Fixtures", relativePath);
         if (!File.Exists(path))
+        {
+            Trace.WriteLine($"Fixture file not found: {path} (relative path: {relativePath})");
             return null;
-        return File.ReadAllText(path, System.Text.Encoding.UTF8);
+        }
+        var content = File.ReadAllText(path, System.Text.Encoding.UTF8);
+        if (string.IsNullOrEmpty(content))
+            Trace.WriteLine($"Fixture file is empty: {path} (relative path: {relativePath})");
+        return content;
     }
 }

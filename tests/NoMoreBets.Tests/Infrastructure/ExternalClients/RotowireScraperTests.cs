@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NoMoreBets.Domain.Entities.Rotowire;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Infrastructure.ExternalClients;
 using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Tests.Helpers;
@@ -34,8 +35,6 @@ public class RotowireScraperTests
     public async Task ParseLineupsAsync_WithRealFixture_ParsesMultipleGames()
     {
         var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
-        if (string.IsNullOrEmpty(html))
-            return; // Fixture not present (e.g. clone without large file)
         var sut = CreateScraper();
 
         var result = await sut.ParseLineupsAsync(html);
@@ -53,8 +52,6 @@ public class RotowireScraperTests
     public async Task GetSoccerLineupsAsync_WhenCacheReturnsRealFixture_ParsesAllGames()
     {
         var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
-        if (string.IsNullOrEmpty(html))
-            return; // Fixture not present
         var url = "https://www.rotowire.com/soccer/lineups.php";
         var cache = Substitute.For<IHtmlCache>();
         cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns(html);
@@ -69,5 +66,28 @@ public class RotowireScraperTests
         result[0].HomeTeam.TeamCode.Should().NotBeNullOrEmpty();
         result[0].AwayTeam.TeamCode.Should().NotBeNullOrEmpty();
         await fetcher.DidNotReceive().GetHtmlAsync(Arg.Any<string>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task ParseLineupsAsync_WithRealFixture_ParsesInjuriesWithInjuryStatusEnum()
+    {
+        // Arrange
+        var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseLineupsAsync(html);
+
+        // Assert
+        result.Should().NotBeEmpty();
+        var allInjuries = result
+            .SelectMany(g => g.HomeTeam.Injuries.Concat(g.AwayTeam.Injuries))
+            .ToList();
+        allInjuries.Should().NotBeEmpty("fixture contains injuries with QUES, SUS, OUT");
+        allInjuries.Should().OnlyContain(e => e.Status is InjuryStatus.Out or InjuryStatus.Questionable or InjuryStatus.Suspended or InjuryStatus.Unknown,
+            "all statuses must be InjuryStatus enum values");
+        allInjuries.Should().Contain(e => e.Status == InjuryStatus.Out);
+        allInjuries.Should().Contain(e => e.Status == InjuryStatus.Questionable);
+        allInjuries.Should().Contain(e => e.Status == InjuryStatus.Suspended);
     }
 }

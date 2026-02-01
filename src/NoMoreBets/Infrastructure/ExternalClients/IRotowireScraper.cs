@@ -8,7 +8,7 @@ namespace NoMoreBets.Infrastructure.ExternalClients;
 public interface IRotowireScraper
 {
     /// <summary>
-    /// Gets soccer lineups (games with team lineups, injuries, odds, weather) for all leagues.
+    /// Gets soccer lineups (games with team lineups, injuries) for all leagues.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of parsed game lineups.</returns>
