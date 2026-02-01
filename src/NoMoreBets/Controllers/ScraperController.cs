@@ -1,4 +1,3 @@
-using System.Linq;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
@@ -12,6 +11,12 @@ using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Fotmob.Scraping;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups.Dtos;
+using NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
+using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
+using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
+using NoMoreBets.Features.SoccerData.GetSoccerDataMatches;
+using NoMoreBets.Features.SoccerData.Model;
+using NoMoreBets.Features.SoccerData;
 
 namespace NoMoreBets.Controllers;
 
@@ -73,11 +78,10 @@ public class ScraperController(IMediator mediator) : ControllerBase
   /// <returns>List of clubs in table order.</returns>
   [HttpGet("fotmob/league-table")]
   public async Task<ActionResult<IReadOnlyList<ClubDto>>> GetFotmobLeagueTable(
-    [FromQuery] string? filter = "all",
+    [FromQuery] TableFilter filter = TableFilter.All,
     CancellationToken cancellationToken = default)
   {
-    var tableFilter = ParseTableFilter(filter);
-    var dtos = await mediator.Send(new GetFotmobLeagueTableQuery(tableFilter), cancellationToken);
+    var dtos = await mediator.Send(new GetFotmobLeagueTableQuery(filter), cancellationToken);
     return Ok(dtos);
   }
 
@@ -93,14 +97,74 @@ public class ScraperController(IMediator mediator) : ControllerBase
     return Ok(dtos);
   }
 
-  private static TableFilter ParseTableFilter(string? filter)
+  /// <summary>
+  /// Gets upcoming match previews from SoccerData API, optionally filtered by league ID.
+  /// Defaults to Premier League when no league ID is provided.
+  /// </summary>
+  /// <param name="leagueId">Optional league ID to filter results. Default: Premier League (228).</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of league match previews.</returns>
+  [HttpGet("soccerdata/match-previews-upcoming")]
+  public async Task<ActionResult<IReadOnlyList<LeagueMatchPreviews>>> GetSoccerDataMatchPreviewsUpcoming(
+    [FromQuery] int? leagueId = SoccerDataConstants.PremierLeagueId,
+    CancellationToken cancellationToken = default)
   {
-    return filter?.ToLowerInvariant() switch
-    {
-      "home" => TableFilter.Home,
-      "away" => TableFilter.Away,
-      "form" => TableFilter.Form,
-      _ => TableFilter.All
-    };
+    var effectiveLeagueId = leagueId;
+    var result = await mediator.Send(new GetSoccerDataMatchPreviewsUpcomingQuery(effectiveLeagueId), cancellationToken);
+    return Ok(result);
+  }
+
+  /// <summary>
+  /// Gets match preview for a single match from SoccerData API.
+  /// </summary>
+  /// <param name="matchId">Match ID.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Match preview with teams, weather, and content.</returns>
+  [HttpGet("soccerdata/match-preview")]
+  public async Task<ActionResult<MatchPreview>> GetSoccerDataMatchPreview(
+    [FromQuery] int matchId,
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator.Send(new GetSoccerDataMatchPreviewQuery(matchId), cancellationToken);
+    return Ok(result);
+  }
+
+  /// <summary>
+  /// Gets head-to-head data between two teams from SoccerData API.
+  /// </summary>
+  /// <param name="team1Id">First team ID.</param>
+  /// <param name="team2Id">Second team ID.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Head-to-head stats and team info.</returns>
+  [HttpGet("soccerdata/head-to-head")]
+  public async Task<ActionResult<HeadToHead>> GetSoccerDataHeadToHead(
+    [FromQuery] int team1Id,
+    [FromQuery] int team2Id,
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator.Send(new GetSoccerDataHeadToHeadQuery(team1Id, team2Id), cancellationToken);
+    return Ok(result);
+  }
+
+  /// <summary>
+  /// Gets matches from SoccerData API by date, league ID, and/or season.
+  /// Defaults to Premier League and current season when league/season not provided.
+  /// </summary>
+  /// <param name="date">Optional date filter.</param>
+  /// <param name="leagueId">Optional league ID. Default: Premier League (228).</param>
+  /// <param name="season">Optional season (e.g. 2025-2026). Default: current season.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of league matches.</returns>
+  [HttpGet("soccerdata/matches")]
+  public async Task<ActionResult<IReadOnlyList<LeagueMatches>>> GetSoccerDataMatches(
+    [FromQuery] string? date = null,
+    [FromQuery] int? leagueId = SoccerDataConstants.PremierLeagueId,
+    [FromQuery] string? season = SoccerDataConstants.CurrentSeason,
+    CancellationToken cancellationToken = default)
+  {
+    var effectiveLeagueId = leagueId;
+    var effectiveSeason = season;
+    var result = await mediator.Send(new GetSoccerDataMatchesQuery(date, effectiveLeagueId, effectiveSeason), cancellationToken);
+    return Ok(result);
   }
 }

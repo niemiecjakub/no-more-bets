@@ -18,3 +18,7 @@ venv/
 src/NoMoreBets/NoMoreBets.Data/Resources/*
 .env
 cache/
+
+srv/NoMoreBets/appsettings.Development.json
+/src/NoMoreBets/appsettings.Development.json
+/src/NoMoreBets/appsettings.Development.json

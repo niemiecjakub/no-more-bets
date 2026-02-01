@@ -1,6 +1,8 @@
+using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Features.Fotmob.Scraping;
 using NoMoreBets.Features.Rotowire.Scraping;
+using NoMoreBets.Features.SoccerData;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
@@ -17,6 +19,7 @@ builder.Services.Configure<HtmlCacheOptions>(builder.Configuration.GetSection("S
 builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection("Scraper"));
 builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection("Scraper:Betclic"));
 builder.Services.Configure<FotmobScraperOptions>(builder.Configuration.GetSection("Scraper:Fotmob"));
+builder.Services.Configure<SoccerDataOptions>(builder.Configuration.GetSection("SoccerData"));
 builder.Services.AddSingleton<IJsonCache, JsonCache>();
 builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
 builder.Services.AddSingleton<PlaywrightPageFetcher>();
@@ -25,6 +28,21 @@ builder.Services.AddSingleton<IInteractivePageFetcher>(sp => sp.GetRequiredServi
 builder.Services.AddSingleton<IRotowireScraper, RotowireScraper>();
 builder.Services.AddSingleton<IBetclicScraper, BetclicScraper>();
 builder.Services.AddSingleton<IFotmobScraper, FotmobScraper>();
+builder.Services.AddHttpClient<ISoccerDataClient, SoccerDataClient>((sp, client) =>
+{
+    var options = sp.GetRequiredService<IOptions<SoccerDataOptions>>().Value;
+    client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AutomaticDecompression = System.Net.DecompressionMethods.GZip
+});
+
+builder.Services.AddOptions<SoccerDataOptions>()
+                .Bind(builder.Configuration.GetSection("SoccerData"))
+                .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),"SoccerData:ApiKey is required")
+                .ValidateOnStart();
+
 
 var app = builder.Build();
 
