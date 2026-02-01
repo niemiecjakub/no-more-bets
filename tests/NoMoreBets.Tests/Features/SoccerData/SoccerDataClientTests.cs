@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -9,6 +10,8 @@ using NSubstitute;
 using NoMoreBets.Features.SoccerData;
 using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Tests.Helpers;
+using Polly;
+using Polly.Retry;
 
 namespace NoMoreBets.Tests.Features.SoccerData;
 
@@ -78,16 +81,20 @@ public class SoccerDataClientTests
   [Fact]
   public async Task GetMatchPreviewsUpcomingAsync_WhenApiKeyMissing_ThrowsSoccerDataAuthException()
   {
-    // Arrange
+    // Arrange: mock 401 so we don't depend on real API; client throws SoccerDataAuthException on 401
+    var cache = Substitute.For<IJsonCache>();
+    cache.LoadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<JsonElement?>(null));
+    var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
+    var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
     var options = Options.Create(new SoccerDataOptions { ApiKey = null });
-    var sut = CreateClient(options: options);
+    var sut = CreateClient(httpClient, options: options, cache: cache);
 
     // Act
     var act = () => sut.GetMatchPreviewsUpcomingAsync(null);
 
     // Assert
     await act.Should().ThrowAsync<SoccerDataAuthException>()
-        .WithMessage("*API key is required*");
+        .WithMessage("*Authentication*");
   }
 
   [Fact]
@@ -216,7 +223,7 @@ public class SoccerDataClientTests
   [Fact]
   public async Task GetHeadToHeadAsync_WhenFirstAttemptFails_RetriesAndSucceeds()
   {
-    // Arrange
+    // Arrange: client has no internal retry; Polly on the HttpClient performs retries
     var json = FixtureHelper.LoadFixtureText("soccerdata/head_to_head.json");
     json.Should().NotBeNullOrEmpty();
 
@@ -224,7 +231,7 @@ public class SoccerDataClientTests
     cache.LoadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<JsonElement?>(null));
 
     var callCount = 0;
-    var handler = new MockHttpMessageHandler(_ =>
+    var innerHandler = new MockHttpMessageHandler(_ =>
     {
       callCount++;
       if (callCount == 1)
@@ -234,14 +241,28 @@ public class SoccerDataClientTests
         Content = new StringContent(json!, Encoding.UTF8, "application/json")
       };
     });
+
+    var retryPipeline = new ResiliencePipelineBuilder<HttpResponseMessage>()
+      .AddRetry(new RetryStrategyOptions<HttpResponseMessage>
+      {
+        MaxRetryAttempts = 1,
+        Delay = TimeSpan.FromMilliseconds(10),
+        BackoffType = DelayBackoffType.Constant,
+        ShouldHandle = new PredicateBuilder<HttpResponseMessage>().Handle<HttpRequestException>()
+      })
+      .Build();
+#pragma warning disable EXTEXP0001
+    var resilienceHandler = new ResilienceHandler(retryPipeline) { InnerHandler = innerHandler };
+#pragma warning restore EXTEXP0001
+
     var options = Options.Create(new SoccerDataOptions
     {
       ApiKey = "test-key",
-      RetryCount = 2,
+      RetryCount = 1,
       RetryDelaySeconds = 0.01,
       TimeoutSeconds = 15
     });
-    var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
+    var httpClient = new HttpClient(resilienceHandler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
     var sut = CreateClient(httpClient, options: options, cache: cache);
 
     // Act

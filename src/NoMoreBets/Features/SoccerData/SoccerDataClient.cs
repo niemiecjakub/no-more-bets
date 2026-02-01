@@ -10,7 +10,7 @@ using NoMoreBets.Infrastructure.Storage;
 namespace NoMoreBets.Features.SoccerData;
 
 /// <summary>
-/// HTTP client for SoccerData API with cache and optional retries (via Polly when registered).
+/// HTTP client for SoccerData API with cache. Retries and per-attempt timeout are applied by the registered HttpClient resilience pipeline (e.g. Polly).
 /// </summary>
 public class SoccerDataClient : ISoccerDataClient
 {
@@ -43,7 +43,6 @@ public class SoccerDataClient : ISoccerDataClient
     /// <inheritdoc />
     public async Task<IReadOnlyList<LeagueMatchPreviews>> GetMatchPreviewsUpcomingAsync(int? leagueId = null, CancellationToken cancellationToken = default)
     {
-        EnsureApiKey();
         var endpoint = "/match-previews-upcoming/";
         var cacheKey = BuildCacheKey(endpoint, null);
         var element = await LoadFromCacheOrFetchAsync(cacheKey, endpoint, null, cancellationToken).ConfigureAwait(false);
@@ -78,7 +77,6 @@ public class SoccerDataClient : ISoccerDataClient
     /// <inheritdoc />
     public async Task<MatchPreview> GetMatchPreviewAsync(int matchId, CancellationToken cancellationToken = default)
     {
-        EnsureApiKey();
         var endpoint = "/match-preview/";
         var queryParams = new Dictionary<string, object?> { ["match_id"] = matchId };
         var cacheKey = BuildCacheKey(endpoint, queryParams);
@@ -95,7 +93,6 @@ public class SoccerDataClient : ISoccerDataClient
     /// <inheritdoc />
     public async Task<HeadToHead> GetHeadToHeadAsync(int team1Id, int team2Id, CancellationToken cancellationToken = default)
     {
-        EnsureApiKey();
         var endpoint = "/head-to-head/";
         var queryParams = new Dictionary<string, object?>
         {
@@ -116,7 +113,6 @@ public class SoccerDataClient : ISoccerDataClient
     /// <inheritdoc />
     public async Task<IReadOnlyList<LeagueMatches>> GetMatchesAsync(string? date = null, int? leagueId = null, string? season = null, CancellationToken cancellationToken = default)
     {
-        EnsureApiKey();
         var endpoint = "/matches/";
         var queryParams = new Dictionary<string, object?>();
         if (date is not null) queryParams["date"] = date;
@@ -151,13 +147,7 @@ public class SoccerDataClient : ISoccerDataClient
         return list;
     }
 
-    private void EnsureApiKey()
-    {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
-            throw new SoccerDataAuthException("SoccerData API key is required. Set SoccerData:ApiKey in User Secrets or environment.");
-    }
-
-    /// <summary>Build cache key from endpoint and params (excludes auth_token). Matches Python format.</summary>
+    /// <summary>Build cache key from endpoint and params (excludes auth_token).</summary>
     internal static string BuildCacheKey(string endpoint, IReadOnlyDictionary<string, object?>? queryParams)
     {
         var normalized = endpoint.Trim('/').Replace("/", "_", StringComparison.Ordinal);
@@ -194,58 +184,44 @@ public class SoccerDataClient : ISoccerDataClient
         var pathAndQuery = path + QueryHelpers.AddQueryString("", requestParams!);
         var requestUri = new Uri(new Uri(BaseUrl + "/"), pathAndQuery);
 
-        Exception? lastException = null;
-        for (var attempt = 1; attempt <= _options.RetryCount; attempt++)
+        try
         {
-            try
-            {
-                using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                cts.CancelAfter(TimeSpan.FromSeconds(_options.TimeoutSeconds));
+            using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            request.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip");
+            request.Headers.TryAddWithoutValidation("Content-Type", "application/json");
+            request.Headers.Accept.ParseAdd("application/json");
 
-                using var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
-                request.Headers.TryAddWithoutValidation("Accept-Encoding", "gzip");
-                request.Headers.TryAddWithoutValidation("Content-Type", "application/json");
-                request.Headers.Accept.ParseAdd("application/json");
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
-                using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cts.Token).ConfigureAwait(false);
+            if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+                throw new SoccerDataAuthException($"Authentication failed ({(int)response.StatusCode}). Check your API key.");
 
-                if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
-                    throw new SoccerDataAuthException($"Authentication failed ({(int)response.StatusCode}). Check your API key.");
+            if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                throw new SoccerDataNotFoundException($"Endpoint not found (404): {endpoint}");
 
-                if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
-                    throw new SoccerDataNotFoundException($"Endpoint not found (404): {endpoint}");
+            response.EnsureSuccessStatusCode();
 
-                response.EnsureSuccessStatusCode();
-
-                await using var stream = await response.Content.ReadAsStreamAsync(cts.Token).ConfigureAwait(false);
-                using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cts.Token).ConfigureAwait(false);
-                var element = doc.RootElement.Clone();
-                await _cache.SaveAsync(cacheKey, element, cancellationToken).ConfigureAwait(false);
-                return element;
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (HttpRequestException ex)
-            {
-                lastException = ex;
-                _logger.LogWarning(ex, "SoccerData request failed attempt {Attempt}/{RetryCount}", attempt, _options.RetryCount);
-            }
-            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
-            {
-                lastException = ex;
-                _logger.LogWarning(ex, "SoccerData request timeout attempt {Attempt}/{RetryCount}", attempt, _options.RetryCount);
-            }
-
-            if (attempt < _options.RetryCount)
-            {
-                var backoff = TimeSpan.FromSeconds(_options.RetryDelaySeconds * attempt);
-                var jitter = Random.Shared.NextDouble() * 0.5 + 0.5; // 0.5..1.5
-                await Task.Delay(TimeSpan.FromMilliseconds(backoff.TotalMilliseconds * jitter), cancellationToken).ConfigureAwait(false);
-            }
+            await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
+            var element = doc.RootElement.Clone();
+            await _cache.SaveAsync(cacheKey, element, cancellationToken).ConfigureAwait(false);
+            return element;
         }
-
-        throw new SoccerDataException($"Failed to fetch {requestUri.AbsoluteUri} after {_options.RetryCount} attempts", lastException!);
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (SoccerDataAuthException)
+        {
+            throw;
+        }
+        catch (SoccerDataNotFoundException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new SoccerDataException($"Failed to fetch {requestUri.AbsoluteUri}", ex);
+        }
     }
 }

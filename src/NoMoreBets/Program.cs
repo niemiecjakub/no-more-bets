@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Features.Fotmob.Scraping;
@@ -6,6 +7,8 @@ using NoMoreBets.Features.SoccerData;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
+using Polly;
+using Polly.Retry;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,17 +34,33 @@ builder.Services.AddSingleton<IFotmobScraper, FotmobScraper>();
 builder.Services.AddHttpClient<ISoccerDataClient, SoccerDataClient>((sp, client) =>
 {
     var options = sp.GetRequiredService<IOptions<SoccerDataOptions>>().Value;
-    client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+    client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds * Math.Max(1, options.RetryCount) + 30);
 })
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
     AutomaticDecompression = System.Net.DecompressionMethods.GZip
+})
+.AddResilienceHandler("soccerdata", (builder, context) =>
+{
+    var options = context.ServiceProvider.GetRequiredService<IOptions<SoccerDataOptions>>().Value;
+    builder.AddRetry(new RetryStrategyOptions<HttpResponseMessage>
+    {
+        MaxRetryAttempts = options.RetryCount,
+        BackoffType = DelayBackoffType.Exponential,
+        UseJitter = true,
+        Delay = TimeSpan.FromSeconds(options.RetryDelaySeconds),
+        ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
+            .Handle<HttpRequestException>()
+            .Handle<TaskCanceledException>()
+            .HandleResult(r => (int)r.StatusCode >= 500)
+    });
+    builder.AddTimeout(TimeSpan.FromSeconds(options.TimeoutSeconds));
 });
 
 builder.Services.AddOptions<SoccerDataOptions>()
-                .Bind(builder.Configuration.GetSection("SoccerData"))
-                .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey),"SoccerData:ApiKey is required")
-                .ValidateOnStart();
+    .Bind(builder.Configuration.GetSection("SoccerData"))
+    .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey), "SoccerData:ApiKey is required")
+    .ValidateOnStart();
 
 
 var app = builder.Build();
