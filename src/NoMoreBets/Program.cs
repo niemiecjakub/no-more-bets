@@ -1,4 +1,5 @@
 using NoMoreBets.Features.Betclic.Scraping;
+using NoMoreBets.Features.Fotmob.Scraping;
 using NoMoreBets.Features.Rotowire.Scraping;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
@@ -15,6 +16,7 @@ builder.Services.Configure<JsonCacheOptions>(builder.Configuration.GetSection("S
 builder.Services.Configure<HtmlCacheOptions>(builder.Configuration.GetSection("StorageCache:HtmlCache"));
 builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection("Scraper"));
 builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection("Scraper:Betclic"));
+builder.Services.Configure<FotmobScraperOptions>(builder.Configuration.GetSection("Scraper:Fotmob"));
 builder.Services.AddSingleton<IJsonCache, JsonCache>();
 builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
 builder.Services.AddSingleton<PlaywrightPageFetcher>();
@@ -22,6 +24,7 @@ builder.Services.AddSingleton<IPageFetcher>(sp => sp.GetRequiredService<Playwrig
 builder.Services.AddSingleton<IInteractivePageFetcher>(sp => sp.GetRequiredService<PlaywrightPageFetcher>());
 builder.Services.AddSingleton<IRotowireScraper, RotowireScraper>();
 builder.Services.AddSingleton<IBetclicScraper, BetclicScraper>();
+builder.Services.AddSingleton<IFotmobScraper, FotmobScraper>();
 
 var app = builder.Build();
 

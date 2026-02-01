@@ -5,6 +5,11 @@ using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
 using NoMoreBets.Features.Betclic.GetBetclicMatchEvents.Dtos;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames.Dtos;
+using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable;
+using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
+using NoMoreBets.Features.Fotmob.GetFotmobXgStats;
+using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
+using NoMoreBets.Features.Fotmob.Scraping;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups.Dtos;
 
@@ -58,5 +63,44 @@ public class ScraperController(IMediator mediator) : ControllerBase
     var events = await mediator.Send(new GetBetclicMatchEventsQuery(gameUrl, expand), cancellationToken);
     var dtos = events.Select(BookmakerEventDto.From).ToList();
     return Ok(dtos);
+  }
+
+  /// <summary>
+  /// Gets the league table from FotMob (Premier League by default), optionally filtered by home/away/form.
+  /// </summary>
+  /// <param name="filter">Table filter: all, home, away, form. Default all.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of clubs in table order.</returns>
+  [HttpGet("fotmob/league-table")]
+  public async Task<ActionResult<IReadOnlyList<ClubDto>>> GetFotmobLeagueTable(
+    [FromQuery] string? filter = "all",
+    CancellationToken cancellationToken = default)
+  {
+    var tableFilter = ParseTableFilter(filter);
+    var dtos = await mediator.Send(new GetFotmobLeagueTableQuery(tableFilter), cancellationToken);
+    return Ok(dtos);
+  }
+
+  /// <summary>
+  /// Gets xG statistics table from FotMob for the configured league.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of xG stats per team.</returns>
+  [HttpGet("fotmob/xg-stats")]
+  public async Task<ActionResult<IReadOnlyList<XgStatsDto>>> GetFotmobXgStats(CancellationToken cancellationToken)
+  {
+    var dtos = await mediator.Send(new GetFotmobXgStatsQuery(), cancellationToken);
+    return Ok(dtos);
+  }
+
+  private static TableFilter ParseTableFilter(string? filter)
+  {
+    return filter?.ToLowerInvariant() switch
+    {
+      "home" => TableFilter.Home,
+      "away" => TableFilter.Away,
+      "form" => TableFilter.Form,
+      _ => TableFilter.All
+    };
   }
 }
