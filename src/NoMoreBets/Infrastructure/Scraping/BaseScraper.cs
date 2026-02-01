@@ -2,6 +2,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Storage;
+using Polly;
+using Polly.Retry;
 
 namespace NoMoreBets.Infrastructure.Scraping;
 
@@ -16,6 +18,8 @@ public abstract class BaseScraper
     private readonly IInteractivePageFetcher _interactiveFetcher;
     private readonly BaseScraperOptions _options;
     private readonly ILogger _logger;
+    private readonly ResiliencePipeline<string> _fetchPipeline;
+    private readonly AsyncLocal<string?> _currentFetchUrl = new();
     private readonly SemaphoreSlim _fetchLock = new(1, 1);
     private DateTimeOffset? _lastFetchTime;
 
@@ -31,6 +35,7 @@ public abstract class BaseScraper
         _interactiveFetcher = interactiveFetcher;
         _options = options.Value;
         _logger = logger;
+        _fetchPipeline = CreateFetchPipeline(_options, _logger, _currentFetchUrl);
     }
 
     /// <summary>
@@ -49,42 +54,32 @@ public abstract class BaseScraper
         await _fetchLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            Exception? lastException = null;
+            _currentFetchUrl.Value = url;
             var timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
-
-            for (var attempt = 1; attempt <= _options.RetryCount; attempt++)
+            try
             {
-                await RateLimitAsync(cancellationToken).ConfigureAwait(false);
-
-                try
+                return await _fetchPipeline.ExecuteAsync(async ct =>
                 {
-                    var content = await _fetcher.GetHtmlAsync(url, timeout, cancellationToken).ConfigureAwait(false);
+                    await RateLimitAsync(ct).ConfigureAwait(false);
+                    var content = await _fetcher.GetHtmlAsync(url, timeout, ct).ConfigureAwait(false);
                     _lastFetchTime = DateTimeOffset.UtcNow;
-                    await _cache.SaveAsync(url, content, cancellationToken).ConfigureAwait(false);
+                    await _cache.SaveAsync(url, content, ct).ConfigureAwait(false);
                     return content;
-                }
-                catch (PermanentScraperException)
-                {
-                    throw;
-                }
-                catch (Exception ex)
-                {
-                    lastException = ex;
-                    _logger.LogWarning(ex, "Fetch attempt {Attempt}/{RetryCount} failed for {Url}", attempt, _options.RetryCount, url);
-                }
-
-                if (attempt < _options.RetryCount)
-                {
-                    var backoffSeconds = _options.RetryDelaySeconds * attempt * Jitter();
-                    await Task.Delay(TimeSpan.FromSeconds(backoffSeconds), cancellationToken).ConfigureAwait(false);
-                }
+                }, cancellationToken).ConfigureAwait(false);
             }
-
-            throw new InvalidOperationException(
-                $"Failed to fetch {url} after {_options.RetryCount} attempts", lastException);
+            catch (PermanentScraperException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException(
+                    $"Failed to fetch {url} after {_options.RetryCount} attempts", ex);
+            }
         }
         finally
         {
+            _currentFetchUrl.Value = null;
             _fetchLock.Release();
         }
     }
@@ -131,6 +126,34 @@ public abstract class BaseScraper
     protected Task SaveToCacheAsync(string url, string html, CancellationToken cancellationToken = default) =>
         _cache.SaveAsync(url, html, cancellationToken);
 
+    private static ResiliencePipeline<string> CreateFetchPipeline(
+        BaseScraperOptions options,
+        ILogger logger,
+        AsyncLocal<string?> currentFetchUrl)
+    {
+        var maxRetryAttempts = Math.Max(0, options.RetryCount - 1);
+        var retryOptions = new RetryStrategyOptions<string>
+        {
+            MaxRetryAttempts = maxRetryAttempts,
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,
+            Delay = TimeSpan.FromSeconds(options.RetryDelaySeconds),
+            ShouldHandle = new PredicateBuilder<string>()
+                .Handle<Exception>(ex => ex is not PermanentScraperException),
+            OnRetry = args =>
+            {
+                var url = currentFetchUrl.Value ?? "unknown";
+                logger.LogWarning(args.Outcome.Exception,
+                    "Fetch attempt {Attempt}/{RetryCount} failed for {Url}",
+                    args.AttemptNumber + 1, options.RetryCount, url);
+                return ValueTask.CompletedTask;
+            }
+        };
+        return new ResiliencePipelineBuilder<string>()
+            .AddRetry(retryOptions)
+            .Build();
+    }
+
     private async Task RateLimitAsync(CancellationToken cancellationToken)
     {
         if (_lastFetchTime is null)
@@ -141,6 +164,4 @@ public abstract class BaseScraper
         if (delaySeconds > 0)
             await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken).ConfigureAwait(false);
     }
-
-    private static double Jitter() => 0.5 + (Random.Shared.NextDouble() * 1.0); // 0.5 .. 1.5
 }
