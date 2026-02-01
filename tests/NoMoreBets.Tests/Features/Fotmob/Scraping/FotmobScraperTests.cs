@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using NoMoreBets.Features.Fotmob.Model;
 using NoMoreBets.Features.Fotmob.Scraping;
 using NoMoreBets.Infrastructure.Fetching;
@@ -21,9 +21,9 @@ public class FotmobScraperTests
         BaseScraperOptions? baseOptions = null,
         FotmobScraperOptions? fotmobOptions = null)
     {
-        cache ??= Substitute.For<IHtmlCache>();
-        fetcher ??= Substitute.For<IPageFetcher>();
-        interactiveFetcher ??= Substitute.For<IInteractivePageFetcher>();
+        cache ??= new Mock<IHtmlCache>().Object;
+        fetcher ??= new Mock<IPageFetcher>().Object;
+        interactiveFetcher ??= new Mock<IInteractivePageFetcher>().Object;
         var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
         {
             DelaySeconds = 0,

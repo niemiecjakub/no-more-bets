@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Features.Rotowire.Model;
 using NoMoreBets.Features.Rotowire.Scraping;
@@ -21,9 +21,9 @@ public class RotowireScraperTests
         IInteractivePageFetcher? interactiveFetcher = null,
         BaseScraperOptions? options = null)
     {
-        cache ??= Substitute.For<IHtmlCache>();
-        fetcher ??= Substitute.For<IPageFetcher>();
-        interactiveFetcher ??= Substitute.For<IInteractivePageFetcher>();
+        cache ??= new Mock<IHtmlCache>().Object;
+        fetcher ??= new Mock<IPageFetcher>().Object;
+        interactiveFetcher ??= new Mock<IInteractivePageFetcher>().Object;
         var opts = Options.Create(options ?? new BaseScraperOptions
         {
             DelaySeconds = 0,
@@ -59,10 +59,10 @@ public class RotowireScraperTests
         var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
         html.Should().NotBeNull("fixture file must exist");
         var url = "https://www.rotowire.com/soccer/lineups.php";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns(html!);
-        var fetcher = Substitute.For<IPageFetcher>();
-        var sut = CreateScraper(cache, fetcher);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync(html!);
+        var fetcherMock = new Mock<IPageFetcher>();
+        var sut = CreateScraper(cacheMock.Object, fetcherMock.Object);
 
         var result = await sut.GetSoccerLineupsAsync();
 
@@ -71,7 +71,7 @@ public class RotowireScraperTests
         result[0].AwayTeam.Should().NotBeNull();
         result[0].HomeTeam.TeamCode.Should().NotBeNullOrEmpty();
         result[0].AwayTeam.TeamCode.Should().NotBeNullOrEmpty();
-        await fetcher.DidNotReceive().GetHtmlAsync(Arg.Any<string>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        fetcherMock.Verify(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

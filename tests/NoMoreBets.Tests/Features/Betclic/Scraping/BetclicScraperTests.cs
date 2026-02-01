@@ -2,7 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using NoMoreBets.Features.Betclic.Model;
 using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Infrastructure.Fetching;
@@ -23,9 +23,9 @@ public class BetclicScraperTests
         BaseScraperOptions? baseOptions = null,
         BetclicScraperOptions? betclicOptions = null)
     {
-        cache ??= Substitute.For<IHtmlCache>();
-        fetcher ??= Substitute.For<IPageFetcher>();
-        interactiveFetcher ??= Substitute.For<IInteractivePageFetcher>();
+        cache ??= new Mock<IHtmlCache>().Object;
+        fetcher ??= new Mock<IPageFetcher>().Object;
+        interactiveFetcher ??= new Mock<IInteractivePageFetcher>().Object;
         var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
         {
             DelaySeconds = 0,
@@ -109,11 +109,11 @@ public class BetclicScraperTests
     {
         // Arrange
         var html = MinimalUpcomingGamesHtml();
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(PremierLeagueUrl, Arg.Any<CancellationToken>()).Returns(html);
-        var fetcher = Substitute.For<IPageFetcher>();
-        var interactiveFetcher = Substitute.For<IInteractivePageFetcher>();
-        var sut = CreateScraper(cache, fetcher, interactiveFetcher);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(PremierLeagueUrl, It.IsAny<CancellationToken>())).ReturnsAsync(html);
+        var fetcherMock = new Mock<IPageFetcher>();
+        var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
+        var sut = CreateScraper(cacheMock.Object, fetcherMock.Object, interactiveFetcherMock.Object);
 
         // Act
         var result = await sut.GetUpcomingGamesAsync();
@@ -123,7 +123,7 @@ public class BetclicScraperTests
         result[0].HomeTeam.Should().Be("Arsenal");
         result[0].AwayTeam.Should().Be("Chelsea");
         result[0].Url.Should().NotBeNullOrEmpty();
-        await fetcher.DidNotReceive().GetHtmlAsync(Arg.Any<string>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        fetcherMock.Verify(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -150,11 +150,11 @@ public class BetclicScraperTests
         var html = FixtureHelper.LoadFixtureText("betclic/match_page.html");
         html.Should().NotBeNull("fixture file must exist");
         var gameUrl = "https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/bournemouth-liverpool-m905675307745280";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(gameUrl, Arg.Any<CancellationToken>()).Returns(html!);
-        var fetcher = Substitute.For<IPageFetcher>();
-        var interactiveFetcher = Substitute.For<IInteractivePageFetcher>();
-        var sut = CreateScraper(cache, fetcher, interactiveFetcher);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(gameUrl, It.IsAny<CancellationToken>())).ReturnsAsync(html!);
+        var fetcherMock = new Mock<IPageFetcher>();
+        var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
+        var sut = CreateScraper(cacheMock.Object, fetcherMock.Object, interactiveFetcherMock.Object);
 
         // Act
         var result = await sut.GetMatchEventsAsync(gameUrl, expand: false);
@@ -163,7 +163,7 @@ public class BetclicScraperTests
         result.Should().NotBeEmpty();
         result.Should().OnlyContain(e => e is BookmakerEvent);
         result.Should().Contain(e => !string.IsNullOrEmpty(e.Title) && e.Options.Count > 0);
-        await fetcher.DidNotReceive().GetHtmlAsync(Arg.Any<string>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        fetcherMock.Verify(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -173,18 +173,20 @@ public class BetclicScraperTests
         var html = FixtureHelper.LoadFixtureText("betclic/match_page.html");
         html.Should().NotBeNull("fixture file must exist");
         var gameUrl = "https://www.betclic.pl/some-match";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(gameUrl, Arg.Any<CancellationToken>()).Returns(html!);
-        var fetcher = Substitute.For<IPageFetcher>();
-        var interactiveFetcher = Substitute.For<IInteractivePageFetcher>();
-        var sut = CreateScraper(cache, fetcher, interactiveFetcher);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(gameUrl, It.IsAny<CancellationToken>())).ReturnsAsync(html!);
+        var fetcherMock = new Mock<IPageFetcher>();
+        var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
+        var sut = CreateScraper(cacheMock.Object, fetcherMock.Object, interactiveFetcherMock.Object);
 
         // Act
         var result = await sut.GetMatchEventsAsync(gameUrl, expand: true);
 
         // Assert
         result.Should().NotBeEmpty();
-        await interactiveFetcher.DidNotReceive().GetHtmlAfterInteractionsAsync(
-            Arg.Any<string>(), Arg.Any<IReadOnlyList<InteractionStep>>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        interactiveFetcherMock.Verify(
+            f => f.GetHtmlAfterInteractionsAsync(
+                It.IsAny<string>(), It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()),
+            Times.Never);
     }
 }

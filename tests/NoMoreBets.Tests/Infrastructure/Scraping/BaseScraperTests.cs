@@ -2,8 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NSubstitute;
-using NSubstitute.Core;
+using Moq;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
@@ -47,7 +46,7 @@ public class BaseScraperTests
     {
         var opts = Options.Create(options ?? DefaultOptions());
         var logger = NullLogger<TestableScraper>.Instance;
-        var interactive = interactiveFetcher ?? Substitute.For<IInteractivePageFetcher>();
+        var interactive = interactiveFetcher ?? new Mock<IInteractivePageFetcher>().Object;
         return new TestableScraper(cache, fetcher, interactive, opts, logger);
     }
 
@@ -56,15 +55,15 @@ public class BaseScraperTests
     {
         var url = "https://example.com";
         var cachedHtml = "<html><body>Cached</body></html>";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns(cachedHtml);
-        var fetcher = Substitute.For<IPageFetcher>();
-        var sut = CreateSut(cache, fetcher);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync(cachedHtml);
+        var fetcherMock = new Mock<IPageFetcher>();
+        var sut = CreateSut(cacheMock.Object, fetcherMock.Object);
 
         var result = await sut.FetchAsync(url);
 
         result.Should().Be(cachedHtml);
-        await fetcher.DidNotReceive().GetHtmlAsync(Arg.Any<string>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        fetcherMock.Verify(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -72,34 +71,34 @@ public class BaseScraperTests
     {
         var url = "https://example.com";
         var fetchedHtml = "<html><body>Fetched</body></html>";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns((string?)null);
-        var fetcher = Substitute.For<IPageFetcher>();
-        fetcher.GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>()).Returns(fetchedHtml);
-        var sut = CreateSut(cache, fetcher);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
+        var fetcherMock = new Mock<IPageFetcher>();
+        fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(fetchedHtml);
+        var sut = CreateSut(cacheMock.Object, fetcherMock.Object);
 
         var result = await sut.FetchAsync(url);
 
         result.Should().Be(fetchedHtml);
-        await fetcher.Received(1).GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
-        await cache.Received(1).SaveAsync(url, fetchedHtml, Arg.Any<CancellationToken>());
+        fetcherMock.Verify(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
+        cacheMock.Verify(c => c.SaveAsync(url, fetchedHtml, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task GetPageHtmlAsync_WhenFetcherThrowsPermanentScraperException_DoesNotRetry()
     {
         var url = "https://example.com/404";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns((string?)null);
-        var fetcher = Substitute.For<IPageFetcher>();
-        fetcher.GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
-            .Returns((Func<CallInfo, Task<string>>)(_ => Task.FromException<string>(new PermanentScraperException("Permanent failure (404)", 404))));
-        var sut = CreateSut(cache, fetcher);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
+        var fetcherMock = new Mock<IPageFetcher>();
+        fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
+            .Returns(() => Task.FromException<string>(new PermanentScraperException("Permanent failure (404)", 404)));
+        var sut = CreateSut(cacheMock.Object, fetcherMock.Object);
 
         var act = () => sut.FetchAsync(url);
 
         await act.Should().ThrowAsync<PermanentScraperException>().WithMessage("*404*");
-        await fetcher.Received(1).GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        fetcherMock.Verify(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -107,71 +106,72 @@ public class BaseScraperTests
     {
         var url = "https://example.com";
         var fetchedHtml = "<html>OK</html>";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns((string?)null);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
         var callCount = 0;
-        var fetcher = Substitute.For<IPageFetcher>();
-        fetcher.GetHtmlAsync(Arg.Any<string>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
-            .Returns((Func<CallInfo, Task<string>>)(_ =>
+        var fetcherMock = new Mock<IPageFetcher>();
+        fetcherMock.Setup(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
+            .Returns(() =>
             {
                 if (Interlocked.Increment(ref callCount) == 1)
                     return Task.FromException<string>(new InvalidOperationException("Network error"));
                 return Task.FromResult(fetchedHtml);
-            }));
+            });
         var opts = DefaultOptions() with { RetryCount = 2, RetryDelaySeconds = 0.01 };
-        var sut = CreateSut(cache, fetcher, opts);
+        var sut = CreateSut(cacheMock.Object, fetcherMock.Object, opts);
 
         var result = await sut.FetchAsync(url);
 
         result.Should().Be(fetchedHtml);
-        await fetcher.Received(2).GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        fetcherMock.Verify(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     [Fact]
     public async Task GetPageHtmlAsync_WhenAllRetriesFail_ThrowsWithMessage()
     {
         var url = "https://example.com";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns((string?)null);
-        var fetcher = Substitute.For<IPageFetcher>();
-        fetcher.GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
-            .Returns((Func<CallInfo, Task<string>>)(_ => Task.FromException<string>(new InvalidOperationException("Transient failure"))));
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
+        var fetcherMock = new Mock<IPageFetcher>();
+        fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
+            .Returns(() => Task.FromException<string>(new InvalidOperationException("Transient failure")));
         var opts = DefaultOptions() with { RetryCount = 2, RetryDelaySeconds = 0.01 };
-        var sut = CreateSut(cache, fetcher, opts);
+        var sut = CreateSut(cacheMock.Object, fetcherMock.Object, opts);
 
         var act = () => sut.FetchAsync(url);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage($"*Failed to fetch {url} after 2 attempts*");
-        await fetcher.Received(2).GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        fetcherMock.Verify(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     [Fact]
     public async Task ClearCacheAsync_DelegatesToCache()
     {
         var url = "https://example.com";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.ClearAsync(url, Arg.Any<CancellationToken>()).Returns(1);
-        var fetcher = Substitute.For<IPageFetcher>();
-        var sut = CreateSut(cache, fetcher);
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.ClearAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync(1);
+        var fetcherMock = new Mock<IPageFetcher>();
+        var sut = CreateSut(cacheMock.Object, fetcherMock.Object);
 
         var result = await sut.ClearCacheAsync(url);
 
         result.Should().Be(1);
-        await cache.Received(1).ClearAsync(url, Arg.Any<CancellationToken>());
+        cacheMock.Verify(c => c.ClearAsync(url, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task GetPageHtmlAsync_WhenRateLimitActive_WaitsBeforeSecondFetch()
     {
         var url = "https://example.com";
-        var cache = Substitute.For<IHtmlCache>();
-        cache.LoadAsync(url, Arg.Any<CancellationToken>()).Returns((string?)null);
-        var fetcher = Substitute.For<IPageFetcher>();
-        fetcher.GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
-            .Returns("<html>1</html>", "<html>2</html>");
+        var cacheMock = new Mock<IHtmlCache>();
+        cacheMock.Setup(c => c.LoadAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync((string?)null);
+        var callCount = 0;
+        var fetcherMock = new Mock<IPageFetcher>();
+        fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
+            .Returns(() => Task.FromResult(Interlocked.Increment(ref callCount) == 1 ? "<html>1</html>" : "<html>2</html>"));
         var opts = DefaultOptions() with { DelaySeconds = 0.1, RetryDelaySeconds = 0 };
-        var sut = CreateSut(cache, fetcher, opts);
+        var sut = CreateSut(cacheMock.Object, fetcherMock.Object, opts);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var t1 = sut.FetchAsync(url);

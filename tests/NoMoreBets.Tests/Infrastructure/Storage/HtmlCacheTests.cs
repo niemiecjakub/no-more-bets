@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using NoMoreBets.Infrastructure.Storage;
 
 namespace NoMoreBets.Tests.Infrastructure.Storage;
@@ -26,9 +26,9 @@ public class HtmlCacheTests
             CacheTtlSeconds = cacheTtlSeconds
         });
         var logger = NullLogger<HtmlCache>.Instance;
-        var env = Substitute.For<Microsoft.Extensions.Hosting.IHostEnvironment>();
-        env.ContentRootPath.Returns(Path.GetTempPath());
-        return new HtmlCache(options, logger, env);
+        var envMock = new Mock<Microsoft.Extensions.Hosting.IHostEnvironment>();
+        envMock.Setup(e => e.ContentRootPath).Returns(Path.GetTempPath());
+        return new HtmlCache(options, logger, envMock.Object);
     }
 
     [Fact]

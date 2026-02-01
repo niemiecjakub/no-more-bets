@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NSubstitute;
+using Moq;
 using NoMoreBets.Infrastructure.Storage;
 
 namespace NoMoreBets.Tests.Infrastructure.Storage;
@@ -28,9 +28,9 @@ public class JsonCacheTests
             CacheTtlSeconds = cacheTtlSeconds
         });
         var logger = NullLogger<JsonCache>.Instance;
-        var env = Substitute.For<Microsoft.Extensions.Hosting.IHostEnvironment>();
-        env.ContentRootPath.Returns(Path.GetTempPath());
-        return new JsonCache(options, logger, env);
+        var envMock = new Mock<Microsoft.Extensions.Hosting.IHostEnvironment>();
+        envMock.Setup(e => e.ContentRootPath).Returns(Path.GetTempPath());
+        return new JsonCache(options, logger, envMock.Object);
     }
 
     [Fact]
