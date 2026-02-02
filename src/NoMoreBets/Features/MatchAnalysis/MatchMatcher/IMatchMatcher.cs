@@ -1,0 +1,24 @@
+using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
+using NoMoreBets.Features.Rotowire.Model;
+using NoMoreBets.Features.SoccerData.Model;
+
+namespace NoMoreBets.Features.MatchAnalysis.MatchMatcher;
+
+/// <summary>
+/// Matches teams and data across sources (Rotowire lineups, SoccerData previews, FotMob clubs).
+/// Operates on feature types; handler maps results into MatchAnalysis models.
+/// </summary>
+public interface IMatchMatcher
+{
+  /// <summary>Builds an index of lineups by team key (order-independent home/away).</summary>
+  IReadOnlyDictionary<TeamKey, GameLineup> BuildLineupIndex(IReadOnlyList<GameLineup> lineups);
+
+  /// <summary>Finds a lineup matching the given match preview (exact or fuzzy).</summary>
+  GameLineup? FindLineup(string home, string away, IReadOnlyDictionary<TeamKey, GameLineup> index);
+
+  /// <summary>Finds an upcoming match preview by home/away team names (exact or fuzzy).</summary>
+  UpcomingMatchPreview? FindSoccerDataMatch(string home, string away, IReadOnlyList<LeagueMatchPreviews> leagues);
+
+  /// <summary>Finds a FotMob club (DTO) by team name (exact or fuzzy).</summary>
+  ClubDto? FindFotmobClub(string teamName, IReadOnlyList<ClubDto> clubs);
+}

@@ -24,12 +24,12 @@ public record JsonCacheOptions
 }
 
 /// <summary>
-/// Options for HTML cache. Default folder "cache/html", TTL 1 hour.
+/// Options for HTML cache. Default folder "cache/html", TTL from config (effectively indefinite when set high).
 /// </summary>
 public record HtmlCacheOptions
 {
     public string StoreFolder { get; init; } = "cache/html";
     public bool Store { get; init; } = true;
     public bool UseCache { get; init; } = true;
-    public double CacheTtlSeconds { get; init; } = 3600.0;
+    public double CacheTtlSeconds { get; init; } = 999_999_999_999_999_999.0;
 }

@@ -116,28 +116,12 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
         var timeElem = card.QuerySelector("div.scoreboard_hour");
         var matchTime = timeElem?.TextContent.Trim() ?? "";
 
-        double? homeOdds = null, drawOdds = null, awayOdds = null;
-        var marketOdds = card.QuerySelector("div.market_odds");
-        if (marketOdds is not null)
-        {
-          var oddsButtons = marketOdds.QuerySelectorAll("button.btn").Take(3).ToList();
-          if (oddsButtons.Count >= 3)
-          {
-            homeOdds = ParseOddsFromButton(oddsButtons[0]);
-            drawOdds = ParseOddsFromButton(oddsButtons[1]);
-            awayOdds = ParseOddsFromButton(oddsButtons[2]);
-          }
-        }
-
         games.Add(new UpcomingGame
         {
           Date = date,
           HomeTeam = homeTeam,
           AwayTeam = awayTeam,
           Time = matchTime,
-          HomeOdds = homeOdds,
-          DrawOdds = drawOdds,
-          AwayOdds = awayOdds,
           Url = cardUrl
         });
       }
@@ -147,17 +131,6 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
       }
     }
     return games;
-  }
-
-  private static double? ParseOddsFromButton(IElement button)
-  {
-    foreach (var span in button.QuerySelectorAll("span.btn_label, bcdk-bet-button-label.btn_label"))
-    {
-      if (span.ClassList.Contains("is-top"))
-        continue;
-      return ParseOdds(span.TextContent.Trim());
-    }
-    return null;
   }
 
   internal async Task<IReadOnlyList<BookmakerEvent>> ExtractEventsAsync(string html)

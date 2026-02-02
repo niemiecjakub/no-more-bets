@@ -17,12 +17,14 @@ using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
 using NoMoreBets.Features.SoccerData.GetSoccerDataMatches;
 using NoMoreBets.Features.SoccerData.Model;
 using NoMoreBets.Features.SoccerData;
+using NoMoreBets.Features.MatchAnalysis.Model;
+using NoMoreBets.Features.MatchAnalysis.RunMatchAnalysis;
 
 namespace NoMoreBets.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ScraperController(IMediator mediator) : ControllerBase
+public class RotowireController(IMediator mediator) : ControllerBase
 {
   /// <summary>
   /// Gets soccer lineups from RotoWire (games with team lineups, injuries).
@@ -36,6 +38,12 @@ public class ScraperController(IMediator mediator) : ControllerBase
     var lineupsDto = lineups.Select(GameLineupDto.From).ToList();
     return Ok(lineupsDto);
   }
+}
+
+[ApiController]
+[Route("api/[controller]")]
+public class BetclicController(IMediator mediator) : ControllerBase
+{
 
   /// <summary>
   /// Gets upcoming Premier League games from Betclic.
@@ -69,7 +77,12 @@ public class ScraperController(IMediator mediator) : ControllerBase
     var dtos = events.Select(BookmakerEventDto.From).ToList();
     return Ok(dtos);
   }
+}
 
+[ApiController]
+[Route("api/[controller]")]
+public class FotmobController(IMediator mediator) : ControllerBase
+{
   /// <summary>
   /// Gets the league table from FotMob (Premier League by default), optionally filtered by home/away/form.
   /// </summary>
@@ -96,7 +109,12 @@ public class ScraperController(IMediator mediator) : ControllerBase
     var dtos = await mediator.Send(new GetFotmobXgStatsQuery(), cancellationToken);
     return Ok(dtos);
   }
+}
 
+[ApiController]
+[Route("api/[controller]")]
+public class SoccerdataController(IMediator mediator) : ControllerBase
+{
   /// <summary>
   /// Gets upcoming match previews from SoccerData API, optionally filtered by league ID.
   /// Defaults to Premier League when no league ID is provided.
@@ -165,6 +183,26 @@ public class ScraperController(IMediator mediator) : ControllerBase
     var effectiveLeagueId = leagueId;
     var effectiveSeason = season;
     var result = await mediator.Send(new GetSoccerDataMatchesQuery(date, effectiveLeagueId, effectiveSeason), cancellationToken);
+    return Ok(result);
+  }
+}
+
+[ApiController]
+[Route("api/[controller]")]
+public class AnalysisController(IMediator mediator) : ControllerBase
+{
+  /// <summary>
+  /// Runs full match analysis for upcoming Betclic games (lineups, SoccerData previews, FotMob table, betting events).
+  /// </summary>
+  /// <param name="leagueId">Optional league ID for SoccerData upcoming previews. Default: Premier League (228).</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of match analysis results.</returns>
+  [HttpGet("match-analysis")]
+  public async Task<ActionResult<IReadOnlyList<MatchAnalysis>>> GetMatchAnalysis(
+    [FromQuery] int? leagueId = SoccerDataConstants.PremierLeagueId,
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator.Send(new RunMatchAnalysisQuery(leagueId), cancellationToken);
     return Ok(result);
   }
 }
