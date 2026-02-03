@@ -5,7 +5,7 @@ namespace NoMoreBets.Features.Rotowire.GetRotowireLineups.Dtos;
 /// <summary>
 /// Shared DTO for position (acronym + full name). Accept an acronym and get the object.
 /// </summary>
-/// <param name="Acronym">Position code (e.g. GK, DL).</param>
+/// <param name="Acronym">CurrentPostition code (e.g. GK, DL).</param>
 /// <param name="FullName">Full display name (e.g. Goalkeeper).</param>
 public record PlayerPositionDto(string Acronym, string FullName)
 {

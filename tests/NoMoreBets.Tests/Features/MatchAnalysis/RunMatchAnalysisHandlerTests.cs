@@ -173,24 +173,22 @@ public class RunMatchAnalysisHandlerTests
         // Assert
         result.Should().HaveCount(1);
         var analysis = result[0];
-        analysis.MatchInfo.Home.Should().Be("Arsenal");
-        analysis.MatchInfo.Away.Should().Be("Chelsea");
-        analysis.MatchInfo.Date.Should().Be("15/01/2026");
-        analysis.MatchInfo.Time.Should().Be("15:00");
-        analysis.Lineup.Should().NotBeNull();
-        analysis.Lineup!.Home.TeamName.Should().Be("Arsenal");
-        analysis.Lineup.Away.TeamName.Should().Be("Chelsea");
+        analysis.Game.Should().Be("Arsenal vs Chelsea");
+        analysis.Date.Should().Be(new DateTime(2026, 1, 15, 15, 0, 0));
+        analysis.HomeTeam.Name.Should().Be("Arsenal");
+        analysis.AwayTeam.Name.Should().Be("Chelsea");
+        analysis.HomeTeam.Lineup.Should().NotBeNull();
+        analysis.AwayTeam.Lineup.Should().NotBeNull();
+        analysis.HomeTeam.LeagueStatistics.Should().NotBeNull();
+        analysis.HomeTeam.LeagueStatistics!.Points.Should().Be(48);
+        analysis.AwayTeam.LeagueStatistics.Should().NotBeNull();
+        analysis.AwayTeam.LeagueStatistics!.Points.Should().Be(40);
         analysis.HeadToHead.Should().NotBeNull();
-        analysis.HeadToHead!.Team1.Name.Should().Be("Arsenal");
-        analysis.MatchPreview.Should().NotBeNull();
-        analysis.MatchPreview!.Prediction.TeamName.Should().Be("Arsenal");
-        analysis.BettingEvents.Should().NotBeNull().And.HaveCount(1);
-        analysis.BettingEvents![0].Title.Should().Be("Match Winner");
-        analysis.FbrefHome.Should().NotBeNull();
-        analysis.FbrefHome!.ClubStats!.TeamName.Should().Be("Arsenal");
-        analysis.FbrefAway.Should().NotBeNull();
-        analysis.FbrefAway!.ClubStats!.TeamName.Should().Be("Chelsea");
-        analysis.MatchId.Should().Be(100);
+        analysis.HeadToHead!.Team1.Info.Name.Should().Be("Arsenal");
+        analysis.HeadToHead.Team2.Info.Name.Should().Be("Chelsea");
+        analysis.Preview.Should().NotBeNull().And.BeEmpty();
+        analysis.Betting.Should().NotBeNull().And.HaveCount(1);
+        analysis.Betting![0].Title.Should().Be("Match Winner");
 
         _persistenceMock?.Verify(p => p.SaveResultsAsync(It.IsAny<IReadOnlyList<NoMoreBets.Features.MatchAnalysis.Model.MatchAnalysis>>(), It.IsAny<CancellationToken>()), Times.Once);
     }

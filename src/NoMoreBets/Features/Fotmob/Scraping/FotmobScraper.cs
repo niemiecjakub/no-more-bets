@@ -282,7 +282,7 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
 
   private XgStats? ParseXgRow(IElement row, IElement[] cells)
   {
-    // Position is the first number before any '<' in the row's inner HTML.
+    // CurrentPostition is the first number before any '<' in the row's inner HTML.
     var innerHtml = row.InnerHtml ?? "";
     var idx = innerHtml.IndexOf('<');
     var beforeFirstTag = idx >= 0 ? innerHtml[..idx] : innerHtml;

@@ -1,5 +1,5 @@
+using System.Globalization;
 using MediatR;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
@@ -54,9 +54,7 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     var lineups = await _mediator.Send(new GetRotowireLineupsQuery(), cancellationToken).ConfigureAwait(false);
     var lineupIndex = _matchMatcher.BuildLineupIndex(lineups);
 
-    var upcomingLeagueMatches = await _mediator
-        .Send(new GetSoccerDataMatchPreviewsUpcomingQuery(leagueId), cancellationToken)
-        .ConfigureAwait(false);
+    var upcomingLeagueMatches = await _mediator.Send(new GetSoccerDataMatchPreviewsUpcomingQuery(leagueId), cancellationToken).ConfigureAwait(false);
 
     var fotmobClubs = await _mediator.Send(new GetFotmobLeagueTableQuery(), cancellationToken).ConfigureAwait(false);
 
@@ -72,7 +70,7 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
         continue;
       }
 
-      var lineup = _matchMatcher.FindLineup(game.HomeTeam, game.AwayTeam, lineupIndex);
+      var lineup = _matchMatcher.FindLineup(game.HomeTeam, game.AwayTeam, lineupIndex) ?? GameLineup.Empty(game);
       var headToHead = await _mediator
            .Send(new GetSoccerDataHeadToHeadQuery(soccerdataMatch.Teams.Home.Id, soccerdataMatch.Teams.Away.Id), cancellationToken)
            .ConfigureAwait(false);
@@ -84,40 +82,26 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
           .Send(new GetBetclicMatchEventsQuery(game.Url, Expand: true), cancellationToken)
           .ConfigureAwait(false);
 
-      var homeClub = _matchMatcher.FindFotmobClub(game.HomeTeam, fotmobClubs);
-      var awayClub = _matchMatcher.FindFotmobClub(game.AwayTeam, fotmobClubs);
-      var fbrefHome = homeClub != null ? MapFbrefTeamData(homeClub) : null;
-      var fbrefAway = awayClub != null ? MapFbrefTeamData(awayClub) : null;
-
-      var output = new
+      var analysis = new Model.MatchAnalysis
       {
         Game = $"{soccerdataMatch.Teams.Home.Name} vs {soccerdataMatch.Teams.Away.Name}",
-        Date = DateTime.Parse($"{soccerdataMatch.Date} {soccerdataMatch.Time}"),
-        Teams = new
+        Date = DateTime.Parse($"{soccerdataMatch.Date} {soccerdataMatch.Time}", CultureInfo.GetCultureInfo("en-GB")),
+        HomeTeam = new MatchTeamData
         {
-          Home = new
-          {
-            Lineup = MapTeamLineup(lineup.HomeTeam),
-          },
-          Away = new
-          {
-            Lineup = MapTeamLineup(lineup.AwayTeam),
-          }
+          Name = soccerdataMatch.Teams.Home.Name,
+          Lineup = MapTeamLineup(lineup.HomeTeam),
+          LeagueStatistics = GetTeamData(fotmobClubs, game.HomeTeam),
         },
-        Statistics = new
+        AwayTeam = new MatchTeamData
         {
-          HeadToHead = MapHeadToHead(headToHead),
+          Name = soccerdataMatch.Teams.Away.Name,
+          Lineup = MapTeamLineup(lineup.AwayTeam),
+          LeagueStatistics = GetTeamData(fotmobClubs, game.AwayTeam)
         },
+        HeadToHead = MapHeadToHead(headToHead),
         Preview = MapMatchPreview(matchPreview),
         Betting = MapBettingEvents(events)
       };
-
-      var analysis = await CollectMatchDataAsync(
-          game,
-          lineupIndex,
-          upcomingLeagueMatches,
-          fotmobClubs,
-          cancellationToken).ConfigureAwait(false);
       results.Add(analysis);
     }
 
@@ -129,87 +113,21 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     return results;
   }
 
-  private async Task<Model.MatchAnalysis> CollectMatchDataAsync(
-      UpcomingGame game,
-      IReadOnlyDictionary<TeamKey, GameLineup> lineupIndex,
-      IReadOnlyList<LeagueMatchPreviews> upcomingLeagueMatches,
-      IReadOnlyList<ClubDto> fotmobClubs,
-      CancellationToken cancellationToken)
+  private TeamLeagueStats? GetTeamData(IReadOnlyList<ClubDto> fotmobClubs, string clubName)
   {
-    var matchInfo = new MatchInfo
+    var homeClub = _matchMatcher.FindFotmobClub(clubName, fotmobClubs);
+    if (homeClub != null)
     {
-      Home = game.HomeTeam,
-      Away = game.AwayTeam,
-      Date = game.Date,
-      Time = game.Time
-    };
-
-    LineupData? lineupData = null;
-    var lineup = _matchMatcher.FindLineup(game.HomeTeam, game.AwayTeam, lineupIndex);
-    if (lineup != null)
-    {
-      lineupData = new LineupData
-      {
-        Home = MapTeamLineup(lineup.HomeTeam),
-        Away = MapTeamLineup(lineup.AwayTeam)
-      };
+      return MapTeamLeagueData(homeClub);
     }
 
-    HeadToHeadData? headToHeadData = null;
-    MatchPreviewData? matchPreviewData = null;
-    int? matchId = null;
-
-    var soccerdataMatch = _matchMatcher.FindSoccerDataMatch(game.HomeTeam, game.AwayTeam, upcomingLeagueMatches);
-    if (soccerdataMatch != null)
-    {
-      matchId = soccerdataMatch.Id;
-      try
-      {
-        var headToHead = await _mediator
-            .Send(new GetSoccerDataHeadToHeadQuery(soccerdataMatch.Teams.Home.Id, soccerdataMatch.Teams.Away.Id), cancellationToken)
-            .ConfigureAwait(false);
-        headToHeadData = MapHeadToHead(headToHead);
-
-        var matchPreview = await _mediator
-            .Send(new GetSoccerDataMatchPreviewQuery(soccerdataMatch.Id), cancellationToken)
-            .ConfigureAwait(false);
-        matchPreviewData = MapMatchPreview(matchPreview);
-      }
-      catch (OperationCanceledException)
-      {
-        _logger.LogWarning("SoccerData request was canceled for {Home} vs {Away}; head-to-head and match preview will be missing", game.HomeTeam, game.AwayTeam);
-      }
-    }
-
-    var events = await _mediator
-        .Send(new GetBetclicMatchEventsQuery(game.Url, Expand: true), cancellationToken)
-        .ConfigureAwait(false);
-
-    IReadOnlyList<BettingEventInfo>? bettingEvents = MapBettingEvents(events);
-
-    var homeClub = _matchMatcher.FindFotmobClub(game.HomeTeam, fotmobClubs);
-    var awayClub = _matchMatcher.FindFotmobClub(game.AwayTeam, fotmobClubs);
-    var fbrefHome = homeClub != null ? MapFbrefTeamData(homeClub) : null;
-    var fbrefAway = awayClub != null ? MapFbrefTeamData(awayClub) : null;
-
-    return new Model.MatchAnalysis
-    {
-      MatchInfo = matchInfo,
-      Lineup = lineupData,
-      HeadToHead = headToHeadData,
-      MatchPreview = matchPreviewData,
-      BettingEvents = bettingEvents,
-      FbrefHome = fbrefHome,
-      FbrefAway = fbrefAway,
-      MatchId = matchId
-    };
+    return null;
   }
 
   private static TeamLineupData MapTeamLineup(TeamLineup tl)
   {
     return new TeamLineupData
     {
-      TeamName = tl.TeamName,
       LineupTypeDisplayName = LineupTypes.GetDisplayName(tl.LineupType),
       Players = tl.Players.Select(p => new PlayerInLineupInfo
       {
@@ -227,61 +145,64 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
 
   private static HeadToHeadData MapHeadToHead(HeadToHead h2h)
   {
+    var s = h2h.Stats;
+
     return new HeadToHeadData
     {
-      Team1 = new Model.TeamInfo { Id = h2h.Team1.Id, Name = h2h.Team1.Name },
-      Team2 = new Model.TeamInfo { Id = h2h.Team2.Id, Name = h2h.Team2.Name },
-      Overall = new Model.OverallStats
+      Team1 = new TeamMatchup
       {
-        OverallGamesPlayed = h2h.Stats.Overall.OverallGamesPlayed,
-        OverallTeam1Wins = h2h.Stats.Overall.OverallTeam1Wins,
-        OverallTeam2Wins = h2h.Stats.Overall.OverallTeam2Wins,
-        OverallDraws = h2h.Stats.Overall.OverallDraws,
-        OverallTeam1Scored = h2h.Stats.Overall.OverallTeam1Scored,
-        OverallTeam2Scored = h2h.Stats.Overall.OverallTeam2Scored
+        Info = new Model.TeamInfo { Id = h2h.Team1.Id, Name = h2h.Team1.Name },
+        H2HStats = new H2HStats
+        {
+          Total = new StatSummary
+          {
+            Wins = s.Overall.OverallTeam1Wins,
+            Draws = s.Overall.OverallDraws,
+            Losses = s.Overall.OverallTeam2Wins, // Team 2 wins are Team 1 losses
+            GoalsScored = s.Overall.OverallTeam1Scored
+          },
+          AtHome = new StatSummary
+          {
+            Wins = s.Team1AtHome.Team1WinsAtHome,
+            Draws = s.Team1AtHome.Team1DrawsAtHome,
+            Losses = s.Team1AtHome.Team1LossesAtHome,
+            GoalsScored = s.Team1AtHome.Team1ScoredAtHome
+          }
+        }
       },
-      Team1AtHome = new Model.Team1AtHomeStats
+      Team2 = new TeamMatchup
       {
-        Team1GamesPlayedAtHome = h2h.Stats.Team1AtHome.Team1GamesPlayedAtHome,
-        Team1WinsAtHome = h2h.Stats.Team1AtHome.Team1WinsAtHome,
-        Team1LossesAtHome = h2h.Stats.Team1AtHome.Team1LossesAtHome,
-        Team1DrawsAtHome = h2h.Stats.Team1AtHome.Team1DrawsAtHome,
-        Team1ScoredAtHome = h2h.Stats.Team1AtHome.Team1ScoredAtHome,
-        Team1ConcededAtHome = h2h.Stats.Team1AtHome.Team1ConcededAtHome
-      },
-      Team2AtHome = new Model.Team2AtHomeStats
-      {
-        Team2GamesPlayedAtHome = h2h.Stats.Team2AtHome.Team2GamesPlayedAtHome,
-        Team2WinsAtHome = h2h.Stats.Team2AtHome.Team2WinsAtHome,
-        Team2LossesAtHome = h2h.Stats.Team2AtHome.Team2LossesAtHome,
-        Team2DrawsAtHome = h2h.Stats.Team2AtHome.Team2DrawsAtHome,
-        Team2ScoredAtHome = h2h.Stats.Team2AtHome.Team2ScoredAtHome,
-        Team2ConcededAtHome = h2h.Stats.Team2AtHome.Team2ConcededAtHome
+        Info = new Model.TeamInfo { Id = h2h.Team2.Id, Name = h2h.Team2.Name },
+        H2HStats = new H2HStats
+        {
+          Total = new StatSummary
+          {
+            Wins = s.Overall.OverallTeam2Wins,
+            Draws = s.Overall.OverallDraws,
+            Losses = s.Overall.OverallTeam1Wins, // Team 1 wins are Team 2 losses
+            GoalsScored = s.Overall.OverallTeam2Scored
+          },
+          AtHome = new StatSummary
+          {
+            Wins = s.Team2AtHome.Team2WinsAtHome,
+            Draws = s.Team2AtHome.Team2DrawsAtHome,
+            Losses = s.Team2AtHome.Team2LossesAtHome,
+            GoalsScored = s.Team2AtHome.Team2ScoredAtHome
+          }
+        }
       }
     };
   }
 
-  private static MatchPreviewData MapMatchPreview(MatchPreview mp)
+  private static IReadOnlyList<Model.PreviewContentItem> MapMatchPreview(MatchPreview mp)
   {
-    var pred = mp.MatchData.Prediction;
-    var teamName = pred.Choice switch
+    return mp.PreviewContent.Select(p => new Model.PreviewContentItem
     {
-      "home" => mp.Teams.Home.Name,
-      "away" => mp.Teams.Away.Name,
-      _ => pred.Choice
-    };
-    return new MatchPreviewData
-    {
-      ExcitementRating = mp.MatchData.ExcitementRating,
-      Prediction = new PredictionData { Type = pred.Type, Choice = pred.Choice, TeamName = teamName },
-      Weather = new WeatherData
-      {
-        Description = mp.MatchData.Weather.Description,
-        TempC = mp.MatchData.Weather.TempC,
-        TempF = mp.MatchData.Weather.TempF
-      },
-      PreviewContent = mp.PreviewContent.Select(p => new Model.PreviewContentItem { Name = p.Name, Content = p.Content }).ToList()
-    };
+      Name = p.Name,
+      Content = p.Content
+    })
+    .ToList()
+    .AsReadOnly();
   }
 
   private IReadOnlyList<BettingEventInfo> MapBettingEvents(IEnumerable<BookmakerEvent> events)
@@ -294,37 +215,30 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     return events.Select(e => new BettingEventInfo
     {
       Title = e.Title,
-      Options = e.Options.Select(o => new BettingOptionInfo { Label = o.Label, Odds = o.Odds }).ToList()
+      Options = e.Options.Select(o => new BettingOptionInfo
+      {
+        Label = o.Label,
+        Odds = o.Odds
+      }).ToList()
     })
     .ToList()
     .AsReadOnly();
   }
 
-  private static FbrefTeamData MapFbrefTeamData(ClubDto club)
+  private static TeamLeagueStats MapTeamLeagueData(ClubDto club)
   {
-    return new FbrefTeamData
+    return new TeamLeagueStats
     {
-      ClubStats = new TeamLeagueStats
-      {
-        Position = club.Position,
-        TeamName = club.TeamName,
-        TeamShortname = club.TeamShortname,
-        TeamId = club.TeamId,
-        TeamLogoUrl = club.TeamLogoUrl,
-        MatchesPlayed = club.MatchesPlayed,
-        Wins = club.Wins,
-        Draws = club.Draws,
-        Losses = club.Losses,
-        GoalsFor = club.GoalsFor,
-        GoalsAgainst = club.GoalsAgainst,
-        GoalDifference = club.GoalDifference,
-        Points = club.Points,
-        Form = club.Form,
-        NextOpponentId = club.NextOpponentId,
-        NextOpponentName = club.NextOpponentName,
-        NextOpponentLogoUrl = club.NextOpponentLogoUrl
-      },
-      RecentGames = []
+      CurrentPostition = club.Position,
+      MatchesPlayed = club.MatchesPlayed,
+      Wins = club.Wins,
+      Draws = club.Draws,
+      Losses = club.Losses,
+      GoalsFor = club.GoalsFor,
+      GoalsAgainst = club.GoalsAgainst,
+      GoalDifference = club.GoalDifference,
+      Points = club.Points,
+      Form = club.Form,
     };
   }
 }

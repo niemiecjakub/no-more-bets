@@ -145,6 +145,11 @@ public sealed class MatchMatcher : IMatchMatcher
     }
 
     var best = Process.ExtractOne(teamName, choices, s => s ?? "", cutoff: FotmobScoreCutoff);
+    if (best == null)
+    {
+      _logger.LogError("No matching club data found for {Club}", teamName);
+      return null;
+    }
     var idx = best.Index;
     if (idx >= 0 && idx < clubs.Count && best.Score >= FotmobScoreCutoff)
     {
