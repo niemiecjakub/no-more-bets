@@ -1,15 +1,15 @@
 namespace NoMoreBets.Features.MatchAnalysis.Model;
 
-/// <summary>Head-to-head statistics between two teams.</summary>
+/// <summary>Head-to-head statistics between two teams. Home and Away match the same roles as <see cref="MatchAnalysis.HomeTeam"/> and <see cref="MatchAnalysis.AwayTeam"/>.</summary>
 public record HeadToHeadData
 {
-  public required TeamMatchup Team1 { get; init; }
-  public required TeamMatchup Team2 { get; init; }
+  public required TeamMatchup Home { get; init; }
+  public required TeamMatchup Away { get; init; }
 }
 
 public record TeamMatchup
 {
-  public required TeamInfo Info { get; init; }
+  public required string Name { get; init; }
   public required H2HStats H2HStats { get; init; }
 }
 

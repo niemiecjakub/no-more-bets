@@ -1,6 +1,6 @@
 namespace NoMoreBets.Features.SoccerData.Model;
 
-/// <summary>Player from SoccerData API.</summary>
+/// <summary>Name from SoccerData API.</summary>
 public record Player
 {
     public int Id { get; init; }

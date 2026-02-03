@@ -132,12 +132,12 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
       Players = tl.Players.Select(p => new PlayerInLineupInfo
       {
         Position = FootballPositions.GetFullName(p.Position),
-        Player = p.Player
+        Name = p.Player
       }).ToList(),
-      Injuries = tl.Injuries.Select(i => new InjuryInfo
+      Injuries = tl.Injuries.Select(i => new PlayerInjuryInfo
       {
         Position = FootballPositions.GetFullName(i.Position),
-        Player = i.Player,
+        Name = i.Player,
         Status = InjuryStatuses.GetFullName(i.Status)
       }).ToList()
     };
@@ -149,9 +149,9 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
 
     return new HeadToHeadData
     {
-      Team1 = new TeamMatchup
+      Home = new TeamMatchup
       {
-        Info = new Model.TeamInfo { Id = h2h.Team1.Id, Name = h2h.Team1.Name },
+        Name = h2h.Team1.Name,
         H2HStats = new H2HStats
         {
           Total = new StatSummary
@@ -170,9 +170,9 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
           }
         }
       },
-      Team2 = new TeamMatchup
+      Away = new TeamMatchup
       {
-        Info = new Model.TeamInfo { Id = h2h.Team2.Id, Name = h2h.Team2.Name },
+        Name = h2h.Team2.Name,
         H2HStats = new H2HStats
         {
           Total = new StatSummary

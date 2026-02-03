@@ -5,5 +5,5 @@ public record TeamLineupData
 {
     public required string LineupTypeDisplayName { get; init; }
     public IReadOnlyList<PlayerInLineupInfo> Players { get; init; } = [];
-    public IReadOnlyList<InjuryInfo> Injuries { get; init; } = [];
+    public IReadOnlyList<PlayerInjuryInfo> Injuries { get; init; } = [];
 }

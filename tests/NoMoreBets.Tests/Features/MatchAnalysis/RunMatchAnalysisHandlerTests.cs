@@ -184,8 +184,8 @@ public class RunMatchAnalysisHandlerTests
         analysis.AwayTeam.LeagueStatistics.Should().NotBeNull();
         analysis.AwayTeam.LeagueStatistics!.Points.Should().Be(40);
         analysis.HeadToHead.Should().NotBeNull();
-        analysis.HeadToHead!.Team1.Info.Name.Should().Be("Arsenal");
-        analysis.HeadToHead.Team2.Info.Name.Should().Be("Chelsea");
+        analysis.HeadToHead!.Home.Name.Should().Be("Arsenal");
+        analysis.HeadToHead.Away.Name.Should().Be("Chelsea");
         analysis.Preview.Should().NotBeNull().And.BeEmpty();
         analysis.Betting.Should().NotBeNull().And.HaveCount(1);
         analysis.Betting![0].Title.Should().Be("Match Winner");

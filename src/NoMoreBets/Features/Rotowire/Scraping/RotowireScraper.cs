@@ -188,7 +188,7 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
       var playerName = nameElem.TextContent.Trim();
       FootballPositions.TryParseFromAcronym(acronym, out var position);
       if (position == FootballPosition.Unknown)
-        _logger.LogError("Unknown position acronym \"{Acronym}\" for player {Player}", acronym, playerName);
+        _logger.LogError("Unknown position acronym \"{Acronym}\" for player {Name}", acronym, playerName);
 
       if (inInjuriesSection)
       {
@@ -197,7 +197,7 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
           var statusText = injuryElem.TextContent.Trim();
           if (!InjuryStatuses.TryParseFromCode(statusText, out var injuryStatus))
           {
-            _logger.LogWarning("Unknown injury status \"{Status}\" for player {Player}", statusText, playerName);
+            _logger.LogWarning("Unknown injury status \"{Status}\" for player {Name}", statusText, playerName);
             injuryStatus = InjuryStatus.Unknown;
           }
           injuries.Add(new InjuryEntry(position, playerName, injuryStatus));
