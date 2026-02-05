@@ -27,7 +27,7 @@ public record StatSummary
   public required int GoalsScored { get; init; }
 
   // Calculated properties are excellent for LLM context
-  public double WinRate => (Wins + Draws + Losses) > 0
-      ? Math.Round((double)Wins / (Wins + Draws + Losses) * 100, 2)
-      : 0;
+  public string WinRate => (Wins + Draws + Losses) > 0
+      ? $"{Math.Round((double)Wins / (Wins + Draws + Losses) * 100, 2)} %"
+      : "0 %";
 }

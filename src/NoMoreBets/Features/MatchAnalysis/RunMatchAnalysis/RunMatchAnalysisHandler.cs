@@ -128,7 +128,7 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
   {
     return new TeamLineupData
     {
-      LineupTypeDisplayName = LineupTypes.GetDisplayName(tl.LineupType),
+      Type = LineupTypes.GetDisplayName(tl.LineupType),
       Players = tl.Players.Select(p => new PlayerInLineupInfo
       {
         Position = FootballPositions.GetFullName(p.Position),
@@ -194,15 +194,9 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     };
   }
 
-  private static IReadOnlyList<Model.PreviewContentItem> MapMatchPreview(MatchPreview mp)
+  private static IReadOnlyList<string> MapMatchPreview(MatchPreview mp)
   {
-    return mp.PreviewContent.Select(p => new Model.PreviewContentItem
-    {
-      Name = p.Name,
-      Content = p.Content
-    })
-    .ToList()
-    .AsReadOnly();
+    return mp.PreviewContent.Select(p => p.Content).ToList();
   }
 
   private IReadOnlyList<BettingEventInfo> MapBettingEvents(IEnumerable<BookmakerEvent> events)

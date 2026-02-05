@@ -17,7 +17,7 @@ public record MatchAnalysis
   public HeadToHeadData? HeadToHead { get; init; }
 
   [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-  public IReadOnlyList<PreviewContentItem>? Preview { get; init; }
+  public IReadOnlyList<string>? Preview { get; init; }
 
   [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
   public IReadOnlyList<BettingEventInfo>? Betting { get; init; }
