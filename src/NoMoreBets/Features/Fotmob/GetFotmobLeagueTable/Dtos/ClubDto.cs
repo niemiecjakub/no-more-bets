@@ -17,7 +17,7 @@ public record ClubDto(
     int GoalsAgainst,
     string GoalDifference,
     int Points,
-    string Form,
+    IReadOnlyList<MatchResult> Form,
     int? NextOpponentId,
     string? NextOpponentName,
     string? NextOpponentLogoUrl)

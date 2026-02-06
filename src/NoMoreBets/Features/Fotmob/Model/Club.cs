@@ -44,8 +44,8 @@ public class Club
     /// <summary>Total points.</summary>
     public int Points { get; init; }
 
-    /// <summary>Last 5 results (e.g. "WWWDD").</summary>
-    public string Form { get; init; } = string.Empty;
+    /// <summary>Last 5 results (e.g. Win, Win, Draw, Draw, Loss).</summary>
+    public IReadOnlyList<MatchResult> Form { get; init; } = Array.Empty<MatchResult>();
 
     /// <summary>Next opponent team ID.</summary>
     public int? NextOpponentId { get; init; }

@@ -1,3 +1,5 @@
+using NoMoreBets.Features.Fotmob.Model;
+
 namespace NoMoreBets.Features.MatchAnalysis.Model;
 
 /// <summary>Team league/standings statistics (subset of FotMob Club data).</summary>
@@ -12,5 +14,5 @@ public record TeamLeagueStats
     public int GoalsAgainst { get; init; }
     public required string GoalDifference { get; init; }
     public int Points { get; init; }
-    public required string Form { get; init; }
+    public IReadOnlyList<MatchResult> Form { get; init; } = Array.Empty<MatchResult>();
 }

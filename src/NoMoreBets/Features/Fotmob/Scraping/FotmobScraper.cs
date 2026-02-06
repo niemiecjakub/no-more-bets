@@ -213,24 +213,24 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
     };
   }
 
-  private static string ParseForm(IElement formCell)
+  private static IReadOnlyList<MatchResult> ParseForm(IElement formCell)
   {
     var formSection = formCell.QuerySelector("section[class*='SingleTeamForm']");
     if (formSection is null)
-      return "";
+      return Array.Empty<MatchResult>();
 
-    var chars = new List<char>();
+    var results = new List<MatchResult>();
     foreach (var item in formSection.QuerySelectorAll("a[class*='ResultBox']"))
     {
       var cls = item.ClassName ?? "";
       if (cls.Contains("team-form__win", StringComparison.Ordinal))
-        chars.Add('W');
+        results.Add(MatchResult.Win);
       else if (cls.Contains("team-form__draw", StringComparison.Ordinal))
-        chars.Add('D');
+        results.Add(MatchResult.Draw);
       else if (cls.Contains("team-form__loss", StringComparison.Ordinal))
-        chars.Add('L');
+        results.Add(MatchResult.Loss);
     }
-    return new string(chars.ToArray());
+    return results;
   }
 
   private static void ParseNextOpponent(IElement cell, out int? nextOpponentId, out string? nextOpponentName, out string? nextOpponentLogoUrl)
