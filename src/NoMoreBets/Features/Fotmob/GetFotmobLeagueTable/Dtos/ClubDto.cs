@@ -1,6 +1,6 @@
-using NoMoreBets.Features.Fotmob.Model;
-
 namespace NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
+
+using NoMoreBets.Features.Fotmob.Model;
 
 /// <summary>API response DTO for a club in the league table.</summary>
 public record ClubDto(
@@ -17,7 +17,7 @@ public record ClubDto(
     int GoalsAgainst,
     string GoalDifference,
     int Points,
-    IReadOnlyList<MatchResult> Form,
+    IReadOnlyList<string> Form,
     int? NextOpponentId,
     string? NextOpponentName,
     string? NextOpponentLogoUrl)
@@ -37,7 +37,7 @@ public record ClubDto(
             source.GoalsAgainst,
             source.GoalDifference,
             source.Points,
-            source.Form,
+            source.Form.Select(m => m.ToString()).ToList(),
             source.NextOpponentId,
             source.NextOpponentName,
             source.NextOpponentLogoUrl);

@@ -166,8 +166,11 @@ public class FotmobScraperTests
             club.GoalsFor.Should().BeGreaterThanOrEqualTo(0);
             club.GoalsAgainst.Should().BeGreaterThanOrEqualTo(0);
             club.Points.Should().BeGreaterThanOrEqualTo(0);
-            if (club.Form.Length > 0)
-                club.Form.Should().MatchRegex("^[WDL]+$", "form should only contain W, D, L");
+            if (club.Form.Count > 0)
+            {
+                var formStr = string.Concat(club.Form.Select(f => f switch { MatchResult.Win => "W", MatchResult.Draw => "D", MatchResult.Loss => "L", _ => "?" }));
+                formStr.Should().MatchRegex("^[WDL]+$", "form should only contain W, D, L");
+            }
         }
 
         result.Select(c => c.Position).Should().BeInAscendingOrder("positions should be ordered 1, 2, 3, ...");
@@ -206,8 +209,11 @@ public class FotmobScraperTests
             club.GoalsFor.Should().BeGreaterThanOrEqualTo(0);
             club.GoalsAgainst.Should().BeGreaterThanOrEqualTo(0);
             club.Points.Should().BeGreaterThanOrEqualTo(0);
-            if (club.Form.Length > 0)
-                club.Form.Should().MatchRegex("^[WDL]+$", "form should only contain W, D, L");
+            if (club.Form.Count > 0)
+            {
+                var formStr = string.Concat(club.Form.Select(f => f switch { MatchResult.Win => "W", MatchResult.Draw => "D", MatchResult.Loss => "L", _ => "?" }));
+                formStr.Should().MatchRegex("^[WDL]+$", "form should only contain W, D, L");
+            }
         }
 
         result.Select(c => c.Position).Should().BeInAscendingOrder("positions should be ordered 1, 2, 3, ...");
@@ -246,8 +252,11 @@ public class FotmobScraperTests
             club.GoalsFor.Should().BeGreaterThanOrEqualTo(0);
             club.GoalsAgainst.Should().BeGreaterThanOrEqualTo(0);
             club.Points.Should().BeGreaterThanOrEqualTo(0);
-            if (club.Form.Length > 0)
-                club.Form.Should().MatchRegex("^[WDL]+$", "form should only contain W, D, L");
+            if (club.Form.Count > 0)
+            {
+                var formStr = string.Concat(club.Form.Select(f => f switch { MatchResult.Win => "W", MatchResult.Draw => "D", MatchResult.Loss => "L", _ => "?" }));
+                formStr.Should().MatchRegex("^[WDL]+$", "form should only contain W, D, L");
+            }
         }
 
         result.Select(c => c.Position).Should().BeInAscendingOrder("positions should be ordered 1, 2, 3, ...");
@@ -286,8 +295,11 @@ public class FotmobScraperTests
             club.GoalsFor.Should().BeGreaterThanOrEqualTo(0);
             club.GoalsAgainst.Should().BeGreaterThanOrEqualTo(0);
             club.Points.Should().BeGreaterThanOrEqualTo(0);
-            if (club.Form.Length > 0)
-                club.Form.Should().MatchRegex("^[WDL]+$", "form should only contain W, D, L");
+            if (club.Form.Count > 0)
+            {
+                var formStr = string.Concat(club.Form.Select(f => f switch { MatchResult.Win => "W", MatchResult.Draw => "D", MatchResult.Loss => "L", _ => "?" }));
+                formStr.Should().MatchRegex("^[WDL]+$", "form should only contain W, D, L");
+            }
         }
 
         result.Select(c => c.Position).Should().BeInAscendingOrder("positions should be ordered 1, 2, 3, ...");

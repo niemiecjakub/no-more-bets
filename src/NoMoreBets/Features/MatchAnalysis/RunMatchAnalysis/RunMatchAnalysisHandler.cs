@@ -7,6 +7,7 @@ using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
 using NoMoreBets.Features.Betclic.Model;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
+using NoMoreBets.Features.Fotmob.Model;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
 using NoMoreBets.Features.MatchAnalysis.Model;
 using NoMoreBets.Features.MatchAnalysis.Options;
@@ -232,7 +233,7 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
       GoalsAgainst = club.GoalsAgainst,
       GoalDifference = club.GoalDifference,
       Points = club.Points,
-      Form = club.Form,
+      Form = club.Form.Select(s => Enum.Parse<MatchResult>(s)).ToList().AsReadOnly(),
     };
   }
 }

@@ -83,8 +83,8 @@ public class RunMatchAnalysisHandlerTests
             new() { LeagueId = 228, LeagueName = "Premier League", MatchPreviews = [upcomingMatch] }
         };
 
-        var homeClub = new ClubDto(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, "WWWDW", null, null, null);
-        var awayClub = new ClubDto(2, "Chelsea", "CHE", 43, "", 20, 12, 4, 4, 38, 25, "+13", 40, "WLWDW", null, null, null);
+        var homeClub = new ClubDto(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, new[] { "Win", "Win", "Win", "Draw", "Win" }, null, null, null);
+        var awayClub = new ClubDto(2, "Chelsea", "CHE", 43, "", 20, 12, 4, 4, 38, 25, "+13", 40, new[] { "Win", "Loss", "Win", "Draw", "Win" }, null, null, null);
         var clubs = new List<ClubDto> { homeClub, awayClub };
 
         var game = new UpcomingGame

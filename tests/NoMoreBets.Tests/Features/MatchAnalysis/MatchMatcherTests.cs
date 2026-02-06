@@ -198,8 +198,8 @@ public class MatchMatcherTests
     // Arrange
     var clubs = new List<ClubDto>
         {
-            new(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, "WWWDW", null, null, null),
-            new(2, "Chelsea", "CHE", 43, "", 20, 12, 4, 4, 38, 25, "+13", 40, "WLWDW", null, null, null)
+            new(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, new[] { "Win", "Win", "Win", "Draw", "Win" }, null, null, null),
+            new(2, "Chelsea", "CHE", 43, "", 20, 12, 4, 4, 38, 25, "+13", 40, new[] { "Win", "Loss", "Win", "Draw", "Win" }, null, null, null)
         };
 
     // Act
@@ -216,7 +216,7 @@ public class MatchMatcherTests
     // Arrange: one club that does not match; fuzzy score is below cutoff so returns null
     var clubs = new List<ClubDto>
         {
-            new(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, "WWWDW", null, null, null)
+            new(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, new[] { "Win", "Win", "Win", "Draw", "Win" }, null, null, null)
         };
     // Use a name that will not exact/partial match and will have low fuzzy score
     const string teamName = "XYZ Unknown Team 123";
