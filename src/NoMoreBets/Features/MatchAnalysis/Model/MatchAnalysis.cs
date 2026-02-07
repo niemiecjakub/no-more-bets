@@ -14,6 +14,9 @@ public record MatchAnalysis
   public required MatchTeamData AwayTeam { get; init; }
 
   [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+  public WeatherData? Weather { get; init; }
+
+  [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
   public HeadToHeadData? HeadToHead { get; init; }
 
   [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

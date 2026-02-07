@@ -86,7 +86,8 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
       var analysis = new Model.MatchAnalysis
       {
         Game = $"{soccerdataMatch.Teams.Home.Name} vs {soccerdataMatch.Teams.Away.Name}",
-        Date = DateTime.Parse($"{soccerdataMatch.Date} {soccerdataMatch.Time}", CultureInfo.GetCultureInfo("en-GB")),
+        Date = DateTime.Parse($"{soccerdataMatch.Date} {soccerdataMatch.Time}"),
+        Weather =  MapWeather(matchPreview?.MatchData?.Weather),
         HomeTeam = new MatchTeamData
         {
           Name = soccerdataMatch.Teams.Home.Name,
@@ -198,6 +199,20 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
   private static IReadOnlyList<string> MapMatchPreview(MatchPreview mp)
   {
     return mp.PreviewContent.Select(p => p.Content).ToList();
+  }
+
+  private static WeatherData MapWeather(Weather? w)
+  {
+    if (w == null)
+    {
+      return null;
+    }
+
+    return new WeatherData
+    {
+      TempC = w.TempC,
+      Description = w.Description ?? string.Empty
+    };
   }
 
   private IReadOnlyList<BettingEventInfo> MapBettingEvents(IEnumerable<BookmakerEvent> events)
