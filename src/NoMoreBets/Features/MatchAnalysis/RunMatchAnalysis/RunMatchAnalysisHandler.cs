@@ -7,6 +7,8 @@ using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
 using NoMoreBets.Features.Betclic.Model;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
+using NoMoreBets.Features.Fotmob.GetFotmobXgStats;
+using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Fotmob.Model;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
 using NoMoreBets.Features.MatchAnalysis.Model;
@@ -59,6 +61,8 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
 
     var fotmobClubs = await _mediator.Send(new GetFotmobLeagueTableQuery(), cancellationToken).ConfigureAwait(false);
 
+    var xgStats = await _mediator.Send(new GetFotmobXgStatsQuery(), cancellationToken).ConfigureAwait(false);
+
     var bookmakerGames = await _mediator.Send(new GetBetclicUpcomingGamesQuery(), cancellationToken).ConfigureAwait(false);
 
     var results = new List<Model.MatchAnalysis>(bookmakerGames.Count);
@@ -86,19 +90,21 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
       var analysis = new Model.MatchAnalysis
       {
         Game = $"{soccerdataMatch.Teams.Home.Name} vs {soccerdataMatch.Teams.Away.Name}",
-        Date = DateTime.Parse($"{soccerdataMatch.Date} {soccerdataMatch.Time}"),
+        Date = DateTime.Parse($"{soccerdataMatch.Date} {soccerdataMatch.Time}", CultureInfo.GetCultureInfo("en-GB")),
         Weather =  MapWeather(matchPreview?.MatchData?.Weather),
         HomeTeam = new MatchTeamData
         {
           Name = soccerdataMatch.Teams.Home.Name,
           Lineup = MapTeamLineup(lineup.HomeTeam),
           LeagueStatistics = GetTeamData(fotmobClubs, game.HomeTeam),
+          XgStats = MapXgStats(_matchMatcher.FindXgStats(game.HomeTeam, xgStats)),
         },
         AwayTeam = new MatchTeamData
         {
           Name = soccerdataMatch.Teams.Away.Name,
           Lineup = MapTeamLineup(lineup.AwayTeam),
-          LeagueStatistics = GetTeamData(fotmobClubs, game.AwayTeam)
+          LeagueStatistics = GetTeamData(fotmobClubs, game.AwayTeam),
+          XgStats = MapXgStats(_matchMatcher.FindXgStats(game.AwayTeam, xgStats)),
         },
         HeadToHead = MapHeadToHead(headToHead),
         Preview = MapMatchPreview(matchPreview),
@@ -201,7 +207,7 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     return mp.PreviewContent.Select(p => p.Content).ToList();
   }
 
-  private static WeatherData MapWeather(Weather? w)
+  private static WeatherData? MapWeather(Weather? w)
   {
     if (w == null)
     {
@@ -212,6 +218,22 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     {
       TempC = w.TempC,
       Description = w.Description ?? string.Empty
+    };
+  }
+
+  private static TeamXgData? MapXgStats(XgStatsDto? dto)
+  {
+    if (dto == null)
+    {
+      return null;
+    }
+
+    return new TeamXgData
+    {
+      Xg = dto.Xg,
+      Xga = dto.Xga,
+      XgDiff = dto.XgDiff,
+      XgaDiff = dto.XgaDiff,
     };
   }
 

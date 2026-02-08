@@ -1,5 +1,6 @@
 using FuzzySharp;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
+using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Rotowire.Model;
 using NoMoreBets.Features.SoccerData.Model;
 
@@ -157,6 +158,57 @@ public sealed class MatchMatcher : IMatchMatcher
     }
 
     _logger.LogError("No matching club data found for {Club}", teamName);
+    return null;
+  }
+
+  /// <inheritdoc />
+  public XgStatsDto? FindXgStats(string teamName, IReadOnlyList<XgStatsDto> xgStats)
+  {
+    if (xgStats.Count == 0)
+    {
+      _logger.LogError("No xG stats to perform search from");
+      return null;
+    }
+
+    var normalized = (teamName ?? string.Empty).Trim().ToLowerInvariant();
+    foreach (var stat in xgStats)
+    {
+      var tn = (stat.TeamName ?? string.Empty).Trim().ToLowerInvariant();
+      if (tn == normalized)
+      {
+        return stat;
+      }
+    }
+
+    foreach (var stat in xgStats)
+    {
+      var tn = (stat.TeamName ?? string.Empty).Trim().ToLowerInvariant();
+      if (normalized.Contains(tn, StringComparison.Ordinal) || tn.Contains(normalized, StringComparison.Ordinal))
+      {
+        return stat;
+      }
+    }
+
+    var choices = xgStats.Select(s => s.TeamName ?? string.Empty).ToArray();
+    if (choices.Length == 0)
+    {
+      _logger.LogError("No xG stats choices for matching");
+      return null;
+    }
+
+    var best = Process.ExtractOne(teamName, choices, s => s ?? "", cutoff: FotmobScoreCutoff);
+    if (best == null)
+    {
+      _logger.LogError("No matching xG stats found for {Club}", teamName);
+      return null;
+    }
+    var idx = best.Index;
+    if (idx >= 0 && idx < xgStats.Count && best.Score >= FotmobScoreCutoff)
+    {
+      return xgStats[idx];
+    }
+
+    _logger.LogError("No matching xG stats found for {Club}", teamName);
     return null;
   }
 }

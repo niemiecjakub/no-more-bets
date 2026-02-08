@@ -12,4 +12,7 @@ public record MatchTeamData
 
   [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
   public TeamLeagueStats? LeagueStatistics { get; init; }
+
+  [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+  public TeamXgData? XgStats { get; init; }
 }
