@@ -9,8 +9,6 @@ bin/
 obj/
 src/NoMoreBets/Output/
 
-# Python
-__pycache__/
 venv/
 .coverage
 .pytest_cache/
@@ -21,6 +19,5 @@ src/NoMoreBets/NoMoreBets.Data/Resources/*
 cache/
 plans/
 
-srv/NoMoreBets/appsettings.Development.json
-/src/NoMoreBets/appsettings.Development.json
-/src/NoMoreBets/appsettings.Development.json
+src/NoMoreBets/appsettings.Development.json
+src/NoMoreBets/appsettings.json
