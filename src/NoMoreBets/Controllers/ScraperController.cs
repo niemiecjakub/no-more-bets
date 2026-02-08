@@ -4,6 +4,8 @@ using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
 using NoMoreBets.Features.Betclic.GetBetclicMatchEvents.Dtos;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames.Dtos;
+using NoMoreBets.Features.Fotmob.GetFotmobClubOverview;
+using NoMoreBets.Features.Fotmob.GetFotmobClubOverview.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats;
@@ -109,6 +111,21 @@ public class FotmobController(IMediator mediator) : ControllerBase
     var dtos = await mediator.Send(new GetFotmobXgStatsQuery(), cancellationToken);
     return Ok(dtos);
   }
+
+  /// <summary>
+  /// Gets club overview (recent games and daily summary) for a team from FotMob team overview page.
+  /// </summary>
+  /// <param name="teamId">FotMob team ID.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Club overview with RecentGames and DailySummary.</returns>
+  [HttpGet("fotmob/club-overview")]
+  public async Task<ActionResult<ClubOverviewDto>> GetFotmobClubOverview(
+    [FromQuery] int teamId,
+    CancellationToken cancellationToken = default)
+  {
+    var dtos = await mediator.Send(new GetFotmobClubOverviewQuery(teamId), cancellationToken);
+    return Ok(dtos);
+  }
 }
 
 [ApiController]
@@ -127,8 +144,7 @@ public class SoccerdataController(IMediator mediator) : ControllerBase
     [FromQuery] int? leagueId = SoccerDataConstants.PremierLeagueId,
     CancellationToken cancellationToken = default)
   {
-    var effectiveLeagueId = leagueId;
-    var result = await mediator.Send(new GetSoccerDataMatchPreviewsUpcomingQuery(effectiveLeagueId), cancellationToken);
+    var result = await mediator.Send(new GetSoccerDataMatchPreviewsUpcomingQuery(leagueId), cancellationToken);
     return Ok(result);
   }
 
@@ -180,9 +196,7 @@ public class SoccerdataController(IMediator mediator) : ControllerBase
     [FromQuery] string? season = SoccerDataConstants.CurrentSeason,
     CancellationToken cancellationToken = default)
   {
-    var effectiveLeagueId = leagueId;
-    var effectiveSeason = season;
-    var result = await mediator.Send(new GetSoccerDataMatchesQuery(date, effectiveLeagueId, effectiveSeason), cancellationToken);
+    var result = await mediator.Send(new GetSoccerDataMatchesQuery(date, leagueId, season), cancellationToken);
     return Ok(result);
   }
 }

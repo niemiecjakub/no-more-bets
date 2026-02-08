@@ -16,7 +16,7 @@ namespace NoMoreBets.Features.Fotmob.Scraping;
 /// </summary>
 public class FotmobScraper : BaseScraper, IFotmobScraper
 {
-  private const string BaseUrl = "https://www.fotmob.com/en";
+  private const string BaseUrl = "https://www.fotmob.com";
 
   private static readonly Regex TeamIdFromHrefRegex = new(@"/teams/(\d+)/", RegexOptions.Compiled);
   private static readonly Regex GoalsRegex = new(@"(\d+)\s*-\s*(\d+)", RegexOptions.Compiled);
@@ -59,6 +59,72 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
     var url = BuildXgUrl();
     var html = await GetHtmlAfterInteractionsAsync(url, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
     return await ParseXgStatsAsync(html).ConfigureAwait(false);
+  }
+
+  /// <inheritdoc />
+  public async Task<ClubOverview> GetClubOverviewAsync(int teamId, CancellationToken cancellationToken = default)
+  {
+    var url = BuildTeamOverviewUrl(teamId);
+    var html = await GetHtmlAfterInteractionsAsync(url, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
+    return await ParseClubOverviewAsync(html).ConfigureAwait(false);
+  }
+
+  internal async Task<ClubOverview> ParseClubOverviewAsync(string html)
+  {
+    var context = BrowsingContext.New(Configuration.Default);
+    var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
+
+    var recentGames = ParseRecentGamesFromDocument(doc);
+    var dailySummary = ParseDailySummaryFromDocument(doc);
+
+    return new ClubOverview
+    {
+      RecentGames = recentGames,
+      DailySummary = dailySummary
+    };
+  }
+
+  private IReadOnlyList<ClubRecentGame> ParseRecentGamesFromDocument(IDocument doc)
+  {
+    var links = doc.QuerySelectorAll("a[class*='TeamFormMatchLink']").ToArray();
+    var takeCount = Math.Min(5, links.Length);
+    var startIndex = links.Length - takeCount;
+    var results = new List<ClubRecentGame>();
+
+    for (var i = startIndex; i < links.Length; i++)
+    {
+      try
+      {
+        var game = ParseClubRecentGameLink(links[i]);
+        if (game is not null)
+          results.Add(game);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogWarning(ex, "Failed to parse a club recent game link; skipping.");
+      }
+    }
+
+    return results;
+  }
+
+  private static IReadOnlyList<string> ParseDailySummaryFromDocument(IDocument doc)
+  {
+    var list = new List<string>();
+    var container = doc.QuerySelector("div[class*='NewsSummaryContainerCSS']");
+    var liElements = container?.QuerySelectorAll("ul[class*='NewsList'] li") ?? doc.QuerySelectorAll("ul[class*='NewsList'] li");
+
+    foreach (var li in liElements)
+    {
+      var text = li.TextContent.Trim();
+      if (string.IsNullOrEmpty(text))
+        continue;
+      if (text.EndsWith("Więcej", StringComparison.OrdinalIgnoreCase))
+        text = text[..^6].TrimEnd('\u00A0', ' ');
+      list.Add(text);
+    }
+
+    return list;
   }
 
   internal async Task<IReadOnlyList<Club>> ParseLeagueTableClubsAsync(string html)
@@ -121,9 +187,50 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
     return list;
   }
 
+  private static ClubRecentGame? ParseClubRecentGameLink(IElement link)
+  {
+    var href = link.GetAttribute("href") ?? "";
+    if (string.IsNullOrEmpty(href))
+      return null;
+
+    var gameUrl = href.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+      ? href
+      : BaseUrl + (href.StartsWith("/", StringComparison.Ordinal) ? href : "/" + href);
+
+    var scoreSpan = link.QuerySelector("span[class*='ScoreSpan']");
+    var score = scoreSpan?.TextContent.Trim() ?? "";
+
+    var result = MatchResult.Draw;
+    var statusWrapper = link.QuerySelector("div[class*='FixtureStatusWrapper']");
+    var colorDiv = statusWrapper?.QuerySelector("div[color]");
+    var color = colorDiv?.GetAttribute("color") ?? "";
+    if (color.Contains("TeamForm-green", StringComparison.Ordinal))
+      result = MatchResult.Win;
+    else if (color.Contains("TeamForm-red", StringComparison.Ordinal))
+      result = MatchResult.Loss;
+    else if (color.Contains("TeamForm-grey", StringComparison.Ordinal))
+      result = MatchResult.Draw;
+
+    var img = link.QuerySelector("img[class*='TeamIcon']") ?? link.QuerySelector("img");
+    var src = img?.GetAttribute("src") ?? "";
+    if (string.IsNullOrEmpty(src))
+      return null;
+    var logoMatch = TeamIdFromLogoUrlRegex.Match(src);
+    if (!logoMatch.Success || !int.TryParse(logoMatch.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var opponentId))
+      return null;
+
+    return new ClubRecentGame
+    {
+      OpponentId = opponentId,
+      Score = score,
+      Result = result,
+      GameUrl = gameUrl
+    };
+  }
+
   private string BuildTableUrl(TableFilter filter)
   {
-    var path = $"{BaseUrl.TrimEnd('/')}/leagues/{_options.LeagueId}/table/{_options.LeagueSlug}";
+    var path = $"{BaseUrl}/leagues/{_options.LeagueId}/table/{_options.LeagueSlug}";
     return filter switch
     {
       TableFilter.Home => path + "?filter=home",
@@ -135,8 +242,13 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
 
   private string BuildXgUrl()
   {
-    var path = $"{BaseUrl.TrimEnd('/')}/leagues/{_options.LeagueId}/table/{_options.LeagueSlug}";
+    var path = $"{BaseUrl}/leagues/{_options.LeagueId}/table/{_options.LeagueSlug}";
     return path + "?filter=xg";
+  }
+
+  private static string BuildTeamOverviewUrl(int teamId)
+  {
+    return $"{BaseUrl}/teams/{teamId}";
   }
 
   private Club? ParseLeagueTableRow(IElement row)

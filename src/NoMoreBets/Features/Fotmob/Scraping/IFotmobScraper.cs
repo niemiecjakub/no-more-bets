@@ -21,4 +21,12 @@ public interface IFotmobScraper
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of xG stats per team.</returns>
     Task<IReadOnlyList<XgStats>> GetXgStatsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets club overview for a team (recent games and daily summary) from its overview page.
+    /// </summary>
+    /// <param name="teamId">Fotmob team ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Club overview with RecentGames (up to 5, oldest first) and DailySummary (text from list items).</returns>
+    Task<ClubOverview> GetClubOverviewAsync(int teamId, CancellationToken cancellationToken = default);
 }

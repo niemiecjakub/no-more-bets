@@ -306,4 +306,155 @@ public class FotmobScraperTests
         result.Select(c => c.Position).Should().OnlyHaveUniqueItems("each position should appear once");
         result.Select(c => c.TeamId).Should().OnlyHaveUniqueItems("each team ID should appear once");
     }
+
+    [Fact]
+    public async Task ParseClubOverviewAsync_WithNoFormLinks_ReturnsEmptyRecentGames()
+    {
+        // Arrange
+        var html = "<html><body><div>No form links</div></body></html>";
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseClubOverviewAsync(html);
+
+        // Assert
+        result.RecentGames.Should().BeEmpty();
+        result.DailySummary.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ParseClubOverviewAsync_WithValidFormSection_ReturnsUpToFiveGames()
+    {
+        // Arrange: fixture from recent_games_table.html (Newcastle 0-2 Aston Villa, red = loss, opponent 10252)
+        var html = FixtureHelper.LoadFixtureText("fotmob/recent_games_table.html");
+        if (html is null)
+            return; // Fixture not available
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseClubOverviewAsync(html);
+
+        // Assert
+        result.RecentGames.Should().HaveCount(1);
+        result.RecentGames[0].OpponentId.Should().Be(10252);
+        result.RecentGames[0].Score.Should().Be("0 - 2");
+        result.RecentGames[0].Result.Should().Be(MatchResult.Loss);
+        result.RecentGames[0].GameUrl.Should().Be("https://www.fotmob.com/pl/matches/aston-villa-vs-newcastle-united/3h9v0m#4813603");
+    }
+
+    [Fact]
+    public async Task ParseClubOverviewAsync_WithTeamFormRed_ReturnsLoss()
+    {
+        // Arrange
+        var html = """
+            <html><body>
+            <a href="/pl/matches/a-vs-b/1" class="TeamFormMatchLink">
+            <div class="FixtureStatusWrapper"><div color="var(--TeamForm-red)" class="ResultBox"><span class="ScoreSpan">0 - 1</span></div></div>
+            <img src="https://images.fotmob.com/image_resources/logo/teamlogo/100_xsmall.png" class="TeamIcon">
+            </a>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseClubOverviewAsync(html);
+
+        // Assert
+        result.RecentGames.Should().HaveCount(1);
+        result.RecentGames[0].Result.Should().Be(MatchResult.Loss);
+        result.RecentGames[0].OpponentId.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task ParseClubOverviewAsync_WithTeamFormGreen_ReturnsWin()
+    {
+        // Arrange
+        var html = """
+            <html><body>
+            <a href="/pl/matches/a-vs-b/2" class="TeamFormMatchLink">
+            <div class="FixtureStatusWrapper"><div color="var(--TeamForm-green)" class="ResultBox"><span class="ScoreSpan">2 - 0</span></div></div>
+            <img src="https://images.fotmob.com/image_resources/logo/teamlogo/200_xsmall.png" class="TeamIcon">
+            </a>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseClubOverviewAsync(html);
+
+        // Assert
+        result.RecentGames.Should().HaveCount(1);
+        result.RecentGames[0].Result.Should().Be(MatchResult.Win);
+        result.RecentGames[0].OpponentId.Should().Be(200);
+    }
+
+    [Fact]
+    public async Task ParseClubOverviewAsync_WithTeamFormGrey_ReturnsDraw()
+    {
+        // Arrange
+        var html = """
+            <html><body>
+            <a href="/pl/matches/a-vs-b/3" class="TeamFormMatchLink">
+            <div class="FixtureStatusWrapper"><div color="var(--TeamForm-grey)" class="ResultBox"><span class="ScoreSpan">1 - 1</span></div></div>
+            <img src="https://images.fotmob.com/image_resources/logo/teamlogo/300_xsmall.png" class="TeamIcon">
+            </a>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseClubOverviewAsync(html);
+
+        // Assert
+        result.RecentGames.Should().HaveCount(1);
+        result.RecentGames[0].Result.Should().Be(MatchResult.Draw);
+        result.RecentGames[0].OpponentId.Should().Be(300);
+    }
+
+    [Fact]
+    public async Task ParseClubOverviewAsync_WithLinkMissingImg_SkipsThatLink()
+    {
+        // Arrange: one valid link, one without img (should be skipped)
+        var html = """
+            <html><body>
+            <a href="/pl/matches/valid/1" class="TeamFormMatchLink">
+            <div class="FixtureStatusWrapper"><div color="var(--TeamForm-green)"><span class="ScoreSpan">1 - 0</span></div></div>
+            <img src="https://images.fotmob.com/image_resources/logo/teamlogo/999_xsmall.png" class="TeamIcon">
+            </a>
+            <a href="/pl/matches/nologo/2" class="TeamFormMatchLink">
+            <div class="FixtureStatusWrapper"><div color="var(--TeamForm-red)"><span class="ScoreSpan">0 - 1</span></div></div>
+            </a>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseClubOverviewAsync(html);
+
+        // Assert
+        result.RecentGames.Should().HaveCount(1);
+        result.RecentGames[0].OpponentId.Should().Be(999);
+        result.RecentGames[0].GameUrl.Should().Be("https://www.fotmob.com/pl/matches/valid/1");
+    }
+
+    [Fact]
+    public async Task ParseClubOverviewAsync_WithDailySummaryFixture_ParsesDailySummaryItems()
+    {
+        // Arrange: fixture with Daily Summary ul/li structure
+        var html = FixtureHelper.LoadFixtureText("fotmob/dailySummary.html");
+        if (html is null)
+            return; // Fixture not available
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseClubOverviewAsync(html);
+
+        // Assert
+        result.DailySummary.Should().HaveCount(3);
+        result.DailySummary.Should().OnlyContain(s => !string.IsNullOrWhiteSpace(s));
+        result.DailySummary[0].Should().Contain("Newcastle suffered");
+        result.DailySummary[0].Should().NotEndWith("Więcej");
+        result.DailySummary[1].Should().Contain("Eddie Howe");
+        result.DailySummary[2].Should().Contain("Sandro Tonali");
+    }
 }
