@@ -1,3 +1,5 @@
+using AngleSharp;
+using AngleSharp.Dom;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -456,5 +458,283 @@ public class FotmobScraperTests
         result.DailySummary[0].Should().NotEndWith("Więcej");
         result.DailySummary[1].Should().Contain("Eddie Howe");
         result.DailySummary[2].Should().Contain("Sandro Tonali");
+    }
+
+    [Fact]
+    public async Task ParsePlayersFromDocumentAsync_WithNoTable_ReturnsEmptyList()
+    {
+        // Arrange
+        var html = FixtureHelper.LoadFixtureText("fotmob/stats_no_player_table.html");
+        if (html is null)
+            return; // Fixture not available
+
+        // Act
+        var result = await FotmobScraper.ParsePlayersFromDocumentAsync(html);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ParsePlayersFromDocumentAsync_WithPlayerStatsFixture_ParsesExpectedStructure()
+    {
+        // Arrange
+        var html = FixtureHelper.LoadFixtureText("fotmob/player_stats.html");
+        if (html is null)
+            return; // Fixture not available
+
+        // Act
+        var result = await FotmobScraper.ParsePlayersFromDocumentAsync(html);
+
+        // Assert
+        result.Should().NotBeEmpty("fixture should contain player table rows");
+        var table = await LoadDocumentAndGetTableRowCount(html);
+        if (table.HasValue)
+            result.Should().HaveCount(table.Value, "parsed count should match tbody tr count in fixture");
+        foreach (var row in result)
+        {
+            row.Player.Should().NotBeNull();
+            row.Score.Should().NotBeNull();
+            row.MinutesPlayed.Should().NotBeNull();
+            row.Goals.Should().NotBeNull();
+            row.Assists.Should().NotBeNull();
+            row.Xg.Should().NotBeNull();
+            row.Xa.Should().NotBeNull();
+            row.XgPlusXa.Should().NotBeNull();
+            row.DefensiveContributions.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public async Task ParsePlayersFromDocumentAsync_WithPlayerStatsFixture_FirstRowMatchesFixtureContent()
+    {
+        // Arrange: derive expected first row from fixture DOM (no hardcoded strings)
+        var html = FixtureHelper.LoadFixtureText("fotmob/player_stats.html");
+        if (html is null)
+            return; // Fixture not available
+        var (expectedPlayer, expectedScore, expectedMinutes, expectedGoals, expectedAssists, expectedXg, expectedXa, expectedXgPlusXa, expectedDefensive) = await GetFirstRowExpectedFromFixtureAsync(html);
+        if (expectedPlayer is null)
+            return; // Could not extract expected from fixture
+
+        // Act
+        var result = await FotmobScraper.ParsePlayersFromDocumentAsync(html);
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result[0].Player.Should().Be(expectedPlayer);
+        result[0].Score.Should().Be(expectedScore);
+        result[0].MinutesPlayed.Should().Be(expectedMinutes);
+        result[0].Goals.Should().Be(expectedGoals);
+        result[0].Assists.Should().Be(expectedAssists);
+        result[0].Xg.Should().Be(expectedXg);
+        result[0].Xa.Should().Be(expectedXa);
+        result[0].XgPlusXa.Should().Be(expectedXgPlusXa);
+        result[0].DefensiveContributions.Should().Be(expectedDefensive);
+    }
+
+    private static async Task<int?> LoadDocumentAndGetTableRowCount(string html)
+    {
+        var context = BrowsingContext.New(Configuration.Default);
+        var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
+        var table = doc.QuerySelector("table[class*='StyledTable']") ?? doc.QuerySelector("[class*='StyledTable']");
+        if (table is null)
+            return null;
+        var rows = table.QuerySelectorAll("tbody tr");
+        return rows.Count();
+    }
+
+    private static async Task<(string? Player, string Score, string MinutesPlayed, string Goals, string Assists, string Xg, string Xa, string XgPlusXa, string DefensiveContributions)> GetFirstRowExpectedFromFixtureAsync(string html)
+    {
+        var context = BrowsingContext.New(Configuration.Default);
+        var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
+        var table = doc.QuerySelector("table[class*='StyledTable']") ?? doc.QuerySelector("[class*='StyledTable']");
+        if (table is null)
+            return (null, "", "", "", "", "", "", "", "");
+        var rows = table.QuerySelectorAll("tbody tr");
+        if (rows.Length == 0)
+            return (null, "", "", "", "", "", "", "", "");
+        var firstRow = rows[0];
+        var cells = firstRow.QuerySelectorAll("td").ToArray();
+        if (cells.Length < 9)
+            return (null, "", "", "", "", "", "", "", "");
+        var player = cells[0].QuerySelector("[class*='PlayerNameCSS']")?.TextContent.Trim();
+        var score = cells[1].QuerySelector("[class*='PlayerRatingCSS'] span")?.TextContent.Trim() ?? GetCellText(cells[1]);
+        return (player, score, GetCellText(cells[2]), GetCellText(cells[3]), GetCellText(cells[4]), GetCellText(cells[5]), GetCellText(cells[6]), GetCellText(cells[7]), GetCellText(cells[8]));
+    }
+
+    private static string GetCellText(IElement cell)
+    {
+        var span = cell.QuerySelector("span");
+        return span?.TextContent.Trim() ?? cell.TextContent.Trim() ?? "";
+    }
+
+    [Fact]
+    public async Task ParseStatisticsFromDocumentAsync_WithNoStatGroupContainer_ReturnsEmptyList()
+    {
+        // Arrange
+        var html = FixtureHelper.LoadFixtureText("fotmob/stats_no_stat_groups.html");
+        if (html is null)
+            return; // Fixture not available
+
+        // Act
+        var result = await FotmobScraper.ParseStatisticsFromDocumentAsync(html);
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ParseStatisticsFromDocumentAsync_WithMatchStatsFixture_ParsesExpectedStructure()
+    {
+        // Arrange
+        var html = FixtureHelper.LoadFixtureText("fotmob/match_stats.html");
+        if (html is null)
+            return; // Fixture not available
+
+        // Act
+        var result = await FotmobScraper.ParseStatisticsFromDocumentAsync(html);
+
+        // Assert
+        result.Should().NotBeEmpty("fixture contains StatGroupContainer(s)");
+        foreach (var group in result)
+        {
+            group.Title.Should().NotBeNull();
+            group.Rows.Should().NotBeNull();
+            foreach (var row in group.Rows!)
+                row.Label.Should().NotBeNull();
+        }
+    }
+
+    [Fact]
+    public async Task ParseStatisticsFromDocumentAsync_WithMatchStatsFixture_FirstGroupMatchesFixtureContent()
+    {
+        // Arrange: derive expected first group from fixture DOM (no hardcoded strings)
+        var html = FixtureHelper.LoadFixtureText("fotmob/match_stats.html");
+        if (html is null)
+            return; // Fixture not available
+        var expected = await GetFirstStatGroupExpectedFromFixtureAsync(html);
+        if (expected is null)
+            return; // Could not extract expected from fixture
+
+        // Act
+        var result = await FotmobScraper.ParseStatisticsFromDocumentAsync(html);
+
+        // Assert
+        result.Should().NotBeEmpty();
+        result[0].Title.Should().Be(expected.Value.Title);
+        result[0].Rows.Should().NotBeEmpty();
+        result[0].Rows![0].Label.Should().Be(expected.Value.FirstRowLabel);
+        result[0].Rows![0].HomeValue.Should().Be(expected.Value.FirstRowHomeValue);
+        result[0].Rows![0].AwayValue.Should().Be(expected.Value.FirstRowAwayValue);
+    }
+
+    private static async Task<(string Title, string FirstRowLabel, string? FirstRowHomeValue, string? FirstRowAwayValue)?> GetFirstStatGroupExpectedFromFixtureAsync(string html)
+    {
+        var context = BrowsingContext.New(Configuration.Default);
+        var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
+        var container = doc.QuerySelector("[class*='StatGroupContainer']");
+        if (container is null)
+            return null;
+        var header = container.QuerySelector("header");
+        var titleEl = header?.QuerySelector("h2") ?? header?.QuerySelector("[class*='Title']");
+        var title = titleEl?.TextContent.Trim() ?? "";
+        var children = container.Children.ToArray();
+        string? firstLabel = null;
+        string? firstHome = null;
+        string? firstAway = null;
+        for (var i = 0; i < children.Length; i++)
+        {
+            var child = children[i];
+            var className = child.ClassName ?? "";
+            if (className.Contains("PossessionTitle", StringComparison.OrdinalIgnoreCase))
+            {
+                var labelEl = child.QuerySelector("[class*='StatTitle']");
+                firstLabel = labelEl?.TextContent.Trim();
+                if (i + 1 < children.Length && (children[i + 1].ClassName ?? "").Contains("PossessionDiv", StringComparison.OrdinalIgnoreCase))
+                {
+                    var segments = children[i + 1].QuerySelectorAll("[class*='PossessionSegment'] span").ToArray();
+                    firstHome = segments.Length > 0 ? segments[0].TextContent.Trim() : null;
+                    firstAway = segments.Length > 1 ? segments[1].TextContent.Trim() : null;
+                }
+                break;
+            }
+            if (child.TagName?.ToUpperInvariant() == "LI" && className.Contains("Stat", StringComparison.OrdinalIgnoreCase))
+            {
+                var labelEl = child.QuerySelector("[class*='StatTitle']");
+                firstLabel = labelEl?.TextContent.Trim();
+                var boxes = child.QuerySelectorAll("[class*='StatBox']").ToArray();
+                if (boxes.Length >= 2)
+                {
+                    firstHome = boxes[0].QuerySelector("[class*='StatValue']")?.TextContent.Trim();
+                    firstAway = boxes[1].QuerySelector("[class*='StatValue']")?.TextContent.Trim();
+                }
+                if (!string.IsNullOrEmpty(firstLabel) && (firstHome is not null || firstAway is not null))
+                    break;
+            }
+        }
+        if (firstLabel is null)
+            return null; // Need at least first row to assert
+        return (title, firstLabel, firstHome, firstAway);
+    }
+
+    [Fact]
+    public async Task ParseMatchDetailsAsync_WithMinimalFixture_ParsesHomeAndAwayTeam()
+    {
+        // Arrange
+        var html = FixtureHelper.LoadFixtureText("fotmob/match_details_minimal.html");
+        if (html is null)
+            return; // Fixture not available
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseMatchDetailsAsync(html);
+
+        // Assert
+        result.HomeTeam.Should().Be("Home");
+        result.AwayTeam.Should().Be("Away");
+        result.HomeLineup.Should().BeNull();
+        result.AwayLineup.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task ParseMatchDetailsAsync_WithNoH1_ReturnsEmptyTeamNames()
+    {
+        // Arrange
+        var html = FixtureHelper.LoadFixtureText("fotmob/match_details_no_h1.html");
+        if (html is null)
+            return; // Fixture not available
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseMatchDetailsAsync(html);
+
+        // Assert
+        result.HomeTeam.Should().BeEmpty();
+        result.AwayTeam.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetMatchDetailsAsync_WhenStatsFixtureContainsPlayerTable_ReturnsDetailsWithPlayers()
+    {
+        // Arrange: first fetch = minimal match details, second fetch = stats tab with player table
+        var minimalHtml = FixtureHelper.LoadFixtureText("fotmob/match_details_minimal.html");
+        var playerStatsHtml = FixtureHelper.LoadFixtureText("fotmob/player_stats.html");
+        if (minimalHtml is null || playerStatsHtml is null)
+            return; // Fixtures not available
+        var mockFetcher = new Mock<IInteractivePageFetcher>();
+        mockFetcher
+            .SetupSequence(x => x.GetHtmlAfterInteractionsAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(minimalHtml)
+            .ReturnsAsync(playerStatsHtml);
+        var sut = CreateScraper(interactiveFetcher: mockFetcher.Object);
+
+        // Act
+        var result = await sut.GetMatchDetailsAsync("https://www.fotmob.com/pl/matches/some-match/1");
+
+        // Assert
+        result.HomeTeam.Should().Be("Home");
+        result.AwayTeam.Should().Be("Away");
+        result.Players.Should().NotBeNull("stats fixture contains player table");
+        result.Players!.Count.Should().BeGreaterThan(0, "fixture has multiple player rows");
     }
 }
