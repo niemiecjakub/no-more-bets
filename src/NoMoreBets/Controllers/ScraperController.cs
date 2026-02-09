@@ -6,6 +6,10 @@ using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobClubOverview;
 using NoMoreBets.Features.Fotmob.GetFotmobClubOverview.Dtos;
+using NoMoreBets.Features.Fotmob.GetFotmobClubRollingForm;
+using NoMoreBets.Features.Fotmob.GetFotmobClubRollingForm.Dtos;
+using NoMoreBets.Features.Fotmob.GetFotmobCoreMatchDetails;
+using NoMoreBets.Features.Fotmob.GetFotmobCoreMatchDetails.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable;
 using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails;
 using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails.Dtos;
@@ -143,6 +147,46 @@ public class FotmobController(IMediator mediator) : ControllerBase
     if (string.IsNullOrWhiteSpace(gameUrl))
       return BadRequest("gameUrl is required.");
     var dto = await mediator.Send(new GetFotmobMatchDetailsQuery(gameUrl), cancellationToken);
+    return Ok(dto);
+  }
+
+  /// <summary>
+  /// Gets core match details (goal-format per-team stats) for a team from a FotMob match page.
+  /// </summary>
+  /// <param name="gameUrl">FotMob match page URL.</param>
+  /// <param name="teamName">Team name as used on match pages (e.g. "Paris Saint-Germain").</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Core match stats for the team, or 404 if the team is not in the match.</returns>
+  [HttpGet("fotmob/core-match-details")]
+  public async Task<ActionResult<GoalTeamMatchData>> GetFotmobCoreMatchDetails(
+    [FromQuery] string gameUrl,
+    [FromQuery] string teamName,
+    CancellationToken cancellationToken = default)
+  {
+    if (string.IsNullOrWhiteSpace(gameUrl))
+      return BadRequest("gameUrl is required.");
+    if (string.IsNullOrWhiteSpace(teamName))
+      return BadRequest("teamName is required.");
+    var dto = await mediator.Send(new GetFotmobCoreMatchDetailsQuery(gameUrl, teamName), cancellationToken);
+    return dto is null ? NotFound() : Ok(dto);
+  }
+
+  /// <summary>
+  /// Gets rolling form (averages over last 5 games) for a club from FotMob.
+  /// </summary>
+  /// <param name="teamId">FotMob team ID.</param>
+  /// <param name="teamName">Team name as used on match pages (e.g. "Paris Saint-Germain").</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Rolling form with averages and the list of match details used.</returns>
+  [HttpGet("fotmob/club-rolling-form")]
+  public async Task<ActionResult<ClubRollingFormDto>> GetFotmobClubRollingForm(
+    [FromQuery] int teamId,
+    [FromQuery] string teamName,
+    CancellationToken cancellationToken = default)
+  {
+    if (string.IsNullOrWhiteSpace(teamName))
+      return BadRequest("teamName is required.");
+    var dto = await mediator.Send(new GetFotmobClubRollingFormQuery(teamId, teamName), cancellationToken);
     return Ok(dto);
   }
 }

@@ -28,13 +28,6 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
       new InteractionStep("button.fc-cta-consent", InteractionAction.Click, 600)
   ];
 
-  /// <summary>Consent plus click on 5th nav button (Statystyki) to load Statistics tab.</summary>
-  private static readonly IReadOnlyList<InteractionStep> FotmobMatchDetailsWithStatsSteps =
-  [
-      new InteractionStep("button.fc-cta-consent", InteractionAction.Click, 600),
-      new InteractionStep("nav[class*='NavContainerCSS'] button[class*='MatchNavButton']:nth-of-type(5)", InteractionAction.Click, 700)
-  ];
-
   private readonly FotmobScraperOptions _options;
   private readonly ILogger<FotmobScraper> _logger;
 
@@ -122,7 +115,6 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
       MatchDate = matchDate,
       HomeLineup = homeLineup,
       AwayLineup = awayLineup,
-      Statistics = null
     };
   }
 

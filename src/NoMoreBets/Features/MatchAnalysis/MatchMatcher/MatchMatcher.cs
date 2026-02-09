@@ -100,8 +100,13 @@ public sealed class MatchMatcher : IMatchMatcher
     }
     var keys = candidates.Keys.ToList();
     var best = Process.ExtractOne(searchStr, keys, s => s, cutoff: LineupAndSoccerDataScoreCutoff);
-    var value = best.Value;
+    if (best == null)
+    {
+      _logger.LogError("No matching soccer data match found for {Home} vs {Away}. Bets was null", home, away);
+      return null;
+    }
 
+    var value = best.Value;
     if (value != null && best.Score >= LineupAndSoccerDataScoreCutoff && candidates.TryGetValue(value, out var found))
     {
       return found;
