@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using AngleSharp;
 using AngleSharp.Dom;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Fotmob.Model;
 using NoMoreBets.Infrastructure.Fetching;
@@ -27,6 +26,13 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
   private static readonly IReadOnlyList<InteractionStep> FotmobConsentSteps =
   [
       new InteractionStep("button.fc-cta-consent", InteractionAction.Click, 600)
+  ];
+
+  /// <summary>Consent plus click on 5th nav button (Statystyki) to load Statistics tab.</summary>
+  private static readonly IReadOnlyList<InteractionStep> FotmobMatchDetailsWithStatsSteps =
+  [
+      new InteractionStep("button.fc-cta-consent", InteractionAction.Click, 600),
+      new InteractionStep("nav[class*='NavContainerCSS'] button[class*='MatchNavButton']:nth-of-type(5)", InteractionAction.Click, 700)
   ];
 
   private readonly FotmobScraperOptions _options;
@@ -67,6 +73,318 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
     var url = BuildTeamOverviewUrl(teamId);
     var html = await GetHtmlAfterInteractionsAsync(url, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
     return await ParseClubOverviewAsync(html).ConfigureAwait(false);
+  }
+
+  /// <inheritdoc />
+  public async Task<MatchDetails> GetMatchDetailsAsync(string gameUrl, CancellationToken cancellationToken = default)
+  {
+    var html = await GetHtmlAfterInteractionsAsync(gameUrl, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
+    var details = await ParseMatchDetailsAsync(html).ConfigureAwait(false);
+
+    IReadOnlyList<StatGroup>? statistics = null;
+    IReadOnlyList<PlayerMatchStats>? players = null;
+    try
+    {
+      var statsUrl = gameUrl + ":tab=stats";
+      var statsHtml = await GetHtmlAfterInteractionsAsync(statsUrl, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
+      statistics = await ParseStatisticsFromDocumentAsync(statsHtml).ConfigureAwait(false);
+      players = await ParsePlayersFromDocumentAsync(statsHtml).ConfigureAwait(false);
+    }
+    catch (Exception ex)
+    {
+      _logger.LogWarning(ex, "Failed to fetch or parse match statistics; returning match details without statistics.");
+    }
+
+    return new MatchDetails
+    {
+      HomeTeam = details.HomeTeam,
+      AwayTeam = details.AwayTeam,
+      MatchDate = details.MatchDate,
+      HomeLineup = details.HomeLineup,
+      AwayLineup = details.AwayLineup,
+      Statistics = statistics,
+      Players = players
+    };
+  }
+
+  internal async Task<MatchDetails> ParseMatchDetailsAsync(string html)
+  {
+    var context = BrowsingContext.New(Configuration.Default);
+    var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
+
+    ParseGeneralInfo(doc, out var homeTeam, out var awayTeam, out var matchDate);
+    ParseLineups(doc, out var homeLineup, out var awayLineup);
+
+    return new MatchDetails
+    {
+      HomeTeam = homeTeam,
+      AwayTeam = awayTeam,
+      MatchDate = matchDate,
+      HomeLineup = homeLineup,
+      AwayLineup = awayLineup,
+      Statistics = null
+    };
+  }
+
+  /// <summary>Parses all StatGroupContainer elements from Statistics tab HTML. Returns empty list if none found.</summary>
+  internal static async Task<IReadOnlyList<StatGroup>> ParseStatisticsFromDocumentAsync(string html)
+  {
+    var context = BrowsingContext.New(Configuration.Default);
+    var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
+    var containers = doc.QuerySelectorAll("[class*='StatGroupContainer']");
+    var groups = new List<StatGroup>();
+
+    foreach (var container in containers)
+    {
+      var containerGroups = ParseStatGroupsFromContainer(container);
+      groups.AddRange(containerGroups);
+    }
+
+    return groups;
+  }
+
+  /// <summary>Parses the player stats table from Statistics tab HTML. Returns empty list if table not found.</summary>
+  internal static async Task<IReadOnlyList<PlayerMatchStats>> ParsePlayersFromDocumentAsync(string html)
+  {
+    var context = BrowsingContext.New(Configuration.Default);
+    var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
+    var table = doc.QuerySelector("table[class*='StyledTable']") ?? doc.QuerySelector("[class*='StyledTable']");
+    var list = new List<PlayerMatchStats>();
+    if (table is null)
+      return list;
+    var rows = table.QuerySelectorAll("tbody tr");
+
+    foreach (var row in rows)
+    {
+      var cells = row.QuerySelectorAll("td").ToArray();
+      if (cells.Length < 9)
+        continue;
+
+      var player = cells[0].QuerySelector("[class*='PlayerNameCSS']")?.TextContent.Trim() ?? "";
+      var score = cells[1].QuerySelector("[class*='PlayerRatingCSS'] span")?.TextContent.Trim() ?? GetCellText(cells[1]);
+      var minutesPlayed = GetCellText(cells[2]);
+      var goals = GetCellText(cells[3]);
+      var assists = GetCellText(cells[4]);
+      var xg = GetCellText(cells[5]);
+      var xa = GetCellText(cells[6]);
+      var xgPlusXa = GetCellText(cells[7]);
+      var defensiveContributions = GetCellText(cells[8]);
+
+      list.Add(new PlayerMatchStats
+      {
+        Player = player,
+        Score = score,
+        MinutesPlayed = minutesPlayed,
+        Goals = goals,
+        Assists = assists,
+        Xg = xg,
+        Xa = xa,
+        XgPlusXa = xgPlusXa,
+        DefensiveContributions = defensiveContributions
+      });
+    }
+
+    return list;
+  }
+
+  private static string GetCellText(IElement cell)
+  {
+    var span = cell.QuerySelector("span");
+    return span?.TextContent.Trim() ?? "";
+  }
+
+  /// <summary>Parses one ul (StatGroupContainer) into zero or more StatGroups (section-aware).</summary>
+  private static List<StatGroup> ParseStatGroupsFromContainer(IElement ul)
+  {
+    var result = new List<StatGroup>();
+    var currentTitle = "";
+    var currentRows = new List<StatRow>();
+    var children = ul.Children.ToArray();
+
+    void PushCurrentGroup()
+    {
+      if (currentRows.Count > 0)
+      {
+        result.Add(new StatGroup { Title = currentTitle, Rows = currentRows.ToList() });
+        currentRows = new List<StatRow>();
+      }
+    }
+
+    for (var i = 0; i < children.Length; i++)
+    {
+      var child = children[i];
+      var tag = child.TagName?.ToUpperInvariant() ?? "";
+      var className = child.ClassName ?? "";
+
+      if (tag == "HEADER")
+      {
+        var titleEl = child.QuerySelector("h2") ?? child.QuerySelector("[class*='Title']");
+        currentTitle = titleEl?.TextContent.Trim() ?? "";
+        continue;
+      }
+
+      if (className.Contains("PossessionTitle", StringComparison.OrdinalIgnoreCase))
+      {
+        var labelEl = child.QuerySelector("[class*='StatTitle']");
+        var label = labelEl?.TextContent.Trim() ?? "";
+        IElement? possessionDiv = null;
+        if (i + 1 < children.Length && (children[i + 1].ClassName ?? "").Contains("PossessionDiv", StringComparison.OrdinalIgnoreCase))
+          possessionDiv = children[i + 1];
+        if (possessionDiv is not null)
+        {
+          var segments = possessionDiv.QuerySelectorAll("[class*='PossessionSegment'] span").ToArray();
+          var homeVal = segments.Length > 0 ? segments[0].TextContent.Trim() : null;
+          var awayVal = segments.Length > 1 ? segments[1].TextContent.Trim() : null;
+          currentRows.Add(new StatRow { Label = label, HomeValue = homeVal, AwayValue = awayVal });
+          i++;
+        }
+        continue;
+      }
+
+      if (tag == "DIV" && (className.Contains("Separator", StringComparison.OrdinalIgnoreCase) ||
+                           className.Contains("XgWrapper", StringComparison.OrdinalIgnoreCase) ||
+                           className.Contains("InfoWrapper", StringComparison.OrdinalIgnoreCase)))
+        continue;
+
+      if (tag == "LI" && className.Contains("Stat", StringComparison.OrdinalIgnoreCase))
+      {
+        var labelEl = child.QuerySelector("[class*='StatTitle']");
+        var label = labelEl?.TextContent.Trim() ?? "";
+        var boxes = child.QuerySelectorAll("[class*='StatBox']").ToArray();
+        var firstValue = boxes.Length > 0 ? boxes[0].QuerySelector("[class*='StatValue']")?.TextContent.Trim() : null;
+        var secondValue = boxes.Length > 1 ? boxes[1].QuerySelector("[class*='StatValue']")?.TextContent.Trim() : null;
+        var isHeaderRow = (string.IsNullOrEmpty(firstValue) && string.IsNullOrEmpty(secondValue)) ||
+                          (labelEl?.ClassName ?? "").Contains("dnc4li", StringComparison.OrdinalIgnoreCase);
+
+        if (isHeaderRow)
+        {
+          PushCurrentGroup();
+          currentTitle = label;
+        }
+        else if (!string.IsNullOrEmpty(label))
+        {
+          currentRows.Add(new StatRow { Label = label, HomeValue = firstValue, AwayValue = secondValue });
+        }
+        continue;
+      }
+    }
+
+    PushCurrentGroup();
+    return result;
+  }
+
+  private static void ParseGeneralInfo(IDocument doc, out string homeTeam, out string awayTeam, out DateTimeOffset? matchDate)
+  {
+    homeTeam = "";
+    awayTeam = "";
+    matchDate = null;
+
+    var timeEl = doc.QuerySelector("time[datetime]");
+    if (timeEl is not null)
+    {
+      var datetime = timeEl.GetAttribute("datetime");
+      if (!string.IsNullOrEmpty(datetime) && DateTimeOffset.TryParse(datetime, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+        matchDate = parsed;
+    }
+
+    var h1 = doc.QuerySelector("h1");
+    var h1Text = h1?.TextContent?.Trim() ?? "";
+    if (string.IsNullOrEmpty(h1Text))
+      return;
+
+    var vsIndex = h1Text.IndexOf(" vs ", StringComparison.OrdinalIgnoreCase);
+    if (vsIndex < 0)
+      return;
+    homeTeam = h1Text[..vsIndex].Trim();
+    var afterVs = h1Text[(vsIndex + 4)..].Trim();
+    var parenIndex = afterVs.IndexOf(" (", StringComparison.Ordinal);
+    awayTeam = parenIndex >= 0 ? afterVs[..parenIndex].Trim() : afterVs;
+
+    if (matchDate is null && parenIndex >= 0)
+    {
+      var datePart = afterVs[(parenIndex + 2)..].TrimEnd(')');
+      if (!string.IsNullOrEmpty(datePart) && DateTimeOffset.TryParse(datePart, CultureInfo.InvariantCulture, DateTimeStyles.None, out var fromH1))
+        matchDate = fromH1;
+    }
+  }
+
+  private void ParseLineups(IDocument doc, out TeamLineup? homeLineup, out TeamLineup? awayLineup)
+  {
+    homeLineup = null;
+    awayLineup = null;
+
+    var lineupSection = doc.QuerySelector("[class*='LineupCSS']") ?? doc.QuerySelector("[class*='LineupBackground']");
+    if (lineupSection is null)
+      return;
+
+    var teamInfoContainers = lineupSection.QuerySelectorAll("[class*='TeamInfoContainer']").ToArray();
+    var teamContainers = lineupSection.QuerySelectorAll("[class*='TeamContainer']").ToArray();
+
+    if (teamInfoContainers.Length >= 2 && teamContainers.Length >= 2)
+    {
+      homeLineup = ParseTeamLineup(teamInfoContainers[0], teamContainers[0]);
+      awayLineup = ParseTeamLineup(teamInfoContainers[1], teamContainers[1]);
+    }
+  }
+
+  private static TeamLineup? ParseTeamLineup(IElement teamInfoContainer, IElement teamContainer)
+  {
+    var teamName = "";
+    var link = teamInfoContainer.QuerySelector("a[class*='LineupContainer']");
+    var h2 = link?.QuerySelector("h2");
+    if (h2 is not null)
+      teamName = h2.TextContent.Trim();
+
+    var formationEl = teamInfoContainer.QuerySelector("[class*='FormationText']");
+    var formation = formationEl?.TextContent.Trim();
+
+    double? teamRating = null;
+    var badgeWrapper = teamInfoContainer.QuerySelector("[class*='BadgeWrapper']");
+    var ratingSpan = badgeWrapper?.QuerySelector("[class*='PlayerRatingCSS'] span");
+    if (ratingSpan is not null && TryParseRating(ratingSpan.TextContent, out var tr))
+      teamRating = tr;
+
+    var players = new List<LineupPlayer>();
+    foreach (var playerDiv in teamContainer.QuerySelectorAll("[class*='PlayerDiv']"))
+    {
+      var player = ParseLineupPlayer(playerDiv);
+      if (player is not null)
+        players.Add(player);
+    }
+
+    return new TeamLineup
+    {
+      TeamName = teamName,
+      Formation = formation,
+      TeamRating = teamRating,
+      Players = players
+    };
+  }
+
+  private static LineupPlayer? ParseLineupPlayer(IElement playerDiv)
+  {
+    var nameEl = playerDiv.QuerySelector("[class*='LineupPlayerText']");
+    var name = nameEl?.GetAttribute("title")?.Trim() ?? nameEl?.TextContent.Trim() ?? "";
+
+    double? rating = null;
+    var ratingEl = playerDiv.QuerySelector("[class*='PlayerRatingCSS'] span");
+    if (ratingEl is not null && TryParseRating(ratingEl.TextContent, out var r))
+      rating = r;
+
+    return new LineupPlayer
+    {
+      Name = name,
+      Rating = rating
+    };
+  }
+
+  private static bool TryParseRating(string? text, out double value)
+  {
+    value = 0;
+    if (string.IsNullOrWhiteSpace(text))
+      return false;
+    var normalized = text.Trim().Replace(',', '.');
+    return double.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out value);
   }
 
   internal async Task<ClubOverview> ParseClubOverviewAsync(string html)

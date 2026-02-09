@@ -132,7 +132,7 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     return null;
   }
 
-  private static TeamLineupData MapTeamLineup(TeamLineup tl)
+  private static TeamLineupData MapTeamLineup(Rotowire.Model.TeamLineup tl)
   {
     return new TeamLineupData
     {

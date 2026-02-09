@@ -7,6 +7,8 @@ using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobClubOverview;
 using NoMoreBets.Features.Fotmob.GetFotmobClubOverview.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable;
+using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails;
+using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
@@ -120,11 +122,28 @@ public class FotmobController(IMediator mediator) : ControllerBase
   /// <returns>Club overview with RecentGames and DailySummary.</returns>
   [HttpGet("fotmob/club-overview")]
   public async Task<ActionResult<ClubOverviewDto>> GetFotmobClubOverview(
-    [FromQuery] int teamId,
+    [FromQuery] int teamId = 10261,
     CancellationToken cancellationToken = default)
   {
     var dtos = await mediator.Send(new GetFotmobClubOverviewQuery(teamId), cancellationToken);
     return Ok(dtos);
+  }
+
+  /// <summary>
+  /// Gets match details from a FotMob match detail page.
+  /// </summary>
+  /// <param name="gameUrl">FotMob match page URL.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Match details with home/away teams, match date, and lineups when present.</returns>
+  [HttpGet("fotmob/match-details")]
+  public async Task<ActionResult<MatchDetailsDto>> GetFotmobMatchDetails(
+    [FromQuery] string gameUrl,
+    CancellationToken cancellationToken = default)
+  {
+    if (string.IsNullOrWhiteSpace(gameUrl))
+      return BadRequest("gameUrl is required.");
+    var dto = await mediator.Send(new GetFotmobMatchDetailsQuery(gameUrl), cancellationToken);
+    return Ok(dto);
   }
 }
 

@@ -29,4 +29,12 @@ public interface IFotmobScraper
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Club overview with RecentGames (up to 5, oldest first) and DailySummary (text from list items).</returns>
     Task<ClubOverview> GetClubOverviewAsync(int teamId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets match details (general info and lineups) from a FotMob match detail page.
+    /// </summary>
+    /// <param name="gameUrl">FotMob match page URL (e.g. https://www.fotmob.com/.../matches/...-vs-.../...).</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Match details with home/away teams, match date, and lineups when present.</returns>
+    Task<MatchDetails> GetMatchDetailsAsync(string gameUrl, CancellationToken cancellationToken = default);
 }
