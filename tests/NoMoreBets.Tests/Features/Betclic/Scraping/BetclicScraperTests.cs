@@ -83,7 +83,7 @@ public class BetclicScraperTests
     result[0].HomeTeam.Should().Be("Arsenal");
     result[0].AwayTeam.Should().Be("Chelsea");
     result[0].Url.Should().Contain("betclic.pl").And.Contain("arsenal-chelsea");
-    result[0].Date.Should().Be("Sob. 17/01");
+    result[0].Date.Should().Be(new DateTime(DateTime.Today.Year, 1, 17));
     result[0].Time.Should().Be("13:30");
   }
 

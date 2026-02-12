@@ -46,7 +46,7 @@ public class RunMatchAnalysisHandlerTests
         // Arrange
         var lineup = new GameLineup
         {
-            Date = "2026-01-15",
+            Date = new DateTime(2026, 1, 15),
             Time = "15:00",
             HomeTeam = new TeamLineup
             {
@@ -89,7 +89,7 @@ public class RunMatchAnalysisHandlerTests
 
         var game = new UpcomingGame
         {
-            Date = "15/01/2026",
+            Date = new DateTime(2026, 1, 15),
             Time = "15:00",
             HomeTeam = "Arsenal",
             AwayTeam = "Chelsea",

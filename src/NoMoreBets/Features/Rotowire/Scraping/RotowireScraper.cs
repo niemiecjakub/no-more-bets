@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 using AngleSharp;
 using AngleSharp.Dom;
@@ -103,13 +104,29 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
 
     ValiiadteLineupPlayers(homeLineup, awayLineup);
 
+    var parsedDate = ParseRotowireDate(date);
     return new GameLineup
     {
-      Date = string.IsNullOrEmpty(date) ? "Unknown" : date,
+      Date = parsedDate,
       Time = time,
       HomeTeam = homeLineup,
       AwayTeam = awayLineup
     };
+  }
+
+  private static DateTime ParseRotowireDate(string? dateStr)
+  {
+    if (string.IsNullOrWhiteSpace(dateStr))
+    {
+      return DateTime.Today;
+    }
+    var withYear = $"{dateStr.Trim()}, {DateTime.Today.Year}";
+    if (DateTime.TryParse(withYear, CultureInfo.GetCultureInfo("en-US"), DateTimeStyles.None, out var dt))
+    {
+      return dt;
+    }
+
+    throw new ArgumentException($"Couldnt parse date from rotowire: {dateStr}", nameof(dateStr));
   }
 
   private TeamLineup ParseTeamLineup(IElement section, string teamCode, string teamName)

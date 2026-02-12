@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Features.Fotmob.Scraping;
@@ -20,7 +19,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+  c.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
+});
 var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
 builder.Services.AddDbContextFactory<AppDbContext>(options =>
   options.UseNpgsql(dbConnectionString, o =>

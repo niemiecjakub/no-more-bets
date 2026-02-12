@@ -24,7 +24,7 @@ public class MatchMatcherTests
     // Arrange
     var lineup = new GameLineup
     {
-      Date = "2026-01-15",
+      Date = new DateTime(2026, 1, 15),
       Time = "15:00",
       HomeTeam = new TeamLineup
       {
@@ -59,13 +59,13 @@ public class MatchMatcherTests
     // Arrange
     var lineup1 = new GameLineup
     {
-      Date = "2026-01-15",
+      Date = new DateTime(2026, 1, 15),
       HomeTeam = new TeamLineup { TeamName = "Arsenal", LineupType = LineupType.Predicted, Players = [], Injuries = [] },
       AwayTeam = new TeamLineup { TeamName = "Chelsea", LineupType = LineupType.Predicted, Players = [], Injuries = [] }
     };
     var lineup2 = new GameLineup
     {
-      Date = "2026-01-15",
+      Date = new DateTime(2026, 1, 15),
       HomeTeam = new TeamLineup { TeamName = "Chelsea", LineupType = LineupType.Predicted, Players = [], Injuries = [] },
       AwayTeam = new TeamLineup { TeamName = "Arsenal", LineupType = LineupType.Predicted, Players = [], Injuries = [] }
     };
@@ -88,7 +88,7 @@ public class MatchMatcherTests
     // Arrange
     var lineup = new GameLineup
     {
-      Date = "2026-01-15",
+      Date = new DateTime(2026, 1, 15),
       Time = "15:00",
       HomeTeam = new TeamLineup { TeamName = "Arsenal", LineupType = LineupType.Predicted, Players = [], Injuries = [] },
       AwayTeam = new TeamLineup { TeamName = "Chelsea", LineupType = LineupType.Predicted, Players = [], Injuries = [] }

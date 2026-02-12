@@ -5,7 +5,7 @@ namespace NoMoreBets.Features.Betclic.Model;
 /// </summary>
 public record UpcomingGame
 {
-  public required string Date { get; init; }
+  public required DateTime Date { get; init; }
   public required string HomeTeam { get; init; }
   public required string AwayTeam { get; init; }
   public required string Time { get; init; }

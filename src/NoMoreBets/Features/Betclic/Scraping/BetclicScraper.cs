@@ -98,7 +98,8 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
       return games;
 
     var dateHeader = groupEvents.QuerySelector("h2.groupEvents_headTitle");
-    var date = dateHeader?.TextContent.Trim() ?? "";
+    var dateString = dateHeader?.TextContent.Trim() ?? "";
+    var parsedDate = ParseBetclicDateString(dateString);
 
     foreach (var card in groupEvents.QuerySelectorAll("sports-events-event-card.groupEvents_card"))
     {
@@ -118,7 +119,7 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
 
         games.Add(new UpcomingGame
         {
-          Date = date,
+          Date = parsedDate,
           HomeTeam = homeTeam,
           AwayTeam = awayTeam,
           Time = matchTime,
@@ -131,6 +132,34 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
       }
     }
     return games;
+  }
+
+  private static DateTime ParseBetclicDateString(string dateString)
+  {
+    var trimmed = dateString.Trim();
+    if (string.IsNullOrEmpty(trimmed))
+    {
+      throw new ArgumentException("Date string is empty.", nameof(dateString));
+    }
+    if (string.Equals(trimmed, "Dzisiaj", StringComparison.OrdinalIgnoreCase))
+    {
+      return DateTime.Today;
+    }
+    if (string.Equals(trimmed, "Jutro", StringComparison.OrdinalIgnoreCase))
+    {
+      return DateTime.Today.AddDays(1);
+    }
+
+    var ddMm = trimmed[^5..];
+    var parts = ddMm.Split('/');
+    if (parts.Length == 2 &&
+        int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var day) &&
+        int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var month))
+    {
+      return new DateTime(DateTime.Today.Year, month, day);
+    }
+
+    throw new ArgumentException($"Couldnt parse betlic header date: {dateString}", nameof(dateString));
   }
 
   internal async Task<IReadOnlyList<BookmakerEvent>> ExtractEventsAsync(string html)

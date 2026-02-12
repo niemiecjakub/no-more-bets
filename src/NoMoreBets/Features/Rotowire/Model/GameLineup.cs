@@ -7,7 +7,7 @@ namespace NoMoreBets.Features.Rotowire.Model;
 /// </summary>
 public record GameLineup
 {
-  public required string Date { get; init; }
+  public required DateTime Date { get; init; }
   public string? Time { get; init; }
   public required TeamLineup HomeTeam { get; init; }
   public required TeamLineup AwayTeam { get; init; }

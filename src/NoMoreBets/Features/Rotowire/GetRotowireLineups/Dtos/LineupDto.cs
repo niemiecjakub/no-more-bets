@@ -37,7 +37,7 @@ public record TeamLineupDto(
 
 /// <summary>API response DTO for a game lineup.</summary>
 public record GameLineupDto(
-    string Date,
+    DateTime Date,
     string? Time,
     TeamLineupDto HomeTeam,
     TeamLineupDto AwayTeam)

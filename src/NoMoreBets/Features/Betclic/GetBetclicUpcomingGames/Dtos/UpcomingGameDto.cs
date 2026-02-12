@@ -4,7 +4,7 @@ namespace NoMoreBets.Features.Betclic.GetBetclicUpcomingGames.Dtos;
 
 /// <summary>API response DTO for an upcoming game.</summary>
 public record UpcomingGameDto(
-    string Date,
+    DateTime Date,
     string HomeTeam,
     string AwayTeam,
     string Time,
