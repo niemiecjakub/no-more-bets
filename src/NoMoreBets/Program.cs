@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Betclic.Scraping;
@@ -7,6 +8,7 @@ using NoMoreBets.Features.MatchAnalysis.Options;
 using NoMoreBets.Features.MatchAnalysis.Persistence;
 using NoMoreBets.Features.Rotowire.Scraping;
 using NoMoreBets.Features.SoccerData;
+using NoMoreBets.Infrastructure.Database;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
@@ -18,10 +20,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
-{
-  c.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
-});
+builder.Services.AddSwaggerGen();
+var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+builder.Services.AddDbContextFactory<AppDbContext>(options =>
+  options.UseNpgsql(dbConnectionString, o =>
+    {
+      o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+    }));
 
 builder.Services.Configure<JsonCacheOptions>(builder.Configuration.GetSection("StorageCache:JsonCache"));
 builder.Services.Configure<HtmlCacheOptions>(builder.Configuration.GetSection("StorageCache:HtmlCache"));
@@ -30,7 +35,7 @@ builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSecti
 builder.Services.Configure<FotmobScraperOptions>(builder.Configuration.GetSection("Scraper:Fotmob"));
 builder.Services.Configure<SoccerDataOptions>(builder.Configuration.GetSection("SoccerData"));
 builder.Services.Configure<MatchAnalysisOptions>(builder.Configuration.GetSection("MatchAnalysis"));
-builder.Services.AddSingleton<IMatchMatcher, NoMoreBets.Features.MatchAnalysis.MatchMatcher.MatchMatcher>();
+builder.Services.AddSingleton<IMatchMatcher, MatchMatcher>();
 builder.Services.AddSingleton<IMatchAnalysisPersistence, FileMatchAnalysisPersistence>();
 builder.Services.AddSingleton<IJsonCache, JsonCache>();
 builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
