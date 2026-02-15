@@ -27,6 +27,7 @@ using NoMoreBets.Features.SoccerData.Model;
 using NoMoreBets.Features.SoccerData;
 using NoMoreBets.Features.MatchAnalysis.Model;
 using NoMoreBets.Features.MatchAnalysis.RunMatchAnalysis;
+using NoMoreBets.Features.Prediction.PredictMatch;
 
 namespace NoMoreBets.Controllers;
 
@@ -280,6 +281,21 @@ public class AnalysisController(IMediator mediator) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     var result = await mediator.Send(new RunMatchAnalysisQuery(leagueId), cancellationToken);
+    return Ok(result);
+  }
+
+  /// <summary>
+  /// Runs multi-agent prediction for a specific match and returns a JSON betting ticket.
+  /// </summary>
+  /// <param name="query">PredictMatch input payload.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Prediction ticket and transcript metadata.</returns>
+  [HttpPost("predict-match")]
+  public async Task<ActionResult<PredictMatchResult>> PredictMatch(
+    [FromBody] PredictMatchQuery query,
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator.Send(query, cancellationToken);
     return Ok(result);
   }
 }

@@ -127,7 +127,7 @@ public class RunMatchAnalysisHandlerTests
             {
                 ExcitementRating = 7.5,
                 Weather = new Weather { Description = "Clear", TempC = 12, TempF = 54 },
-                Prediction = new Prediction { Type = "match_winner", Choice = "home" }
+                Prediction = new NoMoreBets.Features.SoccerData.Model.Prediction { Type = "match_winner", Choice = "home" }
             },
             PreviewContent = []
         };
