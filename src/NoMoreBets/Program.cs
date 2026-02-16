@@ -49,6 +49,7 @@ builder.Services.AddSingleton<IPredictMatchAgentOrchestrator, PredictMatchAgentO
 builder.Services.AddSingleton<IJsonCache, JsonCache>();
 builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
 builder.Services.AddSingleton<PlaywrightPageFetcher>();
+builder.Services.AddScoped<Initialize>();
 builder.Services.AddSingleton<IPageFetcher>(sp => sp.GetRequiredService<PlaywrightPageFetcher>());
 builder.Services.AddSingleton<IInteractivePageFetcher>(sp => sp.GetRequiredService<PlaywrightPageFetcher>());
 builder.Services.AddSingleton<IRotowireScraper, RotowireScraper>();

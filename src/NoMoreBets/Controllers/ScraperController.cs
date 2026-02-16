@@ -28,6 +28,7 @@ using NoMoreBets.Features.SoccerData;
 using NoMoreBets.Features.MatchAnalysis.Model;
 using NoMoreBets.Features.MatchAnalysis.RunMatchAnalysis;
 using NoMoreBets.Features.Prediction.PredictMatch;
+using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Controllers;
 
@@ -139,7 +140,7 @@ public class FotmobController(IMediator mediator) : ControllerBase
   /// </summary>
   /// <param name="gameUrl">FotMob match page URL.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>Match details with home/away teams, match date, and lineups when present.</returns>
+  /// <returns>Matches details with home/away teams, match date, and lineups when present.</returns>
   [HttpGet("fotmob/match-details")]
   public async Task<ActionResult<MatchDetailsDto>> GetFotmobMatchDetails(
     [FromQuery] string gameUrl,
@@ -194,7 +195,7 @@ public class FotmobController(IMediator mediator) : ControllerBase
 
 [ApiController]
 [Route("api/[controller]")]
-public class SoccerdataController(IMediator mediator) : ControllerBase
+public class SoccerdataController(IMediator mediator, Initialize initialize) : ControllerBase
 {
   /// <summary>
   /// Gets upcoming match previews from SoccerData API, optionally filtered by league ID.
@@ -215,9 +216,9 @@ public class SoccerdataController(IMediator mediator) : ControllerBase
   /// <summary>
   /// Gets match preview for a single match from SoccerData API.
   /// </summary>
-  /// <param name="matchId">Match ID.</param>
+  /// <param name="matchId">Matches ID.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>Match preview with teams, weather, and content.</returns>
+  /// <returns>Matches preview with teams, weather, and content.</returns>
   [HttpGet("soccerdata/match-preview")]
   public async Task<ActionResult<MatchPreview>> GetSoccerDataMatchPreview(
     [FromQuery] int matchId,
@@ -261,6 +262,7 @@ public class SoccerdataController(IMediator mediator) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     var result = await mediator.Send(new GetSoccerDataMatchesQuery(date, leagueId, season), cancellationToken);
+    await initialize.SeedMatchData(result);
     return Ok(result);
   }
 }
