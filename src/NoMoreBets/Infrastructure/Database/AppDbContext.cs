@@ -88,7 +88,7 @@ public class AppDbContext : DbContext
       entity.HasOne(e => e.Stage).WithMany(e => e.Matches).HasForeignKey(e => e.StageId);
       entity.HasOne(e => e.HomeClub).WithMany(e => e.HomeMatches).HasForeignKey(e => e.HomeClubId);
       entity.HasOne(e => e.AwayClub).WithMany(e => e.AwayMatches).HasForeignKey(e => e.AwayClubId);
-      entity.HasOne(m => m.MatchStatus)
+      entity.HasOne(m => m.MatchStatusEntity)
         .WithMany()
         .HasForeignKey(m => m.MatchStatusId)
         .OnDelete(DeleteBehavior.Restrict);

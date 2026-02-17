@@ -1,3 +1,4 @@
+using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames.Dtos;
 using NoMoreBets.Features.Betclic.Model;
 
 namespace NoMoreBets.Features.Rotowire.Model;
@@ -28,6 +29,30 @@ public record GameLineup
       AwayTeam = new TeamLineup
       {
         TeamName = game.AwayTeam,
+        LineupType = Domain.Enums.LineupType.Unknown,
+        Players = Array.Empty<PlayerInLineup>(),
+        Injuries = Array.Empty<InjuryEntry>()
+      }
+    };
+  }
+
+  public static GameLineup Empty(UpcomingGameDto dto)
+  {
+    var timeStr = TimeOnly.FromDateTime(dto.Date).ToString("HH:mm");
+    return new GameLineup
+    {
+      Date = dto.Date,
+      Time = timeStr,
+      HomeTeam = new TeamLineup
+      {
+        TeamName = dto.HomeTeam.Name,
+        LineupType = Domain.Enums.LineupType.Unknown,
+        Players = Array.Empty<PlayerInLineup>(),
+        Injuries = Array.Empty<InjuryEntry>()
+      },
+      AwayTeam = new TeamLineup
+      {
+        TeamName = dto.AwayTeam.Name,
         LineupType = Domain.Enums.LineupType.Unknown,
         Players = Array.Empty<PlayerInLineup>(),
         Injuries = Array.Empty<InjuryEntry>()

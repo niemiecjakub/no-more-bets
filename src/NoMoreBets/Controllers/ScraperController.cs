@@ -64,8 +64,7 @@ public class BetclicController(IMediator mediator) : ControllerBase
   public async Task<ActionResult<IReadOnlyList<UpcomingGameDto>>> GetBetclicUpcomingGames(CancellationToken cancellationToken)
   {
     var games = await mediator.Send(new GetBetclicUpcomingGamesQuery(), cancellationToken);
-    var dtos = games.Select(UpcomingGameDto.From).ToList();
-    return Ok(dtos);
+    return Ok(games);
   }
 
   /// <summary>

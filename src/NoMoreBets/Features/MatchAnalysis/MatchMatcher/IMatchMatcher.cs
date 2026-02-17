@@ -25,4 +25,7 @@ public interface IMatchMatcher
 
   /// <summary>Finds xG stats by team name (exact or fuzzy).</summary>
   XgStatsDto? FindXgStats(string teamName, IReadOnlyList<XgStatsDto> xgStats);
+
+  /// <summary>Finds the best matching candidate by home/away team names (exact or fuzzy).</summary>
+  T? FindBestMatch<T>(string home, string away, IReadOnlyList<(string HomeName, string AwayName, T Value)> candidates);
 }

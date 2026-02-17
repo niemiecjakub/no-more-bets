@@ -216,4 +216,42 @@ public sealed class MatchMatcher : IMatchMatcher
     _logger.LogError("No matching xG stats found for {Club}", teamName);
     return null;
   }
+
+  /// <inheritdoc />
+  public T? FindBestMatch<T>(string home, string away, IReadOnlyList<(string HomeName, string AwayName, T Value)> candidates)
+  {
+    if (candidates.Count == 0)
+    {
+      return default;
+    }
+
+    var key = new TeamKey(home, away);
+    var searchStr = key.ToSearchString();
+
+    foreach (var c in candidates)
+    {
+      var matchKey = new TeamKey(c.HomeName, c.AwayName);
+      if (matchKey.Equals(key))
+      {
+        return c.Value;
+      }
+    }
+
+    var dict = new Dictionary<string, T>(StringComparer.Ordinal);
+    foreach (var c in candidates)
+    {
+      var k = new TeamKey(c.HomeName, c.AwayName);
+      dict[k.ToSearchString()] = c.Value;
+    }
+
+    var keys = dict.Keys.ToList();
+    var best = Process.ExtractOne(searchStr, keys, s => s, cutoff: LineupAndSoccerDataScoreCutoff);
+    var value = best.Value;
+    if (value != null && best.Score >= LineupAndSoccerDataScoreCutoff && dict.TryGetValue(value, out var found))
+    {
+      return found;
+    }
+
+    return default;
+  }
 }

@@ -68,14 +68,14 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     var results = new List<Model.MatchAnalysis>(bookmakerGames.Count);
     foreach (var game in bookmakerGames)
     {
-      var soccerdataMatch = _matchMatcher.FindSoccerDataMatch(game.HomeTeam, game.AwayTeam, upcomingLeagueMatches);
+      var soccerdataMatch = _matchMatcher.FindSoccerDataMatch(game.HomeTeam.Name, game.AwayTeam.Name, upcomingLeagueMatches);
       if (soccerdataMatch == null)
       {
-        _logger.LogInformation("No SoccerData match found for {Home} vs {Away}; skipping match analysis", game.HomeTeam, game.AwayTeam);
+        _logger.LogInformation("No SoccerData match found for {Home} vs {Away}; skipping match analysis", game.HomeTeam.Name, game.AwayTeam.Name);
         continue;
       }
 
-      var lineup = _matchMatcher.FindLineup(game.HomeTeam, game.AwayTeam, lineupIndex) ?? GameLineup.Empty(game);
+      var lineup = _matchMatcher.FindLineup(game.HomeTeam.Name, game.AwayTeam.Name, lineupIndex) ?? GameLineup.Empty(game);
       var headToHead = await _mediator
            .Send(new GetSoccerDataHeadToHeadQuery(soccerdataMatch.Teams.Home.Id, soccerdataMatch.Teams.Away.Id), cancellationToken)
            .ConfigureAwait(false);
@@ -96,15 +96,15 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
         {
           Name = soccerdataMatch.Teams.Home.Name,
           Lineup = MapTeamLineup(lineup.HomeTeam),
-          LeagueStatistics = GetTeamData(fotmobClubs, game.HomeTeam),
-          XgStats = MapXgStats(_matchMatcher.FindXgStats(game.HomeTeam, xgStats)),
+          LeagueStatistics = GetTeamData(fotmobClubs, game.HomeTeam.Name),
+          XgStats = MapXgStats(_matchMatcher.FindXgStats(game.HomeTeam.Name, xgStats)),
         },
         AwayTeam = new MatchTeamData
         {
           Name = soccerdataMatch.Teams.Away.Name,
           Lineup = MapTeamLineup(lineup.AwayTeam),
-          LeagueStatistics = GetTeamData(fotmobClubs, game.AwayTeam),
-          XgStats = MapXgStats(_matchMatcher.FindXgStats(game.AwayTeam, xgStats)),
+          LeagueStatistics = GetTeamData(fotmobClubs, game.AwayTeam.Name),
+          XgStats = MapXgStats(_matchMatcher.FindXgStats(game.AwayTeam.Name, xgStats)),
         },
         HeadToHead = MapHeadToHead(headToHead),
         Preview = MapMatchPreview(matchPreview),
