@@ -14,8 +14,9 @@ public class AppDbContext : DbContext
   public DbSet<Club> Club { get; set; }
   public DbSet<Season> Season { get; set; }
   public DbSet<Stage> Stage { get; set; }
-  public DbSet<Match> Game { get; set; }
   public DbSet<MatchStatusEntity> MatchStatus { get; set; }
+  public DbSet<Match> Match { get; set; }
+  public DbSet<Lineup> Lineup { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -79,19 +80,29 @@ public class AppDbContext : DbContext
     modelBuilder.Entity<Match>(entity =>
     {
       entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
       entity.Property(e => e.StageId).IsRequired();
       entity.Property(e => e.MatchDate).IsRequired();
       entity.Property(e => e.HomeClubId).IsRequired();
       entity.Property(e => e.AwayClubId).IsRequired();
-      entity.Property(e => e.SoccerdataId).IsRequired();
       entity.Property(e => e.MatchStatusId).IsRequired();
-      entity.HasOne(e => e.Stage).WithMany(e => e.Matches).HasForeignKey(e => e.StageId);
-      entity.HasOne(e => e.HomeClub).WithMany(e => e.HomeMatches).HasForeignKey(e => e.HomeClubId);
-      entity.HasOne(e => e.AwayClub).WithMany(e => e.AwayMatches).HasForeignKey(e => e.AwayClubId);
-      entity.HasOne(m => m.MatchStatusEntity)
+      entity.HasOne(e => e.Stage).WithMany().HasForeignKey(e => e.StageId);
+      entity.HasOne(e => e.HomeClub).WithMany().HasForeignKey(e => e.HomeClubId);
+      entity.HasOne(e => e.AwayClub).WithMany().HasForeignKey(e => e.AwayClubId);
+      entity.HasOne(e => e.MatchStatusEntity)
         .WithMany()
-        .HasForeignKey(m => m.MatchStatusId)
+        .HasForeignKey(e => e.MatchStatusId)
         .OnDelete(DeleteBehavior.Restrict);
+    });
+
+    modelBuilder.Entity<Lineup>(entity =>
+    {
+      entity.HasKey(e => e.MatchId);
+      entity.Property(e => e.HomeTeamJson).IsRequired();
+      entity.Property(e => e.AwayTeamJson).IsRequired();
+      entity.HasOne(e => e.Match)
+        .WithOne(m => m.Lineup)
+        .HasForeignKey<Lineup>(e => e.MatchId);
     });
   }
 }

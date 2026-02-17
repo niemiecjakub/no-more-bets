@@ -6,7 +6,7 @@ namespace NoMoreBets.Domain.Entity;
 public class Match
 {
   public int Id { get; set; }
-  public int? SoccerdataId { get; set; }
+  public int SoccerdataId { get; set; }
   public int StageId { get; set; }
   public DateTime MatchDate { get; set; }
   public int HomeClubId { get; set; }
@@ -19,6 +19,7 @@ public class Match
   public Club HomeClub { get; set; } = null!;
   public Club AwayClub { get; set; } = null!;
   public MatchStatusEntity MatchStatusEntity { get; set; } = null!;
+  public Lineup? Lineup { get; set; }
 
   [NotMapped]
   public MatchStatus MatchStatus

@@ -264,7 +264,7 @@ public class Initialize
             AwayClubId = awayClubId,
             MatchStatusId = string.Equals("finished", match.Status) ? (int)MatchStatus.Finished : (int)MatchStatus.Upcomming,
             HomeGoals = string.Equals("finished", match.Status) ? match.Goals.HomeFtGoals : null,
-            AwayGoals = string.Equals("finished", match.Status) ? match.Goals.AwayFtGoals: null,
+            AwayGoals = string.Equals("finished", match.Status) ? match.Goals.AwayFtGoals : null,
           });
         }
       }
@@ -281,7 +281,7 @@ public class Initialize
     }
 
     var soccerdataMatchIds = uniqueMatchesFromPayload.Select(m => m.SoccerdataId).ToHashSet();
-    var existingMatchesBySoccerdataId = await _context.Game
+    var existingMatchesBySoccerdataId = await _context.Match
       .Where(m => soccerdataMatchIds.Contains(m.SoccerdataId))
       .ToDictionaryAsync(m => m.Id);
 
@@ -306,7 +306,7 @@ public class Initialize
 
     if (matchesToInsert.Count > 0)
     {
-      await _context.Game.AddRangeAsync(matchesToInsert);
+      await _context.Match.AddRangeAsync(matchesToInsert);
       await _context.SaveChangesAsync();
     }
   }

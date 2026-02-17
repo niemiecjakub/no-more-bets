@@ -31,7 +31,7 @@ public class GetBetclicUpcomingGamesHandler(
       var dateWithTime = CombineDateAndTime(game.Date, game.Time);
       var gameDayUtc = dateWithTime.ToUniversalTime().Date;
 
-      var matchesOnDay = await db.Game
+      var matchesOnDay = await db.Match
         .Where(g => g.MatchDate.Date == gameDayUtc)
         .Include(g => g.HomeClub)
         .Include(g => g.AwayClub)
