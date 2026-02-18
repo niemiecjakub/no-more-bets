@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
   public DbSet<Match> Match { get; set; }
   public DbSet<Lineup> Lineup { get; set; }
   public DbSet<MatchPreview> MatchPreview { get; set; }
+  public DbSet<Head2Head> Head2Head { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -109,6 +110,17 @@ public class AppDbContext : DbContext
       entity.HasKey(e => e.MatchId);
       entity.Property(e => e.PreviewContentJson).IsRequired().HasColumnType("jsonb");
       entity.HasOne(e => e.Match).WithOne(m => m.MatchPreview).HasForeignKey<MatchPreview>(e => e.MatchId);
+    });
+
+    modelBuilder.Entity<Head2Head>(entity =>
+    {
+      entity.HasKey(e => new { e.Team1Id, e.Team2Id });
+      entity.Property(e => e.Team1Id).IsRequired();
+      entity.Property(e => e.Team2Id).IsRequired();
+      entity.Property(e => e.Head2HeadJson).IsRequired().HasColumnType("jsonb");
+      entity.Property(e => e.UpdatedAt).IsRequired();
+      entity.HasOne(e => e.Team1).WithMany().HasForeignKey(e => e.Team1Id);
+      entity.HasOne(e => e.Team2).WithMany().HasForeignKey(e => e.Team2Id);
     });
   }
 }
