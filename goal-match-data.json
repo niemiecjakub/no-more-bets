@@ -1,0 +1,30 @@
+{
+  "team": "Paris Saint-Germain",
+  "opponent": "Newcastle United",
+  "date": "2026-01-28",
+  "isHome": true,
+
+  "xg_for": 2.52,
+  "xg_against": 1.07,
+  "shots_for": 25,
+  "shots_against": 10,
+  "shots_on_target_for": 7,
+  "shots_on_target_against": 4,
+  "big_chances_for": 3,
+  "big_chances_against": 2,
+  "possession": 0.67,
+  "corners": 5,
+  "touches_box": 48,
+
+  "passes": 686,
+  "pass_accuracy": 0.90,
+
+  "tackles": 12,
+  "interceptions": 15,
+  "keeper_saves": 3,
+
+  "distance_km": 115.8,
+  "sprints": 132,
+
+  "team_rating": 7.3
+}

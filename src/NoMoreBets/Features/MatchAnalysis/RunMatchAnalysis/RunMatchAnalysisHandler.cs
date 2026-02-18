@@ -57,7 +57,9 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
     var lineups = await _mediator.Send(new GetRotowireLineupsQuery(), cancellationToken).ConfigureAwait(false);
     var lineupIndex = _matchMatcher.BuildLineupIndex(lineups);
 
-    var upcomingLeagueMatches = await _mediator.Send(new GetSoccerDataMatchPreviewsUpcomingQuery(leagueId), cancellationToken).ConfigureAwait(false);
+    await _mediator.Send(new RefreshSoccerDataMatchPreviewsUpcomingCommand(leagueId), cancellationToken).ConfigureAwait(false);
+    var upcomingLeagueMatches = await _mediator.Send(new GetSoccerDataMatchPreviewsUpcomingQuery(leagueId), cancellationToken).ConfigureAwait(false)
+      ?? [];
 
     var fotmobClubs = await _mediator.Send(new GetFotmobLeagueTableQuery(), cancellationToken).ConfigureAwait(false);
 
@@ -76,10 +78,12 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
       }
 
       var lineup = _matchMatcher.FindLineup(game.HomeTeam.Name, game.AwayTeam.Name, lineupIndex) ?? GameLineup.Empty(game);
+      await _mediator.Send(new RefreshSoccerDataHeadToHeadCommand(soccerdataMatch.Teams.Home.Id, soccerdataMatch.Teams.Away.Id), cancellationToken).ConfigureAwait(false);
       var headToHead = await _mediator
            .Send(new GetSoccerDataHeadToHeadQuery(soccerdataMatch.Teams.Home.Id, soccerdataMatch.Teams.Away.Id), cancellationToken)
            .ConfigureAwait(false);
 
+      await _mediator.Send(new RefreshSoccerDataMatchPreviewCommand(soccerdataMatch.Id), cancellationToken).ConfigureAwait(false);
       var matchPreview = await _mediator.Send(new GetSoccerDataMatchPreviewQuery(soccerdataMatch.Id), cancellationToken)
           .ConfigureAwait(false);
 
@@ -106,8 +110,8 @@ public sealed class RunMatchAnalysisHandler : IRequestHandler<RunMatchAnalysisQu
           LeagueStatistics = GetTeamData(fotmobClubs, game.AwayTeam.Name),
           XgStats = MapXgStats(_matchMatcher.FindXgStats(game.AwayTeam.Name, xgStats)),
         },
-        HeadToHead = MapHeadToHead(headToHead),
-        Preview = MapMatchPreview(matchPreview),
+        HeadToHead = headToHead is not null ? MapHeadToHead(headToHead) : null,
+        Preview = matchPreview is not null ? MapMatchPreview(matchPreview) : null,
         Betting = MapBettingEvents(events)
       };
       results.Add(analysis);

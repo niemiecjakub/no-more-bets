@@ -208,8 +208,9 @@ public class SoccerdataController(IMediator mediator, Initialize initialize) : C
     [FromQuery] int? leagueId = SoccerDataConstants.PremierLeagueId,
     CancellationToken cancellationToken = default)
   {
+    await mediator.Send(new RefreshSoccerDataMatchPreviewsUpcomingCommand(leagueId), cancellationToken);
     var result = await mediator.Send(new GetSoccerDataMatchPreviewsUpcomingQuery(leagueId), cancellationToken);
-    return Ok(result);
+    return result is null ? NotFound() : Ok(result);
   }
 
   /// <summary>
@@ -223,8 +224,9 @@ public class SoccerdataController(IMediator mediator, Initialize initialize) : C
     [FromQuery] int matchId,
     CancellationToken cancellationToken = default)
   {
+    await mediator.Send(new RefreshSoccerDataMatchPreviewCommand(matchId), cancellationToken);
     var result = await mediator.Send(new GetSoccerDataMatchPreviewQuery(matchId), cancellationToken);
-    return Ok(result);
+    return result is null ? NotFound() : Ok(result);
   }
 
   /// <summary>
@@ -240,8 +242,9 @@ public class SoccerdataController(IMediator mediator, Initialize initialize) : C
     [FromQuery] int team2Id,
     CancellationToken cancellationToken = default)
   {
+    await mediator.Send(new RefreshSoccerDataHeadToHeadCommand(team1Id, team2Id), cancellationToken);
     var result = await mediator.Send(new GetSoccerDataHeadToHeadQuery(team1Id, team2Id), cancellationToken);
-    return Ok(result);
+    return result is null ? NotFound() : Ok(result);
   }
 
   /// <summary>

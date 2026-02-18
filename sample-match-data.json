@@ -1,0 +1,700 @@
+{
+    "homeTeam": "Paris Saint-Germain",
+    "awayTeam": "Newcastle United",
+    "matchDate": "2026-01-28T20:00:00+00:00",
+    "homeLineup": {
+      "teamName": "Paris Saint-Germain",
+      "formation": "4-3-3",
+      "teamRating": 7.3,
+      "players": [
+        {
+          "name": "Matvey Safonov",
+          "rating": 7
+        },
+        {
+          "name": "Achraf Hakimi",
+          "rating": 7.1
+        },
+        {
+          "name": "Marquinhos",
+          "rating": 7.1
+        },
+        {
+          "name": "Willian Pacho",
+          "rating": 7.5
+        },
+        {
+          "name": "Nuno Mendes",
+          "rating": 7.8
+        },
+        {
+          "name": "Joao Neves",
+          "rating": 7.7
+        },
+        {
+          "name": "Vitinha",
+          "rating": 8.6
+        },
+        {
+          "name": "Warren Zaire-Emery",
+          "rating": 7.5
+        },
+        {
+          "name": "Khvicha Kvaratskhelia",
+          "rating": 6.8
+        },
+        {
+          "name": "Ousmane Dembélé",
+          "rating": 7.5
+        },
+        {
+          "name": "Bradley Barcola",
+          "rating": 6.9
+        }
+      ]
+    },
+    "awayLineup": {
+      "teamName": "Newcastle United",
+      "formation": "3-4-3",
+      "teamRating": 6.9,
+      "players": [
+        {
+          "name": "Joseph Willock",
+          "rating": 8.1
+        },
+        {
+          "name": "Nick Woltemade",
+          "rating": 6.3
+        },
+        {
+          "name": "Anthony Elanga",
+          "rating": 6.4
+        },
+        {
+          "name": "Lewis Hall",
+          "rating": 6.7
+        },
+        {
+          "name": "Sandro Tonali",
+          "rating": 7.1
+        },
+        {
+          "name": "Jacob Ramsey",
+          "rating": 7.1
+        },
+        {
+          "name": "Lewis Miley",
+          "rating": 6.3
+        },
+        {
+          "name": "Daniel Burn",
+          "rating": 7.6
+        },
+        {
+          "name": "Sven Botman",
+          "rating": 7.1
+        },
+        {
+          "name": "Malick Thiaw",
+          "rating": 6.6
+        },
+        {
+          "name": "Nick Pope",
+          "rating": 8
+        }
+      ]
+    },
+    "statistics": [
+      {
+        "title": "Top stats",
+        "rows": [
+          {
+            "label": "Ball possession",
+            "homeValue": "67%",
+            "awayValue": "33%"
+          },
+          {
+            "label": "Expected goals (xG)",
+            "homeValue": "2.52",
+            "awayValue": "1.07"
+          },
+          {
+            "label": "Total shots",
+            "homeValue": "25",
+            "awayValue": "10"
+          },
+          {
+            "label": "Shots on target",
+            "homeValue": "7",
+            "awayValue": "4"
+          },
+          {
+            "label": "Big chances",
+            "homeValue": "3",
+            "awayValue": "2"
+          },
+          {
+            "label": "Big chances missed",
+            "homeValue": "3",
+            "awayValue": "1"
+          },
+          {
+            "label": "Accurate passes",
+            "homeValue": "616 (90%)",
+            "awayValue": "247 (74%)"
+          },
+          {
+            "label": "Fouls committed",
+            "homeValue": "8",
+            "awayValue": "8"
+          },
+          {
+            "label": "Corners",
+            "homeValue": "5",
+            "awayValue": "1"
+          }
+        ]
+      },
+      {
+        "title": "Physical performance",
+        "rows": [
+          {
+            "label": "Distance covered",
+            "homeValue": "115.8 km",
+            "awayValue": "120.1 km"
+          },
+          {
+            "label": "Walking",
+            "homeValue": "33.5 km",
+            "awayValue": "33.1 km"
+          },
+          {
+            "label": "Running",
+            "homeValue": "79.4 km",
+            "awayValue": "84.2 km"
+          },
+          {
+            "label": "Sprinting",
+            "homeValue": "3.0 km",
+            "awayValue": "2.8 km"
+          },
+          {
+            "label": "Number of sprints",
+            "homeValue": "132",
+            "awayValue": "118"
+          }
+        ]
+      },
+      {
+        "title": "Expected goals (xG)",
+        "rows": [
+          {
+            "label": "Expected goals (xG)",
+            "homeValue": "2.52",
+            "awayValue": "1.07"
+          },
+          {
+            "label": "xG open play",
+            "homeValue": "1.65",
+            "awayValue": "0.80"
+          },
+          {
+            "label": "xG set play",
+            "homeValue": "0.08",
+            "awayValue": "0.27"
+          },
+          {
+            "label": "Non-penalty xG",
+            "homeValue": "1.73",
+            "awayValue": "1.07"
+          },
+          {
+            "label": "xG on target (xGOT)",
+            "homeValue": "1.46",
+            "awayValue": "0.86"
+          }
+        ]
+      },
+      {
+        "title": "Shots",
+        "rows": [
+          {
+            "label": "Total shots",
+            "homeValue": "25",
+            "awayValue": "10"
+          },
+          {
+            "label": "Shots off target",
+            "homeValue": "10",
+            "awayValue": "3"
+          },
+          {
+            "label": "Shots on target",
+            "homeValue": "7",
+            "awayValue": "4"
+          },
+          {
+            "label": "Blocked shots",
+            "homeValue": "8",
+            "awayValue": "3"
+          },
+          {
+            "label": "Hit woodwork",
+            "homeValue": "0",
+            "awayValue": "0"
+          },
+          {
+            "label": "Shots inside box",
+            "homeValue": "18",
+            "awayValue": "8"
+          },
+          {
+            "label": "Shots outside box",
+            "homeValue": "7",
+            "awayValue": "2"
+          }
+        ]
+      },
+      {
+        "title": "Duels",
+        "rows": [
+          {
+            "label": "Duels won",
+            "homeValue": "40",
+            "awayValue": "38"
+          },
+          {
+            "label": "Ground duels won",
+            "homeValue": "28 (47%)",
+            "awayValue": "31 (53%)"
+          },
+          {
+            "label": "Aerial duels won",
+            "homeValue": "12 (63%)",
+            "awayValue": "7 (37%)"
+          },
+          {
+            "label": "Successful dribbles",
+            "homeValue": "9 (45%)",
+            "awayValue": "5 (50%)"
+          }
+        ]
+      },
+      {
+        "title": "Discipline",
+        "rows": [
+          {
+            "label": "Yellow cards",
+            "homeValue": "0",
+            "awayValue": "1"
+          },
+          {
+            "label": "Red cards",
+            "homeValue": "0",
+            "awayValue": "0"
+          }
+        ]
+      },
+      {
+        "title": "Passes",
+        "rows": [
+          {
+            "label": "Passes",
+            "homeValue": "686",
+            "awayValue": "332"
+          },
+          {
+            "label": "Accurate passes",
+            "homeValue": "616 (90%)",
+            "awayValue": "247 (74%)"
+          },
+          {
+            "label": "Own half",
+            "homeValue": "245",
+            "awayValue": "117"
+          },
+          {
+            "label": "Opposition half",
+            "homeValue": "371",
+            "awayValue": "130"
+          },
+          {
+            "label": "Accurate long balls",
+            "homeValue": "21 (55%)",
+            "awayValue": "26 (46%)"
+          },
+          {
+            "label": "Accurate crosses",
+            "homeValue": "7 (47%)",
+            "awayValue": "2 (22%)"
+          },
+          {
+            "label": "Throws",
+            "homeValue": "13",
+            "awayValue": "13"
+          },
+          {
+            "label": "Touches in opposition box",
+            "homeValue": "48",
+            "awayValue": "25"
+          },
+          {
+            "label": "Offsides",
+            "homeValue": "1",
+            "awayValue": "1"
+          }
+        ]
+      },
+      {
+        "title": "Defense",
+        "rows": [
+          {
+            "label": "Tackles",
+            "homeValue": "12",
+            "awayValue": "18"
+          },
+          {
+            "label": "Interceptions",
+            "homeValue": "15",
+            "awayValue": "11"
+          },
+          {
+            "label": "Blocks",
+            "homeValue": "3",
+            "awayValue": "7"
+          },
+          {
+            "label": "Clearances",
+            "homeValue": "19",
+            "awayValue": "19"
+          },
+          {
+            "label": "Keeper saves",
+            "homeValue": "3",
+            "awayValue": "6"
+          }
+        ]
+      }
+    ],
+    "players": [
+      {
+        "player": "Vitinha",
+        "score": "8.6",
+        "minutesPlayed": "90",
+        "goals": "1",
+        "assists": "0",
+        "xg": "0.36",
+        "xa": "0.23",
+        "xgPlusXa": "0.59",
+        "defensiveContributions": "4"
+      },
+      {
+        "player": "Joseph Willock",
+        "score": "8.1",
+        "minutesPlayed": "68",
+        "goals": "1",
+        "assists": "0",
+        "xg": "0.24",
+        "xa": "0.03",
+        "xgPlusXa": "0.27",
+        "defensiveContributions": "6"
+      },
+      {
+        "player": "Nick Pope",
+        "score": "8.0",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0",
+        "xgPlusXa": "0",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Nuno Mendes",
+        "score": "7.8",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.02",
+        "xa": "0.10",
+        "xgPlusXa": "0.12",
+        "defensiveContributions": "6"
+      },
+      {
+        "player": "Joao Neves",
+        "score": "7.7",
+        "minutesPlayed": "87",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0.11",
+        "xgPlusXa": "0.11",
+        "defensiveContributions": "7"
+      },
+      {
+        "player": "Daniel Burn",
+        "score": "7.6",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "1",
+        "xg": "0",
+        "xa": "0.15",
+        "xgPlusXa": "0.15",
+        "defensiveContributions": "10"
+      },
+      {
+        "player": "Warren Zaire-Emery",
+        "score": "7.5",
+        "minutesPlayed": "87",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.03",
+        "xa": "0.11",
+        "xgPlusXa": "0.14",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Willian Pacho",
+        "score": "7.5",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.05",
+        "xa": "0.01",
+        "xgPlusXa": "0.06",
+        "defensiveContributions": "13"
+      },
+      {
+        "player": "Ousmane Dembélé",
+        "score": "7.5",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "1.41",
+        "xa": "0.26",
+        "xgPlusXa": "1.67",
+        "defensiveContributions": "3"
+      },
+      {
+        "player": "Sandro Tonali",
+        "score": "7.1",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.04",
+        "xa": "0.09",
+        "xgPlusXa": "0.13",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Jacob Ramsey",
+        "score": "7.1",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.17",
+        "xa": "0.02",
+        "xgPlusXa": "0.19",
+        "defensiveContributions": "4"
+      },
+      {
+        "player": "Sven Botman",
+        "score": "7.1",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0.01",
+        "xgPlusXa": "0.01",
+        "defensiveContributions": "8"
+      },
+      {
+        "player": "Achraf Hakimi",
+        "score": "7.1",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.17",
+        "xa": "0.15",
+        "xgPlusXa": "0.32",
+        "defensiveContributions": "1"
+      },
+      {
+        "player": "Marquinhos",
+        "score": "7.1",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0.10",
+        "xgPlusXa": "0.10",
+        "defensiveContributions": "8"
+      },
+      {
+        "player": "Matvey Safonov",
+        "score": "7.0",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0",
+        "xgPlusXa": "0",
+        "defensiveContributions": "2"
+      },
+      {
+        "player": "Bradley Barcola",
+        "score": "6.9",
+        "minutesPlayed": "70",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.12",
+        "xa": "0.04",
+        "xgPlusXa": "0.16",
+        "defensiveContributions": "2"
+      },
+      {
+        "player": "Désiré Doué",
+        "score": "6.9",
+        "minutesPlayed": "68",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.15",
+        "xa": "0.37",
+        "xgPlusXa": "0.52",
+        "defensiveContributions": "3"
+      },
+      {
+        "player": "Khvicha Kvaratskhelia",
+        "score": "6.8",
+        "minutesPlayed": "22",
+        "goals": "0",
+        "assists": "1",
+        "xg": "0.18",
+        "xa": "0.01",
+        "xgPlusXa": "0.19",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Lewis Hall",
+        "score": "6.7",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0.02",
+        "xgPlusXa": "0.02",
+        "defensiveContributions": "10"
+      },
+      {
+        "player": "Malick Thiaw",
+        "score": "6.6",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0",
+        "xgPlusXa": "0",
+        "defensiveContributions": "9"
+      },
+      {
+        "player": "Anthony Elanga",
+        "score": "6.4",
+        "minutesPlayed": "67",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0.02",
+        "xgPlusXa": "0.02",
+        "defensiveContributions": "1"
+      },
+      {
+        "player": "Lewis Miley",
+        "score": "6.3",
+        "minutesPlayed": "90",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.04",
+        "xa": "0.01",
+        "xgPlusXa": "0.05",
+        "defensiveContributions": "7"
+      },
+      {
+        "player": "Goncalo Ramos",
+        "score": "6.3",
+        "minutesPlayed": "20",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0",
+        "xgPlusXa": "0",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Harvey Barnes",
+        "score": "6.3",
+        "minutesPlayed": "22",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.43",
+        "xa": "0.01",
+        "xgPlusXa": "0.44",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Nick Woltemade",
+        "score": "6.3",
+        "minutesPlayed": "79",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.03",
+        "xa": "0.12",
+        "xgPlusXa": "0.15",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Yoane Wissa",
+        "score": "6.2",
+        "minutesPlayed": "11",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0",
+        "xgPlusXa": "0",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Anthony Gordon",
+        "score": "6.2",
+        "minutesPlayed": "23",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.13",
+        "xa": "0.03",
+        "xgPlusXa": "0.16",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Senny Mayulu",
+        "score": "",
+        "minutesPlayed": "3",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0.03",
+        "xa": "0.02",
+        "xgPlusXa": "0.05",
+        "defensiveContributions": "0"
+      },
+      {
+        "player": "Ibrahim Mbaye",
+        "score": "",
+        "minutesPlayed": "3",
+        "goals": "0",
+        "assists": "0",
+        "xg": "0",
+        "xa": "0",
+        "xgPlusXa": "0",
+        "defensiveContributions": "0"
+      }
+    ]
+  }

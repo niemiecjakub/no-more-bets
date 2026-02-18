@@ -39,11 +39,12 @@ public sealed class FootballDataPlugin(IMediator mediator)
 
   [KernelFunction("get_head_to_head")]
   [Description("Fetches head-to-head statistics.")]
-  public async Task<HeadToHead> GetHeadToHeadAsync(
+  public async Task<HeadToHead?> GetHeadToHeadAsync(
       [Description("Home team SoccerData ID.")] int homeTeamId,
       [Description("Away team SoccerData ID.")] int awayTeamId,
       CancellationToken cancellationToken = default)
   {
+    await mediator.Send(new RefreshSoccerDataHeadToHeadCommand(homeTeamId, awayTeamId), cancellationToken);
     return await mediator.Send(new GetSoccerDataHeadToHeadQuery(homeTeamId, awayTeamId), cancellationToken);
   }
 
@@ -72,7 +73,8 @@ public sealed class FootballDataPlugin(IMediator mediator)
       [Description("Soccerdata match ID.")] int matchId,
       CancellationToken cancellationToken = default)
   {
+    await mediator.Send(new RefreshSoccerDataMatchPreviewCommand(matchId), cancellationToken);
     var data = await mediator.Send(new GetSoccerDataMatchPreviewQuery(matchId), cancellationToken);
-    return data.PreviewContent;
+    return data?.PreviewContent ?? [];
   }
 }
