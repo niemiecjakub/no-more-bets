@@ -1,4 +1,4 @@
-namespace NoMoreBets.Features.SoccerData;
+namespace NoMoreBets.Features.SoccerData.Exceptions;
 
 /// <summary>Base exception for SoccerData API errors.</summary>
 public class SoccerDataException : Exception

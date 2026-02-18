@@ -8,10 +8,8 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
 
-/// <summary>Handles <see cref="GetSoccerDataMatchPreviewsUpcomingQuery"/> by delegating to <see cref="ISoccerDataClient"/> and syncing matches to DB (update SoccerdataId or insert upcoming).</summary>
 public class GetSoccerDataMatchPreviewsUpcomingHandler(ISoccerDataClient client, AppDbContext db, IMatchMatcher matchMatcher, ILogger<GetSoccerDataMatchPreviewsUpcomingHandler> logger) : IRequestHandler<GetSoccerDataMatchPreviewsUpcomingQuery, IReadOnlyList<LeagueMatchPreviews>>
 {
-  /// <inheritdoc />
   public async Task<IReadOnlyList<LeagueMatchPreviews>> Handle(GetSoccerDataMatchPreviewsUpcomingQuery request, CancellationToken cancellationToken)
   {
     var games = await client.GetMatchPreviewsUpcomingAsync(request.LeagueId, cancellationToken)

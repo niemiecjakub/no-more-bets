@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using NoMoreBets.Features.SoccerData;
+using NoMoreBets.Features.SoccerData.Exceptions;
 using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Tests.Helpers;
 using Polly;
@@ -24,13 +25,7 @@ public class SoccerDataClientTests
       ILogger<SoccerDataClient>? logger = null)
   {
     var client = httpClient ?? new HttpClient();
-    var opts = options ?? Options.Create(new SoccerDataOptions
-    { 
-      ApiKey = "test-key",
-      RetryCount = 1,
-      RetryDelaySeconds = 0.01,
-      TimeoutSeconds = 15
-    });
+    var opts = options ?? Options.Create(new SoccerDataOptions { ApiKey = "test-key" });
     cache ??= new Mock<IJsonCache>().Object;
     logger ??= NullLogger<SoccerDataClient>.Instance;
     return new SoccerDataClient(client, opts, cache, logger);
@@ -255,13 +250,7 @@ public class SoccerDataClientTests
     var resilienceHandler = new ResilienceHandler(retryPipeline) { InnerHandler = innerHandler };
 #pragma warning restore EXTEXP0001
 
-    var options = Options.Create(new SoccerDataOptions
-    {
-      ApiKey = "test-key",
-      RetryCount = 1,
-      RetryDelaySeconds = 0.01,
-      TimeoutSeconds = 15
-    });
+    var options = Options.Create(new SoccerDataOptions { ApiKey = "test-key" });
     var httpClient = new HttpClient(resilienceHandler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
     var sut = CreateClient(httpClient, options: options, cache: cacheMock.Object);
 

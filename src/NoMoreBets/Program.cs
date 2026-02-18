@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Betclic.Scraping;
@@ -55,31 +56,11 @@ builder.Services.AddSingleton<IInteractivePageFetcher>(sp => sp.GetRequiredServi
 builder.Services.AddSingleton<IRotowireScraper, RotowireScraper>();
 builder.Services.AddSingleton<IBetclicScraper, BetclicScraper>();
 builder.Services.AddSingleton<IFotmobScraper, FotmobScraper>();
-builder.Services.AddHttpClient<ISoccerDataClient, SoccerDataClient>((sp, client) =>
-{
-  var options = sp.GetRequiredService<IOptions<SoccerDataOptions>>().Value;
-  client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds * Math.Max(1, options.RetryCount) + 30);
-})
-.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
-{
-  AutomaticDecompression = System.Net.DecompressionMethods.GZip
-})
-.AddResilienceHandler("soccerdata", (builder, context) =>
-{
-  var options = context.ServiceProvider.GetRequiredService<IOptions<SoccerDataOptions>>().Value;
-  builder.AddRetry(new RetryStrategyOptions<HttpResponseMessage>
-  {
-    MaxRetryAttempts = options.RetryCount,
-    BackoffType = DelayBackoffType.Exponential,
-    UseJitter = true,
-    Delay = TimeSpan.FromSeconds(options.RetryDelaySeconds),
-    ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
-          .Handle<HttpRequestException>()
-          .Handle<TaskCanceledException>()
-          .HandleResult(r => (int)r.StatusCode >= 500)
-  });
-  builder.AddTimeout(TimeSpan.FromSeconds(options.TimeoutSeconds));
-});
+builder.Services.AddHttpClient<ISoccerDataClient, SoccerDataClient>()
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+        AutomaticDecompression = DecompressionMethods.All
+    });
 
 builder.Services.AddOptions<SoccerDataOptions>()
     .Bind(builder.Configuration.GetSection("SoccerData"))

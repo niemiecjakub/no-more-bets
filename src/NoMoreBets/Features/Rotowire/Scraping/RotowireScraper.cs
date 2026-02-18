@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using AngleSharp;
 using AngleSharp.Dom;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Features.Rotowire.Model;
