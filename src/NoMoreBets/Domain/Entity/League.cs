@@ -8,4 +8,5 @@ public class League
 
   public ICollection<Club> Clubs { get; set; } = new List<Club>();
   public ICollection<Season> Seasons { get; set; } = new List<Season>();
+  public ICollection<LeagueTableSnapshot> LeagueTableSnapshots { get; set; } = new List<LeagueTableSnapshot>();
 }

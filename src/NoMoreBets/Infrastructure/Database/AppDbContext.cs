@@ -19,6 +19,8 @@ public class AppDbContext : DbContext
   public DbSet<Lineup> Lineup { get; set; }
   public DbSet<MatchPreview> MatchPreview { get; set; }
   public DbSet<Head2Head> Head2Head { get; set; }
+  public DbSet<LeagueTableSnapshot> LeagueTableSnapshot { get; set; }
+  public DbSet<LeagueTableSnapshotRow> LeagueTableSnapshotRow { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -121,6 +123,46 @@ public class AppDbContext : DbContext
       entity.Property(e => e.UpdatedAt).IsRequired();
       entity.HasOne(e => e.Team1).WithMany().HasForeignKey(e => e.Team1Id);
       entity.HasOne(e => e.Team2).WithMany().HasForeignKey(e => e.Team2Id);
+    });
+
+    modelBuilder.Entity<LeagueTableSnapshot>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+      entity.Property(e => e.LeagueId).IsRequired();
+      entity.Property(e => e.SeasonId).IsRequired();
+      entity.Property(e => e.SnapshotDate).IsRequired();
+      entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("now()");
+      entity.HasIndex(e => new { e.SeasonId, e.SnapshotDate }).IsUnique();
+      entity.HasIndex(e => new { e.LeagueId, e.SnapshotDate });
+      entity.HasOne(e => e.League).WithMany(l => l.LeagueTableSnapshots).HasForeignKey(e => e.LeagueId).OnDelete(DeleteBehavior.Cascade);
+      entity.HasOne(e => e.Season).WithMany(s => s.LeagueTableSnapshots).HasForeignKey(e => e.SeasonId).OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<LeagueTableSnapshotRow>(entity =>
+    {
+      entity.HasKey(e => new { e.SnapshotId, e.ClubId });
+      entity.Property(e => e.SnapshotId).IsRequired();
+      entity.Property(e => e.ClubId).IsRequired();
+      entity.Property(e => e.Position).IsRequired();
+      entity.Property(e => e.MatchesPlayed).IsRequired();
+      entity.Property(e => e.Wins).IsRequired();
+      entity.Property(e => e.Draws).IsRequired();
+      entity.Property(e => e.Losses).IsRequired();
+      entity.Property(e => e.GoalsFor).IsRequired();
+      entity.Property(e => e.GoalsAgainst).IsRequired();
+      entity.Property(e => e.GoalDifference).IsRequired();
+      entity.Property(e => e.Points).IsRequired();
+      entity.Property(e => e.Xg).IsRequired().HasPrecision(6, 2);
+      entity.Property(e => e.XgDiff).IsRequired().HasPrecision(6, 2);
+      entity.Property(e => e.Xga).IsRequired().HasPrecision(6, 2);
+      entity.Property(e => e.XgaDiff).IsRequired().HasPrecision(6, 2);
+      entity.Property(e => e.Xpts).IsRequired().HasPrecision(6, 2);
+      entity.Property(e => e.XptsDiff).IsRequired().HasPrecision(6, 2);
+      entity.HasIndex(e => new { e.SnapshotId, e.Position });
+      entity.HasIndex(e => e.ClubId);
+      entity.HasOne(e => e.Snapshot).WithMany(s => s.Rows).HasForeignKey(e => e.SnapshotId).OnDelete(DeleteBehavior.Cascade);
+      entity.HasOne(e => e.Club).WithMany(c => c.LeagueTableSnapshotRows).HasForeignKey(e => e.ClubId).OnDelete(DeleteBehavior.Cascade);
     });
   }
 }

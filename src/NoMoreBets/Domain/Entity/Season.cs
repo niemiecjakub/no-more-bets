@@ -7,4 +7,5 @@ public class Season
   public string Year { get; set; } = null!;
   public League League { get; set; } = null!;
   public ICollection<Stage> Stages { get; set; } = new List<Stage>();
+  public ICollection<LeagueTableSnapshot> LeagueTableSnapshots { get; set; } = new List<LeagueTableSnapshot>();
 }
