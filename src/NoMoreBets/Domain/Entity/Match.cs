@@ -20,6 +20,7 @@ public class Match
   public Club AwayClub { get; set; } = null!;
   public MatchStatusEntity MatchStatusEntity { get; set; } = null!;
   public Lineup? Lineup { get; set; }
+  public MatchPreview? MatchPreview { get; set; }
 
   [NotMapped]
   public MatchStatus MatchStatus

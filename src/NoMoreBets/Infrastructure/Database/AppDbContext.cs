@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
   public DbSet<MatchStatusEntity> MatchStatus { get; set; }
   public DbSet<Match> Match { get; set; }
   public DbSet<Lineup> Lineup { get; set; }
+  public DbSet<MatchPreview> MatchPreview { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -101,6 +102,13 @@ public class AppDbContext : DbContext
       entity.Property(e => e.AwayTeamJson).IsRequired().HasColumnType("jsonb");
       entity.Property(e => e.UpdatedAt).IsRequired();
       entity.HasOne(e => e.Match).WithOne(m => m.Lineup).HasForeignKey<Lineup>(e => e.MatchId);
+    });
+
+    modelBuilder.Entity<MatchPreview>(entity =>
+    {
+      entity.HasKey(e => e.MatchId);
+      entity.Property(e => e.PreviewContentJson).IsRequired().HasColumnType("jsonb");
+      entity.HasOne(e => e.Match).WithOne(m => m.MatchPreview).HasForeignKey<MatchPreview>(e => e.MatchId);
     });
   }
 }
