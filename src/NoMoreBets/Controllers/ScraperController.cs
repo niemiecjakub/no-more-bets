@@ -42,11 +42,17 @@ public class RotowireController(IMediator mediator) : ControllerBase
   /// <param name="cancellationToken">Cancellation token.</param>
   /// <returns>List of game lineups.</returns>
   [HttpGet("rotowire/lineups")]
-  public async Task<ActionResult<IReadOnlyList<GameLineupDto>>> GetRotowireLineups(CancellationToken cancellationToken)
+  public async Task<ActionResult<IReadOnlyList<GameLineupDto>>> GetRotowireLineup(
+    [FromQuery] int soccerdataMatchId,
+    CancellationToken cancellationToken)
   {
-    var lineups = await mediator.Send(new GetRotowireLineupsQuery(), cancellationToken);
-    var lineupsDto = lineups.Select(GameLineupDto.From).ToList();
-    return Ok(lineupsDto);
+    await mediator.Send(new RefreshRotowireLineupsCommand(), cancellationToken);
+    var lineup = await mediator.Send(new GetRotowireLineupQuery(soccerdataMatchId), cancellationToken);
+    if (lineup == null)
+    {
+      return NotFound();
+    }
+    return Ok(GameLineupDto.From(lineup));
   }
 }
 

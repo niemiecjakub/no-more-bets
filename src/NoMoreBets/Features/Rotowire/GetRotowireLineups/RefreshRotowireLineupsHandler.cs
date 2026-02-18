@@ -3,24 +3,23 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Domain.Entity;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
-using NoMoreBets.Features.Rotowire.Model;
 using NoMoreBets.Features.Rotowire.Scraping;
 using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.Rotowire.GetRotowireLineups;
 
 /// <summary>
-/// Handles <see cref="GetRotowireLineupsQuery"/> by delegating to <see cref="IRotowireScraper"/>.
+/// Handles <see cref="RefreshRotowireLineupsCommand"/> by scraping RotoWire and upserting lineups into the database.
 /// </summary>
-public class GetRotowireLineupsHandler(
+public class RefreshRotowireLineupsHandler(
   IRotowireScraper scraper,
   AppDbContext db,
-  IMatchMatcher matchMatcher) : IRequestHandler<GetRotowireLineupsQuery, IReadOnlyList<GameLineup>>
+  IMatchMatcher matchMatcher) : IRequestHandler<RefreshRotowireLineupsCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
   /// <inheritdoc />
-  public async Task<IReadOnlyList<GameLineup>> Handle(GetRotowireLineupsQuery request, CancellationToken cancellationToken)
+  public async Task<Unit> Handle(RefreshRotowireLineupsCommand request, CancellationToken cancellationToken)
   {
     var lineups = await scraper.GetSoccerLineupsAsync(cancellationToken).ConfigureAwait(false);
 
@@ -61,6 +60,6 @@ public class GetRotowireLineupsHandler(
     }
 
     await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    return lineups;
+    return Unit.Value;
   }
 }
