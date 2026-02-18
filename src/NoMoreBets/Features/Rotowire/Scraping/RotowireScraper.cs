@@ -99,17 +99,23 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
     if (string.IsNullOrEmpty(homeCode) || string.IsNullOrEmpty(awayCode))
       return null;
 
-    var homeLineup = ParseTeamLineup(section, homeCode, homeTeamName ?? $"Team {homeCode}");
-    var awayLineup = ParseTeamLineup(section, awayCode, awayTeamName ?? $"Team {awayCode}");
+    var homeLineup = ParseTeamLineup(section, homeCode);
+    var awayLineup = ParseTeamLineup(section, awayCode);
 
-    ValiiadteLineupPlayers(homeLineup, awayLineup);
+    var homeName = homeTeamName ?? $"Team {homeCode}";
+    var awayName = awayTeamName ?? $"Team {awayCode}";
+    ValiiadteLineupPlayers(homeLineup, awayLineup, homeName, awayName);
 
     var parsedDate = ParseRotowireDate(date);
     return new GameLineup
     {
       Date = parsedDate,
       Time = time,
+      HomeTeamName = homeName,
+      HomeTeamCode = homeCode,
       HomeTeam = homeLineup,
+      AwayTeamName = awayName,
+      AwayTeamCode = awayCode,
       AwayTeam = awayLineup
     };
   }
@@ -129,7 +135,7 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
     throw new ArgumentException($"Couldnt parse date from rotowire: {dateStr}", nameof(dateStr));
   }
 
-  private TeamLineup ParseTeamLineup(IElement section, string teamCode, string teamName)
+  private TeamLineup ParseTeamLineup(IElement section, string teamCode)
   {
     var players = new List<PlayerInLineup>();
     var injuries = new List<InjuryEntry>();
@@ -162,8 +168,6 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
     {
       return new TeamLineup
       {
-        TeamName = teamName,
-        TeamCode = teamCode,
         LineupType = lineupType,
         Players = players,
         Injuries = injuries
@@ -228,22 +232,17 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
 
     return new TeamLineup
     {
-      TeamName = teamName,
-      TeamCode = teamCode,
       LineupType = lineupType,
       Players = players,
       Injuries = injuries
     };
   }
 
-  private void ValiiadteLineupPlayers(params TeamLineup[] lineups)
+  private void ValiiadteLineupPlayers(TeamLineup homeLineup, TeamLineup awayLineup, string homeTeamName, string awayTeamName)
   {
-    foreach (var lineup in lineups)
-    {
-      if (lineup.Players.Count != 11)
-      {
-        _logger.LogError("{Team} lineup has {Count} players (expected 11)", lineup.TeamName, lineup.Players.Count);
-      }
-    }
+    if (homeLineup.Players.Count != 11)
+      _logger.LogError("{Team} lineup has {Count} players (expected 11)", homeTeamName, homeLineup.Players.Count);
+    if (awayLineup.Players.Count != 11)
+      _logger.LogError("{Team} lineup has {Count} players (expected 11)", awayTeamName, awayLineup.Players.Count);
   }
 }

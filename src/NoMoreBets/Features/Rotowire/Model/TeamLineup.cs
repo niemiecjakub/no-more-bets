@@ -7,8 +7,6 @@ namespace NoMoreBets.Features.Rotowire.Model;
 /// </summary>
 public record TeamLineup
 {
-    public required string TeamName { get; init; }
-    public string? TeamCode { get; init; }
     public required LineupType LineupType { get; init; }
     public IReadOnlyList<PlayerInLineup> Players { get; init; } = Array.Empty<PlayerInLineup>();
     public IReadOnlyList<InjuryEntry> Injuries { get; init; } = Array.Empty<InjuryEntry>();

@@ -1,4 +1,5 @@
 using FuzzySharp;
+using NoMoreBets.Domain.Entity;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Rotowire.Model;
@@ -26,7 +27,7 @@ public sealed class MatchMatcher : IMatchMatcher
     var dict = new Dictionary<TeamKey, GameLineup>(lineups.Count);
     foreach (var lineup in lineups)
     {
-      var key = new TeamKey(lineup.HomeTeam.TeamName, lineup.AwayTeam.TeamName);
+      var key = new TeamKey(lineup.HomeTeamName, lineup.AwayTeamName);
       dict[key] = lineup;
     }
     return dict;
@@ -55,6 +56,12 @@ public sealed class MatchMatcher : IMatchMatcher
 
     var keys = candidates.Keys.ToList();
     var best = Process.ExtractOne(searchStr, keys, s => s, cutoff: LineupAndSoccerDataScoreCutoff);
+    if (best is null)
+    {
+      _logger.LogError("No matching lineup found for {Home} vs {Away}", home, away);
+      return null;
+    }
+
     var value = best.Value;
     if (value != null && best.Score >= LineupAndSoccerDataScoreCutoff && candidates.TryGetValue(value, out var found))
     {
@@ -167,6 +174,35 @@ public sealed class MatchMatcher : IMatchMatcher
   }
 
   /// <inheritdoc />
+  public Club FindClub(string teamName, IReadOnlyList<Club> clubs)
+  {
+    var trimmed = (teamName ?? string.Empty).Trim();
+    if (clubs.Count == 0)
+    {
+      throw new InvalidOperationException(
+        $"No clubs in league to match. Cannot resolve team '{trimmed}'.");
+    }
+
+    foreach (var club in clubs)
+    {
+      if (string.Equals(club.Name.Trim(), trimmed, StringComparison.OrdinalIgnoreCase))
+      {
+        return club;
+      }
+    }
+
+    var names = clubs.Select(c => c.Name).ToArray();
+    var best = Process.ExtractOne(trimmed, names, s => s ?? "", cutoff: FotmobScoreCutoff);
+    if (best != null && best.Score >= FotmobScoreCutoff && best.Index >= 0 && best.Index < clubs.Count)
+    {
+      return clubs[best.Index];
+    }
+
+    throw new InvalidOperationException(
+      $"No matching club found for '{trimmed}' among {clubs.Count} clubs. Ensure the team exists in the league.");
+  }
+
+  /// <inheritdoc />
   public XgStatsDto? FindXgStats(string teamName, IReadOnlyList<XgStatsDto> xgStats)
   {
     if (xgStats.Count == 0)
@@ -246,6 +282,11 @@ public sealed class MatchMatcher : IMatchMatcher
 
     var keys = dict.Keys.ToList();
     var best = Process.ExtractOne(searchStr, keys, s => s, cutoff: LineupAndSoccerDataScoreCutoff);
+    if (best is null)
+    {
+      return default;
+    }
+
     var value = best.Value;
     if (value != null && best.Score >= LineupAndSoccerDataScoreCutoff && dict.TryGetValue(value, out var found))
     {

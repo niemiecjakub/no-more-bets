@@ -26,10 +26,10 @@ public record TeamLineupDto(
     IReadOnlyList<PlayerInLineupDto> Players,
     IReadOnlyList<InjuryEntryDto> Injuries)
 {
-  public static TeamLineupDto From(TeamLineup source) =>
+  public static TeamLineupDto From(TeamLineup source, string teamName, string? teamCode) =>
       new(
-          source.TeamName,
-          source.TeamCode,
+          teamName,
+          teamCode,
           LineupTypes.GetDisplayName(source.LineupType),
           source.Players.Select(PlayerInLineupDto.From).ToList(),
           source.Injuries.Select(InjuryEntryDto.From).ToList());
@@ -46,6 +46,6 @@ public record GameLineupDto(
       new(
           source.Date,
           source.Time,
-          TeamLineupDto.From(source.HomeTeam),
-          TeamLineupDto.From(source.AwayTeam));
+          TeamLineupDto.From(source.HomeTeam, source.HomeTeamName, source.HomeTeamCode),
+          TeamLineupDto.From(source.AwayTeam, source.AwayTeamName, source.AwayTeamCode));
 }

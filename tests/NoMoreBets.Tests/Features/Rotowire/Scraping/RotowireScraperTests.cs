@@ -49,8 +49,8 @@ public class RotowireScraperTests
         var first = result[0];
         first.HomeTeam.Should().NotBeNull();
         first.AwayTeam.Should().NotBeNull();
-        first.HomeTeam.TeamCode.Should().NotBeNullOrEmpty();
-        first.AwayTeam.TeamCode.Should().NotBeNullOrEmpty();
+        first.HomeTeamCode.Should().NotBeNullOrEmpty();
+        first.AwayTeamCode.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
@@ -69,8 +69,8 @@ public class RotowireScraperTests
         result.Should().NotBeEmpty();
         result[0].HomeTeam.Should().NotBeNull();
         result[0].AwayTeam.Should().NotBeNull();
-        result[0].HomeTeam.TeamCode.Should().NotBeNullOrEmpty();
-        result[0].AwayTeam.TeamCode.Should().NotBeNullOrEmpty();
+        result[0].HomeTeamCode.Should().NotBeNullOrEmpty();
+        result[0].AwayTeamCode.Should().NotBeNullOrEmpty();
         fetcherMock.Verify(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 

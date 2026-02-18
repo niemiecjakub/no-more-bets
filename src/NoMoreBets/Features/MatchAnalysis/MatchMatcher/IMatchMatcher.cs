@@ -1,3 +1,4 @@
+using NoMoreBets.Domain.Entity;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Rotowire.Model;
@@ -22,6 +23,9 @@ public interface IMatchMatcher
 
   /// <summary>Finds a FotMob club (DTO) by team name (exact or fuzzy).</summary>
   ClubDto? FindFotmobClub(string teamName, IReadOnlyList<ClubDto> clubs);
+
+  /// <summary>Finds a domain Club by team name (exact or fuzzy) from the given list. Throws if no match.</summary>
+  Club FindClub(string teamName, IReadOnlyList<Club> clubs);
 
   /// <summary>Finds xG stats by team name (exact or fuzzy).</summary>
   XgStatsDto? FindXgStats(string teamName, IReadOnlyList<XgStatsDto> xgStats);

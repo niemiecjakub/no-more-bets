@@ -35,7 +35,7 @@
 //    {
 //        _mediatorMock = new Mock<IMediator>();
 //        _matchMatcherMock = new Mock<IMatchMatcher>();
-//        _options = Options.Create(new MatchAnalysisOptions { LeagueId = 228, OutputDirectory = "" });
+//        _options = Options.CreateUpcomming(new MatchAnalysisOptions { LeagueId = 228, OutputDirectory = "" });
 //        _logger = NullLogger<RunMatchAnalysisHandler>.Instance;
 //        _persistenceMock = new Mock<NoMoreBets.Features.MatchAnalysis.Persistence.IMatchAnalysisPersistence>();
 //    }

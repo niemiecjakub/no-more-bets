@@ -24,8 +24,8 @@ public sealed class SquadPlugin(IMediator mediator)
     var matchup = await GetMatchupAsync(homeTeam, awayTeam, cancellationToken);
     var payload = new
     {
-      homeTeam = matchup?.HomeTeam.TeamName ?? homeTeam,
-      awayTeam = matchup?.AwayTeam.TeamName ?? awayTeam,
+      homeTeam = matchup?.HomeTeamName ?? homeTeam,
+      awayTeam = matchup?.AwayTeamName ?? awayTeam,
       homeInjuries = matchup?.HomeTeam.Injuries ?? [],
       awayInjuries = matchup?.AwayTeam.Injuries ?? []
     };
@@ -43,8 +43,8 @@ public sealed class SquadPlugin(IMediator mediator)
     var matchup = await GetMatchupAsync(homeTeam, awayTeam, cancellationToken);
     var payload = new
     {
-      homeTeam = matchup?.HomeTeam.TeamName ?? homeTeam,
-      awayTeam = matchup?.AwayTeam.TeamName ?? awayTeam,
+      homeTeam = matchup?.HomeTeamName ?? homeTeam,
+      awayTeam = matchup?.AwayTeamName ?? awayTeam,
       homeLineupType = matchup?.HomeTeam.LineupType.ToString() ?? "Unknown",
       awayLineupType = matchup?.AwayTeam.LineupType.ToString() ?? "Unknown",
       homePlayers = matchup?.HomeTeam.Players ?? [],
@@ -58,8 +58,8 @@ public sealed class SquadPlugin(IMediator mediator)
   {
     var lineups = await mediator.Send(new GetRotowireLineupsQuery(), cancellationToken);
     return lineups.FirstOrDefault(lineup =>
-        IsSameTeam(lineup.HomeTeam.TeamName, homeTeam) &&
-        IsSameTeam(lineup.AwayTeam.TeamName, awayTeam));
+        IsSameTeam(lineup.HomeTeamName, homeTeam) &&
+        IsSameTeam(lineup.AwayTeamName, awayTeam));
   }
 
   private static bool IsSameTeam(string left, string right) =>

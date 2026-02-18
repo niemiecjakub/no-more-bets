@@ -26,16 +26,16 @@ public class MatchMatcherTests
     {
       Date = new DateTime(2026, 1, 15),
       Time = "15:00",
+      HomeTeamName = "Arsenal",
+      AwayTeamName = "Chelsea",
       HomeTeam = new TeamLineup
       {
-        TeamName = "Arsenal",
         LineupType = LineupType.Predicted,
         Players = [],
         Injuries = []
       },
       AwayTeam = new TeamLineup
       {
-        TeamName = "Chelsea",
         LineupType = LineupType.Predicted,
         Players = [],
         Injuries = []
@@ -60,14 +60,18 @@ public class MatchMatcherTests
     var lineup1 = new GameLineup
     {
       Date = new DateTime(2026, 1, 15),
-      HomeTeam = new TeamLineup { TeamName = "Arsenal", LineupType = LineupType.Predicted, Players = [], Injuries = [] },
-      AwayTeam = new TeamLineup { TeamName = "Chelsea", LineupType = LineupType.Predicted, Players = [], Injuries = [] }
+      HomeTeamName = "Arsenal",
+      AwayTeamName = "Chelsea",
+      HomeTeam = new TeamLineup { LineupType = LineupType.Predicted, Players = [], Injuries = [] },
+      AwayTeam = new TeamLineup { LineupType = LineupType.Predicted, Players = [], Injuries = [] }
     };
     var lineup2 = new GameLineup
     {
       Date = new DateTime(2026, 1, 15),
-      HomeTeam = new TeamLineup { TeamName = "Chelsea", LineupType = LineupType.Predicted, Players = [], Injuries = [] },
-      AwayTeam = new TeamLineup { TeamName = "Arsenal", LineupType = LineupType.Predicted, Players = [], Injuries = [] }
+      HomeTeamName = "Chelsea",
+      AwayTeamName = "Arsenal",
+      HomeTeam = new TeamLineup { LineupType = LineupType.Predicted, Players = [], Injuries = [] },
+      AwayTeam = new TeamLineup { LineupType = LineupType.Predicted, Players = [], Injuries = [] }
     };
     var lineups = new List<GameLineup> { lineup1, lineup2 };
 
@@ -90,8 +94,10 @@ public class MatchMatcherTests
     {
       Date = new DateTime(2026, 1, 15),
       Time = "15:00",
-      HomeTeam = new TeamLineup { TeamName = "Arsenal", LineupType = LineupType.Predicted, Players = [], Injuries = [] },
-      AwayTeam = new TeamLineup { TeamName = "Chelsea", LineupType = LineupType.Predicted, Players = [], Injuries = [] }
+      HomeTeamName = "Arsenal",
+      AwayTeamName = "Chelsea",
+      HomeTeam = new TeamLineup { LineupType = LineupType.Predicted, Players = [], Injuries = [] },
+      AwayTeam = new TeamLineup { LineupType = LineupType.Predicted, Players = [], Injuries = [] }
     };
     var index = _sut.BuildLineupIndex(new List<GameLineup> { lineup });
     var match = new UpcomingMatchPreview
@@ -112,8 +118,8 @@ public class MatchMatcherTests
 
     // Assert
     result.Should().NotBeNull();
-    result!.HomeTeam.TeamName.Should().Be("Arsenal");
-    result.AwayTeam.TeamName.Should().Be("Chelsea");
+    result!.HomeTeamName.Should().Be("Arsenal");
+    result.AwayTeamName.Should().Be("Chelsea");
   }
 
   [Fact]

@@ -29,7 +29,7 @@ public class GetBetclicUpcomingGamesHandler(
     foreach (var game in upcomingGames)
     {
       var dateWithTime = CombineDateAndTime(game.Date, game.Time);
-      var gameDayUtc = dateWithTime.ToUniversalTime().Date;
+      var gameDayUtc = DateTime.SpecifyKind(dateWithTime, DateTimeKind.Utc);
 
       var matchesOnDay = await db.Match
         .Where(g => g.MatchDate.Date == gameDayUtc)
@@ -44,16 +44,28 @@ public class GetBetclicUpcomingGamesHandler(
 
       Match? matched = matchMatcher.FindBestMatch(game.HomeTeam, game.AwayTeam, candidates);
 
-      var homeTeam = matched != null
-        ? new UpcomingGameTeamDto(matched.HomeClub.Id, matched.HomeClub.Name, matched.HomeClub.SoccerdataId)
-        : new UpcomingGameTeamDto(0, game.HomeTeam, 0);
-      var awayTeam = matched != null
-        ? new UpcomingGameTeamDto(matched.AwayClub.Id, matched.AwayClub.Name, matched.AwayClub.SoccerdataId)
-        : new UpcomingGameTeamDto(0, game.AwayTeam, 0);
+      if (matched is null)
+      {
+        const int leagueId = 1;
+        const int stageId = 1;
+        var clubs = await db.Club
+          .Where(c => c.LeagueId == leagueId)
+          .ToListAsync(cancellationToken)
+          .ConfigureAwait(false);
+        var homeClub = matchMatcher.FindClub(game.HomeTeam, clubs);
+        var awayClub = matchMatcher.FindClub(game.AwayTeam, clubs);
+        var newMatch = Match.CreateUpcomming(gameDayUtc, stageId, homeClub.Id, awayClub.Id);
+        db.Match.Add(newMatch);
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        newMatch.HomeClub = homeClub;
+        newMatch.AwayClub = awayClub;
+        matched = newMatch;
+      }
 
-      var gameId = matched?.Id ?? 0;
-      var gameSoccerdataId = matched?.SoccerdataId;
-      results.Add(new UpcomingGameDto(gameId, gameSoccerdataId, dateWithTime, homeTeam, awayTeam, game.Url));
+      var m = matched!;
+      var homeTeam = new UpcomingGameTeamDto(m.HomeClub.Id, m.HomeClub.Name, m.HomeClub.SoccerdataId);
+      var awayTeam = new UpcomingGameTeamDto(m.AwayClub.Id, m.AwayClub.Name, m.AwayClub.SoccerdataId);
+      results.Add(new UpcomingGameDto(m.Id, m.SoccerdataId, dateWithTime, homeTeam, awayTeam, game.Url));
     }
 
     return results;
