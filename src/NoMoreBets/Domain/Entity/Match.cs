@@ -21,6 +21,7 @@ public class Match
   public MatchStatusEntity MatchStatusEntity { get; set; } = null!;
   public Lineup? Lineup { get; set; }
   public MatchPreview? MatchPreview { get; set; }
+  public MatchDetails? MatchDetails { get; set; }
 
   [NotMapped]
   public MatchStatus MatchStatus

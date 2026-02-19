@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
   public DbSet<Head2Head> Head2Head { get; set; }
   public DbSet<LeagueTableSnapshot> LeagueTableSnapshot { get; set; }
   public DbSet<LeagueTableSnapshotRow> LeagueTableSnapshotRow { get; set; }
+  public DbSet<MatchDetails> MatchDetails { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -163,6 +164,17 @@ public class AppDbContext : DbContext
       entity.HasIndex(e => e.ClubId);
       entity.HasOne(e => e.Snapshot).WithMany(s => s.Rows).HasForeignKey(e => e.SnapshotId).OnDelete(DeleteBehavior.Cascade);
       entity.HasOne(e => e.Club).WithMany(c => c.LeagueTableSnapshotRows).HasForeignKey(e => e.ClubId).OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<MatchDetails>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.FotmobUrl).IsRequired();
+      entity.HasIndex(e => e.FotmobUrl).IsUnique();
+      entity.Property(e => e.FotmobDetailsJson).IsRequired().HasColumnType("jsonb");
+      entity.HasIndex(e => e.MatchId).IsUnique().HasFilter("\"MatchId\" IS NOT NULL");
+      entity.HasOne(e => e.Match).WithOne(m => m.MatchDetails).HasForeignKey<MatchDetails>(e => e.MatchId).OnDelete(DeleteBehavior.SetNull);
     });
   }
 }

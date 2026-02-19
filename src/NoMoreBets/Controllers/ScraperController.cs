@@ -18,6 +18,7 @@ using NoMoreBets.Features.Fotmob.GetFotmobXgStats;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
 using NoMoreBets.Features.Fotmob.Scraping;
+using NoMoreBets.Features.Fotmob.UpdateFotmobRecentMatches;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups.Dtos;
 using NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
@@ -111,6 +112,21 @@ public class FotmobController(IMediator mediator) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     await mediator.Send(new RefreshFotmobLeagueTableSnapshotCommand(leagueId), cancellationToken);
+    return NoContent();
+  }
+
+  /// <summary>
+  /// Updates recent match details from a club's FotMob overview: fetches overview, scrapes details for new match URLs, fuzzy-matches to domain Match, and inserts MatchDetails.
+  /// </summary>
+  /// <param name="teamId">FotMob team ID.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>204 No Content on success.</returns>
+  [HttpPost("fotmob/update-recent-matches")]
+  public async Task<IActionResult> UpdateFotmobRecentMatches(
+    [FromQuery] int teamId,
+    CancellationToken cancellationToken = default)
+  {
+    await mediator.Send(new UpdateFotmobRecentMatchesCommand(teamId), cancellationToken);
     return NoContent();
   }
 
