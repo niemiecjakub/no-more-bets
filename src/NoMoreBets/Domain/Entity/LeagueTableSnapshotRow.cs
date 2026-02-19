@@ -5,15 +5,15 @@ public class LeagueTableSnapshotRow
   public long SnapshotId { get; set; }
   public int ClubId { get; set; }
 
-  public short Position { get; set; }
-  public short MatchesPlayed { get; set; }
-  public short Wins { get; set; }
-  public short Draws { get; set; }
-  public short Losses { get; set; }
-  public short GoalsFor { get; set; }
-  public short GoalsAgainst { get; set; }
-  public short GoalDifference { get; set; }
-  public short Points { get; set; }
+  public int Position { get; set; }
+  public int MatchesPlayed { get; set; }
+  public int Wins { get; set; }
+  public int Draws { get; set; }
+  public int Losses { get; set; }
+  public int GoalsFor { get; set; }
+  public int GoalsAgainst { get; set; }
+  public int GoalDifference { get; set; }
+  public int Points { get; set; }
 
   public decimal Xg { get; set; }
   public decimal XgDiff { get; set; }

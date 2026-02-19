@@ -16,6 +16,7 @@ using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
+using NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
 using NoMoreBets.Features.Fotmob.Scraping;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups.Dtos;
@@ -98,6 +99,21 @@ public class BetclicController(IMediator mediator) : ControllerBase
 [Route("api/[controller]")]
 public class FotmobController(IMediator mediator) : ControllerBase
 {
+  /// <summary>
+  /// Refreshes the league table snapshot from FotMob (scrape table + xG, merge, persist) for the latest season of the given league.
+  /// </summary>
+  /// <param name="leagueId">Domain league ID.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>204 No Content on success.</returns>
+  [HttpPost("fotmob/refresh-league-table-snapshot")]
+  public async Task<IActionResult> RefreshFotmobLeagueTableSnapshot(
+    [FromQuery] int leagueId,
+    CancellationToken cancellationToken = default)
+  {
+    await mediator.Send(new RefreshFotmobLeagueTableSnapshotCommand(leagueId), cancellationToken);
+    return NoContent();
+  }
+
   /// <summary>
   /// Gets the league table from FotMob (Premier League by default), optionally filtered by home/away/form.
   /// </summary>
