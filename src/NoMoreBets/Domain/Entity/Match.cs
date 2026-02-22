@@ -42,3 +42,14 @@ public class Match
     };
   }
 }
+
+public static class MatchQueryableExtensions
+{
+  /// <summary>
+  /// Filters Match to rows where the two clubs are home and away (order-independent).
+  /// </summary>
+  public static IQueryable<Match> ForClubs(this IQueryable<Match> query, int club1Id, int club2Id) =>
+    query.Where(m =>
+      (m.HomeClubId == club1Id && m.AwayClubId == club2Id) ||
+      (m.HomeClubId == club2Id && m.AwayClubId == club1Id));
+}

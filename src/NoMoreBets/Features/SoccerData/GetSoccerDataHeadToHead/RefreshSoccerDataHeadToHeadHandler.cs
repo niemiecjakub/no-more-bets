@@ -14,25 +14,25 @@ public class RefreshSoccerDataHeadToHeadHandler(
 
   public async Task<Unit> Handle(RefreshSoccerDataHeadToHeadCommand request, CancellationToken cancellationToken)
   {
-    var headToHead = await client.GetHeadToHeadAsync(request.Team1Id, request.Team2Id, cancellationToken).ConfigureAwait(false);
+    var headToHead = await client.GetHeadToHeadAsync(request.Team1SoccerdataId, request.Team2SoccerdataId, cancellationToken).ConfigureAwait(false);
 
-    var clubIds = new[] { request.Team1Id, request.Team2Id };
+    var clubIds = new[] { request.Team1SoccerdataId, request.Team2SoccerdataId };
     var clubs = await db.Club
       .Where(c => clubIds.Contains(c.SoccerdataId))
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
 
-    var club1 = clubs.FirstOrDefault(c => c.SoccerdataId == request.Team1Id);
-    var club2 = clubs.FirstOrDefault(c => c.SoccerdataId == request.Team2Id);
+    var club1 = clubs.FirstOrDefault(c => c.SoccerdataId == request.Team1SoccerdataId);
+    var club2 = clubs.FirstOrDefault(c => c.SoccerdataId == request.Team2SoccerdataId);
 
     if (club1 != null && club2 != null)
     {
-      var team1DbId = Math.Min(club1.Id, club2.Id);
-      var team2DbId = Math.Max(club1.Id, club2.Id);
+      var (team1DbId, team2DbId) = Head2Head.NormalizeClubIds(club1.Id, club2.Id);
 
       var head2HeadJson = JsonSerializer.Serialize(headToHead, JsonOptions);
       var entity = await db.Head2Head
-        .FirstOrDefaultAsync(e => e.Team1Id == team1DbId && e.Team2Id == team2DbId, cancellationToken)
+        .ForClubs(club1.Id, club2.Id)
+        .FirstOrDefaultAsync(cancellationToken)
         .ConfigureAwait(false);
 
       if (entity == null)

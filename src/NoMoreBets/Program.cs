@@ -1,6 +1,7 @@
 using System.Net;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Features.Fotmob.Scraping;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
@@ -14,8 +15,7 @@ using NoMoreBets.Infrastructure.Database;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Storage;
-using Polly;
-using Polly.Retry;
+using NoMoreBets.Features.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -57,18 +57,39 @@ builder.Services.AddSingleton<IRotowireScraper, RotowireScraper>();
 builder.Services.AddSingleton<IBetclicScraper, BetclicScraper>();
 builder.Services.AddSingleton<IFotmobScraper, FotmobScraper>();
 builder.Services.AddHttpClient<ISoccerDataClient, SoccerDataClient>()
-    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
-    {
-        AutomaticDecompression = DecompressionMethods.All
-    });
+  .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+  {
+    AutomaticDecompression = DecompressionMethods.All
+  });
 
 builder.Services.AddOptions<SoccerDataOptions>()
     .Bind(builder.Configuration.GetSection("SoccerData"))
     .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey), "SoccerData:ApiKey is required")
     .ValidateOnStart();
 
+builder.Services.AddHangfire(config => config
+  .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+  .UseSimpleAssemblyNameTypeSerializer()
+  .UseRecommendedSerializerSettings()
+  .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(dbConnectionString)));
+builder.Services.AddHangfireServer();
+builder.Services.AddScoped<JobService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+  var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+  //recurringJobManager.AddOrUpdate<JobService>(
+  //  "update-match-data",
+  //  jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId, new()),
+  //  "*/10 * * * *");
+
+  //recurringJobManager.AddOrUpdate<JobService>(
+  //  "update-lineups",
+  //  jobService => jobService.GetLineups(new()),
+  //  "*/1 * * * *");
+}
 
 if (app.Environment.IsDevelopment())
 {
@@ -78,6 +99,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
+app.UseHangfireDashboard("/hangfire");
 app.MapControllers();
 
 app.Run();

@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
@@ -12,13 +11,12 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
   AppDbContext db,
   IMatchMatcher matchMatcher,
   ILogger<RefreshSoccerDataMatchPreviewsUpcomingHandler> logger)
-  : IRequestHandler<RefreshSoccerDataMatchPreviewsUpcomingCommand, Unit>
+  : IRequestHandler<RefreshSoccerDataMatchPreviewsUpcomingCommand, List<DomainMatch>>
 {
-  private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
-  public async Task<Unit> Handle(RefreshSoccerDataMatchPreviewsUpcomingCommand request, CancellationToken cancellationToken)
+  public async Task<List<DomainMatch>> Handle(RefreshSoccerDataMatchPreviewsUpcomingCommand request, CancellationToken cancellationToken)
   {
-    var previews = await client.GetMatchPreviewsUpcomingAsync(request.LeagueId, cancellationToken)
+    var added = new List<DomainMatch>();
+    var previews = await client.GetMatchPreviewsUpcomingAsync(request.SoccerdataLeagueId, cancellationToken)
       .ConfigureAwait(false);
 
     var clubIds = previews
@@ -91,11 +89,12 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
         var newMatch = DomainMatch.CreateUpcomming(gameDayUtc, currentStageId, homeClub.Id, awayClub.Id);
         newMatch.SoccerdataId = matchPreview.Id;
         db.Match.Add(newMatch);
+        added.Add(newMatch);
       }
     }
 
     await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    return Unit.Value;
+    return added;
   }
 
   private static bool TryParseMatchDate(string dateStr, string timeStr, out DateTime gameDayUtc)

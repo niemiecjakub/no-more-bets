@@ -18,7 +18,7 @@ public class Head2Head
   /// <summary>
   /// Deserializes <see cref="Head2HeadJson"/> and aligns teams so that team 1 is the club with
   /// <paramref name="team1SoccerdataId"/> and team 2 is the club with <paramref name="team2SoccerdataId"/>,
-  /// ensuring entity Team1Id/Team2Id correspond to the returned Team1/Team2 and their stats.
+  /// ensuring entity Team1SoccerdataId/Team2SoccerdataId correspond to the returned Team1/Team2 and their stats.
   /// </summary>
   public HeadToHead GetHeadToHead(int team1SoccerdataId, int team2SoccerdataId)
   {
@@ -63,5 +63,19 @@ public class Head2Head
       }
     };
     return new HeadToHead { Team1 = raw.Team2, Team2 = raw.Team1, Stats = swappedStats };
+  }
+
+  public static (int Team1Id, int Team2Id) NormalizeClubIds(int club1Id, int club2Id)
+  {
+    return (Math.Min(club1Id, club2Id), Math.Max(club1Id, club2Id));
+  }
+}
+
+public static class Head2HeadQueryableExtensions
+{
+  public static IQueryable<Head2Head> ForClubs(this IQueryable<Head2Head> query, int club1Id, int club2Id)
+  {
+    var (team1Id, team2Id) = Head2Head.NormalizeClubIds(club1Id, club2Id);
+    return query.Where(h => h.Team1Id == team1Id && h.Team2Id == team2Id);
   }
 }

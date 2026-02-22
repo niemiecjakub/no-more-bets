@@ -52,7 +52,7 @@
 //  /// <inheritdoc />
 //  public async Task<IReadOnlyList<Model.MatchAnalysis>> Handle(RunMatchAnalysisQuery request, CancellationToken cancellationToken)
 //  {
-//    var leagueId = request.LeagueId ?? _options.LeagueId;
+//    var leagueId = request.SoccerdataLeagueId ?? _options.SoccerdataLeagueId;
 
 //    await _mediator.Send(new RefreshRotowireLineupsCommand(), cancellationToken).ConfigureAwait(false);
 //    var lineups = await _mediator.Send(new GetRotowireLineupsQuery(), cancellationToken).ConfigureAwait(false);

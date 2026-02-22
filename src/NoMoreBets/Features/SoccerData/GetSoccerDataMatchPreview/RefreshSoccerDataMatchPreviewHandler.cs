@@ -14,10 +14,10 @@ public class RefreshSoccerDataMatchPreviewHandler(
 
   public async Task<Unit> Handle(RefreshSoccerDataMatchPreviewCommand request, CancellationToken cancellationToken)
   {
-    var matchPreview = await client.GetMatchPreviewAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
+    var matchPreview = await client.GetMatchPreviewAsync(request.SoccerdataMatchId, cancellationToken).ConfigureAwait(false);
 
     var match = await db.Match
-      .FirstOrDefaultAsync(m => m.SoccerdataId == request.MatchId, cancellationToken)
+      .FirstOrDefaultAsync(m => m.SoccerdataId == request.SoccerdataMatchId, cancellationToken)
       .ConfigureAwait(false);
 
     if (match != null)
