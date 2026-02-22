@@ -89,6 +89,11 @@ using (var scope = app.Services.CreateScope())
   //  "update-lineups",
   //  jobService => jobService.GetLineups(new()),
   //  "*/1 * * * *");
+
+  //recurringJobManager.AddOrUpdate<JobService>(
+  //  "update-lineups",
+  //  jobService => jobService.GetLeagueTable(new()),
+  //  "*/1 * * * *");
 }
 
 if (app.Environment.IsDevelopment())

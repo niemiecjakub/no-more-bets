@@ -57,6 +57,31 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
 
     var xgStatsDtos = xgStats.Select(XgStatsDto.From).ToList();
 
+    var latestSnapshot = await db.LeagueTableSnapshot
+      .Where(s => s.SeasonId == seasonId)
+      .Include(s => s.Rows)
+      .OrderByDescending(s => s.CreatedAt)
+      .FirstOrDefaultAsync(cancellationToken) ?? new();
+
+    if (latestSnapshot.Rows.Count > 0 && latestSnapshot.Rows.Count == tableClubs.Count)
+    {
+      var allMatchesPlayedUnchanged = tableClubs.All(readRecord =>
+      {
+        var domainClub = matchMatcher.FindClub(readRecord.TeamName, domainClubs);
+        if (domainClub == null)
+        {
+          return false;
+        }
+        var previousRow = latestSnapshot.Rows.FirstOrDefault(r => r.ClubId == domainClub.Id);
+        return previousRow != null && previousRow.MatchesPlayed == readRecord.MatchesPlayed;
+      });
+
+      if (allMatchesPlayedUnchanged)
+      {
+        return Unit.Value;
+      }
+    }
+
     var snapshot = new LeagueTableSnapshot
     {
       LeagueId = request.LeagueId,

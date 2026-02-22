@@ -2,6 +2,7 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Domain.Entity;
+using NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups;
 using NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
 using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
@@ -82,5 +83,16 @@ public class JobService(IMediator mediator, AppDbContext db)
   public async Task GetLineups(CancellationToken cancellationToken = default)
   {
     await mediator.Send(new RefreshRotowireLineupsCommand(), cancellationToken);
+  }
+
+  [AutomaticRetry(Attempts = 10)]
+  public async Task GetLeagueTable(CancellationToken cancellationToken = default)
+  {
+    var premierLeagueId = await db.League
+      .Where(l => l.Name == "Premier League")
+      .Select(l => l.Id)
+      .FirstOrDefaultAsync(cancellationToken);
+
+    await mediator.Send(new RefreshFotmobLeagueTableSnapshotCommand(premierLeagueId), cancellationToken);
   }
 }
