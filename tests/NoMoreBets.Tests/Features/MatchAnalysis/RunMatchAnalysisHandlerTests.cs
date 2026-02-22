@@ -35,7 +35,7 @@
 //    {
 //        _mediatorMock = new Mock<IMediator>();
 //        _matchMatcherMock = new Mock<IMatchMatcher>();
-//        _options = Options.CreateUpcomming(new MatchAnalysisOptions { LeagueId = 228, OutputDirectory = "" });
+//        _options = Options.CreateUpcomming(new MatchAnalysisOptions { SoccerdataLeagueId = 228, OutputDirectory = "" });
 //        _logger = NullLogger<RunMatchAnalysisHandler>.Instance;
 //        _persistenceMock = new Mock<NoMoreBets.Features.MatchAnalysis.Persistence.IMatchAnalysisPersistence>();
 //    }
@@ -80,7 +80,7 @@
 //        };
 //        var leagues = new List<LeagueMatchPreviews>
 //        {
-//            new() { LeagueId = 228, LeagueName = "Premier League", MatchPreviews = [upcomingMatch] }
+//            new() { SoccerdataLeagueId = 228, LeagueName = "Premier League", MatchPreviews = [upcomingMatch] }
 //        };
 
 //        var homeClub = new ClubDto(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, new[] { "Win", "Win", "Win", "Draw", "Win" }, null, null, null);

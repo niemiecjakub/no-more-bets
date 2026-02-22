@@ -8,7 +8,6 @@ using NoMoreBets.Features.Rotowire.Model;
 using NoMoreBets.Features.Rotowire.Scraping;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
-using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Tests.Helpers;
 
 namespace NoMoreBets.Tests.Features.Rotowire.Scraping;
@@ -16,12 +15,10 @@ namespace NoMoreBets.Tests.Features.Rotowire.Scraping;
 public class RotowireScraperTests
 {
     private static RotowireScraper CreateScraper(
-        IHtmlCache? cache = null,
         IPageFetcher? fetcher = null,
         IInteractivePageFetcher? interactiveFetcher = null,
         BaseScraperOptions? options = null)
     {
-        cache ??= new Mock<IHtmlCache>().Object;
         fetcher ??= new Mock<IPageFetcher>().Object;
         interactiveFetcher ??= new Mock<IInteractivePageFetcher>().Object;
         var opts = Options.Create(options ?? new BaseScraperOptions
@@ -32,7 +29,7 @@ public class RotowireScraperTests
             TimeoutSeconds = 15
         });
         var logger = NullLogger<RotowireScraper>.Instance;
-        return new RotowireScraper(cache, fetcher, interactiveFetcher, opts, logger);
+        return new RotowireScraper(fetcher, interactiveFetcher, opts, logger);
     }
 
     [Fact]
@@ -54,15 +51,14 @@ public class RotowireScraperTests
     }
 
     [Fact]
-    public async Task GetSoccerLineupsAsync_WhenCacheReturnsRealFixture_ParsesAllGames()
+    public async Task GetSoccerLineupsAsync_WhenFetcherReturnsRealFixture_ParsesAllGames()
     {
         var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
         html.Should().NotBeNull("fixture file must exist");
         var url = "https://www.rotowire.com/soccer/lineups.php";
-        var cacheMock = new Mock<IHtmlCache>();
-        cacheMock.Setup(c => c.LoadAsync(url, It.IsAny<CancellationToken>())).ReturnsAsync(html!);
         var fetcherMock = new Mock<IPageFetcher>();
-        var sut = CreateScraper(cacheMock.Object, fetcherMock.Object);
+        fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html!);
+        var sut = CreateScraper(fetcherMock.Object);
 
         var result = await sut.GetSoccerLineupsAsync();
 
@@ -71,7 +67,7 @@ public class RotowireScraperTests
         result[0].AwayTeam.Should().NotBeNull();
         result[0].HomeTeamCode.Should().NotBeNullOrEmpty();
         result[0].AwayTeamCode.Should().NotBeNullOrEmpty();
-        fetcherMock.Verify(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
+        fetcherMock.Verify(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

@@ -13,7 +13,7 @@ namespace NoMoreBets.Infrastructure.Scraping;
 /// </summary>
 public abstract class BaseScraper
 {
-  private readonly IHtmlCache _cache;
+  private readonly IHtmlCache? _cache;
   private readonly IPageFetcher _fetcher;
   private readonly IInteractivePageFetcher _interactiveFetcher;
   private readonly BaseScraperOptions _options;
@@ -24,7 +24,7 @@ public abstract class BaseScraper
   private DateTimeOffset? _lastFetchTime;
 
   protected BaseScraper(
-      IHtmlCache cache,
+      IHtmlCache? cache,
       IPageFetcher fetcher,
       IInteractivePageFetcher interactiveFetcher,
       IOptions<BaseScraperOptions> options,
@@ -47,9 +47,12 @@ public abstract class BaseScraper
   /// <exception cref="PermanentScraperException">Permanent failure (403, 404, 410) – not retried.</exception>
   protected async Task<string> GetPageHtmlAsync(string url, CancellationToken cancellationToken = default)
   {
-    var cached = await _cache.LoadAsync(url, cancellationToken).ConfigureAwait(false);
-    if (cached is { } html)
-      return html;
+    if (_cache is { } cache)
+    {
+      var cached = await cache.LoadAsync(url, cancellationToken).ConfigureAwait(false);
+      if (cached is { } html)
+        return html;
+    }
 
     await _fetchLock.WaitAsync(cancellationToken).ConfigureAwait(false);
     try
@@ -63,7 +66,8 @@ public abstract class BaseScraper
           await RateLimitAsync(ct).ConfigureAwait(false);
           var content = await _fetcher.GetHtmlAsync(url, timeout, ct).ConfigureAwait(false);
           _lastFetchTime = DateTimeOffset.UtcNow;
-          await _cache.SaveAsync(url, content, ct).ConfigureAwait(false);
+          if (_cache is { } c)
+            await c.SaveAsync(url, content, ct).ConfigureAwait(false);
           return content;
         }, cancellationToken).ConfigureAwait(false);
       }
@@ -89,7 +93,7 @@ public abstract class BaseScraper
   /// </summary>
   /// <returns>Number of cache files removed.</returns>
   public Task<int> ClearCacheAsync(string url, CancellationToken cancellationToken = default) =>
-      _cache.ClearAsync(url, cancellationToken);
+      _cache?.ClearAsync(url, cancellationToken) ?? Task.FromResult(0);
 
   /// <summary>
   /// Gets page HTML after interactions: cache-first, then interactive fetch and save to cache.
@@ -105,12 +109,16 @@ public abstract class BaseScraper
       TimeSpan? timeout = null,
       CancellationToken cancellationToken = default)
   {
-    var cached = await _cache.LoadAsync(url, cancellationToken).ConfigureAwait(false);
-    if (cached is not null)
-      return cached;
+    if (_cache is { } cache)
+    {
+      var cached = await cache.LoadAsync(url, cancellationToken).ConfigureAwait(false);
+      if (cached is not null)
+        return cached;
+    }
 
     var html = await _interactiveFetcher.GetHtmlAfterInteractionsAsync(url, steps, timeout, cancellationToken).ConfigureAwait(false);
-    await _cache.SaveAsync(url, html, cancellationToken).ConfigureAwait(false);
+    if (_cache is { } c)
+      await c.SaveAsync(url, html, cancellationToken).ConfigureAwait(false);
     return html;
   }
 

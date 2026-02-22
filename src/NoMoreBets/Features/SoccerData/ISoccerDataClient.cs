@@ -9,14 +9,14 @@ namespace NoMoreBets.Features.SoccerData;
 public interface ISoccerDataClient
 {
     /// <summary>Gets upcoming match previews, optionally filtered by league ID.</summary>
-    Task<IReadOnlyList<LeagueMatchPreviews>> GetMatchPreviewsUpcomingAsync(int? leagueId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LeagueMatchPreviews>> GetMatchPreviewsUpcomingAsync(int? leagueSoccerdataId = null, CancellationToken cancellationToken = default);
 
     /// <summary>Gets match preview for a single match.</summary>
-    Task<MatchPreview> GetMatchPreviewAsync(int matchId, CancellationToken cancellationToken = default);
+    Task<MatchPreview> GetMatchPreviewAsync(int matchISoccerdatad, CancellationToken cancellationToken = default);
 
     /// <summary>Gets head-to-head data between two teams.</summary>
-    Task<HeadToHead> GetHeadToHeadAsync(int team1Id, int team2Id, CancellationToken cancellationToken = default);
+    Task<HeadToHead> GetHeadToHeadAsync(int team1SoccerdataId, int team2SoccerdataId, CancellationToken cancellationToken = default);
 
     /// <summary>Gets matches by date, league, and/or season (combinations as per API).</summary>
-    Task<IReadOnlyList<LeagueMatches>> GetMatchesAsync(string? date = null, int? leagueId = null, string? season = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<LeagueMatches>> GetMatchesAsync(string? date = null, int? leagueSoccerdataId = null, string? season = null, CancellationToken cancellationToken = default);
 }

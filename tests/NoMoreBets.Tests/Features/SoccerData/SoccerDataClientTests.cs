@@ -6,10 +6,8 @@ using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using Moq;
 using NoMoreBets.Features.SoccerData;
 using NoMoreBets.Features.SoccerData.Exceptions;
-using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Tests.Helpers;
 using Polly;
 using Polly.Retry;
@@ -21,68 +19,22 @@ public class SoccerDataClientTests
   private static SoccerDataClient CreateClient(
       HttpClient? httpClient = null,
       IOptions<SoccerDataOptions>? options = null,
-      IJsonCache? cache = null,
       ILogger<SoccerDataClient>? logger = null)
   {
     var client = httpClient ?? new HttpClient();
     var opts = options ?? Options.Create(new SoccerDataOptions { ApiKey = "test-key" });
-    cache ??= new Mock<IJsonCache>().Object;
     logger ??= NullLogger<SoccerDataClient>.Instance;
-    return new SoccerDataClient(client, opts, cache, logger);
-  }
-
-  [Fact]
-  public static void BuildCacheKey_WithNoParams_ReturnsNormalizedEndpointWithTrailingUnderscore()
-  {
-    // Arrange
-    var key = SoccerDataClient.BuildCacheKey("/match-previews-upcoming/", null);
-
-    // Assert
-    key.Should().Be("match-previews-upcoming_");
-  }
-
-  [Fact]
-  public static void BuildCacheKey_WithParams_ReturnsKeyWithSortedParams()
-  {
-    // Arrange
-    var params_ = new Dictionary<string, object?> { ["match_id"] = 954577 };
-
-    // Act
-    var key = SoccerDataClient.BuildCacheKey("/match-preview/", params_);
-
-    // Assert
-    key.Should().Contain("match-preview_");
-    key.Should().Contain("match_id_954577");
-  }
-
-  [Fact]
-  public static void BuildCacheKey_WithParams_ExcludesAuthToken()
-  {
-    // Arrange
-    var params_ = new Dictionary<string, object?>
-    {
-      ["match_id"] = 954577,
-      ["auth_token"] = "secret"
-    };
-
-    // Act
-    var key = SoccerDataClient.BuildCacheKey("/match-preview/", params_);
-
-    // Assert
-    key.Should().NotContain("auth_token");
-    key.Should().Contain("match_id_954577");
+    return new SoccerDataClient(client, opts, logger);
   }
 
   [Fact]
   public async Task GetMatchPreviewsUpcomingAsync_WhenApiKeyMissing_ThrowsSoccerDataAuthException()
   {
     // Arrange: mock 401 so we don't depend on real API; client throws SoccerDataAuthException on 401
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((JsonElement?)null);
     var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
     var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
     var options = Options.Create(new SoccerDataOptions { ApiKey = null });
-    var sut = CreateClient(httpClient, options: options, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient, options: options);
 
     // Act
     var act = () => sut.GetMatchPreviewsUpcomingAsync(null);
@@ -93,21 +45,18 @@ public class SoccerDataClientTests
   }
 
   [Fact]
-  public async Task GetMatchPreviewAsync_WhenCacheHit_ReturnsDeserializedPreviewWithoutCallingHttp()
+  public async Task GetMatchPreviewAsync_WhenHttpReturnsOk_ReturnsDeserializedPreview()
   {
     // Arrange
     var json = FixtureHelper.LoadFixtureText("soccerdata/match_preview.json");
     json.Should().NotBeNullOrEmpty();
-    using var doc = JsonDocument.Parse(json!);
-    var element = doc.RootElement.Clone();
 
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-        .ReturnsAsync(element);
-
-    var handler = new MockHttpMessageHandler(_ => throw new InvalidOperationException("HTTP should not be called"));
+    var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+      Content = new StringContent(json!, Encoding.UTF8, "application/json")
+    });
     var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
-    var sut = CreateClient(httpClient, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient);
 
     // Act
     var result = await sut.GetMatchPreviewAsync(955509);
@@ -117,26 +66,21 @@ public class SoccerDataClientTests
     result.Id.Should().Be(955509);
     result.Teams.Home.Name.Should().Be("Club Brugge");
     result.Teams.Away.Name.Should().Be("RAAL La Louviere");
-    cacheMock.Verify(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-    cacheMock.Verify(c => c.SaveAsync(It.IsAny<string>(), It.IsAny<JsonElement>(), It.IsAny<CancellationToken>()), Times.Never);
   }
 
   [Fact]
-  public async Task GetHeadToHeadAsync_WhenCacheMiss_CallsHttpAndSavesToCache()
+  public async Task GetHeadToHeadAsync_WhenHttpReturnsOk_ReturnsDeserializedHeadToHead()
   {
     // Arrange
     var json = FixtureHelper.LoadFixtureText("soccerdata/head_to_head.json");
     json.Should().NotBeNullOrEmpty();
-
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((JsonElement?)null);
 
     var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
     {
       Content = new StringContent(json!, Encoding.UTF8, "application/json")
     });
     var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
-    var sut = CreateClient(httpClient, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient);
 
     // Act
     var result = await sut.GetHeadToHeadAsync(2916, 4148);
@@ -147,20 +91,15 @@ public class SoccerDataClientTests
     result.Team2.Id.Should().Be(4148);
     result.Team1.Name.Should().Be("Chelsea");
     result.Team2.Name.Should().Be("Brentford");
-    cacheMock.Verify(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
-    cacheMock.Verify(c => c.SaveAsync(It.IsAny<string>(), It.IsAny<JsonElement>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
   public async Task GetMatchPreviewAsync_WhenHttpReturns401_ThrowsSoccerDataAuthException()
   {
     // Arrange
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((JsonElement?)null);
-
     var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
     var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
-    var sut = CreateClient(httpClient, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient);
 
     // Act
     var act = () => sut.GetMatchPreviewAsync(123);
@@ -174,12 +113,9 @@ public class SoccerDataClientTests
   public async Task GetMatchPreviewAsync_WhenHttpReturns404_ThrowsSoccerDataNotFoundException()
   {
     // Arrange
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((JsonElement?)null);
-
     var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
     var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
-    var sut = CreateClient(httpClient, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient);
 
     // Act
     var act = () => sut.GetMatchPreviewAsync(999999);
@@ -197,15 +133,12 @@ public class SoccerDataClientTests
     fixtureJson.Should().NotBeNullOrEmpty();
     var wrapped = "{\"results\": " + fixtureJson + "}";
 
-    using var doc = JsonDocument.Parse(wrapped);
-    var element = doc.RootElement.Clone();
-
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-        .ReturnsAsync(element);
-
-    var httpClient = new HttpClient(new MockHttpMessageHandler(_ => throw new NotSupportedException()));
-    var sut = CreateClient(httpClient, cache: cacheMock.Object);
+    var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+    {
+      Content = new StringContent(wrapped, Encoding.UTF8, "application/json")
+    });
+    var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
+    var sut = CreateClient(httpClient);
 
     // Act: filter by league 212 (First Division A in fixture)
     var result = await sut.GetMatchPreviewsUpcomingAsync(212);
@@ -221,9 +154,6 @@ public class SoccerDataClientTests
     // Arrange: client has no internal retry; Polly on the HttpClient performs retries
     var json = FixtureHelper.LoadFixtureText("soccerdata/head_to_head.json");
     json.Should().NotBeNullOrEmpty();
-
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((JsonElement?)null);
 
     var callCount = 0;
     var innerHandler = new MockHttpMessageHandler(_ =>
@@ -252,7 +182,7 @@ public class SoccerDataClientTests
 
     var options = Options.Create(new SoccerDataOptions { ApiKey = "test-key" });
     var httpClient = new HttpClient(resilienceHandler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
-    var sut = CreateClient(httpClient, options: options, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient, options: options);
 
     // Act
     var result = await sut.GetHeadToHeadAsync(2916, 4148);
@@ -281,15 +211,12 @@ public class SoccerDataClientTests
             ]
             """;
 
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((JsonElement?)null);
-
     var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
     {
       Content = new StringContent(matchesJson, Encoding.UTF8, "application/json")
     });
     var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
-    var sut = CreateClient(httpClient, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient);
 
     // Act
     var result = await sut.GetMatchesAsync(leagueId: 39);
@@ -307,15 +234,12 @@ public class SoccerDataClientTests
     var json = FixtureHelper.LoadFixtureText("soccerdata/matches_league.json");
     json.Should().NotBeNullOrEmpty();
 
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((JsonElement?)null);
-
     var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
     {
       Content = new StringContent(json!, Encoding.UTF8, "application/json")
     });
     var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
-    var sut = CreateClient(httpClient, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient);
 
     // Act
     var result = await sut.GetMatchesAsync(leagueId: 228, season: "2025-2026");
@@ -334,15 +258,12 @@ public class SoccerDataClientTests
     var json = FixtureHelper.LoadFixtureText("soccerdata/matches_league.json");
     json.Should().NotBeNullOrEmpty();
 
-    var cacheMock = new Mock<IJsonCache>();
-    cacheMock.Setup(c => c.LoadAsync(It.IsAny<string>(), It.IsAny<CancellationToken>())).ReturnsAsync((JsonElement?)null);
-
     var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
     {
       Content = new StringContent(json!, Encoding.UTF8, "application/json")
     });
     var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
-    var sut = CreateClient(httpClient, cache: cacheMock.Object);
+    var sut = CreateClient(httpClient);
 
     // Act
     var result = await sut.GetMatchesAsync(leagueId: 228, season: "2025-2026");

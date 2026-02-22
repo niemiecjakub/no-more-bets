@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Features.SoccerData.Exceptions;
 using NoMoreBets.Features.SoccerData.Model;
-using NoMoreBets.Infrastructure.Storage;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -30,27 +29,23 @@ public class SoccerDataClient : ISoccerDataClient
 
   private readonly HttpClient _httpClient;
   private readonly SoccerDataOptions _options;
-  private readonly IJsonCache _cache;
   private readonly ILogger<SoccerDataClient> _logger;
 
   public SoccerDataClient(
       HttpClient httpClient,
       IOptions<SoccerDataOptions> options,
-      IJsonCache cache,
       ILogger<SoccerDataClient> logger)
   {
     _httpClient = httpClient;
     _options = options.Value;
-    _cache = cache;
     _logger = logger;
   }
 
   /// <inheritdoc />
-  public async Task<IReadOnlyList<LeagueMatchPreviews>> GetMatchPreviewsUpcomingAsync(int? leagueId = null, CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<LeagueMatchPreviews>> GetMatchPreviewsUpcomingAsync(int? soccerdataLeagueId = null, CancellationToken cancellationToken = default)
   {
     var endpoint = "/match-previews-upcoming/";
-    var cacheKey = BuildCacheKey(endpoint, null);
-    var element = await LoadFromCacheOrFetchAsync(cacheKey, endpoint, null, cancellationToken).ConfigureAwait(false);
+    var element = await FetchAsync(endpoint, null, cancellationToken).ConfigureAwait(false);
     if (element is null)
       return [];
 
@@ -67,7 +62,7 @@ public class SoccerDataClient : ISoccerDataClient
       {
         var league = item.Deserialize<LeagueMatchPreviews>(JsonOptions);
         if (league is null) continue;
-        if (leagueId is null || league.LeagueId == leagueId.Value)
+        if (soccerdataLeagueId is null || league.LeagueId == soccerdataLeagueId.Value)
           list.Add(league);
       }
       catch (Exception ex)
@@ -80,18 +75,17 @@ public class SoccerDataClient : ISoccerDataClient
   }
 
   /// <inheritdoc />
-  public async Task<MatchPreview> GetMatchPreviewAsync(int matchId, CancellationToken cancellationToken = default)
+  public async Task<MatchPreview> GetMatchPreviewAsync(int soccerdataMatchId, CancellationToken cancellationToken = default)
   {
     var endpoint = "/match-preview/";
-    var queryParams = new Dictionary<string, object?> { ["match_id"] = matchId };
-    var cacheKey = BuildCacheKey(endpoint, queryParams);
-    var element = await LoadFromCacheOrFetchAsync(cacheKey, endpoint, queryParams, cancellationToken).ConfigureAwait(false);
+    var queryParams = new Dictionary<string, object?> { ["match_id"] = soccerdataMatchId };
+    var element = await FetchAsync(endpoint, queryParams, cancellationToken).ConfigureAwait(false);
     if (element is null)
-      throw new SoccerDataException($"No response for match preview {matchId}");
+      throw new SoccerDataException($"No response for match preview {soccerdataMatchId}");
 
     var preview = element.Value.Deserialize<MatchPreview>(JsonOptions);
     if (preview is null)
-      throw new SoccerDataException($"Failed to deserialize match preview {matchId}");
+      throw new SoccerDataException($"Failed to deserialize match preview {soccerdataMatchId}");
     return preview;
   }
 
@@ -104,8 +98,7 @@ public class SoccerDataClient : ISoccerDataClient
       ["team_1_id"] = team1Id,
       ["team_2_id"] = team2Id
     };
-    var cacheKey = BuildCacheKey(endpoint, queryParams);
-    var element = await LoadFromCacheOrFetchAsync(cacheKey, endpoint, queryParams, cancellationToken).ConfigureAwait(false);
+    var element = await FetchAsync(endpoint, queryParams, cancellationToken).ConfigureAwait(false);
     if (element is null)
       throw new SoccerDataException($"No response for head-to-head {team1Id} vs {team2Id}");
 
@@ -123,8 +116,7 @@ public class SoccerDataClient : ISoccerDataClient
     if (date is not null) queryParams["date"] = date;
     if (leagueId is not null) queryParams["league_id"] = leagueId;
     if (season is not null) queryParams["season"] = season;
-    var cacheKey = BuildCacheKey(endpoint, queryParams.Count > 0 ? queryParams : null);
-    var element = await LoadFromCacheOrFetchAsync(cacheKey, endpoint, queryParams.Count > 0 ? queryParams : null, cancellationToken).ConfigureAwait(false);
+    var element = await FetchAsync(endpoint, queryParams.Count > 0 ? queryParams : null, cancellationToken).ConfigureAwait(false);
     if (element is null)
       return [];
 
@@ -152,30 +144,11 @@ public class SoccerDataClient : ISoccerDataClient
     return list;
   }
 
-  /// <summary>Build cache key from endpoint and params (excludes auth_token).</summary>
-  internal static string BuildCacheKey(string endpoint, IReadOnlyDictionary<string, object?>? queryParams)
-  {
-    var normalized = endpoint.Trim('/').Replace("/", "_", StringComparison.Ordinal);
-    if (queryParams is null || queryParams.Count == 0)
-      return normalized + "_";
-
-    var filtered = queryParams
-        .Where(kv => kv.Key != "auth_token" && kv.Value is not null)
-        .OrderBy(kv => kv.Key)
-        .Select(kv => $"{kv.Key}_{kv.Value}");
-    return normalized + "_" + string.Join("_", filtered);
-  }
-
-  private async Task<JsonElement?> LoadFromCacheOrFetchAsync(
-      string cacheKey,
+  private async Task<JsonElement?> FetchAsync(
       string endpoint,
       IReadOnlyDictionary<string, object?>? queryParams,
       CancellationToken cancellationToken)
   {
-    var cached = await _cache.LoadAsync(cacheKey, cancellationToken).ConfigureAwait(false);
-    if (cached.HasValue)
-      return cached;
-
     var requestParams = new Dictionary<string, string?>();
     if (queryParams is not null)
     {
@@ -208,9 +181,7 @@ public class SoccerDataClient : ISoccerDataClient
 
       await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
       using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken).ConfigureAwait(false);
-      var element = doc.RootElement.Clone();
-      await _cache.SaveAsync(cacheKey, element, cancellationToken).ConfigureAwait(false);
-      return element;
+      return doc.RootElement.Clone();
     }
     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
     {

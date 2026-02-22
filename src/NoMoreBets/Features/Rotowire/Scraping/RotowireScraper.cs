@@ -7,7 +7,6 @@ using NoMoreBets.Domain.Enums;
 using NoMoreBets.Features.Rotowire.Model;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
-using NoMoreBets.Infrastructure.Storage;
 
 namespace NoMoreBets.Features.Rotowire.Scraping;
 
@@ -25,12 +24,11 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
   private readonly ILogger<RotowireScraper> _logger;
 
   public RotowireScraper(
-      IHtmlCache cache,
       IPageFetcher fetcher,
       IInteractivePageFetcher interactiveFetcher,
       IOptions<BaseScraperOptions> options,
       ILogger<RotowireScraper> logger)
-      : base(cache, fetcher, interactiveFetcher, options, logger)
+      : base(null, fetcher, interactiveFetcher, options, logger)
   {
     _logger = logger;
   }
