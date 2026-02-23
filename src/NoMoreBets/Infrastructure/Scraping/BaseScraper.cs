@@ -1,19 +1,17 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Infrastructure.Fetching;
-using NoMoreBets.Infrastructure.Storage;
 using Polly;
 using Polly.Retry;
 
 namespace NoMoreBets.Infrastructure.Scraping;
 
 /// <summary>
-/// Base scraper with cache-first fetch, rate limiting, and retry with exponential backoff.
+/// Base scraper with rate limiting and retry with exponential backoff.
 /// Concrete scrapers inherit and use <see cref="GetPageHtmlAsync"/> then parse to DTOs.
 /// </summary>
 public abstract class BaseScraper
 {
-  private readonly IHtmlCache? _cache;
   private readonly IPageFetcher _fetcher;
   private readonly IInteractivePageFetcher _interactiveFetcher;
   private readonly BaseScraperOptions _options;
@@ -24,13 +22,11 @@ public abstract class BaseScraper
   private DateTimeOffset? _lastFetchTime;
 
   protected BaseScraper(
-      IHtmlCache? cache,
       IPageFetcher fetcher,
       IInteractivePageFetcher interactiveFetcher,
       IOptions<BaseScraperOptions> options,
       ILogger logger)
   {
-    _cache = cache;
     _fetcher = fetcher;
     _interactiveFetcher = interactiveFetcher;
     _options = options.Value;
@@ -39,7 +35,7 @@ public abstract class BaseScraper
   }
 
   /// <summary>
-  /// Gets page HTML: cache-first, then rate-limited fetch with retry and backoff.
+  /// Gets page HTML: rate-limited fetch with retry and backoff.
   /// </summary>
   /// <param name="url">URL to fetch.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
@@ -47,13 +43,6 @@ public abstract class BaseScraper
   /// <exception cref="PermanentScraperException">Permanent failure (403, 404, 410) – not retried.</exception>
   protected async Task<string> GetPageHtmlAsync(string url, CancellationToken cancellationToken = default)
   {
-    if (_cache is { } cache)
-    {
-      var cached = await cache.LoadAsync(url, cancellationToken).ConfigureAwait(false);
-      if (cached is { } html)
-        return html;
-    }
-
     await _fetchLock.WaitAsync(cancellationToken).ConfigureAwait(false);
     try
     {
@@ -66,8 +55,6 @@ public abstract class BaseScraper
           await RateLimitAsync(ct).ConfigureAwait(false);
           var content = await _fetcher.GetHtmlAsync(url, timeout, ct).ConfigureAwait(false);
           _lastFetchTime = DateTimeOffset.UtcNow;
-          if (_cache is { } c)
-            await c.SaveAsync(url, content, ct).ConfigureAwait(false);
           return content;
         }, cancellationToken).ConfigureAwait(false);
       }
@@ -89,14 +76,7 @@ public abstract class BaseScraper
   }
 
   /// <summary>
-  /// Clears cached files for the given URL.
-  /// </summary>
-  /// <returns>Number of cache files removed.</returns>
-  public Task<int> ClearCacheAsync(string url, CancellationToken cancellationToken = default) =>
-      _cache?.ClearAsync(url, cancellationToken) ?? Task.FromResult(0);
-
-  /// <summary>
-  /// Gets page HTML after interactions: cache-first, then interactive fetch and save to cache.
+  /// Gets page HTML after interactions via interactive fetch.
   /// </summary>
   /// <param name="url">URL to fetch.</param>
   /// <param name="steps">Ordered list of interactions (e.g. click by selector).</param>
@@ -109,17 +89,7 @@ public abstract class BaseScraper
       TimeSpan? timeout = null,
       CancellationToken cancellationToken = default)
   {
-    if (_cache is { } cache)
-    {
-      var cached = await cache.LoadAsync(url, cancellationToken).ConfigureAwait(false);
-      if (cached is not null)
-        return cached;
-    }
-
-    var html = await _interactiveFetcher.GetHtmlAfterInteractionsAsync(url, steps, timeout, cancellationToken).ConfigureAwait(false);
-    if (_cache is { } c)
-      await c.SaveAsync(url, html, cancellationToken).ConfigureAwait(false);
-    return html;
+    return await _interactiveFetcher.GetHtmlAfterInteractionsAsync(url, steps, timeout, cancellationToken).ConfigureAwait(false);
   }
 
   private static ResiliencePipeline<string> CreateFetchPipeline(

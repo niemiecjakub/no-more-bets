@@ -16,7 +16,7 @@ venv/
 # Resources
 src/NoMoreBets/NoMoreBets.Data/Resources/*
 .env
-cache/
+Scripts/
 plans/
 
 src/NoMoreBets/appsettings.Development.json

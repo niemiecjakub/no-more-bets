@@ -14,7 +14,6 @@ using NoMoreBets.Features.SoccerData;
 using NoMoreBets.Infrastructure.Database;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
-using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Features.Jobs;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,8 +32,6 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
       o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
     }));
 
-builder.Services.Configure<JsonCacheOptions>(builder.Configuration.GetSection("StorageCache:JsonCache"));
-builder.Services.Configure<HtmlCacheOptions>(builder.Configuration.GetSection("StorageCache:HtmlCache"));
 builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection("Scraper"));
 builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection("Scraper:Betclic"));
 builder.Services.Configure<FotmobScraperOptions>(builder.Configuration.GetSection("Scraper:Fotmob"));
@@ -47,8 +44,6 @@ builder.Services.AddSingleton<FootballDataPlugin>();
 builder.Services.AddSingleton<SquadPlugin>();
 builder.Services.AddSingleton<BookmakerPlugin>();
 builder.Services.AddSingleton<IPredictMatchAgentOrchestrator, PredictMatchAgentOrchestrator>();
-builder.Services.AddSingleton<IJsonCache, JsonCache>();
-builder.Services.AddSingleton<IHtmlCache, HtmlCache>();
 builder.Services.AddSingleton<PlaywrightPageFetcher>();
 builder.Services.AddScoped<Initialize>();
 builder.Services.AddSingleton<IPageFetcher>(sp => sp.GetRequiredService<PlaywrightPageFetcher>());

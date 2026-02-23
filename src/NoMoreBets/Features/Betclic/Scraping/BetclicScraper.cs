@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Betclic.Model;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
-using NoMoreBets.Infrastructure.Storage;
 
 namespace NoMoreBets.Features.Betclic.Scraping;
 
@@ -29,13 +28,12 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
   ];
 
   public BetclicScraper(
-      IHtmlCache cache,
       IPageFetcher fetcher,
       IInteractivePageFetcher interactiveFetcher,
       IOptions<BaseScraperOptions> options,
       IOptions<BetclicScraperOptions> betclicOptions,
       ILogger<BetclicScraper> logger)
-      : base(cache, fetcher, interactiveFetcher, options, logger)
+      : base(fetcher, interactiveFetcher, options, logger)
   {
     _betclicOptions = betclicOptions.Value;
     _logger = logger;
@@ -53,7 +51,6 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
         return games;
       if (attempt < _betclicOptions.EmptyResultRetryCount - 1)
       {
-        await ClearCacheAsync(PremierLeagueUrl, cancellationToken).ConfigureAwait(false);
         var delay = JitterDelay(_betclicOptions.EmptyResultRetryDelayMinSeconds, _betclicOptions.EmptyResultRetryDelayMaxSeconds);
         await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken).ConfigureAwait(false);
       }
@@ -79,7 +76,6 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
         return events;
       if (attempt < _betclicOptions.EmptyResultRetryCount - 1)
       {
-        await ClearCacheAsync(gameUrl, cancellationToken).ConfigureAwait(false);
         var delay = JitterDelay(_betclicOptions.MatchEventsRetryDelayMinSeconds, _betclicOptions.MatchEventsRetryDelayMaxSeconds);
         await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken).ConfigureAwait(false);
       }

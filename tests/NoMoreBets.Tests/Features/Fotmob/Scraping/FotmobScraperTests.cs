@@ -9,7 +9,6 @@ using NoMoreBets.Features.Fotmob.Model;
 using NoMoreBets.Features.Fotmob.Scraping;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
-using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Tests.Helpers;
 
 namespace NoMoreBets.Tests.Features.Fotmob.Scraping;
@@ -17,13 +16,11 @@ namespace NoMoreBets.Tests.Features.Fotmob.Scraping;
 public class FotmobScraperTests
 {
     private static FotmobScraper CreateScraper(
-        IHtmlCache? cache = null,
         IPageFetcher? fetcher = null,
         IInteractivePageFetcher? interactiveFetcher = null,
         BaseScraperOptions? baseOptions = null,
         FotmobScraperOptions? fotmobOptions = null)
     {
-        cache ??= new Mock<IHtmlCache>().Object;
         fetcher ??= new Mock<IPageFetcher>().Object;
         interactiveFetcher ??= new Mock<IInteractivePageFetcher>().Object;
         var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
@@ -39,7 +36,7 @@ public class FotmobScraperTests
             LeagueSlug = "premier-league"
         });
         var logger = NullLogger<FotmobScraper>.Instance;
-        return new FotmobScraper(cache, fetcher, interactiveFetcher, baseOpts, fotmobOpts, logger);
+        return new FotmobScraper(fetcher, interactiveFetcher, baseOpts, fotmobOpts, logger);
     }
 
     [Fact]

@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 using NoMoreBets.Features.Fotmob.Model;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
-using NoMoreBets.Infrastructure.Storage;
 
 namespace NoMoreBets.Features.Fotmob.Scraping;
 
@@ -32,13 +31,12 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
   private readonly ILogger<FotmobScraper> _logger;
 
   public FotmobScraper(
-      IHtmlCache cache,
       IPageFetcher fetcher,
       IInteractivePageFetcher interactiveFetcher,
       IOptions<BaseScraperOptions> baseOptions,
       IOptions<FotmobScraperOptions> fotmobOptions,
       ILogger<FotmobScraper> logger)
-      : base(cache, fetcher, interactiveFetcher, baseOptions, logger)
+      : base(fetcher, interactiveFetcher, baseOptions, logger)
   {
     _options = fotmobOptions.Value;
     _logger = logger;

@@ -7,7 +7,6 @@ using NoMoreBets.Features.Betclic.Model;
 using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
-using NoMoreBets.Infrastructure.Storage;
 using NoMoreBets.Tests.Helpers;
 
 namespace NoMoreBets.Tests.Features.Betclic.Scraping;
@@ -17,13 +16,11 @@ public class BetclicScraperTests
   private const string PremierLeagueUrl = "https://www.betclic.pl/football-sfootball/premier-league-c3";
 
   private static BetclicScraper CreateScraper(
-      IHtmlCache? cache = null,
       IPageFetcher? fetcher = null,
       IInteractivePageFetcher? interactiveFetcher = null,
       BaseScraperOptions? baseOptions = null,
       BetclicScraperOptions? betclicOptions = null)
   {
-    cache ??= new Mock<IHtmlCache>().Object;
     fetcher ??= new Mock<IPageFetcher>().Object;
     interactiveFetcher ??= new Mock<IInteractivePageFetcher>().Object;
     var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
@@ -42,7 +39,7 @@ public class BetclicScraperTests
       MatchEventsRetryDelayMaxSeconds = 0
     });
     var logger = NullLogger<BetclicScraper>.Instance;
-    return new BetclicScraper(cache, fetcher, interactiveFetcher, baseOpts, betclicOpts, logger);
+    return new BetclicScraper(fetcher, interactiveFetcher, baseOpts, betclicOpts, logger);
   }
 
   private static string MinimalUpcomingGamesHtml()
@@ -102,15 +99,14 @@ public class BetclicScraperTests
   }
 
   [Fact]
-  public async Task GetUpcomingGamesAsync_WhenCacheReturnsMinimalFixture_ParsesGames()
+  public async Task GetUpcomingGamesAsync_WhenFetcherReturnsMinimalFixture_ParsesGames()
   {
     // Arrange
     var html = MinimalUpcomingGamesHtml();
-    var cacheMock = new Mock<IHtmlCache>();
-    cacheMock.Setup(c => c.LoadAsync(PremierLeagueUrl, It.IsAny<CancellationToken>())).ReturnsAsync(html);
     var fetcherMock = new Mock<IPageFetcher>();
+    fetcherMock.Setup(f => f.GetHtmlAsync(PremierLeagueUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html);
     var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
-    var sut = CreateScraper(cacheMock.Object, fetcherMock.Object, interactiveFetcherMock.Object);
+    var sut = CreateScraper(fetcherMock.Object, interactiveFetcherMock.Object);
 
     // Act
     var result = await sut.GetUpcomingGamesAsync();
@@ -120,7 +116,7 @@ public class BetclicScraperTests
     result[0].HomeTeam.Should().Be("Arsenal");
     result[0].AwayTeam.Should().Be("Chelsea");
     result[0].Url.Should().NotBeNullOrEmpty();
-    fetcherMock.Verify(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
+    fetcherMock.Verify(f => f.GetHtmlAsync(PremierLeagueUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
@@ -141,17 +137,16 @@ public class BetclicScraperTests
   }
 
   [Fact]
-  public async Task GetMatchEventsAsync_WhenCacheReturnsMatchFixture_ParsesEvents()
+  public async Task GetMatchEventsAsync_WhenFetcherReturnsMatchFixture_ParsesEvents()
   {
     // Arrange
     var html = FixtureHelper.LoadFixtureText("betclic/match_page.html");
     html.Should().NotBeNull("fixture file must exist");
     var gameUrl = "https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/bournemouth-liverpool-m905675307745280";
-    var cacheMock = new Mock<IHtmlCache>();
-    cacheMock.Setup(c => c.LoadAsync(gameUrl, It.IsAny<CancellationToken>())).ReturnsAsync(html!);
     var fetcherMock = new Mock<IPageFetcher>();
+    fetcherMock.Setup(f => f.GetHtmlAsync(gameUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html!);
     var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
-    var sut = CreateScraper(cacheMock.Object, fetcherMock.Object, interactiveFetcherMock.Object);
+    var sut = CreateScraper(fetcherMock.Object, interactiveFetcherMock.Object);
 
     // Act
     var result = await sut.GetMatchEventsAsync(gameUrl, expand: false);
@@ -160,21 +155,23 @@ public class BetclicScraperTests
     result.Should().NotBeEmpty();
     result.Should().OnlyContain(e => e is BookmakerEvent);
     result.Should().Contain(e => !string.IsNullOrEmpty(e.Title) && e.Options.Count > 0);
-    fetcherMock.Verify(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Never);
+    fetcherMock.Verify(f => f.GetHtmlAsync(gameUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
-  public async Task GetMatchEventsAsync_WhenExpandTrueAndCacheHasContent_ReturnsCachedAndDoesNotCallInteractiveFetcher()
+  public async Task GetMatchEventsAsync_WhenExpandTrue_CallsInteractiveFetcherAndParsesEvents()
   {
     // Arrange
     var html = FixtureHelper.LoadFixtureText("betclic/match_page.html");
     html.Should().NotBeNull("fixture file must exist");
     var gameUrl = "https://www.betclic.pl/some-match";
-    var cacheMock = new Mock<IHtmlCache>();
-    cacheMock.Setup(c => c.LoadAsync(gameUrl, It.IsAny<CancellationToken>())).ReturnsAsync(html!);
     var fetcherMock = new Mock<IPageFetcher>();
     var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
-    var sut = CreateScraper(cacheMock.Object, fetcherMock.Object, interactiveFetcherMock.Object);
+    interactiveFetcherMock
+        .Setup(f => f.GetHtmlAfterInteractionsAsync(
+            gameUrl, It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
+        .ReturnsAsync(html!);
+    var sut = CreateScraper(fetcherMock.Object, interactiveFetcherMock.Object);
 
     // Act
     var result = await sut.GetMatchEventsAsync(gameUrl, expand: true);
@@ -183,7 +180,7 @@ public class BetclicScraperTests
     result.Should().NotBeEmpty();
     interactiveFetcherMock.Verify(
         f => f.GetHtmlAfterInteractionsAsync(
-            It.IsAny<string>(), It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()),
-        Times.Never);
+            gameUrl, It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()),
+        Times.Once);
   }
 }
