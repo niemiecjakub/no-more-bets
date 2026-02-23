@@ -133,7 +133,6 @@ public class AppDbContext : DbContext
       entity.Property(e => e.LeagueId).IsRequired();
       entity.Property(e => e.SeasonId).IsRequired();
       entity.Property(e => e.SnapshotDate).IsRequired();
-      entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("now()");
       entity.HasIndex(e => new { e.SeasonId, e.SnapshotDate }).IsUnique();
       entity.HasIndex(e => new { e.LeagueId, e.SnapshotDate });
       entity.HasOne(e => e.League).WithMany(l => l.LeagueTableSnapshots).HasForeignKey(e => e.LeagueId).OnDelete(DeleteBehavior.Cascade);

@@ -60,7 +60,7 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
     var latestSnapshot = await db.LeagueTableSnapshot
       .Where(s => s.SeasonId == seasonId)
       .Include(s => s.Rows)
-      .OrderByDescending(s => s.CreatedAt)
+      .OrderByDescending(s => s.SnapshotDate)
       .FirstOrDefaultAsync(cancellationToken) ?? new();
 
     if (latestSnapshot.Rows.Count > 0 && latestSnapshot.Rows.Count == tableClubs.Count)
@@ -86,8 +86,7 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
     {
       LeagueId = request.LeagueId,
       SeasonId = seasonId.Value,
-      SnapshotDate = snapshotDate,
-      CreatedAt = DateTime.UtcNow
+      SnapshotDate = snapshotDate
     };
 
     foreach (var club in tableClubs)

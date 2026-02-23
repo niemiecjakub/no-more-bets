@@ -6,7 +6,6 @@ public record LeagueTableSnapshotDto(
   int LeagueId,
   int SeasonId,
   DateOnly SnapshotDate,
-  DateTime CreatedAt,
   IReadOnlyList<LeagueTableSnapshotRowDto> Rows);
 
 /// <summary>DTO for a single row in a league table snapshot.</summary>

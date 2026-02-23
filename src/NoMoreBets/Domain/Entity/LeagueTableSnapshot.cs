@@ -6,7 +6,6 @@ public class LeagueTableSnapshot
   public int LeagueId { get; set; }
   public int SeasonId { get; set; }
   public DateOnly SnapshotDate { get; set; }
-  public DateTime CreatedAt { get; set; }
 
   public League League { get; set; } = null!;
   public Season Season { get; set; } = null!;

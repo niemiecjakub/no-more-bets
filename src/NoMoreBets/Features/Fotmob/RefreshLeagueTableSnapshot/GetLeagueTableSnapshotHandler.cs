@@ -82,7 +82,6 @@ public class GetLeagueTableSnapshotHandler(AppDbContext db)
       snapshot.LeagueId,
       snapshot.SeasonId,
       snapshot.SnapshotDate,
-      snapshot.CreatedAt,
       rows);
   }
 }
