@@ -141,7 +141,7 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
     {
       throw new ArgumentException("Date string is empty.", nameof(dateString));
     }
-    if (string.Equals(trimmed, "Dzisiaj", StringComparison.OrdinalIgnoreCase))
+    if (string.Equals(trimmed, "Dzisiaj", StringComparison.OrdinalIgnoreCase) || string.Equals(trimmed, "Teraz", StringComparison.OrdinalIgnoreCase))
     {
       return DateTime.Today;
     }

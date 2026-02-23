@@ -21,6 +21,9 @@ public class AppDbContext : DbContext
   public DbSet<Head2Head> Head2Head { get; set; }
   public DbSet<LeagueTableSnapshot> LeagueTableSnapshot { get; set; }
   public DbSet<LeagueTableSnapshotRow> LeagueTableSnapshotRow { get; set; }
+  public DbSet<BettingEventTypeEntity> BettingEventType { get; set; }
+  public DbSet<BettingOddsSnapshot> BettingOddsSnapshot { get; set; }
+  public DbSet<BettingOddsSnapshotRow> BettingOddsSnapshotRow { get; set; }
   public DbSet<MatchDetails> MatchDetails { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -163,6 +166,46 @@ public class AppDbContext : DbContext
       entity.HasIndex(e => e.ClubId);
       entity.HasOne(e => e.Snapshot).WithMany(s => s.Rows).HasForeignKey(e => e.SnapshotId).OnDelete(DeleteBehavior.Cascade);
       entity.HasOne(e => e.Club).WithMany(c => c.LeagueTableSnapshotRows).HasForeignKey(e => e.ClubId).OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<BettingEventTypeEntity>(entity =>
+    {
+      entity.ToTable(BettingEventTypeEntity.TABLE_NAME);
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+      entity.HasData(
+        Enum.GetValues(typeof(BettingEventType))
+          .Cast<BettingEventType>()
+          .Select(e => new BettingEventTypeEntity()
+          {
+            Id = (int)e,
+            Name = e.ToString()
+          }));
+    });
+
+    modelBuilder.Entity<BettingOddsSnapshot>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+      entity.Property(e => e.MatchId).IsRequired();
+      entity.Property(e => e.SnapshotTime).IsRequired();
+      entity.HasIndex(e => new { e.MatchId, e.SnapshotTime });
+      entity.HasOne(e => e.Match).WithMany(m => m.BettingOddsSnapshots).HasForeignKey(e => e.MatchId).OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<BettingOddsSnapshotRow>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityByDefaultColumn();
+      entity.Property(e => e.SnapshotId).IsRequired();
+      entity.Property(e => e.EventJson).IsRequired().HasColumnType("jsonb");
+      entity.Property(e => e.EventTypeId).IsRequired();
+      entity.HasIndex(e => new { e.SnapshotId, e.EventTypeId });
+      entity.HasOne(e => e.Snapshot).WithMany(s => s.Rows).HasForeignKey(e => e.SnapshotId).OnDelete(DeleteBehavior.Cascade);
+      entity.HasOne(e => e.EventTypeEntity)
+        .WithMany()
+        .HasForeignKey(e => e.EventTypeId)
+        .OnDelete(DeleteBehavior.Restrict);
     });
 
     modelBuilder.Entity<MatchDetails>(entity =>

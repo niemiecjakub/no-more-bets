@@ -6,11 +6,11 @@ namespace NoMoreBets.Domain.Enums;
 /// </summary>
 public enum InjuryStatus
 {
-  Unknown = 0,
-  Out,
-  Questionable,
-  Suspended,
-  Doubtful
+  Unknown = 1,
+  Out = 2,
+  Questionable = 3,
+  Suspended = 4,
+  Doubtful = 5
 }
 
 /// <summary>

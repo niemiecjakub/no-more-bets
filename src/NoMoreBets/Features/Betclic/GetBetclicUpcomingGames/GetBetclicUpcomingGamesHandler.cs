@@ -25,7 +25,9 @@ public class GetBetclicUpcomingGamesHandler(
       return Array.Empty<UpcomingGameDto>();
     }
 
+
     var results = new List<UpcomingGameDto>(upcomingGames.Count);
+
     foreach (var game in upcomingGames)
     {
       var dateWithTime = CombineDateAndTime(game.Date, game.Time);

@@ -6,9 +6,9 @@ namespace NoMoreBets.Domain.Enums;
 /// </summary>
 public enum LineupType
 {
-  Unknown = 0,
-  Predicted,
-  Confirmed
+  Unknown = 1,
+  Predicted = 2,
+  Confirmed = 3
 }
 
 /// <summary>
