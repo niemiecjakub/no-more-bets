@@ -4,6 +4,7 @@ using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
 using NoMoreBets.Features.Betclic.GetBetclicMatchEvents.Dtos;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames.Dtos;
+using NoMoreBets.Features.Betclic.RefreshBetclicGames;
 using NoMoreBets.Features.Fotmob.GetFotmobClubOverview;
 using NoMoreBets.Features.Fotmob.GetFotmobClubOverview.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobClubRollingForm;
@@ -31,6 +32,7 @@ using NoMoreBets.Features.MatchAnalysis.Model;
 using NoMoreBets.Features.MatchAnalysis.RunMatchAnalysis;
 using NoMoreBets.Features.Prediction.PredictMatch;
 using NoMoreBets.Infrastructure.Database;
+using Match = NoMoreBets.Domain.Entity.Match;
 
 namespace NoMoreBets.Controllers;
 
@@ -62,6 +64,18 @@ public class RotowireController(IMediator mediator) : ControllerBase
 [Route("api/[controller]")]
 public class BetclicController(IMediator mediator) : ControllerBase
 {
+
+  /// <summary>
+  /// Refreshes Betclic games: fetches upcoming games from Betclic and adds any match that does not yet exist (same teams, same day) to the database.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of matches that were added.</returns>
+  [HttpPost("betclic/refresh-games")]
+  public async Task<ActionResult<IReadOnlyList<Match>>> RefreshBetclicGames(CancellationToken cancellationToken)
+  {
+    var added = await mediator.Send(new RefreshBetclicGamesCommand(), cancellationToken);
+    return Ok(added);
+  }
 
   /// <summary>
   /// Gets upcoming Premier League games from Betclic.

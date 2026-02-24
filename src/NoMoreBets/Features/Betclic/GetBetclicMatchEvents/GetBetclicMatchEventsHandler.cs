@@ -7,9 +7,9 @@ namespace NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
 /// <summary>
 /// Query to fetch bookmaker events (markets) for a specific match from Betclic.
 /// </summary>
-/// <param name="GameUrl">URL to the match page.</param>
+/// <param name="BetclicGameUrl">URL to the match page.</param>
 /// <param name="Expand">If true, clicks consent/modal and "see more" before parsing.</param>
-public record GetBetclicMatchEventsQuery(string GameUrl, bool Expand = false) : IRequest<IReadOnlyList<BookmakerEvent>>;
+public record GetBetclicMatchEventsQuery(string BetclicGameUrl, bool Expand = false) : IRequest<IReadOnlyList<BookmakerEvent>>;
 
 /// <summary>
 /// Handles <see cref="GetBetclicMatchEventsQuery"/> by delegating to <see cref="BetclicScraper"/>.
@@ -19,6 +19,6 @@ public class GetBetclicMatchEventsHandler(BetclicScraper scraper) : IRequestHand
     /// <inheritdoc />
     public async Task<IReadOnlyList<BookmakerEvent>> Handle(GetBetclicMatchEventsQuery request, CancellationToken cancellationToken)
     {
-        return await scraper.GetMatchEventsAsync(request.GameUrl, request.Expand, cancellationToken).ConfigureAwait(false);
+        return await scraper.GetMatchEventsAsync(request.BetclicGameUrl, request.Expand, cancellationToken).ConfigureAwait(false);
     }
 }
