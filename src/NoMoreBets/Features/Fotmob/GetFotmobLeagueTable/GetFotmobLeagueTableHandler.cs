@@ -5,6 +5,11 @@ using NoMoreBets.Features.Fotmob.Scraping;
 namespace NoMoreBets.Features.Fotmob.GetFotmobLeagueTable;
 
 /// <summary>
+/// Query to fetch the league table from FotMob, optionally filtered by home/away/form.
+/// </summary>
+public record GetFotmobLeagueTableQuery(TableFilter Filter = TableFilter.All) : IRequest<IReadOnlyList<ClubDto>>;
+
+/// <summary>
 /// Handles <see cref="GetFotmobLeagueTableQuery"/> by delegating to <see cref="FotmobScraper"/>.
 /// </summary>
 public class GetFotmobLeagueTableHandler(FotmobScraper scraper) : IRequestHandler<GetFotmobLeagueTableQuery, IReadOnlyList<ClubDto>>

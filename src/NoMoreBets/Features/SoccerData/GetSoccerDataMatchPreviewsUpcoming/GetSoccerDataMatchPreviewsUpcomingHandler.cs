@@ -8,6 +8,9 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
 
+/// <summary>Query to fetch upcoming match previews (from API and persisted to DB). Returns empty list if none.</summary>
+public record GetSoccerDataMatchPreviewsUpcomingQuery(int? LeagueId = null) : IRequest<IReadOnlyList<LeagueMatchPreviews>>;
+
 public class GetSoccerDataMatchPreviewsUpcomingHandler(SoccerDataClient client, AppDbContext db, IMatchMatcher matchMatcher, ILogger<GetSoccerDataMatchPreviewsUpcomingHandler> logger) : IRequestHandler<GetSoccerDataMatchPreviewsUpcomingQuery, IReadOnlyList<LeagueMatchPreviews>>
 {
   public async Task<IReadOnlyList<LeagueMatchPreviews>> Handle(GetSoccerDataMatchPreviewsUpcomingQuery request, CancellationToken cancellationToken)

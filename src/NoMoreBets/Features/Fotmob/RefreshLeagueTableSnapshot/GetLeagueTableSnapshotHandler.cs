@@ -5,6 +5,10 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
 
+/// <summary>Query to get a league table snapshot by season and optional date (latest if null). When SeasonId is null, uses latest season (max id) for the league.</summary>
+public record GetLeagueTableSnapshotQuery(int LeagueId, int? SeasonId = null, DateOnly? SnapshotDate = null)
+  : IRequest<LeagueTableSnapshotDto?>;
+
 /// <summary>
 /// Handles <see cref="GetLeagueTableSnapshotQuery"/> by loading the snapshot (and rows with club names) by season and optional date.
 /// </summary>

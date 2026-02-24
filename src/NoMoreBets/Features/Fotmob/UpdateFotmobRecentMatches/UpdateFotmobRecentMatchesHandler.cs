@@ -10,6 +10,9 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.Fotmob.UpdateFotmobRecentMatches;
 
+/// <summary>Command to refresh Fotmob match details from a club's recent games: fetch overview, scrape details for new URLs, fuzzy-match to Match, and insert MatchDetails.</summary>
+public record UpdateFotmobRecentMatchesCommand(int TeamId) : IRequest<Unit>;
+
 /// <summary>
 /// Handles <see cref="UpdateFotmobRecentMatchesCommand"/> by fetching club overview, scraping details for new match URLs,
 /// fuzzy-matching to domain Match by date and club names, and inserting MatchDetails.

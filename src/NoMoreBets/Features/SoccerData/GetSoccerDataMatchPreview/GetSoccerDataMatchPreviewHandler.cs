@@ -5,6 +5,9 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
 
+/// <summary>Query to fetch a single match preview from the database (cached). Returns null if not found.</summary>
+public record GetSoccerDataMatchPreviewQuery(int MatchId) : IRequest<MatchPreview?>;
+
 public class GetSoccerDataMatchPreviewHandler(AppDbContext db) : IRequestHandler<GetSoccerDataMatchPreviewQuery, MatchPreview?>
 {
   public async Task<MatchPreview?> Handle(GetSoccerDataMatchPreviewQuery request, CancellationToken cancellationToken)

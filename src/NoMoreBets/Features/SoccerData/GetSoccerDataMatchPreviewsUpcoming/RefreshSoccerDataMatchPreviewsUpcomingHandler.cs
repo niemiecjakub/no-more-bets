@@ -1,10 +1,15 @@
 using System.Globalization;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Domain.Entity;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
 using NoMoreBets.Infrastructure.Database;
 using DomainMatch = NoMoreBets.Domain.Entity.Match;
+
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
+
+/// <summary>Command to refresh upcoming match previews from SoccerData API, sync Match table, and update cache.</summary>
+public record RefreshSoccerDataMatchPreviewsUpcomingCommand(int? SoccerdataLeagueId = null) : IRequest<List<Match>>;
 
 public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
   SoccerDataClient client,

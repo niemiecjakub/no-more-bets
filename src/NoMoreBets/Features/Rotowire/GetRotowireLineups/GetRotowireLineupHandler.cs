@@ -5,6 +5,9 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.Rotowire.GetRotowireLineups;
 
+/// <summary>Query to fetch a single lineup from the database by SoccerData match id. Returns null if not found.</summary>
+public record GetRotowireLineupQuery(int SoccerDataMatchId) : IRequest<GameLineup?>;
+
 public class GetRotowireLineupHandler(AppDbContext db) : IRequestHandler<GetRotowireLineupQuery, GameLineup?>
 {
   public async Task<GameLineup?> Handle(GetRotowireLineupQuery request, CancellationToken cancellationToken)

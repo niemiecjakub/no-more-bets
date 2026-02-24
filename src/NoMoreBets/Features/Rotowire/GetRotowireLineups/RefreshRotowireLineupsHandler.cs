@@ -8,6 +8,9 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.Rotowire.GetRotowireLineups;
 
+/// <summary>Command to refresh Rotowire lineups (scrape and persist to database).</summary>
+public record RefreshRotowireLineupsCommand : IRequest<Unit>;
+
 /// <summary>
 /// Handles <see cref="RefreshRotowireLineupsCommand"/> by scraping RotoWire and upserting lineups into the database.
 /// </summary>

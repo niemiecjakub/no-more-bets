@@ -1,5 +1,15 @@
+using MediatR;
+using NoMoreBets.Features.MatchAnalysis.Model;
+
+namespace NoMoreBets.Features.MatchAnalysis.RunMatchAnalysis;
+
+/// <summary>
+/// Query to run full match analysis for upcoming games (Betclic) with data from Rotowire, SoccerData, FotMob.
+/// </summary>
+/// <param name="LeagueId">Optional league ID for SoccerData upcoming previews; if null, uses options default.</param>
+public record RunMatchAnalysisQuery(int? LeagueId = null) : IRequest<IReadOnlyList<Model.MatchAnalysis>>;
+
 //using System.Globalization;
-//using MediatR;
 //using Microsoft.Extensions.Options;
 //using NoMoreBets.Domain.Enums;
 //using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
@@ -11,7 +21,6 @@
 //using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 //using NoMoreBets.Features.Fotmob.Model;
 //using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
-//using NoMoreBets.Features.MatchAnalysis.Model;
 //using NoMoreBets.Features.MatchAnalysis.Options;
 //using NoMoreBets.Features.MatchAnalysis.Persistence;
 //using NoMoreBets.Features.Rotowire.GetRotowireLineups;
@@ -20,8 +29,6 @@
 //using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
 //using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
 //using NoMoreBets.Features.SoccerData.Model;
-
-//namespace NoMoreBets.Features.MatchAnalysis.RunMatchAnalysis;
 
 ///// <summary>
 ///// Orchestrates match data collection from Rotowire, SoccerData, Betclic, FotMob and builds MatchAnalysis per game.

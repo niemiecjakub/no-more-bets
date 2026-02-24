@@ -9,6 +9,11 @@ using NoMoreBets.Infrastructure.Database;
 namespace NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
 
 /// <summary>
+/// Query to fetch upcoming Premier League games from Betclic.
+/// </summary>
+public record GetBetclicUpcomingGamesQuery : IRequest<IReadOnlyList<UpcomingGameDto>>;
+
+/// <summary>
 /// Handles <see cref="GetBetclicUpcomingGamesQuery"/> by delegating to <see cref="BetclicScraper"/> and resolving clubs from DB.
 /// </summary>
 public class GetBetclicUpcomingGamesHandler(

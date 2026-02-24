@@ -5,6 +5,9 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
 
+/// <summary>Query to fetch head-to-head data between two teams from the database (cached). Returns null if not found.</summary>
+public record GetSoccerDataHeadToHeadQuery(int Team1Id, int Team2Id) : IRequest<HeadToHead?>;
+
 public class GetSoccerDataHeadToHeadHandler(AppDbContext db) : IRequestHandler<GetSoccerDataHeadToHeadQuery, HeadToHead?>
 {
   public async Task<HeadToHead?> Handle(GetSoccerDataHeadToHeadQuery request, CancellationToken cancellationToken)
