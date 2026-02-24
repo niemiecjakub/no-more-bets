@@ -10,9 +10,9 @@ using NoMoreBets.Infrastructure.Scraping;
 namespace NoMoreBets.Features.Fotmob.Scraping;
 
 /// <summary>
-/// FotMob scraper for fetching Premier League (or configured league) table and xG statistics.
+/// FotMob scraper for fetching Premier League table and xG statistics.
 /// </summary>
-public class FotmobScraper : BaseScraper, IFotmobScraper
+public class FotmobScraper : BaseScraper
 {
   private const string BaseUrl = "https://www.fotmob.com";
 
@@ -27,22 +27,18 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
       new InteractionStep("button.fc-cta-consent", InteractionAction.Click, 600)
   ];
 
-  private readonly FotmobScraperOptions _options;
   private readonly ILogger<FotmobScraper> _logger;
 
   public FotmobScraper(
-      IPageFetcher fetcher,
-      IInteractivePageFetcher interactiveFetcher,
+      PlaywrightPageFetcher pageFetcher,
       IOptions<BaseScraperOptions> baseOptions,
-      IOptions<FotmobScraperOptions> fotmobOptions,
       ILogger<FotmobScraper> logger)
-      : base(fetcher, interactiveFetcher, baseOptions, logger)
+      : base(pageFetcher, baseOptions, logger)
   {
-    _options = fotmobOptions.Value;
     _logger = logger;
   }
 
-  /// <inheritdoc />
+  /// <summary>Gets the league table (standings) for the configured league, optionally filtered by home/away/form.</summary>
   public async Task<IReadOnlyList<Club>> GetLeagueTableAsync(TableFilter filter, CancellationToken cancellationToken = default)
   {
     var url = BuildTableUrl(filter);
@@ -538,7 +534,7 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
 
   private string BuildTableUrl(TableFilter filter)
   {
-    var path = $"{BaseUrl}/leagues/{_options.LeagueId}/table/{_options.LeagueSlug}";
+    var path = $"{BaseUrl}/leagues/{FotmobConstants.LeagueId}/table/{FotmobConstants.LeagueSlug}";
     return filter switch
     {
       TableFilter.Home => path + "?filter=home",
@@ -550,7 +546,7 @@ public class FotmobScraper : BaseScraper, IFotmobScraper
 
   private string BuildXgUrl()
   {
-    var path = $"{BaseUrl}/leagues/{_options.LeagueId}/table/{_options.LeagueSlug}";
+    var path = $"{BaseUrl}/leagues/{FotmobConstants.LeagueId}/table/{FotmobConstants.LeagueSlug}";
     return path + "?filter=xg";
   }
 

@@ -2,7 +2,7 @@ namespace NoMoreBets.Infrastructure.Fetching;
 
 /// <summary>
 /// Describes a single interaction to perform on a page (e.g. click) before capturing HTML.
-/// Used by <see cref="IInteractivePageFetcher"/>; selectors are supplied by the caller.
+/// Used by <see cref="PlaywrightPageFetcher"/> for interactive fetch; selectors are supplied by the caller.
 /// </summary>
 /// <param name="Selector">CSS selector for the element to interact with.</param>
 /// <param name="Action">Action to perform (e.g. Click).</param>

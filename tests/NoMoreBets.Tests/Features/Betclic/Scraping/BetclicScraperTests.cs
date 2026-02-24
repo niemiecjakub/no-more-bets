@@ -16,13 +16,11 @@ public class BetclicScraperTests
   private const string PremierLeagueUrl = "https://www.betclic.pl/football-sfootball/premier-league-c3";
 
   private static BetclicScraper CreateScraper(
-      IPageFetcher? fetcher = null,
-      IInteractivePageFetcher? interactiveFetcher = null,
+      PlaywrightPageFetcher? pageFetcher = null,
       BaseScraperOptions? baseOptions = null,
       BetclicScraperOptions? betclicOptions = null)
   {
-    fetcher ??= new Mock<IPageFetcher>().Object;
-    interactiveFetcher ??= new Mock<IInteractivePageFetcher>().Object;
+    pageFetcher ??= new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance).Object;
     var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
     {
       DelaySeconds = 0,
@@ -39,7 +37,7 @@ public class BetclicScraperTests
       MatchEventsRetryDelayMaxSeconds = 0
     });
     var logger = NullLogger<BetclicScraper>.Instance;
-    return new BetclicScraper(fetcher, interactiveFetcher, baseOpts, betclicOpts, logger);
+    return new BetclicScraper(pageFetcher, baseOpts, betclicOpts, logger);
   }
 
   private static string MinimalUpcomingGamesHtml()
@@ -103,10 +101,9 @@ public class BetclicScraperTests
   {
     // Arrange
     var html = MinimalUpcomingGamesHtml();
-    var fetcherMock = new Mock<IPageFetcher>();
-    fetcherMock.Setup(f => f.GetHtmlAsync(PremierLeagueUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html);
-    var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
-    var sut = CreateScraper(fetcherMock.Object, interactiveFetcherMock.Object);
+    var pageFetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+    pageFetcherMock.Setup(f => f.GetHtmlAsync(PremierLeagueUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html);
+    var sut = CreateScraper(pageFetcherMock.Object);
 
     // Act
     var result = await sut.GetUpcomingGamesAsync();
@@ -116,7 +113,7 @@ public class BetclicScraperTests
     result[0].HomeTeam.Should().Be("Arsenal");
     result[0].AwayTeam.Should().Be("Chelsea");
     result[0].Url.Should().NotBeNullOrEmpty();
-    fetcherMock.Verify(f => f.GetHtmlAsync(PremierLeagueUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
+    pageFetcherMock.Verify(f => f.GetHtmlAsync(PremierLeagueUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
@@ -143,10 +140,9 @@ public class BetclicScraperTests
     var html = FixtureHelper.LoadFixtureText("betclic/match_page.html");
     html.Should().NotBeNull("fixture file must exist");
     var gameUrl = "https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/bournemouth-liverpool-m905675307745280";
-    var fetcherMock = new Mock<IPageFetcher>();
-    fetcherMock.Setup(f => f.GetHtmlAsync(gameUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html!);
-    var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
-    var sut = CreateScraper(fetcherMock.Object, interactiveFetcherMock.Object);
+    var pageFetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+    pageFetcherMock.Setup(f => f.GetHtmlAsync(gameUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html!);
+    var sut = CreateScraper(pageFetcherMock.Object);
 
     // Act
     var result = await sut.GetMatchEventsAsync(gameUrl, expand: false);
@@ -155,7 +151,7 @@ public class BetclicScraperTests
     result.Should().NotBeEmpty();
     result.Should().OnlyContain(e => e is BookmakerEvent);
     result.Should().Contain(e => !string.IsNullOrEmpty(e.Title) && e.Options.Count > 0);
-    fetcherMock.Verify(f => f.GetHtmlAsync(gameUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
+    pageFetcherMock.Verify(f => f.GetHtmlAsync(gameUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()), Times.Once);
   }
 
   [Fact]
@@ -165,20 +161,19 @@ public class BetclicScraperTests
     var html = FixtureHelper.LoadFixtureText("betclic/match_page.html");
     html.Should().NotBeNull("fixture file must exist");
     var gameUrl = "https://www.betclic.pl/some-match";
-    var fetcherMock = new Mock<IPageFetcher>();
-    var interactiveFetcherMock = new Mock<IInteractivePageFetcher>();
-    interactiveFetcherMock
+    var pageFetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+    pageFetcherMock
         .Setup(f => f.GetHtmlAfterInteractionsAsync(
             gameUrl, It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
         .ReturnsAsync(html!);
-    var sut = CreateScraper(fetcherMock.Object, interactiveFetcherMock.Object);
+    var sut = CreateScraper(pageFetcherMock.Object);
 
     // Act
     var result = await sut.GetMatchEventsAsync(gameUrl, expand: true);
 
     // Assert
     result.Should().NotBeEmpty();
-    interactiveFetcherMock.Verify(
+    pageFetcherMock.Verify(
         f => f.GetHtmlAfterInteractionsAsync(
             gameUrl, It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()),
         Times.Once);

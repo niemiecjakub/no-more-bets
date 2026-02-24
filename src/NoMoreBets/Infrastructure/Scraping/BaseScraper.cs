@@ -12,8 +12,7 @@ namespace NoMoreBets.Infrastructure.Scraping;
 /// </summary>
 public abstract class BaseScraper
 {
-  private readonly IPageFetcher _fetcher;
-  private readonly IInteractivePageFetcher _interactiveFetcher;
+  private readonly PlaywrightPageFetcher _pageFetcher;
   private readonly BaseScraperOptions _options;
   private readonly ILogger _logger;
   private readonly ResiliencePipeline<string> _fetchPipeline;
@@ -22,13 +21,11 @@ public abstract class BaseScraper
   private DateTimeOffset? _lastFetchTime;
 
   protected BaseScraper(
-      IPageFetcher fetcher,
-      IInteractivePageFetcher interactiveFetcher,
+      PlaywrightPageFetcher pageFetcher,
       IOptions<BaseScraperOptions> options,
       ILogger logger)
   {
-    _fetcher = fetcher;
-    _interactiveFetcher = interactiveFetcher;
+    _pageFetcher = pageFetcher;
     _options = options.Value;
     _logger = logger;
     _fetchPipeline = CreateFetchPipeline(_options, _logger, _currentFetchUrl);
@@ -53,7 +50,7 @@ public abstract class BaseScraper
         return await _fetchPipeline.ExecuteAsync(async ct =>
         {
           await RateLimitAsync(ct).ConfigureAwait(false);
-          var content = await _fetcher.GetHtmlAsync(url, timeout, ct).ConfigureAwait(false);
+          var content = await _pageFetcher.GetHtmlAsync(url, timeout, ct).ConfigureAwait(false);
           _lastFetchTime = DateTimeOffset.UtcNow;
           return content;
         }, cancellationToken).ConfigureAwait(false);
@@ -89,7 +86,7 @@ public abstract class BaseScraper
       TimeSpan? timeout = null,
       CancellationToken cancellationToken = default)
   {
-    return await _interactiveFetcher.GetHtmlAfterInteractionsAsync(url, steps, timeout, cancellationToken).ConfigureAwait(false);
+    return await _pageFetcher.GetHtmlAfterInteractionsAsync(url, steps, timeout, cancellationToken).ConfigureAwait(false);
   }
 
   private static ResiliencePipeline<string> CreateFetchPipeline(

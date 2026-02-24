@@ -16,11 +16,10 @@ public class BaseScraperTests
     private sealed class TestableScraper : BaseScraper
     {
         public TestableScraper(
-            IPageFetcher fetcher,
-            IInteractivePageFetcher interactiveFetcher,
+            PlaywrightPageFetcher pageFetcher,
             IOptions<BaseScraperOptions> options,
             ILogger logger)
-            : base(fetcher, interactiveFetcher, options, logger)
+            : base(pageFetcher, options, logger)
         {
         }
 
@@ -37,14 +36,12 @@ public class BaseScraperTests
     };
 
     private static TestableScraper CreateSut(
-        IPageFetcher fetcher,
-        BaseScraperOptions? options = null,
-        IInteractivePageFetcher? interactiveFetcher = null)
+        PlaywrightPageFetcher pageFetcher,
+        BaseScraperOptions? options = null)
     {
         var opts = Options.Create(options ?? DefaultOptions());
         var logger = NullLogger<TestableScraper>.Instance;
-        var interactive = interactiveFetcher ?? new Mock<IInteractivePageFetcher>().Object;
-        return new TestableScraper(fetcher, interactive, opts, logger);
+        return new TestableScraper(pageFetcher, opts, logger);
     }
 
     [Fact]
@@ -52,9 +49,9 @@ public class BaseScraperTests
     {
         var url = "https://example.com";
         var fetchedHtml = "<html><body>Fetched</body></html>";
-        var fetcherMock = new Mock<IPageFetcher>();
+        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(fetchedHtml);
-        var sut = CreateSut(fetcherMock.Object);
+        var sut = CreateSut(pageFetcher: fetcherMock.Object);
 
         var result = await sut.FetchAsync(url);
 
@@ -66,10 +63,10 @@ public class BaseScraperTests
     public async Task GetPageHtmlAsync_WhenFetcherThrowsPermanentScraperException_DoesNotRetry()
     {
         var url = "https://example.com/404";
-        var fetcherMock = new Mock<IPageFetcher>();
+        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .Returns(() => Task.FromException<string>(new PermanentScraperException("Permanent failure (404)", 404)));
-        var sut = CreateSut(fetcherMock.Object);
+        var sut = CreateSut(pageFetcher: fetcherMock.Object);
 
         var act = () => sut.FetchAsync(url);
 
@@ -83,7 +80,7 @@ public class BaseScraperTests
         var url = "https://example.com";
         var fetchedHtml = "<html>OK</html>";
         var callCount = 0;
-        var fetcherMock = new Mock<IPageFetcher>();
+        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
         fetcherMock.Setup(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .Returns(() =>
             {
@@ -92,7 +89,7 @@ public class BaseScraperTests
                 return Task.FromResult(fetchedHtml);
             });
         var opts = DefaultOptions() with { RetryCount = 2, RetryDelaySeconds = 0.01 };
-        var sut = CreateSut(fetcherMock.Object, opts);
+        var sut = CreateSut(pageFetcher: fetcherMock.Object, opts);
 
         var result = await sut.FetchAsync(url);
 
@@ -104,11 +101,11 @@ public class BaseScraperTests
     public async Task GetPageHtmlAsync_WhenAllRetriesFail_ThrowsWithMessage()
     {
         var url = "https://example.com";
-        var fetcherMock = new Mock<IPageFetcher>();
+        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .Returns(() => Task.FromException<string>(new InvalidOperationException("Transient failure")));
         var opts = DefaultOptions() with { RetryCount = 2, RetryDelaySeconds = 0.01 };
-        var sut = CreateSut(fetcherMock.Object, opts);
+        var sut = CreateSut(pageFetcher: fetcherMock.Object, opts);
 
         var act = () => sut.FetchAsync(url);
 
@@ -122,11 +119,11 @@ public class BaseScraperTests
     {
         var url = "https://example.com";
         var callCount = 0;
-        var fetcherMock = new Mock<IPageFetcher>();
+        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .Returns(() => Task.FromResult(Interlocked.Increment(ref callCount) == 1 ? "<html>1</html>" : "<html>2</html>"));
         var opts = DefaultOptions() with { DelaySeconds = 0.1, RetryDelaySeconds = 0 };
-        var sut = CreateSut(fetcherMock.Object, opts);
+        var sut = CreateSut(pageFetcher: fetcherMock.Object, opts);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var t1 = sut.FetchAsync(url);

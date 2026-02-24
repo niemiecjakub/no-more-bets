@@ -15,7 +15,7 @@ namespace NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
 /// merging by team name, and upserting into <see cref="LeagueTableSnapshot"/>.
 /// </summary>
 public class RefreshFotmobLeagueTableSnapshotHandler(
-  IFotmobScraper scraper,
+  FotmobScraper scraper,
   AppDbContext db,
   IMatchMatcher matchMatcher,
   ILogger<RefreshFotmobLeagueTableSnapshotHandler> logger) : IRequestHandler<RefreshFotmobLeagueTableSnapshotCommand, Unit>

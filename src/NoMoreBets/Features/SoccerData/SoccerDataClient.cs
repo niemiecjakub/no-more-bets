@@ -16,7 +16,7 @@ public class SoccerDataOptions
 /// <summary>
 /// HTTP client for SoccerData API.
 /// </summary>
-public class SoccerDataClient : ISoccerDataClient
+public class SoccerDataClient
 {
   private const string BaseUrl = "https://api.soccerdataapi.com";
 

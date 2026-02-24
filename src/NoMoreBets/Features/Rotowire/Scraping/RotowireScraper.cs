@@ -13,7 +13,7 @@ namespace NoMoreBets.Features.Rotowire.Scraping;
 /// <summary>
 /// RotoWire scraper for fetching and parsing soccer lineup data from rotowire.com.
 /// </summary>
-public class RotowireScraper : BaseScraper, IRotowireScraper
+public class RotowireScraper : BaseScraper
 {
   private const string BaseUrl = "https://www.rotowire.com";
   private const string LineupsUrl = BaseUrl + "/soccer/lineups.php";
@@ -24,16 +24,15 @@ public class RotowireScraper : BaseScraper, IRotowireScraper
   private readonly ILogger<RotowireScraper> _logger;
 
   public RotowireScraper(
-      IPageFetcher fetcher,
-      IInteractivePageFetcher interactiveFetcher,
+      PlaywrightPageFetcher pageFetcher,
       IOptions<BaseScraperOptions> options,
       ILogger<RotowireScraper> logger)
-      : base(fetcher, interactiveFetcher, options, logger)
+      : base(pageFetcher, options, logger)
   {
     _logger = logger;
   }
 
-  /// <inheritdoc />
+  /// <summary>Gets soccer lineups (games with team lineups, injuries) for all leagues.</summary>
   public async Task<IReadOnlyList<GameLineup>> GetSoccerLineupsAsync(CancellationToken cancellationToken = default)
   {
     var html = await GetPageHtmlAsync(LineupsUrl, cancellationToken).ConfigureAwait(false);

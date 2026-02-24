@@ -6,9 +6,9 @@ namespace NoMoreBets.Infrastructure.Fetching;
 /// <summary>
 /// Fetches page HTML using Playwright with WaitUntilState.Load (avoids timeout on sites that never reach networkidle).
 /// Throws <see cref="PermanentScraperException"/> for HTTP 403, 404, 410.
-/// Also implements <see cref="IInteractivePageFetcher"/> for pages requiring clicks before capture.
+/// Supports both simple fetch and interactive fetch (clicks before capture) for consent/modals.
 /// </summary>
-public class PlaywrightPageFetcher : IPageFetcher, IInteractivePageFetcher
+public class PlaywrightPageFetcher
 {
   private readonly ILogger<PlaywrightPageFetcher> _logger;
 
@@ -17,8 +17,8 @@ public class PlaywrightPageFetcher : IPageFetcher, IInteractivePageFetcher
     _logger = logger;
   }
 
-  /// <inheritdoc />
-  public async Task<string> GetHtmlAsync(
+  /// <summary>Navigates to the URL, waits for page load, and returns the HTML content.</summary>
+  public virtual async Task<string> GetHtmlAsync(
       string url,
       TimeSpan? timeout = null,
       CancellationToken cancellationToken = default)
@@ -83,8 +83,8 @@ public class PlaywrightPageFetcher : IPageFetcher, IInteractivePageFetcher
     }
   }
 
-  /// <inheritdoc />
-  public async Task<string> GetHtmlAfterInteractionsAsync(
+  /// <summary>Navigates to the URL, runs interaction steps, then returns the HTML content.</summary>
+  public virtual async Task<string> GetHtmlAfterInteractionsAsync(
       string url,
       IReadOnlyList<InteractionStep> steps,
       TimeSpan? timeout = null,

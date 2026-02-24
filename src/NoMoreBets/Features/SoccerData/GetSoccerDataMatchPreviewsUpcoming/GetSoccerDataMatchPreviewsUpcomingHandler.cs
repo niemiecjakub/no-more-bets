@@ -8,7 +8,7 @@ using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
 
-public class GetSoccerDataMatchPreviewsUpcomingHandler(ISoccerDataClient client, AppDbContext db, IMatchMatcher matchMatcher, ILogger<GetSoccerDataMatchPreviewsUpcomingHandler> logger) : IRequestHandler<GetSoccerDataMatchPreviewsUpcomingQuery, IReadOnlyList<LeagueMatchPreviews>>
+public class GetSoccerDataMatchPreviewsUpcomingHandler(SoccerDataClient client, AppDbContext db, IMatchMatcher matchMatcher, ILogger<GetSoccerDataMatchPreviewsUpcomingHandler> logger) : IRequestHandler<GetSoccerDataMatchPreviewsUpcomingQuery, IReadOnlyList<LeagueMatchPreviews>>
 {
   public async Task<IReadOnlyList<LeagueMatchPreviews>> Handle(GetSoccerDataMatchPreviewsUpcomingQuery request, CancellationToken cancellationToken)
   {

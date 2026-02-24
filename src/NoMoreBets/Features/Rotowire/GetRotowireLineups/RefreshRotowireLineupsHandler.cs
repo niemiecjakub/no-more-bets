@@ -12,7 +12,7 @@ namespace NoMoreBets.Features.Rotowire.GetRotowireLineups;
 /// Handles <see cref="RefreshRotowireLineupsCommand"/> by scraping RotoWire and upserting lineups into the database.
 /// </summary>
 public class RefreshRotowireLineupsHandler(
-  IRotowireScraper scraper,
+  RotowireScraper scraper,
   AppDbContext db,
   IMatchMatcher matchMatcher) : IRequestHandler<RefreshRotowireLineupsCommand, Unit>
 {

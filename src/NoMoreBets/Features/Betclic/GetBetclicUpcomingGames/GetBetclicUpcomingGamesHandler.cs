@@ -9,10 +9,10 @@ using NoMoreBets.Infrastructure.Database;
 namespace NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
 
 /// <summary>
-/// Handles <see cref="GetBetclicUpcomingGamesQuery"/> by delegating to <see cref="IBetclicScraper"/> and resolving clubs from DB.
+/// Handles <see cref="GetBetclicUpcomingGamesQuery"/> by delegating to <see cref="BetclicScraper"/> and resolving clubs from DB.
 /// </summary>
 public class GetBetclicUpcomingGamesHandler(
-  IBetclicScraper scraper,
+  BetclicScraper scraper,
   AppDbContext db,
   IMatchMatcher matchMatcher) : IRequestHandler<GetBetclicUpcomingGamesQuery, IReadOnlyList<UpcomingGameDto>>
 {

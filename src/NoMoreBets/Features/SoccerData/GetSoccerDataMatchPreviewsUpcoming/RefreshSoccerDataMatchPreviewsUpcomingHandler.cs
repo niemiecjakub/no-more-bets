@@ -7,7 +7,7 @@ using DomainMatch = NoMoreBets.Domain.Entity.Match;
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
 
 public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
-  ISoccerDataClient client,
+  SoccerDataClient client,
   AppDbContext db,
   IMatchMatcher matchMatcher,
   ILogger<RefreshSoccerDataMatchPreviewsUpcomingHandler> logger)

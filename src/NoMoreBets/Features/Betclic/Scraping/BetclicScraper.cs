@@ -12,7 +12,7 @@ namespace NoMoreBets.Features.Betclic.Scraping;
 /// <summary>
 /// Betclic scraper for fetching Premier League upcoming games and match bookmaker events from betclic.pl.
 /// </summary>
-public class BetclicScraper : BaseScraper, IBetclicScraper
+public class BetclicScraper : BaseScraper
 {
   private const string BaseUrl = "https://www.betclic.pl";
   private const string PremierLeagueUrl = BaseUrl + "/football-sfootball/premier-league-c3";
@@ -28,18 +28,17 @@ public class BetclicScraper : BaseScraper, IBetclicScraper
   ];
 
   public BetclicScraper(
-      IPageFetcher fetcher,
-      IInteractivePageFetcher interactiveFetcher,
+      PlaywrightPageFetcher pageFetcher,
       IOptions<BaseScraperOptions> options,
       IOptions<BetclicScraperOptions> betclicOptions,
       ILogger<BetclicScraper> logger)
-      : base(fetcher, interactiveFetcher, options, logger)
+      : base(pageFetcher, options, logger)
   {
     _betclicOptions = betclicOptions.Value;
     _logger = logger;
   }
 
-  /// <inheritdoc />
+  /// <summary>Gets upcoming games from the Betclic Premier League page.</summary>
   public async Task<IReadOnlyList<UpcomingGame>> GetUpcomingGamesAsync(CancellationToken cancellationToken = default)
   {
     var games = new List<UpcomingGame>();

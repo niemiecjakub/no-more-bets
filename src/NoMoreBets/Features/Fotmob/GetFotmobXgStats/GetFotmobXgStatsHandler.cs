@@ -5,9 +5,9 @@ using NoMoreBets.Features.Fotmob.Scraping;
 namespace NoMoreBets.Features.Fotmob.GetFotmobXgStats;
 
 /// <summary>
-/// Handles <see cref="GetFotmobXgStatsQuery"/> by delegating to <see cref="IFotmobScraper"/>.
+/// Handles <see cref="GetFotmobXgStatsQuery"/> by delegating to <see cref="FotmobScraper"/>.
 /// </summary>
-public class GetFotmobXgStatsHandler(IFotmobScraper scraper) : IRequestHandler<GetFotmobXgStatsQuery, IReadOnlyList<XgStatsDto>>
+public class GetFotmobXgStatsHandler(FotmobScraper scraper) : IRequestHandler<GetFotmobXgStatsQuery, IReadOnlyList<XgStatsDto>>
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<XgStatsDto>> Handle(GetFotmobXgStatsQuery request, CancellationToken cancellationToken)

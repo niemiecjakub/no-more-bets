@@ -7,7 +7,7 @@ using NoMoreBets.Infrastructure.Database;
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
 
 public class RefreshSoccerDataHeadToHeadHandler(
-  ISoccerDataClient client,
+  SoccerDataClient client,
   AppDbContext db) : IRequestHandler<RefreshSoccerDataHeadToHeadCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

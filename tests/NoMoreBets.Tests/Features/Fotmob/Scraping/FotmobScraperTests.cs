@@ -16,13 +16,10 @@ namespace NoMoreBets.Tests.Features.Fotmob.Scraping;
 public class FotmobScraperTests
 {
     private static FotmobScraper CreateScraper(
-        IPageFetcher? fetcher = null,
-        IInteractivePageFetcher? interactiveFetcher = null,
-        BaseScraperOptions? baseOptions = null,
-        FotmobScraperOptions? fotmobOptions = null)
+        PlaywrightPageFetcher? pageFetcher = null,
+        BaseScraperOptions? baseOptions = null)
     {
-        fetcher ??= new Mock<IPageFetcher>().Object;
-        interactiveFetcher ??= new Mock<IInteractivePageFetcher>().Object;
+        pageFetcher ??= new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance).Object;
         var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
         {
             DelaySeconds = 0,
@@ -30,13 +27,8 @@ public class FotmobScraperTests
             RetryDelaySeconds = 0.01,
             TimeoutSeconds = 15
         });
-        var fotmobOpts = Options.Create(fotmobOptions ?? new FotmobScraperOptions
-        {
-            LeagueId = 47,
-            LeagueSlug = "premier-league"
-        });
         var logger = NullLogger<FotmobScraper>.Instance;
-        return new FotmobScraper(fetcher, interactiveFetcher, baseOpts, fotmobOpts, logger);
+        return new FotmobScraper(pageFetcher, baseOpts, logger);
     }
 
     [Fact]
@@ -718,12 +710,12 @@ public class FotmobScraperTests
         var playerStatsHtml = FixtureHelper.LoadFixtureText("fotmob/player_stats.html");
         if (minimalHtml is null || playerStatsHtml is null)
             return; // Fixtures not available
-        var mockFetcher = new Mock<IInteractivePageFetcher>();
+        var mockFetcher = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
         mockFetcher
             .SetupSequence(x => x.GetHtmlAfterInteractionsAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(minimalHtml)
             .ReturnsAsync(playerStatsHtml);
-        var sut = CreateScraper(interactiveFetcher: mockFetcher.Object);
+        var sut = CreateScraper(mockFetcher.Object);
 
         // Act
         var result = await sut.GetMatchDetailsAsync("https://www.fotmob.com/pl/matches/some-match/1");

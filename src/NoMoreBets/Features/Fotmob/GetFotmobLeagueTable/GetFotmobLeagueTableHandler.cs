@@ -5,9 +5,9 @@ using NoMoreBets.Features.Fotmob.Scraping;
 namespace NoMoreBets.Features.Fotmob.GetFotmobLeagueTable;
 
 /// <summary>
-/// Handles <see cref="GetFotmobLeagueTableQuery"/> by delegating to <see cref="IFotmobScraper"/>.
+/// Handles <see cref="GetFotmobLeagueTableQuery"/> by delegating to <see cref="FotmobScraper"/>.
 /// </summary>
-public class GetFotmobLeagueTableHandler(IFotmobScraper scraper) : IRequestHandler<GetFotmobLeagueTableQuery, IReadOnlyList<ClubDto>>
+public class GetFotmobLeagueTableHandler(FotmobScraper scraper) : IRequestHandler<GetFotmobLeagueTableQuery, IReadOnlyList<ClubDto>>
 {
     /// <inheritdoc />
     public async Task<IReadOnlyList<ClubDto>> Handle(GetFotmobLeagueTableQuery request, CancellationToken cancellationToken)

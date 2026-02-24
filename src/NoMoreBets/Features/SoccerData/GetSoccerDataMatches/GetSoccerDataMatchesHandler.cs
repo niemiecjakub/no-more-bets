@@ -3,7 +3,7 @@ using NoMoreBets.Features.SoccerData.Model;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatches;
 
-public class GetSoccerDataMatchesHandler(ISoccerDataClient client) : IRequestHandler<GetSoccerDataMatchesQuery, IReadOnlyList<LeagueMatches>>
+public class GetSoccerDataMatchesHandler(SoccerDataClient client) : IRequestHandler<GetSoccerDataMatchesQuery, IReadOnlyList<LeagueMatches>>
 {
   public Task<IReadOnlyList<LeagueMatches>> Handle(GetSoccerDataMatchesQuery request, CancellationToken cancellationToken)
   {

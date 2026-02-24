@@ -7,7 +7,7 @@ using MatchPreviewEntity = NoMoreBets.Domain.Entity.MatchPreview;
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
 
 public class RefreshSoccerDataMatchPreviewHandler(
-  ISoccerDataClient client,
+  SoccerDataClient client,
   AppDbContext db) : IRequestHandler<RefreshSoccerDataMatchPreviewCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

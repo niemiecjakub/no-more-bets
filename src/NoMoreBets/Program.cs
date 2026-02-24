@@ -34,7 +34,6 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
 
 builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection("Scraper"));
 builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection("Scraper:Betclic"));
-builder.Services.Configure<FotmobScraperOptions>(builder.Configuration.GetSection("Scraper:Fotmob"));
 builder.Services.Configure<SoccerDataOptions>(builder.Configuration.GetSection("SoccerData"));
 builder.Services.Configure<MatchAnalysisOptions>(builder.Configuration.GetSection("MatchAnalysis"));
 builder.Services.Configure<OpenAiAgentOptions>(builder.Configuration.GetSection("OpenAI"));
@@ -46,12 +45,10 @@ builder.Services.AddSingleton<BookmakerPlugin>();
 builder.Services.AddSingleton<IPredictMatchAgentOrchestrator, PredictMatchAgentOrchestrator>();
 builder.Services.AddSingleton<PlaywrightPageFetcher>();
 builder.Services.AddScoped<Initialize>();
-builder.Services.AddSingleton<IPageFetcher>(sp => sp.GetRequiredService<PlaywrightPageFetcher>());
-builder.Services.AddSingleton<IInteractivePageFetcher>(sp => sp.GetRequiredService<PlaywrightPageFetcher>());
-builder.Services.AddSingleton<IRotowireScraper, RotowireScraper>();
-builder.Services.AddSingleton<IBetclicScraper, BetclicScraper>();
-builder.Services.AddSingleton<IFotmobScraper, FotmobScraper>();
-builder.Services.AddHttpClient<ISoccerDataClient, SoccerDataClient>()
+builder.Services.AddSingleton<RotowireScraper>();
+builder.Services.AddSingleton<BetclicScraper>();
+builder.Services.AddSingleton<FotmobScraper>();
+builder.Services.AddHttpClient<SoccerDataClient>()
   .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
   {
     AutomaticDecompression = DecompressionMethods.All
