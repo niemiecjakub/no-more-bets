@@ -1,13 +1,17 @@
+using System.Threading.RateLimiting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Infrastructure.Fetching;
 using Polly;
+using Polly.CircuitBreaker;
 using Polly.Retry;
+using Polly.RateLimiting;
+using Polly.Timeout;
 
 namespace NoMoreBets.Infrastructure.Scraping;
 
 /// <summary>
-/// Base scraper with rate limiting and retry with exponential backoff.
+/// Base scraper with Polly rate limiting, timeout, circuit breaker, and retry.
 /// Concrete scrapers inherit and use <see cref="GetPageHtmlAsync"/> then parse to DTOs.
 /// </summary>
 public abstract class BaseScraper
@@ -16,9 +20,9 @@ public abstract class BaseScraper
   private readonly BaseScraperOptions _options;
   private readonly ILogger _logger;
   private readonly ResiliencePipeline<string> _fetchPipeline;
+  private readonly ResiliencePipeline<string> _interactiveFetchPipeline;
   private readonly AsyncLocal<string?> _currentFetchUrl = new();
   private readonly SemaphoreSlim _fetchLock = new(1, 1);
-  private DateTimeOffset? _lastFetchTime;
 
   protected BaseScraper(
       PlaywrightPageFetcher pageFetcher,
@@ -29,10 +33,11 @@ public abstract class BaseScraper
     _options = options.Value;
     _logger = logger;
     _fetchPipeline = CreateFetchPipeline(_options, _logger, _currentFetchUrl);
+    _interactiveFetchPipeline = CreateInteractiveFetchPipeline(_options, _logger);
   }
 
   /// <summary>
-  /// Gets page HTML: rate-limited fetch with retry and backoff.
+  /// Gets page HTML: rate-limited fetch with timeout, circuit breaker, and retry.
   /// </summary>
   /// <param name="url">URL to fetch.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
@@ -49,9 +54,7 @@ public abstract class BaseScraper
       {
         return await _fetchPipeline.ExecuteAsync(async ct =>
         {
-          await RateLimitAsync(ct).ConfigureAwait(false);
           var content = await _pageFetcher.GetHtmlAsync(url, timeout, ct).ConfigureAwait(false);
-          _lastFetchTime = DateTimeOffset.UtcNow;
           return content;
         }, cancellationToken).ConfigureAwait(false);
       }
@@ -73,7 +76,7 @@ public abstract class BaseScraper
   }
 
   /// <summary>
-  /// Gets page HTML after interactions via interactive fetch.
+  /// Gets page HTML after interactions via interactive fetch (with retry for transient failures).
   /// </summary>
   /// <param name="url">URL to fetch.</param>
   /// <param name="steps">Ordered list of interactions (e.g. click by selector).</param>
@@ -86,7 +89,10 @@ public abstract class BaseScraper
       TimeSpan? timeout = null,
       CancellationToken cancellationToken = default)
   {
-    return await _pageFetcher.GetHtmlAfterInteractionsAsync(url, steps, timeout, cancellationToken).ConfigureAwait(false);
+    var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(_options.TimeoutSeconds);
+    return await _interactiveFetchPipeline.ExecuteAsync(async ct =>
+      await _pageFetcher.GetHtmlAfterInteractionsAsync(url, steps, effectiveTimeout, ct).ConfigureAwait(false),
+      cancellationToken).ConfigureAwait(false);
   }
 
   private static ResiliencePipeline<string> CreateFetchPipeline(
@@ -102,29 +108,91 @@ public abstract class BaseScraper
       UseJitter = true,
       Delay = TimeSpan.FromSeconds(options.RetryDelaySeconds),
       ShouldHandle = new PredicateBuilder<string>()
-            .Handle<Exception>(ex => ex is not PermanentScraperException),
+          .Handle<Exception>(ex => ex is not PermanentScraperException)
+          .Handle<RateLimiterRejectedException>(),
+      DelayGenerator = args =>
+      {
+        if (args.Outcome.Exception is RateLimiterRejectedException { RetryAfter: { } retryAfter })
+          return new ValueTask<TimeSpan?>(retryAfter);
+        return new ValueTask<TimeSpan?>((TimeSpan?)null); // use default exponential backoff
+      },
       OnRetry = args =>
       {
         var url = currentFetchUrl.Value ?? "unknown";
         logger.LogWarning(args.Outcome.Exception,
-                  "Fetch attempt {Attempt}/{RetryCount} failed for {Url}",
-                  args.AttemptNumber + 1, options.RetryCount, url);
+            "Fetch attempt {Attempt}/{RetryCount} failed for {Url}",
+            args.AttemptNumber + 1, options.RetryCount, url);
         return ValueTask.CompletedTask;
       }
     };
+
+    var circuitBreakerOptions = new CircuitBreakerStrategyOptions<string>
+    {
+      FailureRatio = options.CircuitBreakerFailureRatio,
+      MinimumThroughput = options.CircuitBreakerMinimumThroughput,
+      BreakDuration = TimeSpan.FromSeconds(options.CircuitBreakerBreakDurationSeconds),
+      ShouldHandle = new PredicateBuilder<string>()
+          .Handle<Exception>(ex => ex is not PermanentScraperException),
+      OnOpened = args =>
+      {
+        logger.LogWarning("Scraper circuit breaker opened for {Duration}s",
+            options.CircuitBreakerBreakDurationSeconds);
+        return ValueTask.CompletedTask;
+      },
+      OnClosed = _ => ValueTask.CompletedTask,
+      OnHalfOpened = _ => ValueTask.CompletedTask
+    };
+
+    var rateLimiter = new SlidingWindowRateLimiter(new SlidingWindowRateLimiterOptions
+    {
+      PermitLimit = 1,
+      Window = TimeSpan.FromSeconds(options.DelaySeconds),
+      SegmentsPerWindow = 1
+    });
+
+    var timeoutOptions = new TimeoutStrategyOptions
+    {
+      Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds + 5), // pipeline timeout slightly above fetch timeout
+      OnTimeout = args =>
+      {
+        logger.LogWarning("Fetch timed out for {Url}", currentFetchUrl.Value ?? "unknown");
+        return ValueTask.CompletedTask;
+      }
+    };
+
     return new ResiliencePipelineBuilder<string>()
         .AddRetry(retryOptions)
+        .AddCircuitBreaker(circuitBreakerOptions)
+        .AddRateLimiter(new RateLimiterStrategyOptions
+        {
+          RateLimiter = args => rateLimiter.AcquireAsync(1, args.Context.CancellationToken)
+        })
+        .AddTimeout(timeoutOptions)
         .Build();
   }
 
-  private async Task RateLimitAsync(CancellationToken cancellationToken)
+  private static ResiliencePipeline<string> CreateInteractiveFetchPipeline(
+      BaseScraperOptions options,
+      ILogger logger)
   {
-    if (_lastFetchTime is null)
-      return;
+    var retryOptions = new RetryStrategyOptions<string>
+    {
+      MaxRetryAttempts = 2,
+      BackoffType = DelayBackoffType.Exponential,
+      UseJitter = true,
+      Delay = TimeSpan.FromSeconds(1),
+      ShouldHandle = new PredicateBuilder<string>()
+          .Handle<Exception>(ex => ex is not PermanentScraperException),
+      OnRetry = args =>
+      {
+        logger.LogWarning(args.Outcome.Exception,
+            "Interactive fetch attempt {Attempt} failed", args.AttemptNumber + 1);
+        return ValueTask.CompletedTask;
+      }
+    };
 
-    var elapsed = DateTimeOffset.UtcNow - _lastFetchTime.Value;
-    var delaySeconds = _options.DelaySeconds - elapsed.TotalSeconds;
-    if (delaySeconds > 0)
-      await Task.Delay(TimeSpan.FromSeconds(delaySeconds), cancellationToken).ConfigureAwait(false);
+    return new ResiliencePipelineBuilder<string>()
+        .AddRetry(retryOptions)
+        .Build();
   }
 }

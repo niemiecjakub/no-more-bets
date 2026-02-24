@@ -1,4 +1,5 @@
 using System.Net;
+using Polly;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ using NoMoreBets.Features.Rotowire.Scraping;
 using NoMoreBets.Features.SoccerData;
 using NoMoreBets.Infrastructure.Database;
 using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Infrastructure.Http;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Features.Jobs;
 
@@ -48,7 +50,11 @@ builder.Services.AddScoped<Initialize>();
 builder.Services.AddSingleton<RotowireScraper>();
 builder.Services.AddSingleton<BetclicScraper>();
 builder.Services.AddSingleton<FotmobScraper>();
+builder.Services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>
+  ResilienceHttpHandler.CreatePipeline(sp.GetService<ILogger<ResilienceHttpHandler>>()));
+builder.Services.AddTransient<ResilienceHttpHandler>();
 builder.Services.AddHttpClient<SoccerDataClient>()
+  .AddHttpMessageHandler<ResilienceHttpHandler>()
   .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
   {
     AutomaticDecompression = DecompressionMethods.All
