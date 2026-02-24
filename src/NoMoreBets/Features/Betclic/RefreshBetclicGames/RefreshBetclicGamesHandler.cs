@@ -29,6 +29,7 @@ public class RefreshBetclicGamesHandler(
   {
     var upcomingGames = await scraper.GetUpcomingGamesAsync(cancellationToken).ConfigureAwait(false);
     var added = new List<Match>();
+    var hasUpdates = false;
 
     if (upcomingGames.Count == 0)
     {
@@ -59,17 +60,23 @@ public class RefreshBetclicGamesHandler(
       var existing = matchMatcher.FindBestMatch(game.HomeTeam, game.AwayTeam, candidates);
       if (existing is not null)
       {
+        if (string.IsNullOrEmpty(existing.BetclicUrl))
+        {
+          existing.BetclicUrl = game.Url;
+          hasUpdates = true;
+        }
         continue;
       }
 
       var homeClub = matchMatcher.FindClub(game.HomeTeam, clubs);
       var awayClub = matchMatcher.FindClub(game.AwayTeam, clubs);
       var newMatch = Match.CreateUpcomming(gameDayUtc, StageId, homeClub.Id, awayClub.Id);
+      newMatch.BetclicUrl = game.Url;
       db.Match.Add(newMatch);
       added.Add(newMatch);
     }
 
-    if (added.Count > 0)
+    if (added.Count > 0 || hasUpdates)
     {
       await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }

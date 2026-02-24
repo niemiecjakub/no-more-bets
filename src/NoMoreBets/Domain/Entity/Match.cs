@@ -14,6 +14,7 @@ public class Match
   public int MatchStatusId { get; set; }
   public int? HomeGoals { get; set; }
   public int? AwayGoals { get; set; }
+  public string? BetclicUrl { get; set; }
 
   public Stage? Stage { get; set; } = null!;
   public Club HomeClub { get; set; } = null!;

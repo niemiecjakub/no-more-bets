@@ -16,9 +16,11 @@ public record GetBetclicMatchEventsQuery(string BetclicGameUrl, bool Expand = fa
 /// </summary>
 public class GetBetclicMatchEventsHandler(BetclicScraper scraper) : IRequestHandler<GetBetclicMatchEventsQuery, IReadOnlyList<BookmakerEvent>>
 {
-    /// <inheritdoc />
-    public async Task<IReadOnlyList<BookmakerEvent>> Handle(GetBetclicMatchEventsQuery request, CancellationToken cancellationToken)
-    {
-        return await scraper.GetMatchEventsAsync(request.BetclicGameUrl, request.Expand, cancellationToken).ConfigureAwait(false);
-    }
+  /// <inheritdoc />
+  public async Task<IReadOnlyList<BookmakerEvent>> Handle(GetBetclicMatchEventsQuery request, CancellationToken cancellationToken)
+  {
+    var result = await scraper.GetMatchEventsAsync(request.BetclicGameUrl, request.Expand, cancellationToken).ConfigureAwait(false);
+
+    return result;
+  }
 }
