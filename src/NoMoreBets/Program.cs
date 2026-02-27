@@ -75,6 +75,8 @@ builder.Services.AddScoped<JobService>();
 
 var app = builder.Build();
 
+DbInitializer.Initialize(dbConnectionString);
+
 using (var scope = app.Services.CreateScope())
 {
   var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
