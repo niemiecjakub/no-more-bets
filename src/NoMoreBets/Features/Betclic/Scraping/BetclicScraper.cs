@@ -88,42 +88,53 @@ public class BetclicScraper : BaseScraper
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
     var games = new List<UpcomingGame>();
 
-    var groupEvents = doc.QuerySelector("div.groupEvents");
-    if (groupEvents is null)
-      return games;
-
-    var dateHeader = groupEvents.QuerySelector("h2.groupEvents_headTitle");
-    var dateString = dateHeader?.TextContent.Trim() ?? "";
-    var parsedDate = ParseBetclicDateString(dateString);
-
-    foreach (var card in groupEvents.QuerySelectorAll("sports-events-event-card.groupEvents_card"))
+    var groupEventsList = doc.QuerySelectorAll("div.groupEvents");
+    foreach (var groupEvents in groupEventsList)
     {
+      var dateHeader = groupEvents.QuerySelector("h2.groupEvents_headTitle");
+      var dateString = dateHeader?.TextContent.Trim() ?? "";
+      if (string.IsNullOrEmpty(dateString))
+        continue;
+      DateTime parsedDate;
       try
       {
-        var link = card.QuerySelector("a.cardEvent");
-        var href = link?.GetAttribute("href");
-        var cardUrl = string.IsNullOrEmpty(href) ? "" : BaseUrl + href;
-
-        var homeTeamElem = card.QuerySelector("[data-qa='contestant-1-label']");
-        var awayTeamElem = card.QuerySelector("[data-qa='contestant-2-label']");
-        var homeTeam = homeTeamElem?.TextContent.Trim() ?? "";
-        var awayTeam = awayTeamElem?.TextContent.Trim() ?? "";
-
-        var timeElem = card.QuerySelector("div.scoreboard_hour");
-        var matchTime = timeElem?.TextContent.Trim() ?? "";
-
-        games.Add(new UpcomingGame
-        {
-          Date = parsedDate,
-          HomeTeam = homeTeam,
-          AwayTeam = awayTeam,
-          Time = matchTime,
-          Url = cardUrl
-        });
+        parsedDate = ParseBetclicDateString(dateString);
       }
-      catch (Exception ex)
+      catch (ArgumentException)
       {
-        _logger.LogWarning(ex, "Failed to parse a game card; skipping.");
+        _logger.LogWarning("Skipping groupEvents with unparseable date: {DateString}", dateString);
+        continue;
+      }
+
+      foreach (var card in groupEvents.QuerySelectorAll("sports-events-event-card.groupEvents_card"))
+      {
+        try
+        {
+          var link = card.QuerySelector("a.cardEvent");
+          var href = link?.GetAttribute("href");
+          var cardUrl = string.IsNullOrEmpty(href) ? "" : BaseUrl + href;
+
+          var homeTeamElem = card.QuerySelector("[data-qa='contestant-1-label']");
+          var awayTeamElem = card.QuerySelector("[data-qa='contestant-2-label']");
+          var homeTeam = homeTeamElem?.TextContent.Trim() ?? "";
+          var awayTeam = awayTeamElem?.TextContent.Trim() ?? "";
+
+          var timeElem = card.QuerySelector("div.scoreboard_hour");
+          var matchTime = timeElem?.TextContent.Trim() ?? "";
+
+          games.Add(new UpcomingGame
+          {
+            Date = parsedDate,
+            HomeTeam = homeTeam,
+            AwayTeam = awayTeam,
+            Time = matchTime,
+            Url = cardUrl
+          });
+        }
+        catch (Exception ex)
+        {
+          _logger.LogWarning(ex, "Failed to parse a game card; skipping.");
+        }
       }
     }
     return games;

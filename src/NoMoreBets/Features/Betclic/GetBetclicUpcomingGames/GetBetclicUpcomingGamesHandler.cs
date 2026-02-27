@@ -47,7 +47,7 @@ public class GetBetclicUpcomingGamesHandler(
       var gameDayUtc = DateTime.SpecifyKind(dateWithTime, DateTimeKind.Utc);
 
       var matchesOnDay = await db.Match
-        .Where(g => g.MatchDate.Date == gameDayUtc)
+        .Where(g => g.MatchDate.Date == gameDayUtc.Date)
         .Include(g => g.HomeClub)
         .Include(g => g.AwayClub)
         .ToListAsync(cancellationToken)
@@ -79,6 +79,7 @@ public class GetBetclicUpcomingGamesHandler(
           game.Url);
 
         var newMatch = Match.CreateUpcomming(gameDayUtc, stageId, homeClub.Id, awayClub.Id);
+        newMatch.BetclicUrl = game.Url;
         db.Match.Add(newMatch);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         newMatch.HomeClub = homeClub;

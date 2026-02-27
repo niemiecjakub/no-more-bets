@@ -2,6 +2,8 @@ using System.Net;
 using Polly;
 using Hangfire;
 using Hangfire.PostgreSql;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Features.Fotmob.Scraping;
@@ -33,6 +35,10 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     {
       o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
     }));
+
+builder.Services.AddHealthChecks()
+  .AddNpgSql(dbConnectionString, tags: ["db"])
+  .AddDbContextCheck<AppDbContext>(tags: ["dbContext"]);
 
 builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection("Scraper"));
 builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection("Scraper:Betclic"));
@@ -76,6 +82,11 @@ builder.Services.AddScoped<JobService>();
 var app = builder.Build();
 
 DbInitializer.Initialize(dbConnectionString);
+
+app.MapHealthChecks("/health", new HealthCheckOptions()
+{
+  ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 using (var scope = app.Services.CreateScope())
 {
