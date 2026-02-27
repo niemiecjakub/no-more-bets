@@ -103,7 +103,9 @@ public class BetclicController(IMediator mediator) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     if (string.IsNullOrWhiteSpace(gameUrl))
+    {
       return BadRequest("gameUrl is required.");
+    }
     var events = await mediator.Send(new GetBetclicMatchEventsQuery(gameUrl, expand), cancellationToken);
     var dtos = events.Select(ev => BookmakerEventDto.From(ev)).ToList();
     return Ok(dtos);

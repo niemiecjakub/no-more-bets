@@ -78,20 +78,35 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
   var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-  //recurringJobManager.AddOrUpdate<JobService>(
-  //  "update-match-data",
-  //  jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId, new()),
-  //  "*/10 * * * *");
+  // Runs once per day at 18:00
+  recurringJobManager.AddOrUpdate<JobService>(
+    "update-match-data",
+    jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId, new()),
+    "0 18 * * *");
 
-  //recurringJobManager.AddOrUpdate<JobService>(
-  //  "update-lineups",
-  //  jobService => jobService.GetLineups(new()),
-  //  "*/1 * * * *");
+  // Runs once per day at 15:00
+  recurringJobManager.AddOrUpdate<JobService>(
+    "update-lineups",
+    jobService => jobService.GetBetclicGames(new()),
+    "0 15 * * *");
 
-  //recurringJobManager.AddOrUpdate<JobService>(
-  //  "update-lineups",
-  //  jobService => jobService.GetLeagueTable(new()),
-  //  "*/1 * * * *");
+  // Runs once per day at 16:00
+  recurringJobManager.AddOrUpdate<JobService>(
+    "update-lineups",
+    jobService => jobService.GetLineups(new()),
+    "0 16 * * *");
+
+  // Runs once per day at 10:00
+  recurringJobManager.AddOrUpdate<JobService>(
+    "update-league-table",
+    jobService => jobService.GetLeagueTable(new()),
+    "0 10 * * *");
+
+  // Runs hourly at minute 0
+  recurringJobManager.AddOrUpdate<JobService>(
+    "close-starting-soon-matches",
+    jobService => jobService.CloseStartingSoonMatches(new()),
+    "0 * * * *");
 }
 
 if (app.Environment.IsDevelopment())

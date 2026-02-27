@@ -26,6 +26,11 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
   /// <inheritdoc />
   public async Task<Unit> Handle(RefreshFotmobLeagueTableSnapshotCommand request, CancellationToken cancellationToken)
   {
+    logger.LogInformation(
+      "Handling {HandlerName} for league {LeagueId}",
+      nameof(RefreshFotmobLeagueTableSnapshotHandler),
+      request.LeagueId);
+
     var seasonId = await db.Season
       .Where(s => s.LeagueId == request.LeagueId)
       .MaxAsync(s => (int?)s.Id, cancellationToken)
@@ -33,6 +38,10 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
 
     if (seasonId == null)
     {
+      logger.LogError(
+        "Handler {HandlerName} found no season for league {LeagueId}",
+        nameof(RefreshFotmobLeagueTableSnapshotHandler),
+        request.LeagueId);
       throw new InvalidOperationException($"No season found for league {request.LeagueId}.");
     }
 
@@ -43,6 +52,11 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
 
     if (snapshotExists)
     {
+      logger.LogInformation(
+        "Handler {HandlerName} skipping snapshot creation because snapshot already exists for league {LeagueId} on {SnapshotDate}",
+        nameof(RefreshFotmobLeagueTableSnapshotHandler),
+        request.LeagueId,
+        snapshotDate);
       return Unit.Value;
     }
 
@@ -81,6 +95,10 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
 
       if (allMatchesPlayedUnchanged)
       {
+        logger.LogInformation(
+          "Handler {HandlerName} skipping snapshot creation because all matches played are unchanged for league {LeagueId}",
+          nameof(RefreshFotmobLeagueTableSnapshotHandler),
+          request.LeagueId);
         return Unit.Value;
       }
     }
@@ -121,6 +139,13 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
 
     db.LeagueTableSnapshot.Add(snapshot);
     await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+    logger.LogInformation(
+      "Handler {HandlerName} created league table snapshot for league {LeagueId} on {SnapshotDate} with {RowCount} rows",
+      nameof(RefreshFotmobLeagueTableSnapshotHandler),
+      request.LeagueId,
+      snapshotDate,
+      snapshot.Rows.Count);
     return Unit.Value;
   }
 

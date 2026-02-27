@@ -19,14 +19,22 @@ public record GetBetclicUpcomingGamesQuery : IRequest<IReadOnlyList<UpcomingGame
 public class GetBetclicUpcomingGamesHandler(
   BetclicScraper scraper,
   AppDbContext db,
-  IMatchMatcher matchMatcher) : IRequestHandler<GetBetclicUpcomingGamesQuery, IReadOnlyList<UpcomingGameDto>>
+  IMatchMatcher matchMatcher,
+  ILogger<GetBetclicUpcomingGamesHandler> logger) : IRequestHandler<GetBetclicUpcomingGamesQuery, IReadOnlyList<UpcomingGameDto>>
 {
   /// <inheritdoc />
   public async Task<IReadOnlyList<UpcomingGameDto>> Handle(GetBetclicUpcomingGamesQuery request, CancellationToken cancellationToken)
   {
+    logger.LogInformation(
+      "Handling {HandlerName}: fetching upcoming Betclic games",
+      nameof(GetBetclicUpcomingGamesHandler));
+
     var upcomingGames = await scraper.GetUpcomingGamesAsync(cancellationToken).ConfigureAwait(false);
     if (upcomingGames.Count == 0)
     {
+      logger.LogInformation(
+        "Handler {HandlerName} received no upcoming games from Betclic",
+        nameof(GetBetclicUpcomingGamesHandler));
       return Array.Empty<UpcomingGameDto>();
     }
 
@@ -61,6 +69,15 @@ public class GetBetclicUpcomingGamesHandler(
           .ConfigureAwait(false);
         var homeClub = matchMatcher.FindClub(game.HomeTeam, clubs);
         var awayClub = matchMatcher.FindClub(game.AwayTeam, clubs);
+
+        logger.LogWarning(
+          "Handler {HandlerName} creating new match for Betclic game {HomeTeam} vs {AwayTeam} on {GameDayUtc} (url: {GameUrl})",
+          nameof(GetBetclicUpcomingGamesHandler),
+          game.HomeTeam,
+          game.AwayTeam,
+          gameDayUtc,
+          game.Url);
+
         var newMatch = Match.CreateUpcomming(gameDayUtc, stageId, homeClub.Id, awayClub.Id);
         db.Match.Add(newMatch);
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -74,6 +91,11 @@ public class GetBetclicUpcomingGamesHandler(
       var awayTeam = new UpcomingGameTeamDto(m.AwayClub.Id, m.AwayClub.Name, m.AwayClub.SoccerdataId);
       results.Add(new UpcomingGameDto(m.Id, m.SoccerdataId, dateWithTime, homeTeam, awayTeam, game.Url));
     }
+
+    logger.LogInformation(
+      "Handler {HandlerName} returning {UpcomingGameCount} upcoming Betclic games",
+      nameof(GetBetclicUpcomingGamesHandler),
+      results.Count);
 
     return results;
   }

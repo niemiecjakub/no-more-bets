@@ -11,8 +11,6 @@ namespace NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
 public static class BookmakerEventTypeMapper
 {
   private static readonly IReadOnlyList<(string DisplayName, BettingEventType Type)> DisplayToType;
-  private static readonly IReadOnlyDictionary<string, BettingEventType> TitleOverrides;
-
   static BookmakerEventTypeMapper()
   {
     var list = new List<(string DisplayName, BettingEventType Type)>();

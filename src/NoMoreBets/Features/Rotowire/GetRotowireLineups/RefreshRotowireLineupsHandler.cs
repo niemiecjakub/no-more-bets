@@ -17,14 +17,24 @@ public record RefreshRotowireLineupsCommand : IRequest<Unit>;
 public class RefreshRotowireLineupsHandler(
   RotowireScraper scraper,
   AppDbContext db,
-  IMatchMatcher matchMatcher) : IRequestHandler<RefreshRotowireLineupsCommand, Unit>
+  IMatchMatcher matchMatcher,
+  ILogger<RefreshRotowireLineupsHandler> logger) : IRequestHandler<RefreshRotowireLineupsCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
   /// <inheritdoc />
   public async Task<Unit> Handle(RefreshRotowireLineupsCommand request, CancellationToken cancellationToken)
   {
+    logger.LogInformation(
+      "Handling {HandlerName}: starting Rotowire lineups refresh",
+      nameof(RefreshRotowireLineupsHandler));
+
     var lineups = await scraper.GetSoccerLineupsAsync(cancellationToken).ConfigureAwait(false);
+
+    var matchedCount = 0;
+    var unmatchedCount = 0;
+    var insertedCount = 0;
+    var updatedCount = 0;
 
     foreach (var lineup in lineups)
     {
@@ -43,8 +53,17 @@ public class RefreshRotowireLineupsHandler(
       var matched = matchMatcher.FindBestMatch(lineup.HomeTeamName, lineup.AwayTeamName, candidates);
       if (matched == null)
       {
+        unmatchedCount++;
+        logger.LogWarning(
+          "Handler {HandlerName} could not find match for Rotowire lineup {HomeTeam} vs {AwayTeam} on {GameDayUtc}",
+          nameof(RefreshRotowireLineupsHandler),
+          lineup.HomeTeamName,
+          lineup.AwayTeamName,
+          gameDayUtc);
         continue;
       }
+
+      matchedCount++;
 
       var homeTeamJson = JsonSerializer.Serialize(lineup.HomeTeam, JsonOptions);
       var awayTeamJson = JsonSerializer.Serialize(lineup.AwayTeam, JsonOptions);
@@ -55,6 +74,11 @@ public class RefreshRotowireLineupsHandler(
       {
         entity = new Lineup { MatchId = matched.Id };
         db.Lineup.Add(entity);
+        insertedCount++;
+      }
+      else
+      {
+        updatedCount++;
       }
 
       entity.HomeTeamJson = homeTeamJson;
@@ -63,6 +87,14 @@ public class RefreshRotowireLineupsHandler(
     }
 
     await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+    logger.LogInformation(
+      "Handler {HandlerName} completed Rotowire lineups refresh. Matched={MatchedCount}, Unmatched={UnmatchedCount}, Inserted={InsertedCount}, Updated={UpdatedCount}",
+      nameof(RefreshRotowireLineupsHandler),
+      matchedCount,
+      unmatchedCount,
+      insertedCount,
+      updatedCount);
     return Unit.Value;
   }
 }

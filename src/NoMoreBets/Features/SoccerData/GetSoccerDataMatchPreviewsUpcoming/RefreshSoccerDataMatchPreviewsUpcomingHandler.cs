@@ -20,9 +20,19 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
 {
   public async Task<List<DomainMatch>> Handle(RefreshSoccerDataMatchPreviewsUpcomingCommand request, CancellationToken cancellationToken)
   {
+    logger.LogInformation(
+      "Handling {HandlerName} for Soccerdata league {SoccerdataLeagueId}",
+      nameof(RefreshSoccerDataMatchPreviewsUpcomingHandler),
+      request.SoccerdataLeagueId);
+
     var added = new List<DomainMatch>();
     var previews = await client.GetMatchPreviewsUpcomingAsync(request.SoccerdataLeagueId, cancellationToken)
       .ConfigureAwait(false);
+
+    logger.LogInformation(
+      "Handler {HandlerName} fetched {LeagueCount} leagues with upcoming match previews from SoccerData",
+      nameof(RefreshSoccerDataMatchPreviewsUpcomingHandler),
+      previews.Count);
 
     var clubIds = previews
       .SelectMany(l => l.MatchPreviews)
@@ -35,7 +45,7 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
       .ToDictionaryAsync(c => c.SoccerdataId, cancellationToken)
       .ConfigureAwait(false);
 
-    var leagues = await db.League.Select(c => c.SoccerdataId).ToListAsync();
+    var leagues = await db.League.Select(c => c.SoccerdataId).ToListAsync(cancellationToken);
     foreach (var league in previews)
     {
       if (!leagues.Contains(league.LeagueId))
@@ -99,6 +109,12 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
     }
 
     await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+    logger.LogInformation(
+      "Handler {HandlerName} completed. Added {AddedMatchCount} new matches for Soccerdata league {SoccerdataLeagueId}",
+      nameof(RefreshSoccerDataMatchPreviewsUpcomingHandler),
+      added.Count,
+      request.SoccerdataLeagueId);
     return added;
   }
 
