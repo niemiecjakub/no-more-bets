@@ -5,6 +5,8 @@ namespace NoMoreBets.Features.Prediction.PredictMatch;
 /// </summary>
 public sealed class OpenAiAgentOptions
 {
+  public const string SectionName = "OpenAI";
+
   public string ModelId { get; init; } = null!;
   public string ApiKey { get; init; } = null!;
 }

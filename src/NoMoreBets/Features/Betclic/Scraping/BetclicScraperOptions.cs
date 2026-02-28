@@ -6,6 +6,8 @@ namespace NoMoreBets.Features.Betclic.Scraping;
 /// </summary>
 public record BetclicScraperOptions
 {
+    public const string SectionName = "Scraper:Betclic";
+
     /// <summary>Number of retry attempts when parsing returns empty (clear cache and refetch). Default 5.</summary>
     public int EmptyResultRetryCount { get; init; } = 5;
 

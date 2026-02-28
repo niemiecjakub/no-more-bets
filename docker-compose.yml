@@ -19,6 +19,9 @@ services:
       - SoccerData__ApiKey=${SOCCERDATA_API_KEY}
       - OpenAI__ApiKey=${OPENAI_API_KEY}
       - OpenAI__ModelId=${OPENAI_MODEL}
+      - ProxyOptions__ProxyUser=${PROXY_USER}
+      - ProxyOptions__ProxyPassword=${PROXY_PASSWORD}
+      - ProxyOptions__ProxyServer=${PROXY_SERVER}
     networks:
       - backend_db
     depends_on:

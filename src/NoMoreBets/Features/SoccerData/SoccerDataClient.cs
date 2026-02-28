@@ -10,6 +10,8 @@ namespace NoMoreBets.Features.SoccerData;
 
 public class SoccerDataOptions
 {
+  public const string SectionName = "SoccerData";
+
   public string? ApiKey { get; set; }
 }
 

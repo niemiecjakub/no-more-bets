@@ -41,18 +41,21 @@ builder.Services.AddHealthChecks()
   .AddNpgSql(dbConnectionString, tags: ["db"])
   .AddDbContextCheck<AppDbContext>(tags: ["dbContext"]);
 
-builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection("Scraper"));
-builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection("Scraper:Betclic"));
-builder.Services.Configure<SoccerDataOptions>(builder.Configuration.GetSection("SoccerData"));
-builder.Services.Configure<MatchAnalysisOptions>(builder.Configuration.GetSection("MatchAnalysis"));
-builder.Services.Configure<OpenAiAgentOptions>(builder.Configuration.GetSection("OpenAI"));
+builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection(BaseScraperOptions.SectionName));
+builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection(BetclicScraperOptions.SectionName));
+builder.Services.Configure<SoccerDataOptions>(builder.Configuration.GetSection(SoccerDataOptions.SectionName));
+builder.Services.Configure<MatchAnalysisOptions>(builder.Configuration.GetSection(MatchAnalysisOptions.SectionName));
+builder.Services.Configure<OpenAiAgentOptions>(builder.Configuration.GetSection(OpenAiAgentOptions.SectionName));
 builder.Services.AddSingleton<IMatchMatcher, MatchMatcher>();
 builder.Services.AddSingleton<IMatchAnalysisPersistence, FileMatchAnalysisPersistence>();
 builder.Services.AddSingleton<FootballDataPlugin>();
 builder.Services.AddSingleton<SquadPlugin>();
 builder.Services.AddSingleton<BookmakerPlugin>();
 builder.Services.AddSingleton<IPredictMatchAgentOrchestrator, PredictMatchAgentOrchestrator>();
-builder.Services.AddSingleton<PlaywrightPageFetcher>();
+
+builder.Services.Configure<ProxyOptions>(builder.Configuration.GetSection(ProxyOptions.SectionName));
+builder.Services.AddTransient<PlaywrightPageFetcher>();
+
 builder.Services.AddScoped<Initialize>();
 builder.Services.AddSingleton<RotowireScraper>();
 builder.Services.AddSingleton<BetclicScraper>();
@@ -68,7 +71,7 @@ builder.Services.AddHttpClient<SoccerDataClient>()
   });
 
 builder.Services.AddOptions<SoccerDataOptions>()
-    .Bind(builder.Configuration.GetSection("SoccerData"))
+    .Bind(builder.Configuration.GetSection(SoccerDataOptions.SectionName))
     .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey), "SoccerData:ApiKey is required")
     .ValidateOnStart();
 

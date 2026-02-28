@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using NoMoreBets.Infrastructure.Scraping;
 
@@ -11,10 +12,29 @@ namespace NoMoreBets.Infrastructure.Fetching;
 public class PlaywrightPageFetcher
 {
   private readonly ILogger<PlaywrightPageFetcher> _logger;
+  private readonly ProxyOptions _options;
 
-  public PlaywrightPageFetcher(ILogger<PlaywrightPageFetcher> logger)
+  public PlaywrightPageFetcher(ILogger<PlaywrightPageFetcher> logger, IOptions<ProxyOptions> options)
   {
     _logger = logger;
+    _options = options.Value;
+  }
+
+  private Proxy? GetProxy()
+  {
+    string sessionId = Guid.NewGuid().ToString("N").Substring(0, 8);
+
+    if (!_options.IsValid())
+    {
+      return null;
+    }
+
+    return new Proxy
+    {
+      Server = _options.ProxyServer,
+      Username = _options.ProxyUser,
+      Password = _options.ProxyPassword
+    };
   }
 
   /// <summary>Navigates to the URL, waits for page load, and returns the HTML content.</summary>
@@ -40,6 +60,7 @@ public class PlaywrightPageFetcher
 
     await using var context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
+      Proxy = GetProxy(),
       UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
                     "AppleWebKit/537.36 (KHTML, like Gecko) " +
                     "Chrome/117.0.0.0 Safari/537.36",
@@ -50,6 +71,9 @@ public class PlaywrightPageFetcher
     }).ConfigureAwait(false);
 
     var page = await context.NewPageAsync().ConfigureAwait(false);
+
+    await page.RouteAsync("**/*.{png,jpg,jpeg,gif,webp,svg,woff,pdf}", r => r.AbortAsync());
+
     try
     {
       IResponse? response = null;
@@ -109,6 +133,7 @@ public class PlaywrightPageFetcher
 
     var context = await browser.NewContextAsync(new BrowserNewContextOptions
     {
+      Proxy = GetProxy(),
       UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
                     "AppleWebKit/537.36 (KHTML, like Gecko) " +
                     "Chrome/117.0.0.0 Safari/537.36",
@@ -119,6 +144,7 @@ public class PlaywrightPageFetcher
     }).ConfigureAwait(false);
 
     var page = await context.NewPageAsync().ConfigureAwait(false);
+    await page.RouteAsync("**/*.{png,jpg,jpeg,gif,webp,svg,woff,pdf}", r => r.AbortAsync());
 
     try
     {

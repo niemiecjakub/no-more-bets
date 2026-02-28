@@ -6,6 +6,8 @@ namespace NoMoreBets.Infrastructure.Scraping;
 /// </summary>
 public record BaseScraperOptions
 {
+    public const string SectionName = "Scraper";
+
     /// <summary>Minimum delay in seconds between fetches.</summary>
     public double DelaySeconds { get; init; } = 5.0;
 

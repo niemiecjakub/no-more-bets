@@ -268,14 +268,14 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
 
       var jobId = GetBettingOddsJobId(match.Id);
 
-      // Run once immediately
-      BackgroundJob.Enqueue(() => GetBettingOdds(game.Url));
+      //// Run once immediately
+      //BackgroundJob.Enqueue(() => GetBettingOdds(game.Url));
 
-      // Then every hour until match is finished
-      RecurringJob.AddOrUpdate<JobService>(
-        jobId,
-        jobService => jobService.GetBettingOdds(game.Url),
-        "0 * * * *");
+      //// Then every hour until match is finished
+      //RecurringJob.AddOrUpdate<JobService>(
+      //  jobId,
+      //  jobService => jobService.GetBettingOdds(game.Url),
+      //  "0 * * * *");
 
       logger.LogInformation(
         "Job {JobName} scheduled betting odds jobs for match {MatchId} at {GameUrl} with recurring job id {JobId}",
