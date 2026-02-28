@@ -33,6 +33,7 @@ using NoMoreBets.Features.MatchAnalysis.RunMatchAnalysis;
 using NoMoreBets.Features.Prediction.PredictMatch;
 using NoMoreBets.Infrastructure.Database;
 using Match = NoMoreBets.Domain.Entity.Match;
+using NoMoreBets.Features.Jobs;
 
 namespace NoMoreBets.Controllers;
 
@@ -62,7 +63,7 @@ public class RotowireController(IMediator mediator) : ControllerBase
 
 [ApiController]
 [Route("api/[controller]")]
-public class BetclicController(IMediator mediator) : ControllerBase
+public class BetclicController(IMediator mediator, JobService jobService) : ControllerBase
 {
 
   /// <summary>

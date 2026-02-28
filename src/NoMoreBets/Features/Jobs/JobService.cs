@@ -19,15 +19,15 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-  [AutomaticRetry(Attempts = 0)]
-  public async Task GetUpcommingSoccerdataMatches(int soccerdataLeagueId, CancellationToken cancellationToken = default)
+  [AutomaticRetry(Attempts = 3)]
+  public async Task GetUpcommingSoccerdataMatches(int soccerdataLeagueId)
   {
     logger.LogInformation(
       "Starting job {JobName} for Soccerdata league {SoccerdataLeagueId}",
       nameof(GetUpcommingSoccerdataMatches),
       soccerdataLeagueId);
 
-    var upcommingMatches = await mediator.Send(new RefreshSoccerDataMatchPreviewsUpcomingCommand(soccerdataLeagueId), cancellationToken);
+    var upcommingMatches = await mediator.Send(new RefreshSoccerDataMatchPreviewsUpcomingCommand(soccerdataLeagueId));
     logger.LogInformation(
       "Job {JobName} fetched {MatchCount} upcoming matches for Soccerdata league {SoccerdataLeagueId}",
       nameof(GetUpcommingSoccerdataMatches),
@@ -46,8 +46,8 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
           match.Id);
         continue;
       }
-      BackgroundJob.Enqueue(() => GetUpcommingSoccerdataMatchePreview(match.SoccerdataId.Value, cancellationToken));
-      BackgroundJob.Enqueue(() => RefreshHead2HeadStatistics(match.HomeClubId, match.AwayClubId, cancellationToken));
+      BackgroundJob.Enqueue(() => GetUpcommingSoccerdataMatchePreview(match.SoccerdataId.Value));
+      BackgroundJob.Enqueue(() => RefreshHead2HeadStatistics(match.HomeClubId, match.AwayClubId));
       enqueuedJobs += 2;
     }
 
@@ -58,15 +58,15 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       soccerdataLeagueId);
   }
 
-  [AutomaticRetry(Attempts = 0)]
-  public async Task GetUpcommingSoccerdataMatchePreview(int soccerdataMatchId, CancellationToken cancellationToken = default)
+  [AutomaticRetry(Attempts = 3)]
+  public async Task GetUpcommingSoccerdataMatchePreview(int soccerdataMatchId)
   {
     logger.LogInformation(
       "Starting job {JobName} for Soccerdata match {SoccerdataMatchId}",
       nameof(GetUpcommingSoccerdataMatchePreview),
       soccerdataMatchId);
 
-    await mediator.Send(new RefreshSoccerDataMatchPreviewCommand(soccerdataMatchId), cancellationToken);
+    await mediator.Send(new RefreshSoccerDataMatchPreviewCommand(soccerdataMatchId));
 
     logger.LogInformation(
       "Completed job {JobName} for Soccerdata match {SoccerdataMatchId}",
@@ -74,8 +74,8 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       soccerdataMatchId);
   }
 
-  [AutomaticRetry(Attempts = 0)]
-  public async Task RefreshHead2HeadStatistics(int homeClubId, int awayClubId, CancellationToken cancellationToken = default)
+  [AutomaticRetry(Attempts = 3)]
+  public async Task RefreshHead2HeadStatistics(int homeClubId, int awayClubId)
   {
     logger.LogInformation(
       "Starting job {JobName} for clubs {HomeClubId} vs {AwayClubId}",
@@ -86,7 +86,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
     var clubSoccerdataIds = await db.Club
       .Where(c => c.Id == homeClubId || c.Id == awayClubId)
       .Select(c => new { c.Id, c.SoccerdataId })
-      .ToListAsync(cancellationToken);
+      .ToListAsync();
 
     if (clubSoccerdataIds.Count != 2)
     {
@@ -116,7 +116,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
     var (homeClubSoccerdataId, awayClubSoccerdataId) = (homeSoccerdataId, awaySoccerdataId);
     var h2h = await db.Head2Head
         .ForClubs(homeClubSoccerdataId, awayClubSoccerdataId)
-        .FirstOrDefaultAsync(cancellationToken);
+        .FirstOrDefaultAsync();
 
     bool shouldUpdate = h2h == null;
 
@@ -127,14 +127,14 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
           .Where(m => m.MatchStatus == Domain.Enums.MatchStatus.Finished)
           .OrderByDescending(m => m.MatchDate)
           .Select(m => (DateTime?)m.MatchDate)
-          .FirstOrDefaultAsync(cancellationToken);
+          .FirstOrDefaultAsync();
 
       shouldUpdate = lastFinishedGameDate > h2h.UpdatedAt;
     }
 
     if (shouldUpdate)
     {
-      BackgroundJob.Enqueue(() => mediator.Send(new RefreshSoccerDataHeadToHeadCommand(homeClubSoccerdataId, awayClubSoccerdataId), CancellationToken.None));
+      BackgroundJob.Enqueue<JobService>(js => js.RefreshHead2HeadData(homeClubSoccerdataId, awayClubSoccerdataId));
       logger.LogInformation(
         "Job {JobName} enqueued head-to-head refresh for clubs {HomeClubSoccerdataId} vs {AwayClubSoccerdataId}",
         nameof(RefreshHead2HeadStatistics),
@@ -151,22 +151,28 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
     }
   }
 
-  [AutomaticRetry(Attempts = 10)]
-  public async Task GetLineups(CancellationToken cancellationToken = default)
+  [AutomaticRetry(Attempts = 3)]
+  public async Task RefreshHead2HeadData(int homeClubSoccerdataId, int awayClubSoccerdataId)
+  {
+    await mediator.Send(new RefreshSoccerDataHeadToHeadCommand(homeClubSoccerdataId, awayClubSoccerdataId));
+  }
+
+  [AutomaticRetry(Attempts = 3)]
+  public async Task GetLineups()
   {
     logger.LogInformation(
       "Starting job {JobName} to refresh Rotowire lineups",
       nameof(GetLineups));
 
-    await mediator.Send(new RefreshRotowireLineupsCommand(), cancellationToken);
+    await mediator.Send(new RefreshRotowireLineupsCommand());
 
     logger.LogInformation(
       "Completed job {JobName} to refresh Rotowire lineups",
       nameof(GetLineups));
   }
 
-  [AutomaticRetry(Attempts = 10)]
-  public async Task GetLeagueTable(CancellationToken cancellationToken = default)
+  [AutomaticRetry(Attempts = 3)]
+  public async Task GetLeagueTable()
   {
     logger.LogInformation(
       "Starting job {JobName} to refresh league table for Premier League",
@@ -175,7 +181,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
     var premierLeagueId = await db.League
       .Where(l => l.Name == "Premier League")
       .Select(l => l.Id)
-      .FirstOrDefaultAsync(cancellationToken);
+      .FirstOrDefaultAsync();
 
     if (premierLeagueId == 0)
     {
@@ -185,7 +191,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       return;
     }
 
-    await mediator.Send(new RefreshFotmobLeagueTableSnapshotCommand(premierLeagueId), cancellationToken);
+    await mediator.Send(new RefreshFotmobLeagueTableSnapshotCommand(premierLeagueId));
 
     logger.LogInformation(
       "Completed job {JobName} for league {LeagueId}",
@@ -193,15 +199,15 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       premierLeagueId);
   }
 
-  [AutomaticRetry(Attempts = 0)]
-  public async Task CloseStartingSoonMatches(CancellationToken cancellationToken = default)
+  [AutomaticRetry(Attempts = 1)]
+  public async Task CloseStartingSoonMatches()
   {
     var now = DateTime.UtcNow;
     var cutoff = now.AddHours(2);
 
     var matchesToClose = await db.Match
       .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming && m.MatchDate <= cutoff)
-      .ToListAsync(cancellationToken);
+      .ToListAsync();
 
     logger.LogInformation(
       "Job {JobName} found {MatchCount} upcoming matches starting before cutoff {Cutoff}",
@@ -222,7 +228,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       match.MatchStatus = MatchStatus.Finished;
     }
 
-    await db.SaveChangesAsync(cancellationToken);
+    await db.SaveChangesAsync();
 
     logger.LogInformation(
       "Job {JobName} closed {MatchCount} matches starting before cutoff {Cutoff}",
@@ -232,14 +238,14 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
   }
 
 
-
-  public async Task GetBetclicGames(CancellationToken cancellationToken = default)
+  [AutomaticRetry(Attempts = 1)]
+  public async Task GetBetclicGames()
   {
     logger.LogInformation(
       "Starting job {JobName} to process upcoming Betclic games",
       nameof(GetBetclicGames));
 
-    var upcommingGames = await mediator.Send(new GetBetclicUpcomingGamesQuery(), cancellationToken);
+    var upcommingGames = await mediator.Send(new GetBetclicUpcomingGamesQuery());
     logger.LogInformation(
       "Job {JobName} received {GameCount} upcoming Betclic games",
       nameof(GetBetclicGames),
@@ -249,7 +255,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
     {
       var match = await db.Match
         .Where(m => m.BetclicUrl == game.Url)
-        .SingleOrDefaultAsync(cancellationToken);
+        .SingleOrDefaultAsync();
 
       if (match is null)
       {
@@ -263,12 +269,12 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       var jobId = GetBettingOddsJobId(match.Id);
 
       // Run once immediately
-      BackgroundJob.Enqueue(() => GetBettingOdds(game.Url, CancellationToken.None));
+      BackgroundJob.Enqueue(() => GetBettingOdds(game.Url));
 
       // Then every hour until match is finished
       RecurringJob.AddOrUpdate<JobService>(
         jobId,
-        jobService => jobService.GetBettingOdds(game.Url, CancellationToken.None),
+        jobService => jobService.GetBettingOdds(game.Url),
         "0 * * * *");
 
       logger.LogInformation(
@@ -281,7 +287,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
   }
 
   [AutomaticRetry(Attempts = 3)]
-  public async Task GetBettingOdds(string gameUrl, CancellationToken cancellationToken = default)
+  public async Task GetBettingOdds(string gameUrl)
   {
     logger.LogInformation(
       "Starting job {JobName} to get betting odds for {GameUrl}",
@@ -298,7 +304,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
 
     try
     {
-      var events = await mediator.Send(new GetBetclicMatchEventsQuery(gameUrl, Expand: true), cancellationToken);
+      var events = await mediator.Send(new GetBetclicMatchEventsQuery(gameUrl, Expand: true));
       if (events is null || events.Count == 0)
       {
         logger.LogWarning(
@@ -310,7 +316,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
 
       var match = await db.Match
         .Where(m => m.BetclicUrl == gameUrl)
-        .SingleOrDefaultAsync(cancellationToken);
+        .SingleOrDefaultAsync();
 
       if (match is null)
       {
@@ -366,7 +372,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       }
 
       db.BettingOddsSnapshot.Add(snapshot);
-      await db.SaveChangesAsync(cancellationToken);
+      await db.SaveChangesAsync();
 
       logger.LogInformation(
         "Job {JobName} saved betting odds snapshot with {RowCount} rows for match {MatchId} at {GameUrl}",

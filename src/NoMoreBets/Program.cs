@@ -1,6 +1,7 @@
 using System.Net;
 using Polly;
 using Hangfire;
+using Hangfire.Dashboard;
 using Hangfire.PostgreSql;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -91,34 +92,34 @@ app.MapHealthChecks("/health", new HealthCheckOptions()
 using (var scope = app.Services.CreateScope())
 {
   var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-  // Runs once per day at 18:00
+  // Runs once per day at 02:00
   recurringJobManager.AddOrUpdate<JobService>(
     "update-match-data",
-    jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId, new()),
-    "0 18 * * *");
+    jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId),
+    "0 1 * * *");
 
   // Runs once per day at 15:00
   recurringJobManager.AddOrUpdate<JobService>(
-    "update-lineups",
-    jobService => jobService.GetBetclicGames(new()),
+    "update-betclic-games",
+    jobService => jobService.GetBetclicGames(),
     "0 15 * * *");
 
   // Runs once per day at 16:00
   recurringJobManager.AddOrUpdate<JobService>(
     "update-lineups",
-    jobService => jobService.GetLineups(new()),
+    jobService => jobService.GetLineups(),
     "0 16 * * *");
 
   // Runs once per day at 10:00
   recurringJobManager.AddOrUpdate<JobService>(
     "update-league-table",
-    jobService => jobService.GetLeagueTable(new()),
+    jobService => jobService.GetLeagueTable(),
     "0 10 * * *");
 
   // Runs hourly at minute 0
   recurringJobManager.AddOrUpdate<JobService>(
     "close-starting-soon-matches",
-    jobService => jobService.CloseStartingSoonMatches(new()),
+    jobService => jobService.CloseStartingSoonMatches(),
     "0 * * * *");
 }
 
@@ -128,9 +129,21 @@ if (app.Environment.IsDevelopment())
   app.UseSwaggerUI();
 }
 
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+  Authorization = [new AllowAllDashboardAuthorizationFilter()]
+});
 app.UseHttpsRedirection();
 app.UseAuthorization();
-app.UseHangfireDashboard("/hangfire");
 app.MapControllers();
 
 app.Run();
+
+
+public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
+{
+  public bool Authorize(DashboardContext context)
+  {
+    return true;
+  }
+}
