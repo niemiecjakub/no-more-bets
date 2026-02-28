@@ -22,7 +22,6 @@ public abstract class BaseScraper
   private readonly ResiliencePipeline<string> _fetchPipeline;
   private readonly ResiliencePipeline<string> _interactiveFetchPipeline;
   private readonly AsyncLocal<string?> _currentFetchUrl = new();
-  private readonly SemaphoreSlim _fetchLock = new(1, 1);
 
   protected BaseScraper(
       PlaywrightPageFetcher pageFetcher,
@@ -45,10 +44,9 @@ public abstract class BaseScraper
   /// <exception cref="PermanentScraperException">Permanent failure (403, 404, 410) – not retried.</exception>
   protected async Task<string> GetPageHtmlAsync(string url, CancellationToken cancellationToken = default)
   {
-    await _fetchLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+    _currentFetchUrl.Value = url;
     try
     {
-      _currentFetchUrl.Value = url;
       var timeout = TimeSpan.FromSeconds(_options.TimeoutSeconds);
       try
       {
@@ -71,7 +69,6 @@ public abstract class BaseScraper
     finally
     {
       _currentFetchUrl.Value = null;
-      _fetchLock.Release();
     }
   }
 
@@ -145,8 +142,10 @@ public abstract class BaseScraper
 
     var rateLimiter = new SlidingWindowRateLimiter(new SlidingWindowRateLimiterOptions
     {
+      // One permit per window per scraper instance; intentional to throttle fetches and reduce proxy/ban risk.
+      // Concurrency is still 3 via Hangfire workers + context pool.
       PermitLimit = 1,
-      Window = TimeSpan.FromSeconds(options.DelaySeconds),
+      Window = TimeSpan.FromSeconds(Math.Max(options.DelaySeconds, 0.01)),
       SegmentsPerWindow = 1
     });
 

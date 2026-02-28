@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Moq;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
+using NoMoreBets.Tests.Helpers;
 
 namespace NoMoreBets.Tests.Infrastructure.Scraping;
 
@@ -49,7 +50,7 @@ public class BaseScraperTests
     {
         var url = "https://example.com";
         var fetchedHtml = "<html><body>Fetched</body></html>";
-        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+        var fetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(fetchedHtml);
         var sut = CreateSut(pageFetcher: fetcherMock.Object);
 
@@ -63,7 +64,7 @@ public class BaseScraperTests
     public async Task GetPageHtmlAsync_WhenFetcherThrowsPermanentScraperException_DoesNotRetry()
     {
         var url = "https://example.com/404";
-        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+        var fetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .Returns(() => Task.FromException<string>(new PermanentScraperException("Permanent failure (404)", 404)));
         var sut = CreateSut(pageFetcher: fetcherMock.Object);
@@ -80,7 +81,7 @@ public class BaseScraperTests
         var url = "https://example.com";
         var fetchedHtml = "<html>OK</html>";
         var callCount = 0;
-        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+        var fetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
         fetcherMock.Setup(f => f.GetHtmlAsync(It.IsAny<string>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .Returns(() =>
             {
@@ -101,7 +102,7 @@ public class BaseScraperTests
     public async Task GetPageHtmlAsync_WhenAllRetriesFail_ThrowsWithMessage()
     {
         var url = "https://example.com";
-        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+        var fetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .Returns(() => Task.FromException<string>(new InvalidOperationException("Transient failure")));
         var opts = DefaultOptions() with { RetryCount = 2, RetryDelaySeconds = 0.01 };
@@ -119,20 +120,20 @@ public class BaseScraperTests
     {
         var url = "https://example.com";
         var callCount = 0;
-        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+        var fetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .Returns(() => Task.FromResult(Interlocked.Increment(ref callCount) == 1 ? "<html>1</html>" : "<html>2</html>"));
         var opts = DefaultOptions() with { DelaySeconds = 0.1, RetryDelaySeconds = 0 };
         var sut = CreateSut(pageFetcher: fetcherMock.Object, opts);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var t1 = sut.FetchAsync(url);
-        var t2 = sut.FetchAsync(url);
-        await Task.WhenAll(t1, t2);
+        var r1 = await sut.FetchAsync(url);
+        await Task.Delay(150); // allow rate limiter window to renew so second fetch gets a permit
+        var r2 = await sut.FetchAsync(url);
         sw.Stop();
 
-        (await t1).Should().Be("<html>1</html>");
-        (await t2).Should().Be("<html>2</html>");
-        sw.Elapsed.TotalSeconds.Should().BeGreaterOrEqualTo(0.1, "rate limit should delay the second fetch");
+        r1.Should().Be("<html>1</html>");
+        r2.Should().Be("<html>2</html>");
+        sw.Elapsed.TotalSeconds.Should().BeGreaterOrEqualTo(0.1, "rate limit window should have passed before second fetch");
     }
 }

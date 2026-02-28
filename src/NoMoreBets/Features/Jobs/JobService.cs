@@ -5,6 +5,7 @@ using NoMoreBets.Domain.Entity;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
+using NoMoreBets.Features.Betclic.Model;
 using NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups;
 using NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
@@ -250,40 +251,36 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       "Job {JobName} received {GameCount} upcoming Betclic games",
       nameof(GetBetclicGames),
       upcommingGames.Count);
+  }
 
-    foreach (var game in upcommingGames)
+  public async Task ScheduleBettingOddsJob()
+  {
+    logger.LogInformation(
+      "Starting job {JobName} to schedule betting odds for upcoming matches",
+      nameof(ScheduleBettingOddsJob));
+
+    var upcommingGames = await db.Match
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming && m.BetclicUrl != null)
+      .Select(m => new { m.BetclicUrl })
+      .ToListAsync();
+
+    logger.LogInformation(
+      "Job {JobName} found {MatchCount} upcoming matches with Betclic URL to schedule",
+      nameof(ScheduleBettingOddsJob),
+      upcommingGames.Count);
+
+    foreach (var match in upcommingGames)
     {
-      var match = await db.Match
-        .Where(m => m.BetclicUrl == game.Url)
-        .SingleOrDefaultAsync();
-
-      if (match is null)
-      {
-        logger.LogWarning(
-          "Job {JobName} skipping Betclic game at {GameUrl} because no matching match was found",
-          nameof(GetBetclicGames),
-          game.Url);
-        continue;
-      }
-
-      var jobId = GetBettingOddsJobId(match.Id);
-
-      //// Run once immediately
-      //BackgroundJob.Enqueue(() => GetBettingOdds(game.Url));
-
-      //// Then every hour until match is finished
-      //RecurringJob.AddOrUpdate<JobService>(
-      //  jobId,
-      //  jobService => jobService.GetBettingOdds(game.Url),
-      //  "0 * * * *");
-
-      logger.LogInformation(
-        "Job {JobName} scheduled betting odds jobs for match {MatchId} at {GameUrl} with recurring job id {JobId}",
-        nameof(GetBetclicGames),
-        match.Id,
-        game.Url,
-        jobId);
+      var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 300));
+      BackgroundJob.Schedule<JobService>(
+          js => js.GetBettingOdds(match.BetclicUrl!),
+          delay);
     }
+
+    logger.LogInformation(
+      "Job {JobName} scheduled {JobCount} betting odds jobs",
+      nameof(ScheduleBettingOddsJob),
+      upcommingGames.Count);
   }
 
   [AutomaticRetry(Attempts = 3)]

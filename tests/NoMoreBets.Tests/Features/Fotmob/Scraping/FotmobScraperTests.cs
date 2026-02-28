@@ -19,7 +19,7 @@ public class FotmobScraperTests
         PlaywrightPageFetcher? pageFetcher = null,
         BaseScraperOptions? baseOptions = null)
     {
-        pageFetcher ??= new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance).Object;
+        pageFetcher ??= PlaywrightPageFetcherMockHelper.CreateMock().Object;
         var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
         {
             DelaySeconds = 0,
@@ -710,7 +710,7 @@ public class FotmobScraperTests
         var playerStatsHtml = FixtureHelper.LoadFixtureText("fotmob/player_stats.html");
         if (minimalHtml is null || playerStatsHtml is null)
             return; // Fixtures not available
-        var mockFetcher = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+        var mockFetcher = PlaywrightPageFetcherMockHelper.CreateMock();
         mockFetcher
             .SetupSequence(x => x.GetHtmlAfterInteractionsAsync(It.IsAny<string>(), It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(minimalHtml)

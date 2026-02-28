@@ -54,6 +54,7 @@ builder.Services.AddSingleton<BookmakerPlugin>();
 builder.Services.AddSingleton<IPredictMatchAgentOrchestrator, PredictMatchAgentOrchestrator>();
 
 builder.Services.Configure<ProxyOptions>(builder.Configuration.GetSection(ProxyOptions.SectionName));
+builder.Services.AddSingleton<PlaywrightBrowserService>();
 builder.Services.AddTransient<PlaywrightPageFetcher>();
 
 builder.Services.AddScoped<Initialize>();
@@ -80,7 +81,7 @@ builder.Services.AddHangfire(config => config
   .UseSimpleAssemblyNameTypeSerializer()
   .UseRecommendedSerializerSettings()
   .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(dbConnectionString)));
-builder.Services.AddHangfireServer();
+builder.Services.AddHangfireServer(options => options.WorkerCount = 3);
 builder.Services.AddScoped<JobService>();
 
 var app = builder.Build();
@@ -97,25 +98,25 @@ using (var scope = app.Services.CreateScope())
   var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
   // Runs once per day at 02:00
   recurringJobManager.AddOrUpdate<JobService>(
-    "update-match-data",
+    "get-soccerdata-upcoming-matches",
     jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId),
     "0 1 * * *");
 
   // Runs once per day at 15:00
   recurringJobManager.AddOrUpdate<JobService>(
-    "update-betclic-games",
+    "get-upcoming-betclic-games",
     jobService => jobService.GetBetclicGames(),
     "0 15 * * *");
 
   // Runs once per day at 16:00
   recurringJobManager.AddOrUpdate<JobService>(
-    "update-lineups",
+    "get-lineups",
     jobService => jobService.GetLineups(),
     "0 16 * * *");
 
   // Runs once per day at 10:00
   recurringJobManager.AddOrUpdate<JobService>(
-    "update-league-table",
+    "get-league-table",
     jobService => jobService.GetLeagueTable(),
     "0 10 * * *");
 
@@ -124,6 +125,12 @@ using (var scope = app.Services.CreateScope())
     "close-starting-soon-matches",
     jobService => jobService.CloseStartingSoonMatches(),
     "0 * * * *");
+
+  // Runs hourly at 15 min past the hour
+  recurringJobManager.AddOrUpdate<JobService>(
+    "get-betting-odds",
+    jobService => jobService.ScheduleBettingOddsJob(),
+    "15 * * * *");
 }
 
 if (app.Environment.IsDevelopment())

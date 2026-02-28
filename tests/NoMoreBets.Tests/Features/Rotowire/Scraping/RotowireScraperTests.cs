@@ -18,7 +18,7 @@ public class RotowireScraperTests
         PlaywrightPageFetcher? pageFetcher = null,
         BaseScraperOptions? options = null)
     {
-        pageFetcher ??= new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance).Object;
+        pageFetcher ??= PlaywrightPageFetcherMockHelper.CreateMock().Object;
         var opts = Options.Create(options ?? new BaseScraperOptions
         {
             DelaySeconds = 0,
@@ -54,7 +54,7 @@ public class RotowireScraperTests
         var html = FixtureHelper.LoadFixtureText("rotowire/lineups_page.html");
         html.Should().NotBeNull("fixture file must exist");
         var url = "https://www.rotowire.com/soccer/lineups.php";
-        var fetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+        var fetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
         fetcherMock.Setup(f => f.GetHtmlAsync(url, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html!);
         var sut = CreateScraper(fetcherMock.Object);
 

@@ -20,7 +20,7 @@ public class BetclicScraperTests
       BaseScraperOptions? baseOptions = null,
       BetclicScraperOptions? betclicOptions = null)
   {
-    pageFetcher ??= new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance).Object;
+    pageFetcher ??= PlaywrightPageFetcherMockHelper.CreateMock().Object;
     var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
     {
       DelaySeconds = 0,
@@ -101,7 +101,7 @@ public class BetclicScraperTests
   {
     // Arrange
     var html = MinimalUpcomingGamesHtml();
-    var pageFetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+    var pageFetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
     pageFetcherMock.Setup(f => f.GetHtmlAsync(PremierLeagueUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html);
     var sut = CreateScraper(pageFetcherMock.Object);
 
@@ -140,7 +140,7 @@ public class BetclicScraperTests
     var html = FixtureHelper.LoadFixtureText("betclic/match_page.html");
     html.Should().NotBeNull("fixture file must exist");
     var gameUrl = "https://www.betclic.pl/pilka-nozna-sfootball/premier-league-c3/bournemouth-liverpool-m905675307745280";
-    var pageFetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+    var pageFetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
     pageFetcherMock.Setup(f => f.GetHtmlAsync(gameUrl, It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>())).ReturnsAsync(html!);
     var sut = CreateScraper(pageFetcherMock.Object);
 
@@ -161,7 +161,7 @@ public class BetclicScraperTests
     var html = FixtureHelper.LoadFixtureText("betclic/match_page.html");
     html.Should().NotBeNull("fixture file must exist");
     var gameUrl = "https://www.betclic.pl/some-match";
-    var pageFetcherMock = new Mock<PlaywrightPageFetcher>(NullLogger<PlaywrightPageFetcher>.Instance);
+    var pageFetcherMock = PlaywrightPageFetcherMockHelper.CreateMock();
     pageFetcherMock
         .Setup(f => f.GetHtmlAfterInteractionsAsync(
             gameUrl, It.IsAny<IReadOnlyList<InteractionStep>>(), It.IsAny<TimeSpan?>(), It.IsAny<CancellationToken>()))
