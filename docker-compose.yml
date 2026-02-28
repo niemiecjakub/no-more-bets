@@ -1,0 +1,51 @@
+services:
+  backend:
+    container_name: no-more-bets-api
+    build:
+      context: ./src/NoMoreBets
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    env_file:
+      - .env
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT:-Production}
+      - ASPNETCORE_URLS=http://+:8080;http://+:8081
+      - ConnectionStrings__DefaultConnection=Host=${POSTGRES_HOST:-db};Port=${POSTGRES_PORT:-5432};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - Logging__LogLevel__Default=Information
+      - Logging__LogLevel__Microsoft=Warning
+      - Logging__LogLevel__Microsoft.AspNetCore=Warning
+      - SoccerData__ApiKey=${SOCCERDATA_API_KEY}
+      - OpenAI__ApiKey=${OPENAI_API_KEY}
+      - OpenAI__ModelId=${OPENAI_MODEL}
+    networks:
+      - backend_db
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    container_name: no-more-bets-db
+    image: postgres:17
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend_db
+
+volumes:
+  postgres_data:
+
+networks:
+  backend_db:
