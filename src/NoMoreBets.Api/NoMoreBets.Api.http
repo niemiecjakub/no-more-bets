@@ -1,0 +1,6 @@
+@NoMoreBets.Api_HostAddress = http://localhost:5124
+
+GET {{NoMoreBets.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

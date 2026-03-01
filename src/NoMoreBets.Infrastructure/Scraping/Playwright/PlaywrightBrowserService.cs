@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Playwright;
 
 namespace NoMoreBets.Infrastructure.Scraping.Playwright;

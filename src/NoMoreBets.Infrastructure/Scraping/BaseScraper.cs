@@ -1,12 +1,12 @@
 using System.Threading.RateLimiting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Infrastructure.Fetching;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.RateLimiting;
 using Polly.Timeout;
+using NoMoreBets.Infrastructure.Scraping.Playwright;
 
 namespace NoMoreBets.Infrastructure.Scraping;
 
