@@ -69,7 +69,10 @@ public class PlaywrightBrowserService : IDisposable
     {
       if (_browser != null)
         return Task.FromResult(_browser);
-      _browserInitTask ??= CreateBrowserInternalAsync();
+
+      if (_browserInitTask == null)
+        _browserInitTask = CreateBrowserInternalAsync();
+
       return _browserInitTask;
     }
   }
@@ -77,31 +80,33 @@ public class PlaywrightBrowserService : IDisposable
   private async Task<IBrowser> CreateBrowserInternalAsync()
   {
     var playwright = await Playwright.CreateAsync().ConfigureAwait(false);
-    var newBrowser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+    var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
     {
       Headless = true,
-      Args =
-      [
-        "--disable-blink-features=AutomationControlled",
-        "--no-sandbox",
-        "--disable-dev-shm-usage"
-      ]
+      Args = new[]
+        {
+            "--disable-blink-features=AutomationControlled",
+            "--no-sandbox",
+            "--disable-dev-shm-usage"
+        }
     }).ConfigureAwait(false);
 
     lock (_browserLock)
     {
-      if (_browserInitTask == null)
+      // Check if the browser was already cleared
+      if (_browser != null)
       {
-        _playwright = playwright;
-        _browser = newBrowser;
-        _logger.LogInformation("Playwright Chromium browser started (persistent, headless)");
-        return newBrowser;
+        // Someone else already set _browser, close this one
+        browser.CloseAsync().GetAwaiter().GetResult();
+        playwright.Dispose();
+        return _browser; // return the already-initialized browser
       }
-    }
 
-    await newBrowser.CloseAsync().ConfigureAwait(false);
-    playwright.Dispose();
-    throw new InvalidOperationException("Browser was cleared during initialization.");
+      _playwright = playwright;
+      _browser = browser;
+      _logger.LogInformation("Playwright Chromium browser started (persistent, headless)");
+      return _browser;
+    }
   }
 
   private void ClearBrowser()
