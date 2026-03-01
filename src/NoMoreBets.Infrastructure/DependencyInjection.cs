@@ -1,0 +1,1 @@
+namespace NoMoreBets.Infrastructure;

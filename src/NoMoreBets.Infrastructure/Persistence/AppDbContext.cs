@@ -5,7 +5,7 @@ using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 
-namespace NoMoreBets.Infrastructure.Database;
+namespace NoMoreBets.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext
 {

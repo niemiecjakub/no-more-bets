@@ -1,6 +1,6 @@
 using Microsoft.Playwright;
 
-namespace NoMoreBets.Infrastructure.Fetching;
+namespace NoMoreBets.Infrastructure.Scraping.Playwright;
 
 /// <summary>
 /// Singleton that owns one Playwright instance and one Chromium process.

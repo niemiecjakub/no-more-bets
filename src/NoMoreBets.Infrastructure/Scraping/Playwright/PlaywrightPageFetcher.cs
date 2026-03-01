@@ -2,7 +2,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using NoMoreBets.Infrastructure.Scraping;
 
-namespace NoMoreBets.Infrastructure.Fetching;
+namespace NoMoreBets.Infrastructure.Scraping.Playwright;
 
 /// <summary>
 /// Fetches page HTML using Playwright with WaitUntilState.Load (avoids timeout on sites that never reach networkidle).

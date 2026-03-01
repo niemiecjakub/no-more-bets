@@ -1,7 +1,7 @@
 using DbUp;
 using System.Reflection;
 
-namespace NoMoreBets.Infrastructure.Database;
+namespace NoMoreBets.Infrastructure.Persistence;
 
 public static class DbInitializer
 {

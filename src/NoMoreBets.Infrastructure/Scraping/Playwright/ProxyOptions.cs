@@ -1,4 +1,4 @@
-﻿namespace NoMoreBets.Infrastructure.Fetching;
+namespace NoMoreBets.Infrastructure.Scraping.Playwright;
 
 public class ProxyOptions
 {

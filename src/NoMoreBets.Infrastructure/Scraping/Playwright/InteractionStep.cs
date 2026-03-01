@@ -1,4 +1,4 @@
-namespace NoMoreBets.Infrastructure.Fetching;
+namespace NoMoreBets.Infrastructure.Scraping.Playwright;
 
 /// <summary>
 /// Describes a single interaction to perform on a page (e.g. click) before capturing HTML.
