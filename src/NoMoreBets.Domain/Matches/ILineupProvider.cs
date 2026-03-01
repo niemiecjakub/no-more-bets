@@ -1,5 +1,5 @@
 ﻿namespace NoMoreBets.Domain.Matches;
 public interface ILineupProvider
 {
-  public async Task<IReadOnlyList<GameLineup>> GetSoccerLineupsAsync();
+  public Task<IReadOnlyList<GameLineup>> GetSoccerLineupsAsync(CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Domain.Matches;
 

@@ -2,19 +2,13 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.Scraping.External.SoccerData.Exceptions;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace NoMoreBets.Infrastructure.Scraping.External.SoccerData;
-
-public class SoccerDataOptions
-{
-  public const string SectionName = "SoccerData";
-
-  public string? ApiKey { get; set; }
-}
 
 /// <summary>
 /// HTTP client for SoccerData API.

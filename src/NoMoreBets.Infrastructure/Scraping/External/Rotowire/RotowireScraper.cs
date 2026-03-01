@@ -1,12 +1,12 @@
-using System.Globalization;
-using System.Text.RegularExpressions;
 using AngleSharp;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Infrastructure.Scraping.Playwright;
+using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 

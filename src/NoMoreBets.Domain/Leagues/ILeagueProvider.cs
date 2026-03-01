@@ -1,8 +1,8 @@
-﻿using NoMoreBets.Domain.Clubs;
+﻿using NoMoreBets.Domain.Leagues.Dto;
 
 namespace NoMoreBets.Domain.Leagues;
 public interface ILeagueProvider
 {
-  public async Task<IReadOnlyList<Club>> GetLeagueTableAsync(TableFilter filter);
-  public async Task<IReadOnlyList<XgStats>> GetXgStatsAsync();
+  public Task<IReadOnlyList<TableEntry>> GetLeagueTableAsync(CancellationToken cancellationToken = default);
+  public Task<IReadOnlyList<XgStats>> GetXgStatsAsync(CancellationToken cancellationToken = default);
 }

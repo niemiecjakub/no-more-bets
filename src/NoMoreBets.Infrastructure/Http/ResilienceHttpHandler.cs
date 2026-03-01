@@ -58,8 +58,7 @@ public sealed class ResilienceHttpHandler : DelegatingHandler
           .Handle<TaskCanceledException>(ex => ex.InnerException is not OperationCanceledException),
       OnRetry = args =>
       {
-        logger?.LogWarning(args.Outcome.Exception,
-            "HTTP request retry {Attempt}/4", args.AttemptNumber + 1);
+        logger?.LogWarning(args.Outcome.Exception, "HTTP request retry {Attempt}/4", args.AttemptNumber + 1);
         return ValueTask.CompletedTask;
       }
     };

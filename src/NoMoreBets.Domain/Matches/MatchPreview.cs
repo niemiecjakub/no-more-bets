@@ -1,5 +1,5 @@
 using System.Text.Json;
-using NoMoreBets.Features.SoccerData.Model;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Domain.Matches;
 

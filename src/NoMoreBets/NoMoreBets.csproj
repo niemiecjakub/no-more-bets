@@ -35,4 +35,8 @@
     <EmbeddedResource Include="Infrastructure\Database\Scripts\**\*.sql" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Fotmob\Model\" />
+  </ItemGroup>
+
 </Project>

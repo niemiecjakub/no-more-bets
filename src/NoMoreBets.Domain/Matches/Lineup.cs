@@ -1,5 +1,4 @@
 using System.Text.Json;
-using NoMoreBets.Features.Rotowire.Model;
 
 namespace NoMoreBets.Domain.Matches;
 

@@ -1,12 +1,12 @@
-using System.Globalization;
-using System.Text.RegularExpressions;
 using AngleSharp;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
-using NoMoreBets.Infrastructure.Scraping.Playwright;
+using NoMoreBets.Domain.Leagues.Dto;
+using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
@@ -40,9 +40,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
   }
 
   /// <summary>Gets the league table (standings) for the configured league, optionally filtered by home/away/form.</summary>
-  public async Task<IReadOnlyList<Club>> GetLeagueTableAsync(TableFilter filter, CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<TableEntry>> GetLeagueTableAsync(CancellationToken cancellationToken = default)
   {
-    var url = BuildTableUrl(filter);
+    var url = $"{BaseUrl}/leagues/{FotmobConstants.LeagueId}/table/{FotmobConstants.LeagueSlug}";
     var html = await GetHtmlAfterInteractionsAsync(url, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
     return await ParseLeagueTableClubsAsync(html).ConfigureAwait(false);
   }
@@ -432,7 +432,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
     return list;
   }
 
-  internal async Task<IReadOnlyList<Club>> ParseLeagueTableClubsAsync(string html)
+  internal async Task<IReadOnlyList<TableEntry>> ParseLeagueTableClubsAsync(string html)
   {
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
@@ -442,7 +442,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
       throw new InvalidOperationException("Table container not found in the page.");
 
     var rows = tableContainer.QuerySelectorAll("div[class*='TableRowCSS']");
-    var clubs = new List<Club>();
+    var clubs = new List<TableEntry>();
 
     foreach (var row in rows)
     {
@@ -533,18 +533,6 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
     };
   }
 
-  private string BuildTableUrl(TableFilter filter)
-  {
-    var path = $"{BaseUrl}/leagues/{FotmobConstants.LeagueId}/table/{FotmobConstants.LeagueSlug}";
-    return filter switch
-    {
-      TableFilter.Home => path + "?filter=home",
-      TableFilter.Away => path + "?filter=away",
-      TableFilter.Form => path + "?filter=form",
-      _ => path
-    };
-  }
-
   private string BuildXgUrl()
   {
     var path = $"{BaseUrl}/leagues/{FotmobConstants.LeagueId}/table/{FotmobConstants.LeagueSlug}";
@@ -556,7 +544,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
     return $"{BaseUrl}/teams/{teamId}";
   }
 
-  private Club? ParseLeagueTableRow(IElement row)
+  private TableEntry? ParseLeagueTableRow(IElement row)
   {
     var positionCell = row.QuerySelector("div[class*='TablePositionCell']");
     if (positionCell is null)
@@ -608,7 +596,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
     var form = ParseForm(allCells[9]);
     ParseNextOpponent(allCells[10], out var nextOpponentId, out var nextOpponentName, out var nextOpponentLogoUrl);
 
-    return new Club
+    return new TableEntry
     {
       Position = position,
       TeamName = teamName,

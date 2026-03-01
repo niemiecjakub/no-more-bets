@@ -6,7 +6,7 @@ using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.RateLimiting;
 using Polly.Timeout;
-using NoMoreBets.Infrastructure.Scraping.Playwright;
+using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 
 namespace NoMoreBets.Infrastructure.Scraping;
 

@@ -1,5 +1,4 @@
 using System.Text.Json;
-using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails.Dtos;
 
 namespace NoMoreBets.Domain.Matches;
 
@@ -14,8 +13,8 @@ public class MatchDetails
   public int? MatchId { get; set; }
   public Match? Match { get; set; }
 
-  public MatchDetailsDto? GetFotmobDetails() =>
-    string.IsNullOrEmpty(FotmobDetailsJson)
-      ? null
-      : JsonSerializer.Deserialize<MatchDetailsDto>(FotmobDetailsJson, JsonOptions);
+  //public MatchDetailsDto? GetFotmobDetails() =>
+  //  string.IsNullOrEmpty(FotmobDetailsJson)
+  //    ? null
+  //    : JsonSerializer.Deserialize<MatchDetailsDto>(FotmobDetailsJson, JsonOptions);
 }

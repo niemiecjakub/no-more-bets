@@ -1,5 +1,7 @@
-﻿namespace NoMoreBets.Domain.Matches;
+﻿using NoMoreBets.Domain.Matches.Dto;
+
+namespace NoMoreBets.Domain.Matches;
 public interface IHeadToHeadProvider
 {
-  public async Task<HeadToHead> GetHeadToHeadAsync(int team1Id, int team2Id);
+  public Task<HeadToHead> GetHeadToHeadAsync(int team1Id, int team2Id, CancellationToken cancellationToken = default);
 }

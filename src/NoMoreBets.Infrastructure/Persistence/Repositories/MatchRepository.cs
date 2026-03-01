@@ -23,7 +23,7 @@ public class MatchRepository : IMatchRepository
 
   public Task<Match?> GetMatchBySoccerdataId(int soccerdataId)
   {
-    return _db.Match.FirstOrDefault(m => m.SoccerdataId == soccerdataId);
+    return _db.Match.FirstOrDefaultAsync(m => m.SoccerdataId == soccerdataId);
   }
 
   public Task<List<Match>> GetMatches(DateTime date)
@@ -38,8 +38,6 @@ public class MatchRepository : IMatchRepository
 
   public Task<MatchPreview?> GetMatchPreview(int matchId)
   {
-    return _db.MatchPreview
-      .FirstOrDefaultAsync(e => e.MatchId == matchId)
-      .ConfigureAwait(false);
+    return _db.MatchPreview.FirstOrDefaultAsync(e => e.MatchId == matchId);
   }
 }
