@@ -4,7 +4,7 @@ using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Rotowire.Model;
 using NoMoreBets.Features.SoccerData.Model;
 
-namespace NoMoreBets.Features.MatchAnalysis.MatchMatcher;
+namespace NoMoreBets.Application.Common.MatchMatcher;
 
 /// <summary>
 /// Matches teams and data across sources (Rotowire lineups, SoccerData previews, FotMob clubs).

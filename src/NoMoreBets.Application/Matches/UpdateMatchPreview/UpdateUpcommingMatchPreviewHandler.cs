@@ -1,51 +1,48 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Infrastructure.Database;
-using MatchPreviewEntity = NoMoreBets.Domain.Matches.MatchPreview;
+using Microsoft.Extensions.Logging;
+using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
 
 /// <summary>Command to refresh a single match preview from SoccerData API and upsert into the database.</summary>
-public record RefreshSoccerDataMatchPreviewCommand(int SoccerdataMatchId) : IRequest<Unit>;
+public record UpdateUpcommingMatchPreviewCommand(int SoccerdataMatchId) : IRequest<Unit>;
 
-public class RefreshSoccerDataMatchPreviewHandler(
-  SoccerDataClient client,
+public class UpdateUpcommingMatchPreviewHandler(
   AppDbContext db,
-  ILogger<RefreshSoccerDataMatchPreviewHandler> logger) : IRequestHandler<RefreshSoccerDataMatchPreviewCommand, Unit>
+  IMatchPreviewProvider matchPreviewProvider,
+  IMatchRepository matchRepository,
+  ILogger<UpdateUpcommingMatchPreviewHandler> logger) : IRequestHandler<UpdateUpcommingMatchPreviewCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-  public async Task<Unit> Handle(RefreshSoccerDataMatchPreviewCommand request, CancellationToken cancellationToken)
+  public async Task<Unit> Handle(UpdateUpcommingMatchPreviewCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation(
       "Handling {HandlerName} for Soccerdata match {SoccerdataMatchId}",
-      nameof(RefreshSoccerDataMatchPreviewHandler),
+      nameof(UpdateUpcommingMatchPreviewHandler),
       request.SoccerdataMatchId);
 
-    var matchPreview = await client.GetMatchPreviewAsync(request.SoccerdataMatchId, cancellationToken).ConfigureAwait(false);
+    var matchPreview = await matchPreviewProvider.GetMatchPreviewAsync(request.SoccerdataMatchId);
 
-    var match = await db.Match
-      .FirstOrDefaultAsync(m => m.SoccerdataId == request.SoccerdataMatchId, cancellationToken)
-      .ConfigureAwait(false);
+    var match = await matchRepository.GetMatchBySoccerdataId(request.SoccerdataMatchId);
 
     if (match == null)
     {
       logger.LogWarning(
         "Handler {HandlerName} found no match in DB for Soccerdata match {SoccerdataMatchId}",
-        nameof(RefreshSoccerDataMatchPreviewHandler),
+        nameof(UpdateUpcommingMatchPreviewHandler),
         request.SoccerdataMatchId);
       return Unit.Value;
     }
 
     var previewContentJson = JsonSerializer.Serialize(matchPreview.PreviewContent, JsonOptions);
-    var entity = await db.MatchPreview
-      .FirstOrDefaultAsync(e => e.MatchId == match.Id, cancellationToken)
-      .ConfigureAwait(false);
+    var entity = await matchRepository.GetMatchPreview(match.Id);
 
     if (entity == null)
     {
-      entity = new MatchPreviewEntity
+      entity = new MatchPreview
       {
         MatchId = match.Id,
         PreviewContentJson = previewContentJson
@@ -54,7 +51,7 @@ public class RefreshSoccerDataMatchPreviewHandler(
 
       logger.LogInformation(
         "Handler {HandlerName} created new match preview for MatchId={MatchId}, SoccerdataMatchId={SoccerdataMatchId}",
-        nameof(RefreshSoccerDataMatchPreviewHandler),
+        nameof(UpdateUpcommingMatchPreviewHandler),
         match.Id,
         request.SoccerdataMatchId);
     }
@@ -64,7 +61,7 @@ public class RefreshSoccerDataMatchPreviewHandler(
 
       logger.LogInformation(
         "Handler {HandlerName} updated existing match preview for MatchId={MatchId}, SoccerdataMatchId={SoccerdataMatchId}",
-        nameof(RefreshSoccerDataMatchPreviewHandler),
+        nameof(UpdateUpcommingMatchPreviewHandler),
         match.Id,
         request.SoccerdataMatchId);
     }

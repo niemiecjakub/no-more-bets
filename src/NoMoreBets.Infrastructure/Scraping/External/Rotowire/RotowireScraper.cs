@@ -2,18 +2,18 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using AngleSharp;
 using AngleSharp.Dom;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Features.Rotowire.Model;
-using NoMoreBets.Infrastructure.Fetching;
-using NoMoreBets.Infrastructure.Scraping;
+using NoMoreBets.Domain.Matches;
+using NoMoreBets.Infrastructure.Scraping.Playwright;
 
 namespace NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 
 /// <summary>
 /// RotoWire scraper for fetching and parsing soccer lineup data from rotowire.com.
 /// </summary>
-public class RotowireScraper : BaseScraper
+public class RotowireScraper : BaseScraper, ILineupProvider
 {
   private const string BaseUrl = "https://www.rotowire.com";
   private const string LineupsUrl = BaseUrl + "/soccer/lineups.php";

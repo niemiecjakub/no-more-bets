@@ -1,36 +1,34 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Leagues;
+using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
-using NoMoreBets.Features.Rotowire.Scraping;
-using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.Rotowire.GetRotowireLineups;
 
 /// <summary>Command to refresh Rotowire lineups (scrape and persist to database).</summary>
-public record RefreshRotowireLineupsCommand : IRequest<Unit>;
+public record UpdateLineupsCommand : IRequest<Unit>;
 
 /// <summary>
-/// Handles <see cref="RefreshRotowireLineupsCommand"/> by scraping RotoWire and upserting lineups into the database.
+/// Handles <see cref="UpdateLineupsCommand"/> by scraping RotoWire and upserting lineups into the database.
 /// </summary>
-public class RefreshRotowireLineupsHandler(
-  RotowireScraper scraper,
-  AppDbContext db,
+public class UpdateLineupsHandler(
+  ILineupProvider lineupProvider,
+  IMatchRepository matchRepository,
   IMatchMatcher matchMatcher,
-  ILogger<RefreshRotowireLineupsHandler> logger) : IRequestHandler<RefreshRotowireLineupsCommand, Unit>
+  ILogger<UpdateLineupsHandler> logger) : IRequestHandler<UpdateLineupsCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
   /// <inheritdoc />
-  public async Task<Unit> Handle(RefreshRotowireLineupsCommand request, CancellationToken cancellationToken)
+  public async Task<Unit> Handle(UpdateLineupsCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation(
       "Handling {HandlerName}: starting Rotowire lineups refresh",
-      nameof(RefreshRotowireLineupsHandler));
+      nameof(UpdateLineupsHandler));
 
-    var lineups = await scraper.GetSoccerLineupsAsync(cancellationToken).ConfigureAwait(false);
+    var lineups = await lineupProvider.GetSoccerLineupsAsync();
 
     var matchedCount = 0;
     var unmatchedCount = 0;
@@ -39,13 +37,7 @@ public class RefreshRotowireLineupsHandler(
 
     foreach (var lineup in lineups)
     {
-      var gameDayUtc = DateTime.SpecifyKind(lineup.Date, DateTimeKind.Utc).Date;
-      var matchesOnDay = await db.Match
-        .Where(m => m.MatchDate.Date == gameDayUtc)
-        .Include(m => m.HomeClub)
-        .Include(m => m.AwayClub)
-        .ToListAsync(cancellationToken)
-        .ConfigureAwait(false);
+      var matchesOnDay = await matchRepository.GetMatches(lineup.GameDay);
 
       var candidates = matchesOnDay
         .Select(m => (m.HomeClub.Name, m.AwayClub.Name, m))
@@ -57,10 +49,10 @@ public class RefreshRotowireLineupsHandler(
         unmatchedCount++;
         logger.LogWarning(
           "Handler {HandlerName} could not find match for Rotowire lineup {HomeTeam} vs {AwayTeam} on {GameDayUtc}",
-          nameof(RefreshRotowireLineupsHandler),
+          nameof(UpdateLineupsHandler),
           lineup.HomeTeamName,
           lineup.AwayTeamName,
-          gameDayUtc);
+          lineup.GameDay);
         continue;
       }
 
@@ -69,7 +61,7 @@ public class RefreshRotowireLineupsHandler(
       var homeTeamJson = JsonSerializer.Serialize(lineup.HomeTeam, JsonOptions);
       var awayTeamJson = JsonSerializer.Serialize(lineup.AwayTeam, JsonOptions);
 
-      var entity = await db.Lineup.SingleOrDefaultAsync(l => l.MatchId == matched.Id, cancellationToken);
+      var entity = await matchRepository.GetLineup(matched.Id);
 
       if (entity == null)
       {
@@ -91,7 +83,7 @@ public class RefreshRotowireLineupsHandler(
 
     logger.LogInformation(
       "Handler {HandlerName} completed Rotowire lineups refresh. Matched={MatchedCount}, Unmatched={UnmatchedCount}, Inserted={InsertedCount}, Updated={UpdatedCount}",
-      nameof(RefreshRotowireLineupsHandler),
+      nameof(UpdateLineupsHandler),
       matchedCount,
       unmatchedCount,
       insertedCount,

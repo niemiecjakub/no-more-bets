@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Features.SoccerData.Exceptions;
-using NoMoreBets.Features.SoccerData.Model;
+using NoMoreBets.Domain.Matches;
+using NoMoreBets.Infrastructure.Scraping.External.SoccerData.Exceptions;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -18,7 +19,7 @@ public class SoccerDataOptions
 /// <summary>
 /// HTTP client for SoccerData API.
 /// </summary>
-public class SoccerDataClient
+public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpcommingMatchProvider
 {
   private const string BaseUrl = "https://api.soccerdataapi.com";
 

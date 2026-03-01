@@ -11,22 +11,22 @@ namespace NoMoreBets.Features.Betclic.RefreshBetclicGames;
 /// <summary>
 /// Command to refresh Betclic games: fetches upcoming games from Betclic, and adds any match that does not yet exist (same teams, same day) to the database.
 /// </summary>
-public record RefreshBetclicGamesCommand : IRequest<IReadOnlyList<Match>>;
+public record UpdateMatchesCommand : IRequest<IReadOnlyList<Match>>;
 
 /// <summary>
-/// Handles <see cref="RefreshBetclicGamesCommand"/>: calls <see cref="BetclicScraper.GetUpcomingGamesAsync"/>,
+/// Handles <see cref="UpdateMatchesCommand"/>: calls <see cref="BetclicScraper.GetUpcomingGamesAsync"/>,
 /// for each game checks if a match for those teams on that day already exists; if not, adds it to the database.
 /// </summary>
-public class RefreshBetclicGamesHandler(
+public class UpdateMatchesHandler(
   BetclicScraper scraper,
   AppDbContext db,
-  IMatchMatcher matchMatcher) : IRequestHandler<RefreshBetclicGamesCommand, IReadOnlyList<Match>>
+  IMatchMatcher matchMatcher) : IRequestHandler<UpdateMatchesCommand, IReadOnlyList<Match>>
 {
   private const int LeagueId = 1;
   private const int StageId = 1;
 
   /// <inheritdoc />
-  public async Task<IReadOnlyList<Match>> Handle(RefreshBetclicGamesCommand request, CancellationToken cancellationToken)
+  public async Task<IReadOnlyList<Match>> Handle(UpdateMatchesCommand request, CancellationToken cancellationToken)
   {
     var upcomingGames = await scraper.GetUpcomingGamesAsync(cancellationToken).ConfigureAwait(false);
     var added = new List<Match>();

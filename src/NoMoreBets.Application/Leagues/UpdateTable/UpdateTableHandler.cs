@@ -1,73 +1,63 @@
 using System.Globalization;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Common.MatchMatcher;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
-using NoMoreBets.Domain.Matches;
-using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
-using NoMoreBets.Features.Fotmob.Model;
-using NoMoreBets.Features.Fotmob.Scraping;
-using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
-using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
 
 /// <summary>Command to refresh league table snapshot from FotMob (scrape table + xG, merge, persist). Always updates the latest season (max id) for the given league.</summary>
-public record RefreshFotmobLeagueTableSnapshotCommand(int LeagueId) : IRequest<Unit>;
+public record UpdateTableCommand(int LeagueId) : IRequest<Unit>;
 
 /// <summary>
-/// Handles <see cref="RefreshFotmobLeagueTableSnapshotCommand"/> by scraping FotMob table and xG stats,
+/// Handles <see cref="UpdateTableCommand"/> by scraping FotMob table and xG stats,
 /// merging by team name, and upserting into <see cref="LeagueTableSnapshot"/>.
 /// </summary>
-public class RefreshFotmobLeagueTableSnapshotHandler(
-  FotmobScraper scraper,
-  AppDbContext db,
+public class UpdateTableHandler(
+  ILeagueProvider leagueProvider,
+  ILeagueRepository leagueRepository,
+  IClubRepository clubRepository,
   IMatchMatcher matchMatcher,
-  ILogger<RefreshFotmobLeagueTableSnapshotHandler> logger) : IRequestHandler<RefreshFotmobLeagueTableSnapshotCommand, Unit>
+  ILogger<UpdateTableHandler> logger) : IRequestHandler<UpdateTableCommand, Unit>
 {
   /// <inheritdoc />
-  public async Task<Unit> Handle(RefreshFotmobLeagueTableSnapshotCommand request, CancellationToken cancellationToken)
+  public async Task<Unit> Handle(UpdateTableCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation(
       "Handling {HandlerName} for league {LeagueId}",
-      nameof(RefreshFotmobLeagueTableSnapshotHandler),
+      nameof(UpdateTableHandler),
       request.LeagueId);
 
-    var seasonId = await db.Season
-      .Where(s => s.LeagueId == request.LeagueId)
-      .MaxAsync(s => (int?)s.Id, cancellationToken)
-      .ConfigureAwait(false);
+    var season = await leagueRepository.GetLatestSeason(request.LeagueId);
 
-    if (seasonId == null)
+    if (season == null)
     {
       logger.LogError(
         "Handler {HandlerName} found no season for league {LeagueId}",
-        nameof(RefreshFotmobLeagueTableSnapshotHandler),
+        nameof(UpdateTableHandler),
         request.LeagueId);
       throw new InvalidOperationException($"No season found for league {request.LeagueId}.");
     }
 
     var snapshotDate = DateOnly.FromDateTime(DateTime.UtcNow);
-    var snapshotExists = await db.LeagueTableSnapshot
-      .AnyAsync(s => s.SeasonId == seasonId && s.SnapshotDate == snapshotDate, cancellationToken)
-      .ConfigureAwait(false);
+    var snapshotExists = await leagueRepository.TableSnapshotExists(request.LeagueId, snapshotDate);
 
     if (snapshotExists)
     {
       logger.LogInformation(
         "Handler {HandlerName} skipping snapshot creation because snapshot already exists for league {LeagueId} on {SnapshotDate}",
-        nameof(RefreshFotmobLeagueTableSnapshotHandler),
+        nameof(UpdateTableHandler),
         request.LeagueId,
         snapshotDate);
       return Unit.Value;
     }
 
-    var domainClubs = await db.Club
-      .Where(c => c.LeagueId == request.LeagueId)
-      .ToListAsync(cancellationToken)
-      .ConfigureAwait(false);
+    var domainClubs = await clubRepository.GetClubs(request.LeagueId);
 
-    var tableTask = scraper.GetLeagueTableAsync(TableFilter.All, cancellationToken);
-    var xgTask = scraper.GetXgStatsAsync(cancellationToken);
+    var tableTask = leagueProvider.GetLeagueTableAsync(TableFilter.All);
+    var xgTask = leagueProvider.GetXgStatsAsync();
     await Task.WhenAll(tableTask, xgTask).ConfigureAwait(false);
 
     var tableClubs = tableTask.Result;
@@ -75,11 +65,7 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
 
     var xgStatsDtos = xgStats.Select(XgStatsDto.From).ToList();
 
-    var latestSnapshot = await db.LeagueTableSnapshot
-      .Where(s => s.SeasonId == seasonId)
-      .Include(s => s.Rows)
-      .OrderByDescending(s => s.SnapshotDate)
-      .FirstOrDefaultAsync(cancellationToken) ?? new();
+    var latestSnapshot = await leagueRepository.GetLatestTableSnapshot(request.LeagueId) ?? new();
 
     if (latestSnapshot.Rows.Count > 0 && latestSnapshot.Rows.Count == tableClubs.Count)
     {
@@ -98,7 +84,7 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
       {
         logger.LogInformation(
           "Handler {HandlerName} skipping snapshot creation because all matches played are unchanged for league {LeagueId}",
-          nameof(RefreshFotmobLeagueTableSnapshotHandler),
+          nameof(UpdateTableHandler),
           request.LeagueId);
         return Unit.Value;
       }
@@ -107,7 +93,7 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
     var snapshot = new LeagueTableSnapshot
     {
       LeagueId = request.LeagueId,
-      SeasonId = seasonId.Value,
+      SeasonId = season.Id,
       SnapshotDate = snapshotDate
     };
 
@@ -138,12 +124,12 @@ public class RefreshFotmobLeagueTableSnapshotHandler(
       snapshot.Rows.Add(row);
     }
 
-    db.LeagueTableSnapshot.Add(snapshot);
-    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    leagueRepository.LeagueTableSnapshot.Add(snapshot);
+    await leagueRepository.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     logger.LogInformation(
       "Handler {HandlerName} created league table snapshot for league {LeagueId} on {SnapshotDate} with {RowCount} rows",
-      nameof(RefreshFotmobLeagueTableSnapshotHandler),
+      nameof(UpdateTableHandler),
       request.LeagueId,
       snapshotDate,
       snapshot.Rows.Count);

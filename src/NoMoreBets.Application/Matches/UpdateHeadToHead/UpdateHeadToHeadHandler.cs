@@ -1,36 +1,37 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
 
 /// <summary>Command to refresh head-to-head data from SoccerData API and upsert into the database.</summary>
-public record RefreshSoccerDataHeadToHeadCommand(int Team1SoccerdataId, int Team2SoccerdataId) : IRequest<Unit>;
+public record UpdateHeadToHeadCommand(int Team1SoccerdataId, int Team2SoccerdataId) : IRequest<Unit>;
 
-public class RefreshSoccerDataHeadToHeadHandler(
-  SoccerDataClient client,
-  AppDbContext db,
-  ILogger<RefreshSoccerDataHeadToHeadHandler> logger) : IRequestHandler<RefreshSoccerDataHeadToHeadCommand, Unit>
+public class UpdateHeadToHeadHandler(
+  IHeadToHeadProvider headToHeadProvider,
+  IClubRepository clubRepository,
+  IMatchRepository matchRepository,
+  ILogger<UpdateHeadToHeadHandler> logger) : IRequestHandler<UpdateHeadToHeadCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-  public async Task<Unit> Handle(RefreshSoccerDataHeadToHeadCommand request, CancellationToken cancellationToken)
+  public async Task<Unit> Handle(UpdateHeadToHeadCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation(
       "Handling {HandlerName} for Soccerdata teams {Team1SoccerdataId} vs {Team2SoccerdataId}",
-      nameof(RefreshSoccerDataHeadToHeadHandler),
+      nameof(UpdateHeadToHeadHandler),
       request.Team1SoccerdataId,
       request.Team2SoccerdataId);
 
-    var headToHead = await client.GetHeadToHeadAsync(request.Team1SoccerdataId, request.Team2SoccerdataId, cancellationToken).ConfigureAwait(false);
-
-    var clubIds = new[] { request.Team1SoccerdataId, request.Team2SoccerdataId };
-    var clubs = await db.Club
-      .Where(c => clubIds.Contains(c.SoccerdataId))
-      .ToListAsync(cancellationToken)
-      .ConfigureAwait(false);
+    var headToHead = await headToHeadProvider.GetHeadToHeadAsync(request.Team1SoccerdataId, request.Team2SoccerdataId);
+    var clubs = await clubRepository.GetBySoccerdataId(
+    [
+      request.Team1SoccerdataId,
+      request.Team2SoccerdataId
+    ]);
 
     var club1 = clubs.FirstOrDefault(c => c.SoccerdataId == request.Team1SoccerdataId);
     var club2 = clubs.FirstOrDefault(c => c.SoccerdataId == request.Team2SoccerdataId);
@@ -39,7 +40,7 @@ public class RefreshSoccerDataHeadToHeadHandler(
     {
       logger.LogWarning(
         "Handler {HandlerName} cannot update head-to-head: missing clubs for Soccerdata ids {Team1SoccerdataId} and/or {Team2SoccerdataId}",
-        nameof(RefreshSoccerDataHeadToHeadHandler),
+        nameof(UpdateHeadToHeadHandler),
         request.Team1SoccerdataId,
         request.Team2SoccerdataId);
       return Unit.Value;
@@ -48,10 +49,7 @@ public class RefreshSoccerDataHeadToHeadHandler(
     var (team1DbId, team2DbId) = Head2Head.NormalizeClubIds(club1.Id, club2.Id);
 
     var head2HeadJson = JsonSerializer.Serialize(headToHead, JsonOptions);
-    var entity = await db.Head2Head
-      .ForClubs(club1.Id, club2.Id)
-      .FirstOrDefaultAsync(cancellationToken)
-      .ConfigureAwait(false);
+    var entity = await matchRepository.GetHeadToHead(team1DbId, team2DbId);
 
     if (entity == null)
     {
@@ -66,7 +64,7 @@ public class RefreshSoccerDataHeadToHeadHandler(
 
       logger.LogInformation(
         "Handler {HandlerName} created new Head2Head entry for clubs {Team1Id} vs {Team2Id}",
-        nameof(RefreshSoccerDataHeadToHeadHandler),
+        nameof(UpdateHeadToHeadHandler),
         team1DbId,
         team2DbId);
     }
@@ -77,7 +75,7 @@ public class RefreshSoccerDataHeadToHeadHandler(
 
       logger.LogInformation(
         "Handler {HandlerName} updated existing Head2Head entry for clubs {Team1Id} vs {Team2Id}",
-        nameof(RefreshSoccerDataHeadToHeadHandler),
+        nameof(UpdateHeadToHeadHandler),
         entity.Team1Id,
         entity.Team2Id);
     }

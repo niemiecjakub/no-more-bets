@@ -1,37 +1,39 @@
 using System.Globalization;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Common.MatchMatcher;
+using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
-using NoMoreBets.Infrastructure.Database;
-using DomainMatch = NoMoreBets.Domain.Matches.Match;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
 
 /// <summary>Command to refresh upcoming match previews from SoccerData API, sync Match table, and update cache.</summary>
-public record RefreshSoccerDataMatchPreviewsUpcomingCommand(int? SoccerdataLeagueId = null) : IRequest<List<Match>>;
+public record UpdateUpcommingMatchesCommand(int? SoccerdataLeagueId = null) : IRequest<List<Match>>;
 
-public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
-  SoccerDataClient client,
-  AppDbContext db,
+public class UpdateUpcommingMatchesHandler(
+  IUpcommingMatchProvider upcommingMatchProvider,
   IMatchMatcher matchMatcher,
-  ILogger<RefreshSoccerDataMatchPreviewsUpcomingHandler> logger)
-  : IRequestHandler<RefreshSoccerDataMatchPreviewsUpcomingCommand, List<DomainMatch>>
+  IClubRepository clubRepository,
+  ILeagueRepository leagueRepository,
+  IMatchRepository matchRepository,
+  ILogger<UpdateUpcommingMatchesHandler> logger)
+  : IRequestHandler<UpdateUpcommingMatchesCommand, List<Match>>
 {
-  public async Task<List<DomainMatch>> Handle(RefreshSoccerDataMatchPreviewsUpcomingCommand request, CancellationToken cancellationToken)
+  public async Task<List<Match>> Handle(UpdateUpcommingMatchesCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation(
       "Handling {HandlerName} for Soccerdata league {SoccerdataLeagueId}",
-      nameof(RefreshSoccerDataMatchPreviewsUpcomingHandler),
+      nameof(UpdateUpcommingMatchesHandler),
       request.SoccerdataLeagueId);
 
-    var added = new List<DomainMatch>();
-    var previews = await client.GetMatchPreviewsUpcomingAsync(request.SoccerdataLeagueId, cancellationToken)
-      .ConfigureAwait(false);
+    var added = new List<Match>();
+    var previews = await upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(request.SoccerdataLeagueId);
 
     logger.LogInformation(
       "Handler {HandlerName} fetched {LeagueCount} leagues with upcoming match previews from SoccerData",
-      nameof(RefreshSoccerDataMatchPreviewsUpcomingHandler),
+      nameof(UpdateUpcommingMatchesHandler),
       previews.Count);
 
     var clubIds = previews
@@ -40,15 +42,13 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
       .Distinct()
       .ToList();
 
-    var clubsBySoccerdataId = await db.Club
-      .Where(c => clubIds.Contains(c.SoccerdataId))
-      .ToDictionaryAsync(c => c.SoccerdataId, cancellationToken)
-      .ConfigureAwait(false);
+    var clubsBySoccerdataId = await clubRepository.GetClubs(clubIds);
 
-    var leagues = await db.League.Select(c => c.SoccerdataId).ToListAsync(cancellationToken);
+    var leagues = await leagueRepository.GetLeagues();
+    var leagueIds = leagues.Select(c => c.SoccerdataId);
     foreach (var league in previews)
     {
-      if (!leagues.Contains(league.LeagueId))
+      if (!leagueIds.Contains(league.LeagueId))
       {
         continue;
       }
@@ -66,15 +66,10 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
           continue;
         }
 
-        var matchesOnDay = await db.Match
-          .Where(m => m.MatchDate.Date == gameDayUtc.Date)
-          .Include(m => m.HomeClub)
-          .Include(m => m.AwayClub)
-          .ToListAsync(cancellationToken)
-          .ConfigureAwait(false);
+        var matchesOnDay = await matchRepository.GetMatches(gameDayUtc);
 
         var candidates = matchesOnDay
-          .Select(m => (m.HomeClub.Name, m.AwayClub.Name, (DomainMatch)m))
+          .Select(m => (m.HomeClub.Name, m.AwayClub.Name, (Match)m))
           .ToList();
 
         var matched = matchMatcher.FindBestMatch(matchPreview.Teams.Home.Name, matchPreview.Teams.Away.Name, candidates);
@@ -101,7 +96,7 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
           continue;
         }
 
-        var newMatch = DomainMatch.CreateUpcomming(gameDayUtc, currentStageId, homeClub.Id, awayClub.Id);
+        var newMatch = Match.CreateUpcomming(gameDayUtc, currentStageId, homeClub.Id, awayClub.Id);
         newMatch.SoccerdataId = matchPreview.Id;
         db.Match.Add(newMatch);
         added.Add(newMatch);
@@ -112,7 +107,7 @@ public class RefreshSoccerDataMatchPreviewsUpcomingHandler(
 
     logger.LogInformation(
       "Handler {HandlerName} completed. Added {AddedMatchCount} new matches for Soccerdata league {SoccerdataLeagueId}",
-      nameof(RefreshSoccerDataMatchPreviewsUpcomingHandler),
+      nameof(UpdateUpcommingMatchesHandler),
       added.Count,
       request.SoccerdataLeagueId);
     return added;

@@ -1,4 +1,4 @@
-namespace NoMoreBets.Features.MatchAnalysis.MatchMatcher;
+namespace NoMoreBets.Application.Common.MatchMatcher;
 
 /// <summary>
 /// Order-independent key for matching teams (home/away). Normalized for lookup.
