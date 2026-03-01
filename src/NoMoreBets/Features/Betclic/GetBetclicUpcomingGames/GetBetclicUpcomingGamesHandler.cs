@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames.Dtos;
 using NoMoreBets.Features.Betclic.Scraping;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;

@@ -3,7 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
 using NoMoreBets.Features.SoccerData.Model;
-using DomainMatch = NoMoreBets.Domain.Entity.Match;
+using DomainMatch = NoMoreBets.Domain.Matches.Match;
 using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;

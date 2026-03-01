@@ -1,7 +1,7 @@
 using NoMoreBets.Domain.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace NoMoreBets.Domain.Entity;
+namespace NoMoreBets.Domain.Betting;
 
 public class BettingOddsSnapshotRow
 {

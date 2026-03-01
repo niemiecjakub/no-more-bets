@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Infrastructure.Database;
 

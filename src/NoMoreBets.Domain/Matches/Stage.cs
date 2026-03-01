@@ -1,4 +1,6 @@
-namespace NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Leagues;
+
+namespace NoMoreBets.Domain.Matches;
 
 public class Stage
 {

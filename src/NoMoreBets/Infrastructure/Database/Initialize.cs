@@ -1,11 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Features.SoccerData.Model;
 using System.Globalization;
-using DomainMatch = NoMoreBets.Domain.Entity.Match;
-using DomainSeason = NoMoreBets.Domain.Entity.Season;
-using DomainStage = NoMoreBets.Domain.Entity.Stage;
+using DomainMatch = NoMoreBets.Domain.Matches.Match;
+using DomainSeason = NoMoreBets.Domain.Leagues.Season;
+using DomainStage = NoMoreBets.Domain.Matches.Stage;
 
 namespace NoMoreBets.Infrastructure.Database;
 

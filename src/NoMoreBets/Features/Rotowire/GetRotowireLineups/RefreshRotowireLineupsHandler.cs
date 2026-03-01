@@ -1,7 +1,8 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
 using NoMoreBets.Features.Rotowire.Scraping;
 using NoMoreBets.Infrastructure.Database;

@@ -1,4 +1,4 @@
-namespace NoMoreBets.Domain.Entity;
+namespace NoMoreBets.Domain.Matches;
 
 public class MatchStatusEntity
 {

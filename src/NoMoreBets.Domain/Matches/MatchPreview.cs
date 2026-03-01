@@ -1,7 +1,7 @@
 using System.Text.Json;
 using NoMoreBets.Features.SoccerData.Model;
 
-namespace NoMoreBets.Domain.Entity;
+namespace NoMoreBets.Domain.Matches;
 
 public class MatchPreview
 {

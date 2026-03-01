@@ -1,4 +1,6 @@
-namespace NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Clubs;
+
+namespace NoMoreBets.Domain.Leagues;
 
 public class LeagueTableSnapshotRow
 {

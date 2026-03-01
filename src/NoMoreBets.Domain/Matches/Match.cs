@@ -1,7 +1,9 @@
+using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace NoMoreBets.Domain.Entity;
+namespace NoMoreBets.Domain.Matches;
 
 public class Match
 {

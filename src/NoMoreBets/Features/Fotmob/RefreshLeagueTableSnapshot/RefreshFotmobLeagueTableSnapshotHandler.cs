@@ -1,7 +1,8 @@
 using System.Globalization;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Fotmob.Model;
 using NoMoreBets.Features.Fotmob.Scraping;

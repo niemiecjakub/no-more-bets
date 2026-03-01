@@ -1,7 +1,7 @@
 using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Features.Fotmob.GetFotmobClubOverview;
 using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails;
 using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails.Dtos;

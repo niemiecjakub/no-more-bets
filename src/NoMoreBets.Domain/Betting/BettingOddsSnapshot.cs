@@ -1,4 +1,6 @@
-namespace NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Matches;
+
+namespace NoMoreBets.Domain.Betting;
 
 public class BettingOddsSnapshot
 {

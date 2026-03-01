@@ -1,4 +1,4 @@
-using NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
 using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
 using NoMoreBets.Features.Rotowire.Model;

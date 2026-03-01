@@ -1,7 +1,7 @@
 using System.Text.Json;
 using NoMoreBets.Features.Fotmob.GetFotmobMatchDetails.Dtos;
 
-namespace NoMoreBets.Domain.Entity;
+namespace NoMoreBets.Domain.Matches;
 
 public class MatchDetails
 {

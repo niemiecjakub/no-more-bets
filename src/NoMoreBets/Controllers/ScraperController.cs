@@ -32,7 +32,7 @@ using NoMoreBets.Features.MatchAnalysis.Model;
 using NoMoreBets.Features.MatchAnalysis.RunMatchAnalysis;
 using NoMoreBets.Features.Prediction.PredictMatch;
 using NoMoreBets.Infrastructure.Database;
-using Match = NoMoreBets.Domain.Entity.Match;
+using Match = NoMoreBets.Domain.Matches.Match;
 using NoMoreBets.Features.Jobs;
 
 namespace NoMoreBets.Controllers;

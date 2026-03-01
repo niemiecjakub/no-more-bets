@@ -2,7 +2,7 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Infrastructure.Database;
-using MatchPreviewEntity = NoMoreBets.Domain.Entity.MatchPreview;
+using MatchPreviewEntity = NoMoreBets.Domain.Matches.MatchPreview;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
 

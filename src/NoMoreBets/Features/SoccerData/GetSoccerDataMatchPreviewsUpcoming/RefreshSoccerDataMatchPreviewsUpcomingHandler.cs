@@ -1,10 +1,10 @@
 using System.Globalization;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
 using NoMoreBets.Infrastructure.Database;
-using DomainMatch = NoMoreBets.Domain.Entity.Match;
+using DomainMatch = NoMoreBets.Domain.Matches.Match;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
 

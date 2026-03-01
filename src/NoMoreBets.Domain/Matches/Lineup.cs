@@ -1,7 +1,7 @@
 using System.Text.Json;
 using NoMoreBets.Features.Rotowire.Model;
 
-namespace NoMoreBets.Domain.Entity;
+namespace NoMoreBets.Domain.Matches;
 
 public class Lineup
 {

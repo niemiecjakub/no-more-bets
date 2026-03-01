@@ -1,4 +1,7 @@
-namespace NoMoreBets.Domain.Entity;
+using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Domain.Matches;
+
+namespace NoMoreBets.Domain.Clubs;
 
 public class Club
 {
