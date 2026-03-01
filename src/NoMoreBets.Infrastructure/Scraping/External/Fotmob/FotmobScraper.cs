@@ -7,7 +7,7 @@ using NoMoreBets.Features.Fotmob.Model;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
 
-namespace NoMoreBets.Features.Fotmob.Scraping;
+namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
 /// <summary>
 /// FotMob scraper for fetching Premier League table and xG statistics.

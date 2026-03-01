@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace NoMoreBets.Features.SoccerData;
+namespace NoMoreBets.Infrastructure.Scraping.External.SoccerData;
 
 public class SoccerDataOptions
 {

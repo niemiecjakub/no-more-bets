@@ -8,7 +8,7 @@ using NoMoreBets.Features.Rotowire.Model;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
 
-namespace NoMoreBets.Features.Rotowire.Scraping;
+namespace NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 
 /// <summary>
 /// RotoWire scraper for fetching and parsing soccer lineup data from rotowire.com.

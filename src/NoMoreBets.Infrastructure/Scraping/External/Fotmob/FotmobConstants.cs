@@ -1,4 +1,4 @@
-namespace NoMoreBets.Features.Fotmob.Scraping;
+namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
 /// <summary>
 /// Constants for FotMob scraper (Premier League).

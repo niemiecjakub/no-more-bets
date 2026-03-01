@@ -1,4 +1,4 @@
-namespace NoMoreBets.Features.SoccerData;
+namespace NoMoreBets.Infrastructure.Scraping.External.SoccerData;
 
 /// <summary>
 /// SoccerData API constants

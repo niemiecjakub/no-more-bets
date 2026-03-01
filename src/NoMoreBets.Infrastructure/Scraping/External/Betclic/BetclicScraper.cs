@@ -7,7 +7,7 @@ using NoMoreBets.Features.Betclic.Model;
 using NoMoreBets.Infrastructure.Fetching;
 using NoMoreBets.Infrastructure.Scraping;
 
-namespace NoMoreBets.Features.Betclic.Scraping;
+namespace NoMoreBets.Infrastructure.Scraping.External.Betclic;
 
 /// <summary>
 /// Betclic scraper for fetching Premier League upcoming games and match bookmaker events from betclic.pl.

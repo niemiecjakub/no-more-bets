@@ -1,4 +1,4 @@
-namespace NoMoreBets.Features.Betclic.Scraping;
+namespace NoMoreBets.Infrastructure.Scraping.External.Betclic;
 
 /// <summary>
 /// Options for Betclic scraper: empty-result retry behavior.
