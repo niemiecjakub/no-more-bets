@@ -12,7 +12,7 @@ namespace NoMoreBets.Infrastructure.Scraping.External.Betclic;
 /// <summary>
 /// Betclic scraper for fetching Premier League upcoming games and match bookmaker events from betclic.pl.
 /// </summary>
-public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider
+public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEventsProvider
 {
   private const string BaseUrl = "https://www.betclic.pl";
   private const string PremierLeagueUrl = BaseUrl + "/football-sfootball/premier-league-c3";

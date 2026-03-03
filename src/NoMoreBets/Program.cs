@@ -1,137 +1,35 @@
-using System.Net;
-using Polly;
 using Hangfire;
 using Hangfire.Dashboard;
-using Hangfire.PostgreSql;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Features.Betclic.Scraping;
-using NoMoreBets.Features.Fotmob.Scraping;
-using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
-using NoMoreBets.Features.MatchAnalysis.Options;
-using NoMoreBets.Features.MatchAnalysis.Persistence;
-using NoMoreBets.Features.Prediction.Plugins;
-using NoMoreBets.Features.Prediction.PredictMatch;
-using NoMoreBets.Features.Rotowire.Scraping;
-using NoMoreBets.Features.SoccerData;
-using NoMoreBets.Infrastructure.Database;
-using NoMoreBets.Infrastructure.Fetching;
-using NoMoreBets.Infrastructure.Http;
-using NoMoreBets.Infrastructure.Scraping;
-using NoMoreBets.Features.Jobs;
+using NoMoreBets.Application;
+using NoMoreBets.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddHangfireConfiguration(builder.Configuration);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
   c.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
 });
-var dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddDbContextFactory<AppDbContext>(options =>
-  options.UseNpgsql(dbConnectionString, o =>
-    {
-      o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-    }));
-
-builder.Services.AddHealthChecks()
-  .AddNpgSql(dbConnectionString, tags: ["db"])
-  .AddDbContextCheck<AppDbContext>(tags: ["dbContext"]);
-
-builder.Services.Configure<BaseScraperOptions>(builder.Configuration.GetSection(BaseScraperOptions.SectionName));
-builder.Services.Configure<BetclicScraperOptions>(builder.Configuration.GetSection(BetclicScraperOptions.SectionName));
-builder.Services.Configure<SoccerDataOptions>(builder.Configuration.GetSection(SoccerDataOptions.SectionName));
-builder.Services.Configure<MatchAnalysisOptions>(builder.Configuration.GetSection(MatchAnalysisOptions.SectionName));
-builder.Services.Configure<OpenAiAgentOptions>(builder.Configuration.GetSection(OpenAiAgentOptions.SectionName));
-builder.Services.AddSingleton<IMatchMatcher, MatchMatcher>();
-builder.Services.AddSingleton<IMatchAnalysisPersistence, FileMatchAnalysisPersistence>();
-builder.Services.AddSingleton<FootballDataPlugin>();
-builder.Services.AddSingleton<SquadPlugin>();
-builder.Services.AddSingleton<BookmakerPlugin>();
-builder.Services.AddSingleton<IPredictMatchAgentOrchestrator, PredictMatchAgentOrchestrator>();
-
-builder.Services.Configure<ProxyOptions>(builder.Configuration.GetSection(ProxyOptions.SectionName));
-builder.Services.AddSingleton<PlaywrightBrowserService>();
-builder.Services.AddTransient<PlaywrightPageFetcher>();
-
-builder.Services.AddScoped<Initialize>();
-builder.Services.AddSingleton<RotowireScraper>();
-builder.Services.AddSingleton<BetclicScraper>();
-builder.Services.AddSingleton<FotmobScraper>();
-builder.Services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>
-  ResilienceHttpHandler.CreatePipeline(sp.GetService<ILogger<ResilienceHttpHandler>>()));
-builder.Services.AddTransient<ResilienceHttpHandler>();
-builder.Services.AddHttpClient<SoccerDataClient>()
-  .AddHttpMessageHandler<ResilienceHttpHandler>()
-  .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
-  {
-    AutomaticDecompression = DecompressionMethods.All
-  });
-
-builder.Services.AddOptions<SoccerDataOptions>()
-    .Bind(builder.Configuration.GetSection(SoccerDataOptions.SectionName))
-    .Validate(o => !string.IsNullOrWhiteSpace(o.ApiKey), "SoccerData:ApiKey is required")
-    .ValidateOnStart();
-
-builder.Services.AddHangfire(config => config
-  .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-  .UseSimpleAssemblyNameTypeSerializer()
-  .UseRecommendedSerializerSettings()
-  .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(dbConnectionString)));
-builder.Services.AddHangfireServer(options => options.WorkerCount = 3);
-builder.Services.AddScoped<JobService>();
 
 var app = builder.Build();
-
-DbInitializer.Initialize(dbConnectionString);
 
 app.MapHealthChecks("/health", new HealthCheckOptions()
 {
   ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 
-using (var scope = app.Services.CreateScope())
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-  var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
-  // Runs once per day at 02:00
-  recurringJobManager.AddOrUpdate<JobService>(
-    "get-soccerdata-upcoming-matches",
-    jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId),
-    "0 1 * * *");
+  Authorization = [new AllowAllDashboardAuthorizationFilter()]
+});
 
-  // Runs once per day at 15:00
-  recurringJobManager.AddOrUpdate<JobService>(
-    "get-upcoming-betclic-games",
-    jobService => jobService.GetBetclicGames(),
-    "0 15 * * *");
-
-  // Runs once per day at 16:00
-  recurringJobManager.AddOrUpdate<JobService>(
-    "get-lineups",
-    jobService => jobService.GetLineups(),
-    "0 16 * * *");
-
-  // Runs once per day at 10:00
-  recurringJobManager.AddOrUpdate<JobService>(
-    "get-league-table",
-    jobService => jobService.GetLeagueTable(),
-    "0 10 * * *");
-
-  // Runs hourly at minute 0
-  recurringJobManager.AddOrUpdate<JobService>(
-    "close-starting-soon-matches",
-    jobService => jobService.CloseStartingSoonMatches(),
-    "0 * * * *");
-
-  // Runs hourly at 15 min past the hour
-  recurringJobManager.AddOrUpdate<JobService>(
-    "get-betting-odds",
-    jobService => jobService.ScheduleBettingOddsJob(),
-    "15 * * * *");
-}
+HangfireConfiguration.UseRecurringJobs();
 
 if (app.Environment.IsDevelopment())
 {
@@ -139,16 +37,11 @@ if (app.Environment.IsDevelopment())
   app.UseSwaggerUI();
 }
 
-app.UseHangfireDashboard("/hangfire", new DashboardOptions
-{
-  Authorization = [new AllowAllDashboardAuthorizationFilter()]
-});
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
-
 
 public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
 {

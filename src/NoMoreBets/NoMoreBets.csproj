@@ -32,11 +32,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Infrastructure\Database\Scripts\**\*.sql" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Features\Fotmob\Model\" />
+    <ProjectReference Include="..\NoMoreBets.Application\NoMoreBets.Application.csproj" />
+    <ProjectReference Include="..\NoMoreBets.Infrastructure\NoMoreBets.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

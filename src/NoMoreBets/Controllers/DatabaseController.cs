@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Infrastructure.Database;
+using NoMoreBets.Infrastructure.Persistence;
 
 namespace NoMoreBets.Controllers;
 

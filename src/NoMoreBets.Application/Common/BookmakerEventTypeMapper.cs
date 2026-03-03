@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 using NoMoreBets.Domain.Enums;
 
-namespace NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
+namespace NoMoreBets.Application.Common;
 
 /// <summary>
 /// Maps a bookmaker event title (e.g. from Betclic) to <see cref="BettingEventType"/> using

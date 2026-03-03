@@ -1,23 +1,22 @@
-using Hangfire;
+﻿using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Betting.GetBetEvents;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
-using NoMoreBets.Domain.Clubs;
-using NoMoreBets.Domain.Leagues;
-using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
-using NoMoreBets.Features.Betclic.GetBetclicUpcomingGames;
-using NoMoreBets.Features.Betclic.Model;
+using NoMoreBets.Domain.Matches;
+using NoMoreBets.Features.Betclic.RefreshBetclicGames;
 using NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
 using NoMoreBets.Features.Rotowire.GetRotowireLineups;
 using NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
 using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
 using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
-using NoMoreBets.Infrastructure.Database;
+using NoMoreBets.Infrastructure.Persistence;
 using System.Text.Json;
 
-namespace NoMoreBets.Features.Jobs;
+namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
 public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService> logger)
 {
@@ -31,7 +30,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       nameof(GetUpcommingSoccerdataMatches),
       soccerdataLeagueId);
 
-    var upcommingMatches = await mediator.Send(new RefreshSoccerDataMatchPreviewsUpcomingCommand(soccerdataLeagueId));
+    var upcommingMatches = await mediator.Send(new UpdateUpcommingMatchesCommand(soccerdataLeagueId));
     logger.LogInformation(
       "Job {JobName} fetched {MatchCount} upcoming matches for Soccerdata league {SoccerdataLeagueId}",
       nameof(GetUpcommingSoccerdataMatches),
@@ -70,7 +69,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       nameof(GetUpcommingSoccerdataMatchePreview),
       soccerdataMatchId);
 
-    await mediator.Send(new RefreshSoccerDataMatchPreviewCommand(soccerdataMatchId));
+    await mediator.Send(new UpdateUpcommingMatchPreviewCommand(soccerdataMatchId));
 
     logger.LogInformation(
       "Completed job {JobName} for Soccerdata match {SoccerdataMatchId}",
@@ -158,7 +157,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
   [AutomaticRetry(Attempts = 3)]
   public async Task RefreshHead2HeadData(int homeClubSoccerdataId, int awayClubSoccerdataId)
   {
-    await mediator.Send(new RefreshSoccerDataHeadToHeadCommand(homeClubSoccerdataId, awayClubSoccerdataId));
+    await mediator.Send(new UpdateHeadToHeadCommand(homeClubSoccerdataId, awayClubSoccerdataId));
   }
 
   [AutomaticRetry(Attempts = 3)]
@@ -168,7 +167,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       "Starting job {JobName} to refresh Rotowire lineups",
       nameof(GetLineups));
 
-    await mediator.Send(new RefreshRotowireLineupsCommand());
+    await mediator.Send(new UpdateLineupsCommand());
 
     logger.LogInformation(
       "Completed job {JobName} to refresh Rotowire lineups",
@@ -195,7 +194,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       return;
     }
 
-    await mediator.Send(new RefreshFotmobLeagueTableSnapshotCommand(premierLeagueId));
+    await mediator.Send(new UpdateTableCommand(premierLeagueId));
 
     logger.LogInformation(
       "Completed job {JobName} for league {LeagueId}",
@@ -252,7 +251,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       "Starting job {JobName} to process upcoming Betclic games",
       nameof(GetBetclicGames));
 
-    var upcommingGames = await mediator.Send(new GetBetclicUpcomingGamesQuery());
+    var upcommingGames = await mediator.Send(new UpdateMatchesCommand());
     logger.LogInformation(
       "Job {JobName} received {GameCount} upcoming Betclic games",
       nameof(GetBetclicGames),
@@ -396,4 +395,26 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
   }
 
   private static string GetBettingOddsJobId(int matchId) => $"betting-odds-{matchId}";
+}
+
+
+
+public static class Head2HeadQueryableExtensions
+{
+  public static IQueryable<Head2Head> ForClubs(this IQueryable<Head2Head> query, int club1Id, int club2Id)
+  {
+    var (team1Id, team2Id) = Head2Head.NormalizeClubIds(club1Id, club2Id);
+    return query.Where(h => h.Team1Id == team1Id && h.Team2Id == team2Id);
+  }
+}
+
+public static class MatchQueryableExtensions
+{
+  /// <summary>
+  /// Filters Match to rows where the two clubs are home and away (order-independent).
+  /// </summary>
+  public static IQueryable<Match> ForClubs(this IQueryable<Match> query, int club1Id, int club2Id) =>
+    query.Where(m =>
+      (m.HomeClubId == club1Id && m.AwayClubId == club2Id) ||
+      (m.HomeClubId == club2Id && m.AwayClubId == club1Id));
 }

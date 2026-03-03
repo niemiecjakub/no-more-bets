@@ -1,7 +1,14 @@
+using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Betting.Dto;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Features.Betclic.Model;
 
 namespace NoMoreBets.Features.Betclic.GetBetclicMatchEvents.Dtos;
+
+public record EventOptionDto(string Label, double Odds)
+{
+  public static EventOptionDto From(EventOption source) =>
+      new(source.Label, source.Odds);
+}
 
 /// <summary>API response DTO for a bookmaker event, optionally with mapped <see cref="BettingEventType"/>.</summary>
 public record BookmakerEventDto(string? EventTypeName, BettingEventType? EventType, string Title, IReadOnlyList<EventOptionDto> Options)
