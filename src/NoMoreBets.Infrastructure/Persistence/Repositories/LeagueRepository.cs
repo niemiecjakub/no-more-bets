@@ -44,4 +44,9 @@ public class LeagueRepository : ILeagueRepository
          .OrderByDescending(s => s.Id)
          .FirstAsync();
   }
+
+  public async Task AddLeagueTableSnapshot(LeagueTableSnapshot snapshot)
+  {
+    await _db.LeagueTableSnapshot.AddAsync(snapshot);
+  }
 }

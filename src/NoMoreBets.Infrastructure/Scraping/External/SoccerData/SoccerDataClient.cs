@@ -72,7 +72,7 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
   }
 
   /// <inheritdoc />
-  public async Task<MatchPreview> GetMatchPreviewAsync(int soccerdataMatchId, CancellationToken cancellationToken = default)
+  public async Task<MatchPreviewDto> GetMatchPreviewAsync(int soccerdataMatchId, CancellationToken cancellationToken = default)
   {
     var endpoint = "/match-preview/";
     var queryParams = new Dictionary<string, object?> { ["match_id"] = soccerdataMatchId };
@@ -80,7 +80,7 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
     if (element is null)
       throw new SoccerDataException($"No response for match preview {soccerdataMatchId}");
 
-    var preview = element.Value.Deserialize<MatchPreview>(JsonOptions);
+    var preview = element.Value.Deserialize<MatchPreviewDto>(JsonOptions);
     if (preview is null)
       throw new SoccerDataException($"Failed to deserialize match preview {soccerdataMatchId}");
     return preview;

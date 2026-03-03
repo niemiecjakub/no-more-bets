@@ -1,7 +1,7 @@
 using System.Text.Json;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
@@ -10,9 +10,8 @@ namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
 public record UpdateUpcommingMatchPreviewCommand(int SoccerdataMatchId) : IRequest<Unit>;
 
 public class UpdateUpcommingMatchPreviewHandler(
-  AppDbContext db,
   IMatchPreviewProvider matchPreviewProvider,
-  IMatchRepository matchRepository,
+  IUnitOfWork unitOfWork,
   ILogger<UpdateUpcommingMatchPreviewHandler> logger) : IRequestHandler<UpdateUpcommingMatchPreviewCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -26,7 +25,7 @@ public class UpdateUpcommingMatchPreviewHandler(
 
     var matchPreview = await matchPreviewProvider.GetMatchPreviewAsync(request.SoccerdataMatchId);
 
-    var match = await matchRepository.GetMatchBySoccerdataId(request.SoccerdataMatchId);
+    var match = await unitOfWork.Matches.GetMatchBySoccerdataId(request.SoccerdataMatchId);
 
     if (match == null)
     {
@@ -38,7 +37,7 @@ public class UpdateUpcommingMatchPreviewHandler(
     }
 
     var previewContentJson = JsonSerializer.Serialize(matchPreview.PreviewContent, JsonOptions);
-    var entity = await matchRepository.GetMatchPreview(match.Id);
+    var entity = await unitOfWork.Matches.GetMatchPreview(match.Id);
 
     if (entity == null)
     {
@@ -47,7 +46,7 @@ public class UpdateUpcommingMatchPreviewHandler(
         MatchId = match.Id,
         PreviewContentJson = previewContentJson
       };
-      db.MatchPreview.Add(entity);
+      await unitOfWork.Matches.AddMatchPreview(entity);
 
       logger.LogInformation(
         "Handler {HandlerName} created new match preview for MatchId={MatchId}, SoccerdataMatchId={SoccerdataMatchId}",
@@ -66,7 +65,7 @@ public class UpdateUpcommingMatchPreviewHandler(
         request.SoccerdataMatchId);
     }
 
-    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    await unitOfWork.SaveChangesAsync(cancellationToken);
 
     return Unit.Value;
   }

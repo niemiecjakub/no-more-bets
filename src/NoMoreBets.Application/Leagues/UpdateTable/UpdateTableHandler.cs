@@ -1,9 +1,9 @@
 using System.Globalization;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
-using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Clubs.Dto;
 using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
@@ -17,8 +17,7 @@ public record UpdateTableCommand(int LeagueId) : IRequest<Unit>;
 /// </summary>
 public class UpdateTableHandler(
   ILeagueProvider leagueProvider,
-  ILeagueRepository leagueRepository,
-  IClubRepository clubRepository,
+  IUnitOfWork unitOfWork,
   IMatchMatcher matchMatcher,
   ILogger<UpdateTableHandler> logger) : IRequestHandler<UpdateTableCommand, Unit>
 {
@@ -30,7 +29,7 @@ public class UpdateTableHandler(
       nameof(UpdateTableHandler),
       request.LeagueId);
 
-    var season = await leagueRepository.GetLatestSeason(request.LeagueId);
+    var season = await unitOfWork.Leagues.GetLatestSeason(request.LeagueId);
 
     if (season == null)
     {
@@ -42,7 +41,7 @@ public class UpdateTableHandler(
     }
 
     var snapshotDate = DateOnly.FromDateTime(DateTime.UtcNow);
-    var snapshotExists = await leagueRepository.TableSnapshotExists(request.LeagueId, snapshotDate);
+    var snapshotExists = await unitOfWork.Leagues.TableSnapshotExists(request.LeagueId, snapshotDate);
 
     if (snapshotExists)
     {
@@ -54,9 +53,9 @@ public class UpdateTableHandler(
       return Unit.Value;
     }
 
-    var domainClubs = await clubRepository.GetClubs(request.LeagueId);
+    var domainClubs = await unitOfWork.Clubs.GetClubs(request.LeagueId);
 
-    var tableTask = leagueProvider.GetLeagueTableAsync(TableFilter.All);
+    var tableTask = leagueProvider.GetLeagueTableAsync();
     var xgTask = leagueProvider.GetXgStatsAsync();
     await Task.WhenAll(tableTask, xgTask).ConfigureAwait(false);
 
@@ -65,7 +64,7 @@ public class UpdateTableHandler(
 
     var xgStatsDtos = xgStats.Select(XgStatsDto.From).ToList();
 
-    var latestSnapshot = await leagueRepository.GetLatestTableSnapshot(request.LeagueId) ?? new();
+    var latestSnapshot = await unitOfWork.Leagues.GetLatestTableSnapshot(request.LeagueId) ?? new();
 
     if (latestSnapshot.Rows.Count > 0 && latestSnapshot.Rows.Count == tableClubs.Count)
     {
@@ -124,8 +123,8 @@ public class UpdateTableHandler(
       snapshot.Rows.Add(row);
     }
 
-    leagueRepository.LeagueTableSnapshot.Add(snapshot);
-    await leagueRepository.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    await unitOfWork.Leagues.AddLeagueTableSnapshot(snapshot);
+    await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     logger.LogInformation(
       "Handler {HandlerName} created league table snapshot for league {LeagueId} on {SnapshotDate} with {RowCount} rows",

@@ -2,9 +2,8 @@ using System.Globalization;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
-using NoMoreBets.Domain.Clubs;
-using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
@@ -15,8 +14,7 @@ public record UpdateUpcommingMatchesCommand(int? SoccerdataLeagueId = null) : IR
 public class UpdateUpcommingMatchesHandler(
   IUpcommingMatchProvider upcommingMatchProvider,
   IMatchMatcher matchMatcher,
-  IClubRepository clubRepository,
-  ILeagueRepository leagueRepository,
+  IUnitOfWork unitOfWork,
   IMatchRepository matchRepository,
   ILogger<UpdateUpcommingMatchesHandler> logger)
   : IRequestHandler<UpdateUpcommingMatchesCommand, List<Match>>
@@ -42,9 +40,10 @@ public class UpdateUpcommingMatchesHandler(
       .Distinct()
       .ToList();
 
-    var clubsBySoccerdataId = await clubRepository.GetClubs(clubIds);
+    var clubsBySoccerdataId = await unitOfWork.Clubs.GetBySoccerdataId(clubIds);
+    var clubsMap = clubsBySoccerdataId.ToDictionary(c => c.SoccerdataId, c => c);
 
-    var leagues = await leagueRepository.GetLeagues();
+    var leagues = await unitOfWork.Leagues.GetLeagues();
     var leagueIds = leagues.Select(c => c.SoccerdataId);
     foreach (var league in previews)
     {
@@ -53,12 +52,7 @@ public class UpdateUpcommingMatchesHandler(
         continue;
       }
 
-      var currentStageId = await db.Stage
-          .Where(s => s.Season.League.SoccerdataId == league.LeagueId)
-          .OrderByDescending(s => s.Id)
-          .Select(s => s.Id)
-          .FirstOrDefaultAsync();
-
+      var currentStage = await unitOfWork.Leagues.GetCurrentStage(league.LeagueId);
       foreach (var matchPreview in league.MatchPreviews)
       {
         if (!TryParseMatchDate(matchPreview.Date, matchPreview.Time, out var gameDayUtc))
@@ -83,8 +77,8 @@ public class UpdateUpcommingMatchesHandler(
           continue;
         }
 
-        if (!clubsBySoccerdataId.TryGetValue(matchPreview.Teams.Home.Id, out var homeClub) ||
-            !clubsBySoccerdataId.TryGetValue(matchPreview.Teams.Away.Id, out var awayClub))
+        if (!clubsMap.TryGetValue(matchPreview.Teams.Home.Id, out var homeClub) ||
+            !clubsMap.TryGetValue(matchPreview.Teams.Away.Id, out var awayClub))
         {
           logger.LogWarning(
             "Skipping insert for match {MatchId} ({Home} vs {Away}): missing club(s) in DB. HomeClubId={HomeSoccerdataId}, AwayClubId={AwaySoccerdataId}",
@@ -96,14 +90,14 @@ public class UpdateUpcommingMatchesHandler(
           continue;
         }
 
-        var newMatch = Match.CreateUpcomming(gameDayUtc, currentStageId, homeClub.Id, awayClub.Id);
+        var newMatch = Match.CreateUpcomming(gameDayUtc, currentStage.Id, homeClub.Id, awayClub.Id);
         newMatch.SoccerdataId = matchPreview.Id;
-        db.Match.Add(newMatch);
+        await unitOfWork.Matches.AddMatch(newMatch);
         added.Add(newMatch);
       }
     }
 
-    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    await unitOfWork.SaveChangesAsync(cancellationToken);
 
     logger.LogInformation(
       "Handler {HandlerName} completed. Added {AddedMatchCount} new matches for Soccerdata league {SoccerdataLeagueId}",

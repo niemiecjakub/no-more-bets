@@ -9,6 +9,7 @@ public class MatchRepository : IMatchRepository
   {
     _db = db;
   }
+
   public Task<Head2Head?> GetHeadToHead(int team1, int team2)
   {
     return _db.Head2Head
@@ -39,5 +40,19 @@ public class MatchRepository : IMatchRepository
   public Task<MatchPreview?> GetMatchPreview(int matchId)
   {
     return _db.MatchPreview.FirstOrDefaultAsync(e => e.MatchId == matchId);
+  }
+
+  public async Task AddLineup(Lineup lineup)
+  {
+    await _db.Lineup.AddAsync(lineup);
+  }
+
+  public async Task AddMatch(Match match)
+  {
+    await _db.Match.AddAsync(match);
+  }
+  public async Task AddMatchPreview(MatchPreview matchPreview)
+  {
+    await _db.MatchPreview.AddAsync(matchPreview);
   }
 }

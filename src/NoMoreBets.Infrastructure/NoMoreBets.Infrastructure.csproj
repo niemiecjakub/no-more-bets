@@ -29,6 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\NoMoreBets.Application\NoMoreBets.Application.csproj" />
     <ProjectReference Include="..\NoMoreBets.Domain\NoMoreBets.Domain.csproj" />
   </ItemGroup>
   

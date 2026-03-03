@@ -3,6 +3,7 @@ using AngleSharp;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Betting.Dto;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 
@@ -11,7 +12,7 @@ namespace NoMoreBets.Infrastructure.Scraping.External.Betclic;
 /// <summary>
 /// Betclic scraper for fetching Premier League upcoming games and match bookmaker events from betclic.pl.
 /// </summary>
-public class BetclicScraper : BaseScraper
+public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider
 {
   private const string BaseUrl = "https://www.betclic.pl";
   private const string PremierLeagueUrl = BaseUrl + "/football-sfootball/premier-league-c3";

@@ -2,6 +2,7 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Domain.Matches;
 
@@ -15,8 +16,8 @@ public record UpdateLineupsCommand : IRequest<Unit>;
 /// </summary>
 public class UpdateLineupsHandler(
   ILineupProvider lineupProvider,
-  IMatchRepository matchRepository,
   IMatchMatcher matchMatcher,
+  IUnitOfWork unitOfWork,
   ILogger<UpdateLineupsHandler> logger) : IRequestHandler<UpdateLineupsCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -37,7 +38,7 @@ public class UpdateLineupsHandler(
 
     foreach (var lineup in lineups)
     {
-      var matchesOnDay = await matchRepository.GetMatches(lineup.GameDay);
+      var matchesOnDay = await unitOfWork.Matches.GetMatches(lineup.Date);
 
       var candidates = matchesOnDay
         .Select(m => (m.HomeClub.Name, m.AwayClub.Name, m))
@@ -52,7 +53,7 @@ public class UpdateLineupsHandler(
           nameof(UpdateLineupsHandler),
           lineup.HomeTeamName,
           lineup.AwayTeamName,
-          lineup.GameDay);
+          lineup.Date);
         continue;
       }
 
@@ -61,12 +62,12 @@ public class UpdateLineupsHandler(
       var homeTeamJson = JsonSerializer.Serialize(lineup.HomeTeam, JsonOptions);
       var awayTeamJson = JsonSerializer.Serialize(lineup.AwayTeam, JsonOptions);
 
-      var entity = await matchRepository.GetLineup(matched.Id);
+      var entity = await unitOfWork.Matches.GetLineup(matched.Id);
 
       if (entity == null)
       {
         entity = new Lineup { MatchId = matched.Id };
-        db.Lineup.Add(entity);
+        await unitOfWork.Matches.AddLineup(entity);
         insertedCount++;
       }
       else
@@ -79,7 +80,7 @@ public class UpdateLineupsHandler(
       entity.UpdatedAt = DateTime.UtcNow;
     }
 
-    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     logger.LogInformation(
       "Handler {HandlerName} completed Rotowire lineups refresh. Matched={MatchedCount}, Unmatched={UnmatchedCount}, Inserted={InsertedCount}, Updated={UpdatedCount}",

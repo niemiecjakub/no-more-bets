@@ -17,8 +17,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoMoreBets.Domain", "src\No
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoMoreBets.Infrastructure", "src\NoMoreBets.Infrastructure\NoMoreBets.Infrastructure.csproj", "{B7C7C7CF-0CAD-54C2-2832-175170E2A83C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoMoreBets.Api", "src\NoMoreBets.Api\NoMoreBets.Api.csproj", "{C57E0A0F-97A1-4202-912C-A89B0176DF66}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,10 +43,6 @@ Global
 		{B7C7C7CF-0CAD-54C2-2832-175170E2A83C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7C7C7CF-0CAD-54C2-2832-175170E2A83C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7C7C7CF-0CAD-54C2-2832-175170E2A83C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C57E0A0F-97A1-4202-912C-A89B0176DF66}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C57E0A0F-97A1-4202-912C-A89B0176DF66}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C57E0A0F-97A1-4202-912C-A89B0176DF66}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C57E0A0F-97A1-4202-912C-A89B0176DF66}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -59,7 +53,6 @@ Global
 		{978225B3-65B1-5C71-0D56-F8362E8CD0B4} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{9D34F291-A247-3A4D-ECC1-F7B58F40B97A} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{B7C7C7CF-0CAD-54C2-2832-175170E2A83C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
-		{C57E0A0F-97A1-4202-912C-A89B0176DF66} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {DCB6117E-70DC-4817-9267-687660873345}

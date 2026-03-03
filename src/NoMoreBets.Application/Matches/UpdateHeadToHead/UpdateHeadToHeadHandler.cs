@@ -2,6 +2,7 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Matches;
 
@@ -12,8 +13,7 @@ public record UpdateHeadToHeadCommand(int Team1SoccerdataId, int Team2Soccerdata
 
 public class UpdateHeadToHeadHandler(
   IHeadToHeadProvider headToHeadProvider,
-  IClubRepository clubRepository,
-  IMatchRepository matchRepository,
+  IUnitOfWork unitOfWork,
   ILogger<UpdateHeadToHeadHandler> logger) : IRequestHandler<UpdateHeadToHeadCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -27,7 +27,7 @@ public class UpdateHeadToHeadHandler(
       request.Team2SoccerdataId);
 
     var headToHead = await headToHeadProvider.GetHeadToHeadAsync(request.Team1SoccerdataId, request.Team2SoccerdataId);
-    var clubs = await clubRepository.GetBySoccerdataId(
+    var clubs = await unitOfWork.Clubs.GetBySoccerdataId(
     [
       request.Team1SoccerdataId,
       request.Team2SoccerdataId
@@ -49,7 +49,7 @@ public class UpdateHeadToHeadHandler(
     var (team1DbId, team2DbId) = Head2Head.NormalizeClubIds(club1.Id, club2.Id);
 
     var head2HeadJson = JsonSerializer.Serialize(headToHead, JsonOptions);
-    var entity = await matchRepository.GetHeadToHead(team1DbId, team2DbId);
+    var entity = await unitOfWork.Matches.GetHeadToHead(team1DbId, team2DbId);
 
     if (entity == null)
     {
@@ -60,7 +60,7 @@ public class UpdateHeadToHeadHandler(
         Head2HeadJson = head2HeadJson,
         UpdatedAt = DateTime.UtcNow
       };
-      db.Head2Head.Add(entity);
+      await unitOfWork.Clubs.AddHead2Head(entity);
 
       logger.LogInformation(
         "Handler {HandlerName} created new Head2Head entry for clubs {Team1Id} vs {Team2Id}",
@@ -80,7 +80,7 @@ public class UpdateHeadToHeadHandler(
         entity.Team2Id);
     }
 
-    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     return Unit.Value;
   }

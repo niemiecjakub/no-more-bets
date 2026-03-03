@@ -1,9 +1,9 @@
 using FuzzySharp;
+using Microsoft.Extensions.Logging;
 using NoMoreBets.Domain.Clubs;
-using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
-using NoMoreBets.Features.Fotmob.GetFotmobXgStats.Dtos;
-using NoMoreBets.Features.Rotowire.Model;
-using NoMoreBets.Features.SoccerData.Model;
+using NoMoreBets.Domain.Clubs.Dto;
+using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Application.Common.MatchMatcher;
 

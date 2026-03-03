@@ -1,10 +1,8 @@
 using MediatR;
-using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Common.MatchMatcher;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Features.Betclic.Scraping;
-using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
-using NoMoreBets.Infrastructure.Database;
 
 namespace NoMoreBets.Features.Betclic.RefreshBetclicGames;
 
@@ -18,8 +16,8 @@ public record UpdateMatchesCommand : IRequest<IReadOnlyList<Match>>;
 /// for each game checks if a match for those teams on that day already exists; if not, adds it to the database.
 /// </summary>
 public class UpdateMatchesHandler(
-  BetclicScraper scraper,
-  AppDbContext db,
+  IBookmakerMatchesProvider bookmakerMatchesProvider,
+  IUnitOfWork unitOfWork,
   IMatchMatcher matchMatcher) : IRequestHandler<UpdateMatchesCommand, IReadOnlyList<Match>>
 {
   private const int LeagueId = 1;
@@ -28,7 +26,7 @@ public class UpdateMatchesHandler(
   /// <inheritdoc />
   public async Task<IReadOnlyList<Match>> Handle(UpdateMatchesCommand request, CancellationToken cancellationToken)
   {
-    var upcomingGames = await scraper.GetUpcomingGamesAsync(cancellationToken).ConfigureAwait(false);
+    var upcomingGames = await bookmakerMatchesProvider.GetUpcomingGamesAsync(cancellationToken);
     var added = new List<Match>();
     var hasUpdates = false;
 
@@ -37,22 +35,13 @@ public class UpdateMatchesHandler(
       return added;
     }
 
-    var clubs = await db.Club
-      .Where(c => c.LeagueId == LeagueId)
-      .ToListAsync(cancellationToken)
-      .ConfigureAwait(false);
+    var clubs = await unitOfWork.Clubs.GetClubs(LeagueId);
 
     foreach (var game in upcomingGames)
     {
       var dateWithTime = CombineDateAndTime(game.Date, game.Time);
       var gameDayUtc = DateTime.SpecifyKind(dateWithTime, DateTimeKind.Utc);
-
-      var matchesOnDay = await db.Match
-        .Where(m => m.MatchDate.Date == gameDayUtc.Date)
-        .Include(m => m.HomeClub)
-        .Include(m => m.AwayClub)
-        .ToListAsync(cancellationToken)
-        .ConfigureAwait(false);
+      var matchesOnDay = await unitOfWork.Matches.GetMatches(gameDayUtc);
 
       var candidates = matchesOnDay
         .Select(m => (m.HomeClub.Name, m.AwayClub.Name, m))
@@ -73,13 +62,13 @@ public class UpdateMatchesHandler(
       var awayClub = matchMatcher.FindClub(game.AwayTeam, clubs);
       var newMatch = Match.CreateUpcomming(gameDayUtc, StageId, homeClub.Id, awayClub.Id);
       newMatch.BetclicUrl = game.Url;
-      db.Match.Add(newMatch);
+      await unitOfWork.Matches.AddMatch(newMatch);
       added.Add(newMatch);
     }
 
     if (added.Count > 0 || hasUpdates)
     {
-      await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+      await unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     return added;
