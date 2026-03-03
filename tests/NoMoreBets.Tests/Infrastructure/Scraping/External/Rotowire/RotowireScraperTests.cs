@@ -4,13 +4,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Features.Rotowire.Model;
-using NoMoreBets.Features.Rotowire.Scraping;
-using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Domain.Matches;
+using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
+using NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Tests.Helpers;
 
-namespace NoMoreBets.Tests.Features.Rotowire.Scraping;
+namespace NoMoreBets.Tests.Infrastructure.Scraping.External.Rotowire;
 
 public class RotowireScraperTests
 {

@@ -1,4 +1,4 @@
-﻿using Hangfire;
+using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -7,12 +7,12 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Features.Betclic.RefreshBetclicGames;
-using NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
-using NoMoreBets.Features.Rotowire.GetRotowireLineups;
-using NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
-using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
-using NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
+using NoMoreBets.Application.Betting.UpdateMatches;
+using NoMoreBets.Application.Leagues.UpdateTable;
+using NoMoreBets.Application.Matches.UpdateLineup;
+using NoMoreBets.Application.Matches.UpdateHeadToHead;
+using NoMoreBets.Application.Matches.UpdateMatchPreview;
+using NoMoreBets.Application.Matches.UpdateUpcomming;
 using NoMoreBets.Infrastructure.Persistence;
 using System.Text.Json;
 

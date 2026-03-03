@@ -5,13 +5,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using NoMoreBets.Features.Fotmob.Model;
-using NoMoreBets.Features.Fotmob.Scraping;
-using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Domain.Leagues.Dto;
+using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
+using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Tests.Helpers;
 
-namespace NoMoreBets.Tests.Features.Fotmob.Scraping;
+namespace NoMoreBets.Tests.Infrastructure.Scraping.External.Fotmob;
 
 public class FotmobScraperTests
 {
@@ -140,7 +140,7 @@ public class FotmobScraperTests
 
         // Assert
         result.Should().NotBeEmpty("fixture should contain at least one table row");
-        result.Should().OnlyContain(c => c is Club);
+        result.Should().OnlyContain(c => c is TableEntry);
 
         foreach (var club in result)
         {
@@ -183,7 +183,7 @@ public class FotmobScraperTests
 
         // Assert
         result.Should().NotBeEmpty("fixture should contain at least one table row");
-        result.Should().OnlyContain(c => c is Club);
+        result.Should().OnlyContain(c => c is TableEntry);
 
         foreach (var club in result)
         {
@@ -226,7 +226,7 @@ public class FotmobScraperTests
 
         // Assert
         result.Should().NotBeEmpty("fixture should contain at least one table row");
-        result.Should().OnlyContain(c => c is Club);
+        result.Should().OnlyContain(c => c is TableEntry);
 
         foreach (var club in result)
         {
@@ -269,7 +269,7 @@ public class FotmobScraperTests
 
         // Assert
         result.Should().NotBeEmpty("fixture should contain at least one table row");
-        result.Should().OnlyContain(c => c is Club);
+        result.Should().OnlyContain(c => c is TableEntry);
 
         foreach (var club in result)
         {

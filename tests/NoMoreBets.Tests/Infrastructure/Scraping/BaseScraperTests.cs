@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Tests.Helpers;
 

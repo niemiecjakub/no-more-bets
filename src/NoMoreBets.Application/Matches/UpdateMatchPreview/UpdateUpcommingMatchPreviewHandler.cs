@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 
-namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreview;
+namespace NoMoreBets.Application.Matches.UpdateMatchPreview;
 
 /// <summary>Command to refresh a single match preview from SoccerData API and upsert into the database.</summary>
 public record UpdateUpcommingMatchPreviewCommand(int SoccerdataMatchId) : IRequest<Unit>;

@@ -6,7 +6,7 @@ using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Domain.Clubs.Dto;
 using NoMoreBets.Domain.Leagues;
 
-namespace NoMoreBets.Features.Fotmob.RefreshLeagueTableSnapshot;
+namespace NoMoreBets.Application.Leagues.UpdateTable;
 
 /// <summary>Command to refresh league table snapshot from FotMob (scrape table + xG, merge, persist). Always updates the latest season (max id) for the given league.</summary>
 public record UpdateTableCommand(int LeagueId) : IRequest<Unit>;

@@ -6,7 +6,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Domain.Matches;
 
-namespace NoMoreBets.Features.SoccerData.GetSoccerDataMatchPreviewsUpcoming;
+namespace NoMoreBets.Application.Matches.UpdateUpcomming;
 
 /// <summary>Command to refresh upcoming match previews from SoccerData API, sync Match table, and update cache.</summary>
 public record UpdateUpcommingMatchesCommand(int? SoccerdataLeagueId = null) : IRequest<List<Match>>;

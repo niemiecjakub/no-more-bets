@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -31,6 +31,10 @@
   <ItemGroup>
     <ProjectReference Include="..\NoMoreBets.Application\NoMoreBets.Application.csproj" />
     <ProjectReference Include="..\NoMoreBets.Domain\NoMoreBets.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="NoMoreBets.Tests" />
   </ItemGroup>
   
 </Project>

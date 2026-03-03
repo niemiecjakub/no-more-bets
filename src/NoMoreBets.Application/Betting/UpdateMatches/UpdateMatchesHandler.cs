@@ -4,7 +4,7 @@ using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Matches;
 
-namespace NoMoreBets.Features.Betclic.RefreshBetclicGames;
+namespace NoMoreBets.Application.Betting.UpdateMatches;
 
 /// <summary>
 /// Command to refresh Betclic games: fetches upcoming games from Betclic, and adds any match that does not yet exist (same teams, same day) to the database.

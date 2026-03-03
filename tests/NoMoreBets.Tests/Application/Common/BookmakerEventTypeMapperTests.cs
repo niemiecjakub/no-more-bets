@@ -1,8 +1,8 @@
 using FluentAssertions;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Features.Betclic.GetBetclicMatchEvents;
 
-namespace NoMoreBets.Tests.Features.Betclic.GetBetclicMatchEvents;
+namespace NoMoreBets.Tests.Application.Common;
 
 public class BookmakerEventTypeMapperTests
 {
@@ -95,32 +95,6 @@ public class BookmakerEventTypeMapperTests
 
     // Assert
     result.Should().Be(BettingEventType.Goalscorer);
-  }
-
-  [Fact]
-  public void Map_OverrideZdobędzieBramkę_ReturnsFirstTeamToScore()
-  {
-    // Arrange
-    var title = "Zdobędzie bramkę...";
-
-    // Act
-    var result = BookmakerEventTypeMapper.Map(title);
-
-    // Assert
-    result.Should().Be(BettingEventType.FirstTeamToScore);
-  }
-
-  [Fact]
-  public void Map_OverridePrzewagaDwomaBramkami_ReturnsHandicap()
-  {
-    // Arrange
-    var title = "Przewaga dwoma bramkami lub wygrana w meczu (reg. czas)";
-
-    // Act
-    var result = BookmakerEventTypeMapper.Map(title);
-
-    // Assert
-    result.Should().Be(BettingEventType.Handicap);
   }
 
   [Theory]

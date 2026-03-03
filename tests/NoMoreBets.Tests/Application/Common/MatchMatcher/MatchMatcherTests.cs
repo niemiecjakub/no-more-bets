@@ -1,21 +1,22 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using NoMoreBets.Application.Common.MatchMatcher;
+using NoMoreBets.Domain.Clubs.Dto;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Features.Fotmob.GetFotmobLeagueTable.Dtos;
-using NoMoreBets.Features.MatchAnalysis.MatchMatcher;
-using NoMoreBets.Features.Rotowire.Model;
-using NoMoreBets.Features.SoccerData.Model;
+using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Matches.Dto;
+using Sut = NoMoreBets.Application.Common.MatchMatcher.MatchMatcher;
 
-namespace NoMoreBets.Tests.Features.MatchAnalysis;
+namespace NoMoreBets.Tests.Application.Common.MatchMatcher;
 
 public class MatchMatcherTests
 {
-  private readonly MatchMatcher _sut;
+  private readonly Sut _sut;
   public MatchMatcherTests()
   {
-    var logger = Mock.Of<ILogger<MatchMatcher>>();
-    _sut = new MatchMatcher(logger);
+    var logger = Mock.Of<ILogger<Sut>>();
+    _sut = new Sut(logger);
   }
 
   [Fact]
@@ -201,7 +202,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindFotmobClub_WithExactMatch_ReturnsClub()
   {
-    // Arrange
+    // Arrange - ClubDto from Domain.Clubs.Dto (FotMob league table row shape)
     var clubs = new List<ClubDto>
         {
             new(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, new[] { "Win", "Win", "Win", "Draw", "Win" }, null, null, null),

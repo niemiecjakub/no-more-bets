@@ -2,7 +2,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting.Dto;
 using NoMoreBets.Domain.Enums;
 
-namespace NoMoreBets.Features.Betclic.GetBetclicMatchEvents.Dtos;
+namespace NoMoreBets.Infrastructure;
 
 public record EventOptionDto(string Label, double Odds)
 {

@@ -3,13 +3,13 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using NoMoreBets.Features.Betclic.Model;
-using NoMoreBets.Features.Betclic.Scraping;
-using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Domain.Betting.Dto;
+using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
+using NoMoreBets.Infrastructure.Scraping.External.Betclic;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Tests.Helpers;
 
-namespace NoMoreBets.Tests.Features.Betclic.Scraping;
+namespace NoMoreBets.Tests.Infrastructure.Scraping.External.Betclic;
 
 public class BetclicScraperTests
 {

@@ -6,13 +6,13 @@ using Microsoft.Extensions.Http.Resilience;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Features.SoccerData;
-using NoMoreBets.Features.SoccerData.Exceptions;
+using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
+using NoMoreBets.Infrastructure.Scraping.External.SoccerData.Exceptions;
 using NoMoreBets.Tests.Helpers;
 using Polly;
 using Polly.Retry;
 
-namespace NoMoreBets.Tests.Features.SoccerData;
+namespace NoMoreBets.Tests.Infrastructure.Scraping.External.SoccerData;
 
 public class SoccerDataClientTests
 {

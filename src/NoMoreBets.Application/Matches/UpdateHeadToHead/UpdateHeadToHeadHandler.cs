@@ -6,7 +6,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Matches;
 
-namespace NoMoreBets.Features.SoccerData.GetSoccerDataHeadToHead;
+namespace NoMoreBets.Application.Matches.UpdateHeadToHead;
 
 /// <summary>Command to refresh head-to-head data from SoccerData API and upsert into the database.</summary>
 public record UpdateHeadToHeadCommand(int Team1SoccerdataId, int Team2SoccerdataId) : IRequest<Unit>;

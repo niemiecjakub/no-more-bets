@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using NoMoreBets.Infrastructure.Fetching;
+using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 
 namespace NoMoreBets.Tests.Helpers;
 

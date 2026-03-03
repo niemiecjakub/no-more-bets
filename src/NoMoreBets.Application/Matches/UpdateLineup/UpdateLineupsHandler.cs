@@ -6,7 +6,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Domain.Matches;
 
-namespace NoMoreBets.Features.Rotowire.GetRotowireLineups;
+namespace NoMoreBets.Application.Matches.UpdateLineup;
 
 /// <summary>Command to refresh Rotowire lineups (scrape and persist to database).</summary>
 public record UpdateLineupsCommand : IRequest<Unit>;
