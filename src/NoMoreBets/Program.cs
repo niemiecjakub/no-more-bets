@@ -4,6 +4,7 @@ using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using NoMoreBets.Application;
 using NoMoreBets.Infrastructure;
+using NoMoreBets.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,12 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
 
 HangfireConfiguration.UseRecurringJobs();
 
+using (var scope = app.Services.CreateScope())
+{
+  var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+  DbInitializer.Initialize(connectionString);
+}
+
 if (app.Environment.IsDevelopment())
 {
   app.UseSwagger();
@@ -40,7 +47,6 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-
 app.Run();
 
 public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter

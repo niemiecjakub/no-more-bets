@@ -240,10 +240,6 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       cutoff);
   }
 
-
-
-
-
   [AutomaticRetry(Attempts = 1)]
   public async Task GetBetclicGames()
   {

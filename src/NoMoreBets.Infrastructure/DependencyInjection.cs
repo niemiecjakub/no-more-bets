@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
@@ -29,12 +30,6 @@ public static class DependencyInjection
       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
     // DbContext
-    services.AddDbContextFactory<AppDbContext>(options =>
-      options.UseNpgsql(connectionString, o =>
-      {
-        o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
-      }));
-
     services.AddDbContext<AppDbContext>(options =>
       options.UseNpgsql(connectionString, o =>
       {
@@ -69,7 +64,7 @@ public static class DependencyInjection
 
     services.AddScoped<JobService>();
 
-    // HTTP resilience & SoccerData client
+    //HTTP resilience &SoccerData client
     services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>
       ResilienceHttpHandler.CreatePipeline(sp.GetService<ILogger<ResilienceHttpHandler>>()));
     services.AddTransient<ResilienceHttpHandler>();
@@ -85,7 +80,14 @@ public static class DependencyInjection
     services.AddSingleton<BetclicScraper>();
     services.AddSingleton<FotmobScraper>();
 
-    DbInitializer.Initialize(connectionString);
+    // Provider interfaces
+    services.AddTransient<IUpcommingMatchProvider>(sp => sp.GetRequiredService<SoccerDataClient>());
+    services.AddTransient<IMatchPreviewProvider>(sp => sp.GetRequiredService<SoccerDataClient>());
+    services.AddTransient<IHeadToHeadProvider>(sp => sp.GetRequiredService<SoccerDataClient>());
+    services.AddTransient<ILineupProvider, RotowireScraper>();
+    services.AddTransient<ILeagueProvider, FotmobScraper>();
+    services.AddTransient<IBookmakerMatchesProvider, BetclicScraper>();
+    services.AddTransient<IBetEventsProvider, BetclicScraper>();
 
     return services;
   }
