@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Domain.Matches;
-using NoMoreBets.Domain.Matches.Dto;
+using NoMoreBets.Application.Matches;
+using NoMoreBets.Application.Common.Dto.Matches;
 using NoMoreBets.Infrastructure.Scraping.External.SoccerData.Exceptions;
 using System.Globalization;
 using System.Text.Json;

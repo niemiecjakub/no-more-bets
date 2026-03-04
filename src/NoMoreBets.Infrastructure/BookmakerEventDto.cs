@@ -1,5 +1,5 @@
+using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Domain.Betting.Dto;
 using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Infrastructure;

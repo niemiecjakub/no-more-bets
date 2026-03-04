@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Matches;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Matches;
 

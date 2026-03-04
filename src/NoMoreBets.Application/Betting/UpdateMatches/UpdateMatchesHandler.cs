@@ -1,7 +1,7 @@
 using MediatR;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
-using NoMoreBets.Domain.Betting;
+using NoMoreBets.Application.Betting;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Betting.UpdateMatches;

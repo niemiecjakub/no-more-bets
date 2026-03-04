@@ -1,9 +1,9 @@
 using FuzzySharp;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Domain.Clubs;
-using NoMoreBets.Domain.Clubs.Dto;
+using NoMoreBets.Application.Common.Dto.Clubs;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Domain.Matches.Dto;
+using NoMoreBets.Application.Common.Dto.Matches;
 
 namespace NoMoreBets.Application.Common.MatchMatcher;
 

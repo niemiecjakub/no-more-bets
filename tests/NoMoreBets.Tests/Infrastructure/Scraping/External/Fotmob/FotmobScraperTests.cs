@@ -5,7 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using NoMoreBets.Domain.Leagues.Dto;
+using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 using NoMoreBets.Infrastructure.Scraping;

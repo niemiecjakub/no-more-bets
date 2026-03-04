@@ -3,8 +3,8 @@ using AngleSharp;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Domain.Betting;
-using NoMoreBets.Domain.Betting.Dto;
+using NoMoreBets.Application.Betting;
+using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 
 namespace NoMoreBets.Infrastructure.Scraping.External.Betclic;

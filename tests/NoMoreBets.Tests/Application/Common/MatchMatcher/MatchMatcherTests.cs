@@ -2,10 +2,10 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NoMoreBets.Application.Common.MatchMatcher;
-using NoMoreBets.Domain.Clubs.Dto;
+using NoMoreBets.Application.Common.Dto.Clubs;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Domain.Matches.Dto;
+using NoMoreBets.Application.Common.Dto.Matches;
 using Sut = NoMoreBets.Application.Common.MatchMatcher.MatchMatcher;
 
 namespace NoMoreBets.Tests.Application.Common.MatchMatcher;
@@ -202,7 +202,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindFotmobClub_WithExactMatch_ReturnsClub()
   {
-    // Arrange - ClubDto from Domain.Clubs.Dto (FotMob league table row shape)
+    // Arrange - ClubDto from Application.Clubs.Dto (FotMob league table row shape)
     var clubs = new List<ClubDto>
         {
             new(1, "Arsenal", "ARS", 42, "", 20, 15, 3, 2, 45, 20, "+25", 48, new[] { "Win", "Win", "Win", "Draw", "Win" }, null, null, null),

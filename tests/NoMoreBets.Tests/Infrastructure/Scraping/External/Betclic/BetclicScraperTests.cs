@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
-using NoMoreBets.Domain.Betting.Dto;
+using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using NoMoreBets.Infrastructure.Scraping.External.Betclic;
 using NoMoreBets.Infrastructure.Scraping;

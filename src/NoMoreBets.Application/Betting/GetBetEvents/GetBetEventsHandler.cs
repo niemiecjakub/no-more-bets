@@ -1,6 +1,6 @@
-﻿using MediatR;
-using NoMoreBets.Domain.Betting;
-using NoMoreBets.Domain.Betting.Dto;
+using MediatR;
+using NoMoreBets.Application.Betting;
+using NoMoreBets.Application.Common.Dto.Betting;
 
 namespace NoMoreBets.Application.Betting.GetBetEvents;
 public record GetBetclicMatchEventsQuery(string GameUrl, bool Expand = false) : IRequest<IReadOnlyList<BookmakerEvent>>;

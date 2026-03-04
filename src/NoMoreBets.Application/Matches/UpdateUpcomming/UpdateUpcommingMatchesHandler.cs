@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
+using NoMoreBets.Application.Matches;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.UpdateUpcomming;

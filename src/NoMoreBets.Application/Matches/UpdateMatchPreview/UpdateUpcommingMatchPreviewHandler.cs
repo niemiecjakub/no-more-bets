@@ -2,6 +2,7 @@ using System.Text.Json;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Matches;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.UpdateMatchPreview;

@@ -3,7 +3,9 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
-using NoMoreBets.Domain.Clubs.Dto;
+using NoMoreBets.Application.Common.Dto.Clubs;
+using NoMoreBets.Application.Leagues;
+using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.UpdateTable;
