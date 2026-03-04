@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Persistence;
@@ -115,6 +116,57 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   }
 
   /// <summary>
+  /// Gets matches that share the same game URL (BetclicUrl). Returns only URLs that have more than one match.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of game URL and the matches that use it.</returns>
+  [HttpGet("matches/duplicated-by-game-url")]
+  public async Task<ActionResult<IReadOnlyList<DuplicatedMatchesByGameUrlDto>>> GetDuplicatedMatchesByGameUrl(
+    CancellationToken cancellationToken = default)
+  {
+    var duplicatedUrls = await db.Match
+      .Where(m => m.BetclicUrl != null)
+      .GroupBy(m => m.BetclicUrl)
+      .Where(g => g.Count() > 1)
+      .Select(g => g.Key!)
+      .ToListAsync(cancellationToken);
+
+    if (duplicatedUrls.Count == 0)
+      return Ok((IReadOnlyList<DuplicatedMatchesByGameUrlDto>)Array.Empty<DuplicatedMatchesByGameUrlDto>());
+
+    var matches = await db.Match
+      .Where(m => m.BetclicUrl != null && duplicatedUrls.Contains(m.BetclicUrl))
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .Include(m => m.MatchStatusEntity)
+      .OrderBy(m => m.BetclicUrl)
+      .ThenBy(m => m.MatchDate)
+      .ToListAsync(cancellationToken);
+
+    var result = matches
+      .GroupBy(m => m.BetclicUrl!)
+      .OrderBy(g => g.Key)
+      .Select(g => new DuplicatedMatchesByGameUrlDto(
+        g.Key,
+        g.Select(m => new MatchDto(
+          m.Id,
+          m.SoccerdataId,
+          m.MatchDate,
+          m.HomeClubId,
+          m.AwayClubId,
+          m.HomeClub.Name,
+          m.AwayClub.Name,
+          m.MatchStatusId,
+          m.MatchStatusEntity!.Name,
+          m.HomeGoals,
+          m.AwayGoals,
+          m.BetclicUrl)).ToList()))
+      .ToList();
+
+    return Ok(result);
+  }
+
+  /// <summary>
   /// Gets the latest league table for the specified league.
   /// </summary>
   /// <param name="leagueId">League ID.</param>
@@ -203,9 +255,9 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   /// <param name="matchId">Match ID.</param>
   /// <param name="eventTypeId">Betting event type ID (e.g. 5 = MatchResult, 1 = OverUnderGoals).</param>
   /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>List of odds snapshots for that event type, newest first; empty list if none.</returns>
+  /// <returns>Aggregated odds history with eventTypeId, eventTypeName, and history (title + options with odds time series).</returns>
   [HttpGet("matches/{matchId:int}/betting-odds-history")]
-  public async Task<ActionResult<IReadOnlyList<BettingOddsEventHistoryDto>>> GetMatchBettingOddsHistory(
+  public async Task<ActionResult<BettingOddsHistoryResponseDto>> GetMatchBettingOddsHistory(
     int matchId,
     [FromQuery] int eventTypeId,
     CancellationToken cancellationToken = default)
@@ -217,22 +269,58 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .OrderByDescending(s => s.SnapshotTime)
       .ToListAsync(cancellationToken);
 
-    var list = new List<BettingOddsEventHistoryDto>();
+    string? eventTypeName = null;
+    string? historyTitle = null;
+    List<string>? optionOrder = null;
+    var oddsByLabel = new Dictionary<string, List<OddsPointDto>>(StringComparer.Ordinal);
+
     foreach (var snapshot in snapshots)
     {
       var row = snapshot.Rows.FirstOrDefault(r => r.EventTypeId == eventTypeId);
       if (row == null)
         continue;
-      var eventJson = JsonSerializer.Deserialize<JsonElement>(row.EventJson);
-      list.Add(new BettingOddsEventHistoryDto(
-        snapshot.Id,
-        snapshot.SnapshotTime,
-        row.EventTypeId,
-        row.EventTypeEntity.Name,
-        eventJson));
+
+      eventTypeName ??= row.EventTypeEntity.Name;
+
+      BookmakerEvent? ev;
+      try
+      {
+        ev = JsonSerializer.Deserialize<BookmakerEvent>(row.EventJson, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+      }
+      catch
+      {
+        continue;
+      }
+
+      if (ev == null)
+        continue;
+
+      historyTitle ??= ev.Title;
+      optionOrder ??= ev.Options.Select(o => o.Label).ToList();
+
+      foreach (var opt in ev.Options)
+      {
+        if (!oddsByLabel.TryGetValue(opt.Label, out var list))
+        {
+          list = new List<OddsPointDto>();
+          oddsByLabel[opt.Label] = list;
+        }
+        list.Add(new OddsPointDto(opt.Odds, snapshot.SnapshotTime));
+      }
     }
 
-    return Ok(list);
+    var historyOptions = (optionOrder ?? (IReadOnlyList<string>)Array.Empty<string>())
+      .Select(label => new BettingOddsHistoryOptionDto(
+        label,
+        oddsByLabel.TryGetValue(label, out var odds) ? odds : (IReadOnlyList<OddsPointDto>)Array.Empty<OddsPointDto>()))
+      .ToList();
+
+    var response = new BettingOddsHistoryResponseDto(
+      eventTypeId,
+      eventTypeName ?? "",
+      new BettingOddsHistorySectionDto(historyTitle, historyOptions));
+
+    return Ok(response);
   }
 }
 
@@ -288,9 +376,15 @@ public record MatchLineupDto(
   TeamLineup HomeTeam,
   TeamLineup AwayTeam);
 
-public record BettingOddsEventHistoryDto(
-  long SnapshotId,
-  DateTime SnapshotTime,
+public record OddsPointDto(double Value, DateTime Date);
+
+public record BettingOddsHistoryOptionDto(string Title, IReadOnlyList<OddsPointDto> Odds);
+
+public record BettingOddsHistorySectionDto(string? Title, IReadOnlyList<BettingOddsHistoryOptionDto> Options);
+
+public record BettingOddsHistoryResponseDto(
   int EventTypeId,
   string EventTypeName,
-  JsonElement EventJson);
+  BettingOddsHistorySectionDto History);
+
+public record DuplicatedMatchesByGameUrlDto(string GameUrl, IReadOnlyList<MatchDto> Matches);

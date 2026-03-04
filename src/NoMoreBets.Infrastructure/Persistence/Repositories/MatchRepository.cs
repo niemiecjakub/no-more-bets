@@ -1,13 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Infrastructure.Persistence.Repositories;
 public class MatchRepository : IMatchRepository
 {
   private readonly AppDbContext _db;
-  public MatchRepository(AppDbContext db)
+  private readonly ILogger<MatchRepository> _logger;
+
+  public MatchRepository(AppDbContext db, ILogger<MatchRepository> logger)
   {
     _db = db;
+    _logger = logger;
   }
 
   public Task<Head2Head?> GetHeadToHead(int team1, int team2)
@@ -47,10 +51,31 @@ public class MatchRepository : IMatchRepository
     await _db.Lineup.AddAsync(lineup);
   }
 
-  public async Task AddMatch(Match match)
+  public async Task AddMatch(Match match, CancellationToken cancellationToken = default)
   {
-    await _db.Match.AddAsync(match);
+    if (match.SoccerdataId.HasValue)
+    {
+      var existsBySoccerdata = await _db.Match.AnyAsync(m => m.SoccerdataId == match.SoccerdataId.Value, cancellationToken);
+      if (existsBySoccerdata)
+      {
+        _logger.LogWarning("A match with SoccerdataId {SoccerdataId} already exists.", match.SoccerdataId.Value);
+        return;
+      }
+    }
+
+    if (!string.IsNullOrWhiteSpace(match.BetclicUrl))
+    {
+      var existsByBetclic = await _db.Match.AnyAsync(m => m.BetclicUrl != null && m.BetclicUrl == match.BetclicUrl, cancellationToken);
+      if (existsByBetclic)
+      {
+        _logger.LogWarning("A match with BetclicUrl '{BetclicUrl}' already exists.", match.BetclicUrl);
+        return;
+      }
+    }
+
+    await _db.Match.AddAsync(match, cancellationToken);
   }
+  
   public async Task AddMatchPreview(MatchPreview matchPreview)
   {
     await _db.MatchPreview.AddAsync(matchPreview);
