@@ -1,14 +1,14 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /app
+WORKDIR /src
 
-COPY ["NoMoreBets/NoMoreBets.csproj", "NoMoreBets/"]
-COPY ["NoMoreBets.Application/NoMoreBets.Application.csproj", "NoMoreBets.Application/"]
-COPY ["NoMoreBets.Domain/NoMoreBets.Domain.csproj", "NoMoreBets.Domain/"]
-COPY ["NoMoreBets.Infrastructure/NoMoreBets.Infrastructure.csproj", "NoMoreBets.Infrastructure/"]
+COPY ["src/NoMoreBets/NoMoreBets.csproj", "NoMoreBets/"]
+COPY ["src/NoMoreBets.Application/NoMoreBets.Application.csproj", "NoMoreBets.Application/"]
+COPY ["src/NoMoreBets.Domain/NoMoreBets.Domain.csproj", "NoMoreBets.Domain/"]
+COPY ["src/NoMoreBets.Infrastructure/NoMoreBets.Infrastructure.csproj", "NoMoreBets.Infrastructure/"]
 
 RUN dotnet restore "NoMoreBets/NoMoreBets.csproj"
 
-COPY . .
+COPY src/ .
 
 RUN dotnet build "NoMoreBets/NoMoreBets.csproj" -c Release -o /app/build
 

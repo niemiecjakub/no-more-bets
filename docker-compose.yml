@@ -2,8 +2,8 @@ services:
   backend:
     container_name: no-more-bets-api
     build:
-      context: ./src
-      dockerfile: NoMoreBets/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
       - "8081:8081"
