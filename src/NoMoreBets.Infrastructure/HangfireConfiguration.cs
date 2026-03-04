@@ -1,4 +1,4 @@
-﻿using Hangfire;
+using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -55,10 +55,10 @@ public static class HangfireConfiguration
         jobService => jobService.CloseStartingSoonMatches(),
         "0 * * * *");
 
-    // Runs hourly at 15 min past the hour
+    // Runs every 6 hours at 15 min past the hour (00:15, 06:15, 12:15, 18:15)
     RecurringJob.AddOrUpdate<JobService>(
         "get-betting-odds",
         jobService => jobService.ScheduleBettingOddsJob(),
-        "15 * * * *");
+        "15 */6 * * *");
   }
 }
