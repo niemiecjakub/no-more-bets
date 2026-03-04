@@ -1,14 +1,19 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /app
 
-COPY ["NoMoreBets.csproj", "."]
-RUN dotnet restore "NoMoreBets.csproj"
+COPY ["NoMoreBets/NoMoreBets.csproj", "NoMoreBets/"]
+COPY ["NoMoreBets.Application/NoMoreBets.Application.csproj", "NoMoreBets.Application/"]
+COPY ["NoMoreBets.Domain/NoMoreBets.Domain.csproj", "NoMoreBets.Domain/"]
+COPY ["NoMoreBets.Infrastructure/NoMoreBets.Infrastructure.csproj", "NoMoreBets.Infrastructure/"]
+
+RUN dotnet restore "NoMoreBets/NoMoreBets.csproj"
 
 COPY . .
-RUN dotnet build "NoMoreBets.csproj" -c Release -o /app/build
+
+RUN dotnet build "NoMoreBets/NoMoreBets.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "NoMoreBets.csproj" -c Release -o /app/publish
+RUN dotnet publish "NoMoreBets/NoMoreBets.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/playwright/dotnet:v1.49.0-noble AS final
 WORKDIR /app
