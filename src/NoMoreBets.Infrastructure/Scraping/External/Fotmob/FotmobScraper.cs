@@ -64,7 +64,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
   }
 
   /// <inheritdoc />
-  public async Task<MatchDetails> GetMatchDetailsAsync(string gameUrl, CancellationToken cancellationToken = default)
+  public async Task<MatchDetailsDto> GetMatchDetailsAsync(string gameUrl, CancellationToken cancellationToken = default)
   {
     var html = await GetHtmlAfterInteractionsAsync(gameUrl, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
     var details = await ParseMatchDetailsAsync(html).ConfigureAwait(false);
@@ -83,7 +83,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
       _logger.LogWarning(ex, "Failed to fetch or parse match statistics; returning match details without statistics.");
     }
 
-    return new MatchDetails
+    return new MatchDetailsDto
     {
       HomeTeam = details.HomeTeam,
       AwayTeam = details.AwayTeam,
@@ -95,7 +95,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
     };
   }
 
-  internal async Task<MatchDetails> ParseMatchDetailsAsync(string html)
+  internal async Task<MatchDetailsDto> ParseMatchDetailsAsync(string html)
   {
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
@@ -103,7 +103,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
     ParseGeneralInfo(doc, out var homeTeam, out var awayTeam, out var matchDate);
     ParseLineups(doc, out var homeLineup, out var awayLineup);
 
-    return new MatchDetails
+    return new MatchDetailsDto
     {
       HomeTeam = homeTeam,
       AwayTeam = awayTeam,

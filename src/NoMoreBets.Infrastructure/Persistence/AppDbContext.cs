@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
   public DbSet<BettingOddsSnapshot> BettingOddsSnapshot { get; set; }
   public DbSet<BettingOddsSnapshotRow> BettingOddsSnapshotRow { get; set; }
   public DbSet<MatchDetails> MatchDetails { get; set; }
+  public DbSet<ClubDailySummary> ClubDailySummary { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -220,6 +221,18 @@ public class AppDbContext : DbContext
       entity.Property(e => e.FotmobDetailsJson).IsRequired().HasColumnType("jsonb");
       entity.HasIndex(e => e.MatchId).IsUnique().HasFilter("\"MatchId\" IS NOT NULL");
       entity.HasOne(e => e.Match).WithOne(m => m.MatchDetails).HasForeignKey<MatchDetails>(e => e.MatchId).OnDelete(DeleteBehavior.SetNull);
+    });
+
+    modelBuilder.Entity<ClubDailySummary>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.ClubId).IsRequired();
+      entity.Property(e => e.Date).IsRequired();
+      entity.Property(e => e.Summary).IsRequired();
+      entity.HasIndex(e => e.ClubId);
+      entity.HasIndex(e => new { e.ClubId, e.Date });
+      entity.HasOne(e => e.Club).WithMany(c => c.ClubDailySummaries).HasForeignKey(e => e.ClubId).OnDelete(DeleteBehavior.Cascade);
     });
   }
 }

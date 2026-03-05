@@ -29,6 +29,18 @@ CREATE INDEX idx_club_league ON public."Club" USING btree ("LeagueId");
 CREATE INDEX idx_club_name ON public."Club" USING btree ("Name");
 
 
+CREATE TABLE "ClubDailySummary" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"ClubId" int4 NOT NULL,
+	"Date" date NOT NULL,
+	"Summary" text NOT NULL,
+	CONSTRAINT "ClubDailySummary_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT fk_clubdailysummary_club FOREIGN KEY ("ClubId") REFERENCES "Club"("Id") ON DELETE CASCADE
+);
+CREATE INDEX idx_clubdailysummary_club ON public."ClubDailySummary" USING btree ("ClubId");
+CREATE INDEX idx_clubdailysummary_club_date ON public."ClubDailySummary" USING btree ("ClubId", "Date");
+
+
 CREATE TABLE "Season" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"LeagueId" int4 NOT NULL,
@@ -64,6 +76,7 @@ CREATE TABLE "Match" (
 	"AwayGoals" int4 NULL,
 	"SoccerdataId" int4,
 	"BetclicUrl" text NULL,
+	"FotmobUrl" text NULL,
 	CONSTRAINT "Game_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT chk_game_not_same_club CHECK (("HomeClubId" <> "AwayClubId")),
 	CONSTRAINT fk_game_awayclub FOREIGN KEY ("AwayClubId") REFERENCES "Club"("Id"),
@@ -223,19 +236,10 @@ ON "BettingOddsSnapshotRow" ("SnapshotId", "EventTypeId");
 CREATE TABLE "MatchDetails" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"MatchId" int4 NULL,
-	"FotmobUrl" text NOT NULL,
 	"FotmobDetailsJson" jsonb NOT NULL,
-	"MatchDate" timestamp NULL,
-	"HomeClubId" int4 NULL,
-	"AwayClubId" int4 NULL,
+	"FotmobReview" text NULL,
 	CONSTRAINT "MatchDetails_pkey" PRIMARY KEY ("Id"),
-	CONSTRAINT uq_matchdetails_fotmoburl UNIQUE ("FotmobUrl"),
 	CONSTRAINT uq_matchdetails_match UNIQUE ("MatchId"),
-	CONSTRAINT fk_matchdetails_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE SET NULL,
-	CONSTRAINT fk_matchdetails_homeclub FOREIGN KEY ("HomeClubId") REFERENCES "Club"("Id") ON DELETE SET NULL,
-	CONSTRAINT fk_matchdetails_awayclub FOREIGN KEY ("AwayClubId") REFERENCES "Club"("Id") ON DELETE SET NULL
+	CONSTRAINT fk_matchdetails_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE SET NULL
 );
 CREATE INDEX idx_matchdetails_match ON public."MatchDetails" USING btree ("MatchId");
-CREATE INDEX idx_matchdetails_matchdate ON public."MatchDetails" USING btree ("MatchDate");
-CREATE INDEX idx_matchdetails_homeclub ON public."MatchDetails" USING btree ("HomeClubId");
-CREATE INDEX idx_matchdetails_awayclub ON public."MatchDetails" USING btree ("AwayClubId");

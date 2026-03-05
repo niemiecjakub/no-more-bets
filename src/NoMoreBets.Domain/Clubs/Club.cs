@@ -14,4 +14,5 @@ public class Club
   public ICollection<Match> HomeMatches { get; set; } = new List<Match>();
   public ICollection<Match> AwayMatches { get; set; } = new List<Match>();
   public ICollection<LeagueTableSnapshotRow> LeagueTableSnapshotRows { get; set; } = new List<LeagueTableSnapshotRow>();
+  public ICollection<ClubDailySummary> ClubDailySummaries { get; set; } = new List<ClubDailySummary>();
 }

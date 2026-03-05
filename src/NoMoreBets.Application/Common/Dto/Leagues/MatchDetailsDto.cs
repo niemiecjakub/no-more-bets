@@ -1,7 +1,7 @@
 namespace NoMoreBets.Application.Common.Dto.Leagues;
 
 /// <summary>Match details from FotMob match detail page (general info, lineups, and optional statistics).</summary>
-public class MatchDetails
+public class MatchDetailsDto
 {
     public required string HomeTeam { get; init; }
     public required string AwayTeam { get; init; }
