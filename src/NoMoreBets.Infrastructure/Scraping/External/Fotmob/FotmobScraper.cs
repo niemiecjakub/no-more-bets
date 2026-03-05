@@ -2,6 +2,8 @@ using AngleSharp;
 using AngleSharp.Dom;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using NoMoreBets.Application.Clubs;
+using NoMoreBets.Application.Fotmob;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
@@ -13,7 +15,7 @@ namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 /// <summary>
 /// FotMob scraper for fetching Premier League table and xG statistics.
 /// </summary>
-public class FotmobScraper : BaseScraper, ILeagueProvider
+public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
 {
   private const string BaseUrl = "https://www.fotmob.com";
 
@@ -29,20 +31,23 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
   ];
 
   private readonly ILogger<FotmobScraper> _logger;
+  private readonly IFotmobConstants _fotmobConstants;
 
   public FotmobScraper(
       PlaywrightPageFetcher pageFetcher,
       IOptions<BaseScraperOptions> baseOptions,
+      IFotmobConstants fotmobConstants,
       ILogger<FotmobScraper> logger)
       : base(pageFetcher, baseOptions, logger)
   {
     _logger = logger;
+    _fotmobConstants = fotmobConstants;
   }
 
   /// <summary>Gets the league table (standings) for the configured league, optionally filtered by home/away/form.</summary>
   public async Task<IReadOnlyList<TableEntry>> GetLeagueTableAsync(CancellationToken cancellationToken = default)
   {
-    var url = $"{BaseUrl}/leagues/{FotmobConstants.LeagueId}/table/{FotmobConstants.LeagueSlug}";
+    var url = $"{BaseUrl}/leagues/{_fotmobConstants.PremierLeague.Id}/table/{_fotmobConstants.PremierLeague.Slug}";
     var html = await GetHtmlAfterInteractionsAsync(url, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
     return await ParseLeagueTableClubsAsync(html).ConfigureAwait(false);
   }
@@ -535,7 +540,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider
 
   private string BuildXgUrl()
   {
-    var path = $"{BaseUrl}/leagues/{FotmobConstants.LeagueId}/table/{FotmobConstants.LeagueSlug}";
+    var path = $"{BaseUrl}/leagues/{_fotmobConstants.PremierLeague.Id}/table/{_fotmobConstants.PremierLeague.Slug}";
     return path + "?filter=xg";
   }
 

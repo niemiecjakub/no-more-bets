@@ -17,7 +17,8 @@ public class FotmobScraperTests
 {
     private static FotmobScraper CreateScraper(
         PlaywrightPageFetcher? pageFetcher = null,
-        BaseScraperOptions? baseOptions = null)
+        BaseScraperOptions? baseOptions = null,
+        FotmobConstants? fotmobConstants = null)
     {
         pageFetcher ??= PlaywrightPageFetcherMockHelper.CreateMock().Object;
         var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
@@ -28,7 +29,8 @@ public class FotmobScraperTests
             TimeoutSeconds = 15
         });
         var logger = NullLogger<FotmobScraper>.Instance;
-        return new FotmobScraper(pageFetcher, baseOpts, logger);
+        fotmobConstants ??= new FotmobConstants();
+        return new FotmobScraper(pageFetcher, baseOpts, fotmobConstants, logger);
     }
 
     [Fact]

@@ -4,6 +4,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Betting;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Clubs;
+using NoMoreBets.Application.Fotmob;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Domain.Clubs;
@@ -78,6 +80,7 @@ public static class DependencyInjection
       });
 
     // Scrapers
+    services.AddSingleton<IFotmobConstants, FotmobConstants>();
     services.AddSingleton<RotowireScraper>();
     services.AddSingleton<BetclicScraper>();
     services.AddSingleton<FotmobScraper>();
@@ -86,10 +89,11 @@ public static class DependencyInjection
     services.AddTransient<IUpcommingMatchProvider>(sp => sp.GetRequiredService<SoccerDataClient>());
     services.AddTransient<IMatchPreviewProvider>(sp => sp.GetRequiredService<SoccerDataClient>());
     services.AddTransient<IHeadToHeadProvider>(sp => sp.GetRequiredService<SoccerDataClient>());
-    services.AddTransient<ILineupProvider, RotowireScraper>();
-    services.AddTransient<ILeagueProvider, FotmobScraper>();
-    services.AddTransient<IBookmakerMatchesProvider, BetclicScraper>();
-    services.AddTransient<IBetEventsProvider, BetclicScraper>();
+    services.AddTransient<ILineupProvider>(sp => sp.GetRequiredService<RotowireScraper>());
+    services.AddTransient<ILeagueProvider>(sp => sp.GetRequiredService<FotmobScraper>());
+    services.AddTransient<IClubOverviewProvider>(sp => sp.GetRequiredService<FotmobScraper>());
+    services.AddTransient<IBookmakerMatchesProvider>(sp => sp.GetRequiredService<BetclicScraper>());
+    services.AddTransient<IBetEventsProvider>(sp => sp.GetRequiredService<BetclicScraper>());
 
     return services;
   }

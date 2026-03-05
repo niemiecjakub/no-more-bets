@@ -16,6 +16,28 @@ public class ClubRepository : IClubRepository
     await _db.Head2Head.AddAsync(head2Head);
   }
 
+  public async Task<Club?> GetByIdAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _db.Club
+      .FirstOrDefaultAsync(c => c.Id == clubId, cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+
+
+  public async Task<ClubDailySummary?> GetLatestDailySummaryAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _db.ClubDailySummary
+      .Where(s => s.ClubId == clubId)
+      .OrderByDescending(s => s.Date)
+      .FirstOrDefaultAsync(cancellationToken);
+  }
+
+  public async Task AddDailySummaryAsync(ClubDailySummary summary, CancellationToken cancellationToken = default)
+  {
+    await _db.ClubDailySummary.AddAsync(summary, cancellationToken);
+  }
+
   public Task<List<Club>> GetBySoccerdataId(IEnumerable<int> soccerdataIds)
   {
     return _db.Club
