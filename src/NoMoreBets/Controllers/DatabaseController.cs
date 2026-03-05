@@ -47,6 +47,29 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   }
 
   /// <summary>
+  /// Gets the latest daily summary for the specified club.
+  /// </summary>
+  /// <param name="clubId">Club ID.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Latest daily summary or 404 if none exists.</returns>
+  [HttpGet("clubs/{clubId:int}/daily-summary")]
+  public async Task<ActionResult<ClubDailySummaryDto>> GetClubDailySummary(
+    int clubId,
+    CancellationToken cancellationToken = default)
+  {
+    var summary = await db.ClubDailySummary
+      .Where(s => s.ClubId == clubId)
+      .Include(s => s.Club)
+      .OrderByDescending(s => s.Date)
+      .FirstOrDefaultAsync(cancellationToken);
+
+    if (summary == null)
+      return NotFound();
+
+    return Ok(new ClubDailySummaryDto(summary.Id, summary.Club.Name, summary.Date, summary.Summary));
+  }
+
+  /// <summary>
   /// Gets matches from the database.
   /// </summary>
   /// <param name="cancellationToken">Cancellation token.</param>
@@ -327,6 +350,8 @@ public class DatabaseController(AppDbContext db) : ControllerBase
 public record LeagueDto(int Id, string Name, int SoccerdataId);
 
 public record ClubDto(int Id, string Name, int LeagueId, int SoccerdataId, string LeagueName);
+
+public record ClubDailySummaryDto(int Id, string ClubName, DateOnly Date, string Summary);
 
 public record MatchDto(
   int Id,

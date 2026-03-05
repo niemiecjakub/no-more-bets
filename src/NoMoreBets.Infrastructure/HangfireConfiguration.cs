@@ -26,10 +26,11 @@ public static class HangfireConfiguration
 
   public static void UseRecurringJobs()
   {
+    // Runs once per day at 00:05 (5 minutes after midnight)
     RecurringJob.AddOrUpdate<JobService>(
       "get-soccerdata-upcoming-matches",
       jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId),
-      "0 1 * * *");
+      "5 0 * * *");
 
     // Runs once per day at 15:00
     RecurringJob.AddOrUpdate<JobService>(
@@ -48,6 +49,12 @@ public static class HangfireConfiguration
         "get-league-table",
         jobService => jobService.GetLeagueTable(),
         "0 10 * * *");
+
+    // Runs once per day at 14:00
+    RecurringJob.AddOrUpdate<JobService>(
+        "update-daily-summaries-for-all-clubs",
+        jobService => jobService.UpdateDailySummariesForAllClubs(),
+        "0 14 * * *");
 
     // Runs hourly at minute 0
     RecurringJob.AddOrUpdate<JobService>(

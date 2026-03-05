@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Betting.GetBetEvents;
 using NoMoreBets.Application.Betting.UpdateMatches;
+using NoMoreBets.Application.Clubs.UpdateDailySummary;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues.UpdateTable;
 using NoMoreBets.Application.Matches.UpdateLineup;
@@ -200,6 +201,51 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       "Completed job {JobName} for league {LeagueId}",
       nameof(GetLeagueTable),
       premierLeagueId);
+  }
+
+  /// <summary>
+  /// Enqueues UpdateDailySummary for every club in the database. Run daily (e.g. at 14:00).
+  /// </summary>
+  [AutomaticRetry(Attempts = 1)]
+  public async Task UpdateDailySummariesForAllClubs()
+  {
+    logger.LogInformation(
+      "Starting job {JobName} to enqueue daily summary updates for all clubs",
+      nameof(UpdateDailySummariesForAllClubs));
+
+    var clubIds = await db.Club.Select(c => c.Id).ToListAsync();
+
+    logger.LogInformation(
+      "Job {JobName} found {ClubCount} clubs to update",
+      nameof(UpdateDailySummariesForAllClubs),
+      clubIds.Count);
+
+    foreach (var clubId in clubIds)
+    {
+      var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 900)); // 0–15 minutes
+      BackgroundJob.Schedule<JobService>(js => js.UpdateDailySummaryForClub(clubId), delay);
+    }
+
+    logger.LogInformation(
+      "Job {JobName} scheduled {JobCount} daily summary jobs with random delays (0–15 min)",
+      nameof(UpdateDailySummariesForAllClubs),
+      clubIds.Count);
+  }
+
+  [AutomaticRetry(Attempts = 3)]
+  public async Task UpdateDailySummaryForClub(int clubId)
+  {
+    logger.LogInformation(
+      "Starting job {JobName} for club {ClubId}",
+      nameof(UpdateDailySummaryForClub),
+      clubId);
+
+    await mediator.Send(new UpdateDailySummaryCommand(clubId));
+
+    logger.LogInformation(
+      "Completed job {JobName} for club {ClubId}",
+      nameof(UpdateDailySummaryForClub),
+      clubId);
   }
 
   [AutomaticRetry(Attempts = 1)]
