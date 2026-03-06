@@ -1,5 +1,3 @@
-using NoMoreBets.Application.Fotmob;
-
 namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
 /// <summary>

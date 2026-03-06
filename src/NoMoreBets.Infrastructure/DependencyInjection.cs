@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Betting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Clubs;
-using NoMoreBets.Application.Fotmob;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Domain.Clubs;

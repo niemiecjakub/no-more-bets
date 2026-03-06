@@ -1,7 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Fotmob;
 using NoMoreBets.Domain.Clubs;
 
 namespace NoMoreBets.Application.Clubs.UpdateDailySummary;
@@ -11,7 +10,6 @@ public record UpdateDailySummaryCommand(int ClubId, string Summary) : IRequest<U
 
 public class UpdateDailySummaryHandler(
   IClubOverviewProvider clubOverviewProvider,
-  IFotmobConstants fotmobConstants,
   IUnitOfWork unitOfWork,
   ILogger<UpdateDailySummaryHandler> logger) : IRequestHandler<UpdateDailySummaryCommand, Unit>
 {
