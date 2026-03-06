@@ -6,6 +6,7 @@ using NoMoreBets.Application.Betting.GetBetEvents;
 using NoMoreBets.Application.Betting.UpdateMatches;
 using NoMoreBets.Application.Clubs.UpdateDailySummary;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Fotmob;
 using NoMoreBets.Application.Leagues.UpdateTable;
 using NoMoreBets.Application.Matches.UpdateLineup;
 using NoMoreBets.Application.Matches.UpdateHeadToHead;
@@ -16,10 +17,13 @@ using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Persistence;
 using System.Text.Json;
+using NoMoreBets.Application.Clubs.GetOverview;
+using NoMoreBets.Application.Common.Dto.Leagues;
+using NoMoreBets.Application.Matches.UpdateMatchDetails;
 
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
-public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService> logger)
+public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fotmobConstants, ILogger<JobService> logger)
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -205,6 +209,7 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
 
   /// <summary>
   /// Enqueues UpdateDailySummary for every club in the database. Run daily (e.g. at 14:00).
+  /// Uses staggered delays so club summary and match-detail jobs do not collide.
   /// </summary>
   [AutomaticRetry(Attempts = 1)]
   public async Task UpdateDailySummariesForAllClubs()
@@ -213,39 +218,101 @@ public class JobService(IMediator mediator, AppDbContext db, ILogger<JobService>
       "Starting job {JobName} to enqueue daily summary updates for all clubs",
       nameof(UpdateDailySummariesForAllClubs));
 
-    var clubIds = await db.Club.Select(c => c.Id).ToListAsync();
+    var clubs = await db.Club.Select(c => new { c.Id, c.Name }).ToListAsync();
 
     logger.LogInformation(
       "Job {JobName} found {ClubCount} clubs to update",
       nameof(UpdateDailySummariesForAllClubs),
-      clubIds.Count);
+      clubs.Count);
 
-    foreach (var clubId in clubIds)
+    var fotmobMatchUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    var scheduledSummaryCount = 0;
+
+    // Stagger club jobs: random gap (min–max seconds) before each so they don't collide.
+    var nextClubDelaySeconds = 0;
+    var secondsBetweenClubJobsMin = 60;
+    var secondsBetweenClubJobsMax = 120;
+
+    for (var i = 0; i < clubs.Count; i++)
     {
-      var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 900)); // 0–15 minutes
-      BackgroundJob.Schedule<JobService>(js => js.UpdateDailySummaryForClub(clubId), delay);
+      var club = clubs[i];
+      var fotmobTeam = fotmobConstants.GetTeamByName(club.Name);
+      if (fotmobTeam == null)
+      {
+        logger.LogDebug(
+          "Job {JobName} skipping club {ClubId} ({ClubName}): no Fotmob team mapping",
+          nameof(UpdateDailySummariesForAllClubs),
+          club.Id,
+          club.Name);
+        continue;
+      }
+
+      ClubOverview clubOverview;
+      try
+      {
+        clubOverview = await mediator.Send(new GetClubOverviewQuery(fotmobTeam.Id)).ConfigureAwait(false);
+      }
+      catch (Exception ex)
+      {
+        logger.LogWarning(
+          ex,
+          "Job {JobName} failed to get overview for club {ClubId} ({ClubName}), FotmobTeamId={FotmobTeamId}",
+          nameof(UpdateDailySummariesForAllClubs),
+          club.Id,
+          club.Name,
+          fotmobTeam.Id);
+        continue;
+      }
+
+      if (clubOverview.DailySummary != null && clubOverview.DailySummary.Count > 0)
+      {
+        var newSummary = string.Join(Environment.NewLine, clubOverview.DailySummary);
+        nextClubDelaySeconds += Random.Shared.Next(secondsBetweenClubJobsMin, secondsBetweenClubJobsMax + 1);
+        var delay = TimeSpan.FromSeconds(nextClubDelaySeconds);
+        BackgroundJob.Schedule<JobService>(js => js.UpdateDailySummaryForClub(club.Id, newSummary), delay);
+        scheduledSummaryCount++;
+      }
+
+      foreach (var recentGame in clubOverview.RecentGames)
+      {
+        if (!string.IsNullOrWhiteSpace(recentGame.GameUrl))
+        {
+          fotmobMatchUrls.Add(recentGame.GameUrl);
+        }
+      }
+    }
+
+    // Schedule match-detail jobs after the club summary window; random gap before each.
+    var clubWindowSeconds = nextClubDelaySeconds + 60;
+    var secondsBetweenMatchJobsMin = 90;
+    var secondsBetweenMatchJobsMax = 180;
+    var matchUrls = fotmobMatchUrls.ToList();
+    var scheduledMatchCount = 0;
+    var nextMatchDelaySeconds = clubWindowSeconds;
+
+    foreach (var url in matchUrls)
+    {
+      nextMatchDelaySeconds += Random.Shared.Next(secondsBetweenMatchJobsMin, secondsBetweenMatchJobsMax + 1);
+      var delay = TimeSpan.FromSeconds(nextMatchDelaySeconds);
+      BackgroundJob.Schedule<JobService>(js => js.UpdateMatchDetails(url), delay);
+      scheduledMatchCount++;
     }
 
     logger.LogInformation(
-      "Job {JobName} scheduled {JobCount} daily summary jobs with random delays (0–15 min)",
+      "Job {JobName} scheduled {SummaryJobCount} daily summary jobs and {MatchJobCount} match-detail jobs with staggered delays",
       nameof(UpdateDailySummariesForAllClubs),
-      clubIds.Count);
+      scheduledSummaryCount,
+      scheduledMatchCount);
   }
 
-  [AutomaticRetry(Attempts = 3)]
-  public async Task UpdateDailySummaryForClub(int clubId)
+  public async Task UpdateDailySummaryForClub(int clubId, string summary)
   {
-    logger.LogInformation(
-      "Starting job {JobName} for club {ClubId}",
-      nameof(UpdateDailySummaryForClub),
-      clubId);
+    await mediator.Send(new UpdateDailySummaryCommand(clubId, summary));
+  }
 
-    await mediator.Send(new UpdateDailySummaryCommand(clubId));
-
-    logger.LogInformation(
-      "Completed job {JobName} for club {ClubId}",
-      nameof(UpdateDailySummaryForClub),
-      clubId);
+  public async Task UpdateMatchDetails(string fotmobMatchUrl)
+  {
+    await mediator.Send(new UpdateMatchDetailsCommand(fotmobMatchUrl));
   }
 
   [AutomaticRetry(Attempts = 1)]

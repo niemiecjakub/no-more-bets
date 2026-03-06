@@ -7,7 +7,7 @@ using NoMoreBets.Domain.Clubs;
 namespace NoMoreBets.Application.Clubs.UpdateDailySummary;
 
 /// <summary>Command to refresh club daily summary from FotMob and insert when content differs from latest. Club is loaded by ID; Fotmob team is resolved by club name.</summary>
-public record UpdateDailySummaryCommand(int ClubId) : IRequest<Unit>;
+public record UpdateDailySummaryCommand(int ClubId, string Summary) : IRequest<Unit>;
 
 public class UpdateDailySummaryHandler(
   IClubOverviewProvider clubOverviewProvider,
@@ -33,23 +33,10 @@ public class UpdateDailySummaryHandler(
       return Unit.Value;
     }
 
-    var fotmobTeam = fotmobConstants.GetTeamByName(club.Name);
-    if (fotmobTeam == null)
-    {
-      logger.LogWarning(
-        "Handler {HandlerName} no Fotmob team for club name \"{ClubName}\", ClubId={ClubId}",
-        nameof(UpdateDailySummaryHandler),
-        club.Name,
-        request.ClubId);
-      return Unit.Value;
-    }
-
-    var overview = await clubOverviewProvider.GetClubOverviewAsync(fotmobTeam.Id, cancellationToken).ConfigureAwait(false);
-    var newSummary = string.Join(Environment.NewLine, overview.DailySummary ?? Array.Empty<string>());
 
     var latest = await unitOfWork.Clubs.GetLatestDailySummaryAsync(club.Id, cancellationToken).ConfigureAwait(false);
 
-    if (latest?.Summary == newSummary)
+    if (latest?.Summary == request.Summary)
     {
       logger.LogInformation(
         "Handler {HandlerName} skipping insert: daily summary unchanged for ClubId={ClubId}",
@@ -62,7 +49,7 @@ public class UpdateDailySummaryHandler(
     {
       ClubId = club.Id,
       Date = DateOnly.FromDateTime(DateTime.UtcNow),
-      Summary = newSummary
+      Summary = request.Summary
     };
     await unitOfWork.Clubs.AddDailySummaryAsync(entity, cancellationToken).ConfigureAwait(false);
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

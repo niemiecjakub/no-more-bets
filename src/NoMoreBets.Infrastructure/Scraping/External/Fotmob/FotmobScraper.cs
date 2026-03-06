@@ -566,9 +566,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     return path + "?filter=xg";
   }
 
-  private static string BuildTeamOverviewUrl(int teamId)
+  private static string BuildTeamOverviewUrl(int fotmobClubId)
   {
-    return $"{BaseUrl}/teams/{teamId}";
+    return $"{BaseUrl}/teams/{fotmobClubId}";
   }
 
   private TableEntry? ParseLeagueTableRow(IElement row)
