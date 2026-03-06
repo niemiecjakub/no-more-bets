@@ -7,8 +7,8 @@ public class MatchDetails
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
   public int Id { get; set; }
-  public string FotmobUrl { get; set; } = null!;
-  public string FotmobDetailsJson { get; set; } = null!;
+  public string? FotmobUrl { get; set; }
+  public string? FotmobDetailsJson { get; set; }
   public string? FotmobReview { get; set; }
 
   public int? MatchId { get; set; }

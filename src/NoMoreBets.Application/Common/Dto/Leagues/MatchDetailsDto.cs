@@ -6,6 +6,8 @@ public class MatchDetailsDto
     public required string HomeTeam { get; init; }
     public required string AwayTeam { get; init; }
     public DateTimeOffset? MatchDate { get; init; }
+    public int? HomeScore { get; init; }
+    public int? AwayScore { get; init; }
     public TeamLineup? HomeLineup { get; init; }
     public TeamLineup? AwayLineup { get; init; }
     public IReadOnlyList<StatGroup>? Statistics { get; init; }

@@ -235,11 +235,13 @@ ON "BettingOddsSnapshotRow" ("SnapshotId", "EventTypeId");
 
 CREATE TABLE "MatchDetails" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"FotmobUrl" text NULL,
 	"MatchId" int4 NULL,
-	"FotmobDetailsJson" jsonb NOT NULL,
+	"FotmobDetailsJson" jsonb NULL,
 	"FotmobReview" text NULL,
 	CONSTRAINT "MatchDetails_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT uq_matchdetails_match UNIQUE ("MatchId"),
 	CONSTRAINT fk_matchdetails_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE SET NULL
 );
 CREATE INDEX idx_matchdetails_match ON public."MatchDetails" USING btree ("MatchId");
+CREATE UNIQUE INDEX uq_matchdetails_fotmoburl ON public."MatchDetails" ("FotmobUrl") WHERE "FotmobUrl" IS NOT NULL;

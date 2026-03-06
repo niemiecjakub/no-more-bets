@@ -216,9 +216,9 @@ public class AppDbContext : DbContext
     {
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
-      entity.Property(e => e.FotmobUrl).IsRequired();
-      entity.HasIndex(e => e.FotmobUrl).IsUnique();
-      entity.Property(e => e.FotmobDetailsJson).IsRequired().HasColumnType("jsonb");
+      entity.Property(e => e.FotmobUrl).IsRequired(false);
+      entity.HasIndex(e => e.FotmobUrl).IsUnique().HasFilter("\"FotmobUrl\" IS NOT NULL");
+      entity.Property(e => e.FotmobDetailsJson).IsRequired(false).HasColumnType("jsonb");
       entity.HasIndex(e => e.MatchId).IsUnique().HasFilter("\"MatchId\" IS NOT NULL");
       entity.HasOne(e => e.Match).WithOne(m => m.MatchDetails).HasForeignKey<MatchDetails>(e => e.MatchId).OnDelete(DeleteBehavior.SetNull);
     });

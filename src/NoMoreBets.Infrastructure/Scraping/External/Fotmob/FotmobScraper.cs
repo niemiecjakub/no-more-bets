@@ -93,6 +93,8 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
       HomeTeam = details.HomeTeam,
       AwayTeam = details.AwayTeam,
       MatchDate = details.MatchDate,
+      HomeScore = details.HomeScore,
+      AwayScore = details.AwayScore,
       HomeLineup = details.HomeLineup,
       AwayLineup = details.AwayLineup,
       Statistics = statistics,
@@ -108,11 +110,29 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     ParseGeneralInfo(doc, out var homeTeam, out var awayTeam, out var matchDate);
     ParseLineups(doc, out var homeLineup, out var awayLineup);
 
+    int? homeScore = null;
+    int? awayScore = null;
+    var scoreEl = doc.QuerySelector("[class*='MFHeaderStatusScore']");
+    var scoreText = scoreEl?.TextContent.Trim();
+    if (!string.IsNullOrEmpty(scoreText))
+    {
+      var scoreMatch = GoalsRegex.Match(scoreText);
+      if (scoreMatch.Success &&
+          int.TryParse(scoreMatch.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var home) &&
+          int.TryParse(scoreMatch.Groups[2].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var away))
+      {
+        homeScore = home;
+        awayScore = away;
+      }
+    }
+
     return new MatchDetailsDto
     {
       HomeTeam = homeTeam,
       AwayTeam = awayTeam,
       MatchDate = matchDate,
+      HomeScore = homeScore,
+      AwayScore = awayScore,
       HomeLineup = homeLineup,
       AwayLineup = awayLineup,
     };
