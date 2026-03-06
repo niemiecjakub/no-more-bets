@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Fotmob;
 using NoMoreBets.Application.Leagues;
+using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using System.Globalization;
@@ -15,7 +16,7 @@ namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 /// <summary>
 /// FotMob scraper for fetching Premier League table and xG statistics.
 /// </summary>
-public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
+public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider, IMatchDetailsProvider
 {
   private const string BaseUrl = "https://www.fotmob.com";
 

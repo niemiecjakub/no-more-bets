@@ -92,6 +92,7 @@ public static class DependencyInjection
     services.AddTransient<ILineupProvider>(sp => sp.GetRequiredService<RotowireScraper>());
     services.AddTransient<ILeagueProvider>(sp => sp.GetRequiredService<FotmobScraper>());
     services.AddTransient<IClubOverviewProvider>(sp => sp.GetRequiredService<FotmobScraper>());
+    services.AddTransient<IMatchDetailsProvider>(sp => sp.GetRequiredService<FotmobScraper>());
     services.AddTransient<IBookmakerMatchesProvider>(sp => sp.GetRequiredService<BetclicScraper>());
     services.AddTransient<IBetEventsProvider>(sp => sp.GetRequiredService<BetclicScraper>());
 

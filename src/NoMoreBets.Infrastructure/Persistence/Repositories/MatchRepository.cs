@@ -31,6 +31,20 @@ public class MatchRepository : IMatchRepository
     return _db.Match.FirstOrDefaultAsync(m => m.SoccerdataId == soccerdataId);
   }
 
+  public Task<MatchDetails?> GetMatchDetailsByFotmobUrlAsync(string fotmobUrl, CancellationToken cancellationToken = default)
+  {
+    return _db.MatchDetails
+      .Include(md => md.Match)
+      .FirstOrDefaultAsync(md => md.FotmobUrl == fotmobUrl, cancellationToken);
+  }
+
+  public Task<MatchDetails?> GetMatchDetailsByMatchIdAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return _db.MatchDetails
+      .Include(md => md.Match)
+      .FirstOrDefaultAsync(md => md.MatchId == matchId, cancellationToken);
+  }
+
   public Task<List<Match>> GetMatches(DateTime date)
   {
     var dateUtc = DateTime.SpecifyKind(date, DateTimeKind.Utc).Date;
@@ -74,6 +88,11 @@ public class MatchRepository : IMatchRepository
     }
 
     await _db.Match.AddAsync(match, cancellationToken);
+  }
+
+  public async Task AddMatchDetailsAsync(MatchDetails matchDetails, CancellationToken cancellationToken = default)
+  {
+    await _db.MatchDetails.AddAsync(matchDetails, cancellationToken);
   }
   
   public async Task AddMatchPreview(MatchPreview matchPreview)
