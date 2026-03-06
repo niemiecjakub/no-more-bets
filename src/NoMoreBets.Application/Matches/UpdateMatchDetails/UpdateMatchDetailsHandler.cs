@@ -50,7 +50,8 @@ public class UpdateMatchDetailsHandler(
       throw;
     }
 
-    var json = JsonSerializer.Serialize(dto, JsonOptions);
+    var payload = new FotmobDetailsPayload(dto.HomeLineup, dto.AwayLineup, dto.Statistics, dto.Players);
+    var json = JsonSerializer.Serialize(payload, JsonOptions);
 
     // Path A: existing match by FotmobUrl
     var existingDetails = await unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(fotmobGameUrl, cancellationToken).ConfigureAwait(false);

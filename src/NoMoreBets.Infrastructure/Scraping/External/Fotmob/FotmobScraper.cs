@@ -7,6 +7,7 @@ using NoMoreBets.Application.Fotmob;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Common.Dto.Leagues;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -75,8 +76,8 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     var html = await GetHtmlAfterInteractionsAsync(gameUrl, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
     var details = await ParseMatchDetailsAsync(html).ConfigureAwait(false);
 
-    IReadOnlyList<StatGroup>? statistics = null;
-    IReadOnlyList<PlayerMatchStats>? players = null;
+    IReadOnlyList<FotmobStatGroup>? statistics = null;
+    IReadOnlyList<FotmobPlayerMatchStats>? players = null;
     try
     {
       var statsUrl = gameUrl + ":tab=stats";
@@ -140,12 +141,12 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   }
 
   /// <summary>Parses all StatGroupContainer elements from Statistics tab HTML. Returns empty list if none found.</summary>
-  internal static async Task<IReadOnlyList<StatGroup>> ParseStatisticsFromDocumentAsync(string html)
+  internal static async Task<IReadOnlyList<FotmobStatGroup>> ParseStatisticsFromDocumentAsync(string html)
   {
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
     var containers = doc.QuerySelectorAll("[class*='StatGroupContainer']");
-    var groups = new List<StatGroup>();
+    var groups = new List<FotmobStatGroup>();
 
     foreach (var container in containers)
     {
@@ -157,12 +158,12 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   }
 
   /// <summary>Parses the player stats table from Statistics tab HTML. Returns empty list if table not found.</summary>
-  internal static async Task<IReadOnlyList<PlayerMatchStats>> ParsePlayersFromDocumentAsync(string html)
+  internal static async Task<IReadOnlyList<FotmobPlayerMatchStats>> ParsePlayersFromDocumentAsync(string html)
   {
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
     var table = doc.QuerySelector("table[class*='StyledTable']") ?? doc.QuerySelector("[class*='StyledTable']");
-    var list = new List<PlayerMatchStats>();
+    var list = new List<FotmobPlayerMatchStats>();
     if (table is null)
       return list;
     var rows = table.QuerySelectorAll("tbody tr");
@@ -183,7 +184,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
       var xgPlusXa = GetCellText(cells[7]);
       var defensiveContributions = GetCellText(cells[8]);
 
-      list.Add(new PlayerMatchStats
+      list.Add(new FotmobPlayerMatchStats
       {
         Player = player,
         Score = score,
@@ -207,19 +208,19 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   }
 
   /// <summary>Parses one ul (StatGroupContainer) into zero or more StatGroups (section-aware).</summary>
-  private static List<StatGroup> ParseStatGroupsFromContainer(IElement ul)
+  private static List<FotmobStatGroup> ParseStatGroupsFromContainer(IElement ul)
   {
-    var result = new List<StatGroup>();
+    var result = new List<FotmobStatGroup>();
     var currentTitle = "";
-    var currentRows = new List<StatRow>();
+    var currentRows = new List<FotmobStatRow>();
     var children = ul.Children.ToArray();
 
     void PushCurrentGroup()
     {
       if (currentRows.Count > 0)
       {
-        result.Add(new StatGroup { Title = currentTitle, Rows = currentRows.ToList() });
-        currentRows = new List<StatRow>();
+        result.Add(new FotmobStatGroup { Title = currentTitle, Rows = currentRows.ToList() });
+        currentRows = new List<FotmobStatRow>();
       }
     }
 
@@ -248,7 +249,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
           var segments = possessionDiv.QuerySelectorAll("[class*='PossessionSegment'] span").ToArray();
           var homeVal = segments.Length > 0 ? segments[0].TextContent.Trim() : null;
           var awayVal = segments.Length > 1 ? segments[1].TextContent.Trim() : null;
-          currentRows.Add(new StatRow { Label = label, HomeValue = homeVal, AwayValue = awayVal });
+          currentRows.Add(new FotmobStatRow { Label = label, HomeValue = homeVal, AwayValue = awayVal });
           i++;
         }
         continue;
@@ -276,7 +277,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
         }
         else if (!string.IsNullOrEmpty(label))
         {
-          currentRows.Add(new StatRow { Label = label, HomeValue = firstValue, AwayValue = secondValue });
+          currentRows.Add(new FotmobStatRow { Label = label, HomeValue = firstValue, AwayValue = secondValue });
         }
         continue;
       }
@@ -321,7 +322,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     }
   }
 
-  private void ParseLineups(IDocument doc, out TeamLineup? homeLineup, out TeamLineup? awayLineup)
+  private void ParseLineups(IDocument doc, out FotmobTeamLineup? homeLineup, out FotmobTeamLineup? awayLineup)
   {
     homeLineup = null;
     awayLineup = null;
@@ -340,7 +341,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     }
   }
 
-  private static TeamLineup? ParseTeamLineup(IElement teamInfoContainer, IElement teamContainer)
+  private static FotmobTeamLineup? ParseTeamLineup(IElement teamInfoContainer, IElement teamContainer)
   {
     var teamName = "";
     var link = teamInfoContainer.QuerySelector("a[class*='LineupContainer']");
@@ -357,7 +358,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     if (ratingSpan is not null && TryParseRating(ratingSpan.TextContent, out var tr))
       teamRating = tr;
 
-    var players = new List<LineupPlayer>();
+    var players = new List<FotmobLineupPlayer>();
     foreach (var playerDiv in teamContainer.QuerySelectorAll("[class*='PlayerDiv']"))
     {
       var player = ParseLineupPlayer(playerDiv);
@@ -365,7 +366,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
         players.Add(player);
     }
 
-    return new TeamLineup
+    return new FotmobTeamLineup
     {
       TeamName = teamName,
       Formation = formation,
@@ -374,7 +375,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     };
   }
 
-  private static LineupPlayer? ParseLineupPlayer(IElement playerDiv)
+  private static FotmobLineupPlayer? ParseLineupPlayer(IElement playerDiv)
   {
     var nameEl = playerDiv.QuerySelector("[class*='LineupPlayerText']");
     var name = nameEl?.GetAttribute("title")?.Trim() ?? nameEl?.TextContent.Trim() ?? "";
@@ -384,7 +385,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     if (ratingEl is not null && TryParseRating(ratingEl.TextContent, out var r))
       rating = r;
 
-    return new LineupPlayer
+    return new FotmobLineupPlayer
     {
       Name = name,
       Rating = rating

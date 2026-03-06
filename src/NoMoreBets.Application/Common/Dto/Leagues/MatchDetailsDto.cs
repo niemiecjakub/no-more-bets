@@ -1,5 +1,7 @@
 namespace NoMoreBets.Application.Common.Dto.Leagues;
 
+using NoMoreBets.Domain.Matches;
+
 /// <summary>Match details from FotMob match detail page (general info, lineups, and optional statistics).</summary>
 public class MatchDetailsDto
 {
@@ -8,8 +10,8 @@ public class MatchDetailsDto
     public DateTimeOffset? MatchDate { get; init; }
     public int? HomeScore { get; init; }
     public int? AwayScore { get; init; }
-    public TeamLineup? HomeLineup { get; init; }
-    public TeamLineup? AwayLineup { get; init; }
-    public IReadOnlyList<StatGroup>? Statistics { get; init; }
-    public IReadOnlyList<PlayerMatchStats>? Players { get; init; }
+    public FotmobTeamLineup? HomeLineup { get; init; }
+    public FotmobTeamLineup? AwayLineup { get; init; }
+    public IReadOnlyList<FotmobStatGroup>? Statistics { get; init; }
+    public IReadOnlyList<FotmobPlayerMatchStats>? Players { get; init; }
 }
