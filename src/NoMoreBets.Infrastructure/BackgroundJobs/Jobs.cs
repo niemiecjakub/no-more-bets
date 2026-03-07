@@ -226,16 +226,8 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
       clubs.Count);
 
     var fotmobMatchUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    var scheduledSummaryCount = 0;
-
-    // Stagger club jobs: random gap (min–max seconds) before each so they don't collide.
-    var nextClubDelaySeconds = 0;
-    var secondsBetweenClubJobsMin = 60;
-    var secondsBetweenClubJobsMax = 120;
-
-    for (var i = 0; i < clubs.Count; i++)
+    foreach (var club in clubs)
     {
-      var club = clubs[i];
       var fotmobTeam = fotmobConstants.GetTeamByName(club.Name);
       if (fotmobTeam == null)
       {
@@ -267,42 +259,21 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
       if (clubOverview.DailySummary != null && clubOverview.DailySummary.Count > 0)
       {
         var newSummary = string.Join(Environment.NewLine, clubOverview.DailySummary);
-        nextClubDelaySeconds += Random.Shared.Next(secondsBetweenClubJobsMin, secondsBetweenClubJobsMax + 1);
-        var delay = TimeSpan.FromSeconds(nextClubDelaySeconds);
+        var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 300));
         BackgroundJob.Schedule<JobService>(js => js.UpdateDailySummaryForClub(club.Id, newSummary), delay);
-        scheduledSummaryCount++;
       }
 
       foreach (var recentGame in clubOverview.RecentGames)
       {
-        if (!string.IsNullOrWhiteSpace(recentGame.GameUrl))
-        {
-          fotmobMatchUrls.Add(recentGame.GameUrl);
-        }
+        fotmobMatchUrls.Add(recentGame.GameUrl);
       }
     }
 
-    // Schedule match-detail jobs after the club summary window; random gap before each.
-    var clubWindowSeconds = nextClubDelaySeconds + 60;
-    var secondsBetweenMatchJobsMin = 90;
-    var secondsBetweenMatchJobsMax = 180;
-    var matchUrls = fotmobMatchUrls.ToList();
-    var scheduledMatchCount = 0;
-    var nextMatchDelaySeconds = clubWindowSeconds;
-
-    foreach (var url in matchUrls)
+    foreach (var url in fotmobMatchUrls)
     {
-      nextMatchDelaySeconds += Random.Shared.Next(secondsBetweenMatchJobsMin, secondsBetweenMatchJobsMax + 1);
-      var delay = TimeSpan.FromSeconds(nextMatchDelaySeconds);
+      var delay = TimeSpan.FromSeconds(Random.Shared.Next(500, 2000));
       BackgroundJob.Schedule<JobService>(js => js.UpdateMatchDetails(url), delay);
-      scheduledMatchCount++;
     }
-
-    logger.LogInformation(
-      "Job {JobName} scheduled {SummaryJobCount} daily summary jobs and {MatchJobCount} match-detail jobs with staggered delays",
-      nameof(UpdateDailySummariesForAllClubs),
-      scheduledSummaryCount,
-      scheduledMatchCount);
   }
 
   public async Task UpdateDailySummaryForClub(int clubId, string summary)

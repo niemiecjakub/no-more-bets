@@ -36,6 +36,15 @@ public class UpdateMatchDetailsHandler(
       return Unit.Value;
     }
 
+    if (!Uri.TryCreate(fotmobGameUrl, UriKind.Absolute, out _))
+    {
+      logger.LogWarning(
+        "Handler {HandlerName} skipped: FotmobGameUrl is not a valid absolute URL. Value: {FotmobGameUrl}",
+        nameof(UpdateMatchDetailsHandler),
+        fotmobGameUrl.Length > 200 ? fotmobGameUrl[..200] + "…" : fotmobGameUrl);
+      return Unit.Value;
+    }
+
     MatchDetailsDto dto;
     try
     {
