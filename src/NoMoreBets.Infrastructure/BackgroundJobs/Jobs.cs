@@ -41,29 +41,52 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
       nameof(GetUpcommingSoccerdataMatches),
       upcommingMatches.Count,
       soccerdataLeagueId);
+  }
 
-    var enqueuedJobs = 0;
+  /// <summary>
+  /// Daily job: for all upcoming matches with SoccerdataId, enqueue RefreshHead2HeadStatistics;
+  /// for those without a MatchPreview record, enqueue GetUpcommingSoccerdataMatchePreview.
+  /// </summary>
+  [AutomaticRetry(Attempts = 3)]
+  public async Task RefreshUpcomingMatchPreviewsAndHead2Head()
+  {
+    logger.LogInformation(
+      "Starting job {JobName} to schedule preview and head-to-head jobs for upcoming matches",
+      nameof(RefreshUpcomingMatchPreviewsAndHead2Head));
 
-    foreach (var match in upcommingMatches)
+    var upcomingWithSoccerdataId = await db.Match
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming && m.SoccerdataId != null)
+      .Select(m => new { m.Id, m.HomeClubId, m.AwayClubId, m.SoccerdataId })
+      .ToListAsync();
+
+    var upcomingMatchIds = upcomingWithSoccerdataId.Select(m => m.Id).ToList();
+    var matchIdsWithPreview = (await db.MatchPreview
+      .Where(mp => upcomingMatchIds.Contains(mp.MatchId))
+      .Select(mp => mp.MatchId)
+      .ToListAsync()).ToHashSet();
+
+    var enqueuedH2H = 0;
+    var enqueuedPreview = 0;
+
+    foreach (var match in upcomingWithSoccerdataId)
     {
-      if (!match.SoccerdataId.HasValue)
-      {
-        logger.LogWarning(
-          "Job {JobName} skipping match {MatchId} because SoccerdataId is missing",
-          nameof(GetUpcommingSoccerdataMatches),
-          match.Id);
-        continue;
-      }
-      BackgroundJob.Enqueue(() => GetUpcommingSoccerdataMatchePreview(match.SoccerdataId.Value));
       BackgroundJob.Enqueue(() => RefreshHead2HeadStatistics(match.HomeClubId, match.AwayClubId));
-      enqueuedJobs += 2;
+      enqueuedH2H++;
+
+      if (!matchIdsWithPreview.Contains(match.Id))
+      {
+        var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 1500));
+        BackgroundJob.Schedule<JobService>(js => js.GetUpcommingSoccerdataMatchePreview(match.SoccerdataId!.Value), delay);
+        enqueuedPreview++;
+      }
     }
 
     logger.LogInformation(
-      "Job {JobName} enqueued {JobCount} Hangfire jobs for Soccerdata upcoming matches for league {SoccerdataLeagueId}",
-      nameof(GetUpcommingSoccerdataMatches),
-      enqueuedJobs,
-      soccerdataLeagueId);
+      "Job {JobName} enqueued {H2HCount} head-to-head jobs and {PreviewCount} preview jobs for {MatchCount} upcoming matches",
+      nameof(RefreshUpcomingMatchPreviewsAndHead2Head),
+      enqueuedH2H,
+      enqueuedPreview,
+      upcomingWithSoccerdataId.Count);
   }
 
   [AutomaticRetry(Attempts = 3)]
@@ -142,7 +165,8 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
 
     if (shouldUpdate)
     {
-      BackgroundJob.Enqueue<JobService>(js => js.RefreshHead2HeadData(homeClubSoccerdataId, awayClubSoccerdataId));
+      var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 1500));
+      BackgroundJob.Schedule<JobService>(js => js.RefreshHead2HeadData(homeClubSoccerdataId, awayClubSoccerdataId), delay);
       logger.LogInformation(
         "Job {JobName} enqueued head-to-head refresh for clubs {HomeClubSoccerdataId} vs {AwayClubSoccerdataId}",
         nameof(RefreshHead2HeadStatistics),
@@ -212,17 +236,17 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
   /// Uses staggered delays so club summary and match-detail jobs do not collide.
   /// </summary>
   [AutomaticRetry(Attempts = 1)]
-  public async Task UpdateDailySummariesForAllClubs()
+  public async Task UpdateClubOverview()
   {
     logger.LogInformation(
       "Starting job {JobName} to enqueue daily summary updates for all clubs",
-      nameof(UpdateDailySummariesForAllClubs));
+      nameof(UpdateClubOverview));
 
     var clubs = await db.Club.Select(c => new { c.Id, c.Name }).ToListAsync();
 
     logger.LogInformation(
       "Job {JobName} found {ClubCount} clubs to update",
-      nameof(UpdateDailySummariesForAllClubs),
+      nameof(UpdateClubOverview),
       clubs.Count);
 
     var fotmobMatchUrls = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -233,7 +257,7 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
       {
         logger.LogDebug(
           "Job {JobName} skipping club {ClubId} ({ClubName}): no Fotmob team mapping",
-          nameof(UpdateDailySummariesForAllClubs),
+          nameof(UpdateClubOverview),
           club.Id,
           club.Name);
         continue;
@@ -249,7 +273,7 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
         logger.LogWarning(
           ex,
           "Job {JobName} failed to get overview for club {ClubId} ({ClubName}), FotmobTeamId={FotmobTeamId}",
-          nameof(UpdateDailySummariesForAllClubs),
+          nameof(UpdateClubOverview),
           club.Id,
           club.Name,
           fotmobTeam.Id);
