@@ -199,6 +199,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   {
     var snapshot = await db.LeagueTableSnapshot
       .Where(s => s.LeagueId == leagueId)
+      .Include(s => s.League)
       .Include(s => s.Rows)
       .ThenInclude(r => r.Club)
       .OrderByDescending(s => s.SnapshotDate)
@@ -234,6 +235,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       snapshot.LeagueId,
       snapshot.SeasonId,
       snapshot.SnapshotDate,
+      snapshot.League.Name,
       rows));
   }
 
@@ -368,6 +370,7 @@ public record LeagueTableDto(
   int LeagueId,
   int SeasonId,
   DateOnly SnapshotDate,
+  string LeagueName,
   IReadOnlyList<LeagueTableRowDto> Rows);
 
 public record LeagueTableRowDto(

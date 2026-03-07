@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { LeagueListItem } from "../interfaces";
 
 interface LeagueListProps {
@@ -18,9 +19,14 @@ export function LeagueList({ leagues }: LeagueListProps) {
       {leagues.map((league) => (
         <li
           key={league.id}
-          className="bg-white px-4 py-3 text-foreground transition-colors hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+          className="bg-white text-foreground transition-colors hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900"
         >
-          <span className="font-medium">{league.name}</span>
+          <Link
+            href={`/league/${league.id}`}
+            className="block px-4 py-3 font-medium"
+          >
+            {league.name}
+          </Link>
         </li>
       ))}
     </ul>
