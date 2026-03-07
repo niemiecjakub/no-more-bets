@@ -484,7 +484,8 @@ public class FotmobScraperTests
         result.DailySummary.Should().Contain("Newcastle suffered");
         result.DailySummary.Should().Contain("Eddie Howe");
         result.DailySummary.Should().Contain("Sandro Tonali");
-        result.DailySummary.Should().NotContain("Więcej");
+        result.DailySummary.Should().NotEndWith("More");
+        result.DailySummary.Should().EndWith(".");
     }
 
     [Fact]
