@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="NoMoreBets.Tests" />
+    <InternalsVisibleTo Include="NoMoreBets.Infrastructure.Tests" />
   </ItemGroup>
   
 </Project>
