@@ -21,4 +21,4 @@ plans/
 src/NoMoreBets/appsettings.Development.json
 src/NoMoreBets/appsettings.json
 
-tests/NoMoreBets.Tests/Fixtures/*
+tests/**/*.html
