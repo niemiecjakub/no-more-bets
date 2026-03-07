@@ -25,7 +25,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   {
     var list = await db.League
       .OrderBy(l => l.Name)
-      .Select(l => new LeagueDto(l.Id, l.Name, l.SoccerdataId))
+      .Select(l => new LeagueDto(l.Id, l.Name))
       .ToListAsync(cancellationToken);
     return Ok(list);
   }
@@ -41,7 +41,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
     var list = await db.Club
       .Include(c => c.League)
       .OrderBy(c => c.Name)
-      .Select(c => new ClubDto(c.Id, c.Name, c.LeagueId, c.SoccerdataId, c.League.Name))
+      .Select(c => new ClubDto(c.Id, c.Name, c.LeagueId, c.League.Name))
       .ToListAsync(cancellationToken);
     return Ok(list);
   }
@@ -81,10 +81,9 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
       .Include(m => m.MatchStatusEntity)
-      .OrderBy(m => m.MatchDate)
+      .OrderByDescending(m => m.MatchDate)
       .Select(m => new MatchDto(
         m.Id,
-        m.SoccerdataId,
         m.MatchDate,
         m.HomeClubId,
         m.AwayClubId,
@@ -123,7 +122,6 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .OrderBy(m => m.MatchDate)
       .Select(m => new MatchDto(
         m.Id,
-        m.SoccerdataId,
         m.MatchDate,
         m.HomeClubId,
         m.AwayClubId,
@@ -173,7 +171,6 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         g.Key,
         g.Select(m => new MatchDto(
           m.Id,
-          m.SoccerdataId,
           m.MatchDate,
           m.HomeClubId,
           m.AwayClubId,
@@ -347,15 +344,14 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   }
 }
 
-public record LeagueDto(int Id, string Name, int SoccerdataId);
+public record LeagueDto(int Id, string Name);
 
-public record ClubDto(int Id, string Name, int LeagueId, int SoccerdataId, string LeagueName);
+public record ClubDto(int Id, string Name, int LeagueId, string LeagueName);
 
 public record ClubDailySummaryDto(int Id, string ClubName, DateOnly Date, string Summary);
 
 public record MatchDto(
   int Id,
-  int? SoccerdataId,
   DateTime MatchDate,
   int HomeClubId,
   int AwayClubId,
