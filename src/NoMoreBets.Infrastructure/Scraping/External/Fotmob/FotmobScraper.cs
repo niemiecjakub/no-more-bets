@@ -439,7 +439,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     return results;
   }
 
-  private static IReadOnlyList<string> ParseDailySummaryFromDocument(IDocument doc)
+  private static string ParseDailySummaryFromDocument(IDocument doc)
   {
     var list = new List<string>();
     var container = doc.QuerySelector("div[class*='NewsSummaryContainerCSS']");
@@ -450,12 +450,18 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
       var text = li.TextContent.Trim();
       if (string.IsNullOrEmpty(text))
         continue;
-      if (text.EndsWith("Więcej", StringComparison.OrdinalIgnoreCase))
-        text = text[..^6].TrimEnd('\u00A0', ' ');
+
+      var lastDot = text.LastIndexOf('.');
+      if (lastDot >= 0)
+        text = text[..(lastDot + 1)].Trim();
+
+      if (!text.EndsWith('.'))
+        text += ".";
+
       list.Add(text);
     }
 
-    return list;
+    return string.Join(" ", list);
   }
 
   internal async Task<IReadOnlyList<TableEntry>> ParseLeagueTableClubsAsync(string html)

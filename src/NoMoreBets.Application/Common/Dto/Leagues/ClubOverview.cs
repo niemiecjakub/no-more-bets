@@ -4,5 +4,5 @@ namespace NoMoreBets.Application.Common.Dto.Leagues;
 public class ClubOverview
 {
     public required IReadOnlyList<ClubRecentGame> RecentGames { get; init; }
-    public required IReadOnlyList<string> DailySummary { get; init; }
+    public required string DailySummary { get; init; }
 }

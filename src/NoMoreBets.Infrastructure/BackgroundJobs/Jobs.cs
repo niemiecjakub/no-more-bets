@@ -256,11 +256,10 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
         continue;
       }
 
-      if (clubOverview.DailySummary != null && clubOverview.DailySummary.Count > 0)
+      if (!string.IsNullOrWhiteSpace(clubOverview.DailySummary))
       {
-        var newSummary = string.Join(Environment.NewLine, clubOverview.DailySummary);
         var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 300));
-        BackgroundJob.Schedule<JobService>(js => js.UpdateDailySummaryForClub(club.Id, newSummary), delay);
+        BackgroundJob.Schedule<JobService>(js => js.UpdateDailySummaryForClub(club.Id, clubOverview.DailySummary), delay);
       }
 
       foreach (var recentGame in clubOverview.RecentGames)

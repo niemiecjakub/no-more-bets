@@ -481,12 +481,10 @@ public class FotmobScraperTests
         var result = await sut.ParseClubOverviewAsync(html);
 
         // Assert
-        result.DailySummary.Should().HaveCount(3);
-        result.DailySummary.Should().OnlyContain(s => !string.IsNullOrWhiteSpace(s));
-        result.DailySummary[0].Should().Contain("Newcastle suffered");
-        result.DailySummary[0].Should().NotEndWith("Więcej");
-        result.DailySummary[1].Should().Contain("Eddie Howe");
-        result.DailySummary[2].Should().Contain("Sandro Tonali");
+        result.DailySummary.Should().Contain("Newcastle suffered");
+        result.DailySummary.Should().Contain("Eddie Howe");
+        result.DailySummary.Should().Contain("Sandro Tonali");
+        result.DailySummary.Should().NotContain("Więcej");
     }
 
     [Fact]
