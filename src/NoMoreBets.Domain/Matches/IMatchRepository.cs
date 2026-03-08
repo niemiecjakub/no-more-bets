@@ -1,4 +1,5 @@
 namespace NoMoreBets.Domain.Matches;
+/// <summary>Repository for the Match aggregate root. Add* methods persist children attached via the root.</summary>
 public interface IMatchRepository
 {
   public Task<Match?> GetMatchBySoccerdataId(int soccerdataId);

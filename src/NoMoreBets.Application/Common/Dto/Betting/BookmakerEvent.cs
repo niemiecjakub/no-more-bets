@@ -8,3 +8,9 @@ public record BookmakerEvent
     public required string Title { get; init; }
     public required IReadOnlyList<EventOption> Options { get; init; }
 }
+
+public record EventOption
+{
+  public required string Label { get; init; }
+  public required double Odds { get; init; }
+}

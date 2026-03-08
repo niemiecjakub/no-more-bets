@@ -137,6 +137,42 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   }
 
   /// <summary>
+  /// Gets matches that have complete data: MatchPreview, Head2Head, Lineup, and at least one BettingOddsSnapshot.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of matches with home/away club names and status.</returns>
+  [HttpGet("matches/complete")]
+  public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetMatchesWithCompleteData(
+    CancellationToken cancellationToken = default)
+  {
+    var list = await db.Match
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .Include(m => m.MatchStatusEntity)
+      .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
+      .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
+      .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
+      .Where(m => db.Head2Head.Any(h =>
+        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
+        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
+      .OrderByDescending(m => m.MatchDate)
+      .Select(m => new MatchDto(
+        m.Id,
+        m.MatchDate,
+        m.HomeClubId,
+        m.AwayClubId,
+        m.HomeClub.Name,
+        m.AwayClub.Name,
+        m.MatchStatusId,
+        m.MatchStatusEntity!.Name,
+        m.HomeGoals,
+        m.AwayGoals,
+        m.BetclicUrl))
+      .ToListAsync(cancellationToken);
+    return Ok(list);
+  }
+
+  /// <summary>
   /// Gets matches that share the same game URL (BetclicUrl). Returns only URLs that have more than one match.
   /// </summary>
   /// <param name="cancellationToken">Cancellation token.</param>

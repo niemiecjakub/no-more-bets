@@ -26,15 +26,9 @@ export async function apiGet<T>(
   const base = getApiBase();
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
   let res: Response;
-  try {
-    res = await fetch(url, {
-      next: { revalidate: options?.revalidate ?? 60 },
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    const cause = err instanceof Error && err.cause instanceof Error ? err.cause.message : "";
-    throw new Error(`Request to backend failed: ${msg}${cause ? `. ${cause}` : ""}.`);
-  }
+  res = await fetch(url, {
+    next: { revalidate: options?.revalidate ?? 60 },
+  });
   if (!res.ok) {
     throw new Error(`Failed to fetch ${resourceName}: ${res.status} ${res.statusText}`);
   }

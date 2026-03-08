@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 

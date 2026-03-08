@@ -19,25 +19,4 @@ public record ClubDto(
     IReadOnlyList<string> Form,
     int? NextOpponentId,
     string? NextOpponentName,
-    string? NextOpponentLogoUrl)
-{
-  public static ClubDto From(TableEntry source) =>
-      new(
-          source.Position,
-          source.TeamName,
-          source.TeamShortname,
-          source.TeamId,
-          source.TeamLogoUrl,
-          source.MatchesPlayed,
-          source.Wins,
-          source.Draws,
-          source.Losses,
-          source.GoalsFor,
-          source.GoalsAgainst,
-          source.GoalDifference,
-          source.Points,
-          source.Form.Select(m => m.ToString()).ToList(),
-          source.NextOpponentId,
-          source.NextOpponentName,
-          source.NextOpponentLogoUrl);
-}
+    string? NextOpponentLogoUrl);

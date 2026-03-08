@@ -1,4 +1,4 @@
-﻿using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Domain.Leagues;
 public interface ILeagueRepository
