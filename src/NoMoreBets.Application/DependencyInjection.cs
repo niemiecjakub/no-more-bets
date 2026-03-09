@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common.MatchMatcher;
-using MediatR;
 
 namespace NoMoreBets.Application;
 

@@ -8,6 +8,7 @@ using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.BackgroundJobs;
@@ -20,8 +21,11 @@ using NoMoreBets.Infrastructure.Scraping.External.Betclic;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 using NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
+using NoMoreBets.Infrastructure.AI.Plugins;
+using NoMoreBets.Infrastructure.AI;
 using Polly;
 using System.Net;
+using Microsoft.SemanticKernel;
 
 namespace NoMoreBets.Infrastructure;
 
@@ -56,10 +60,13 @@ public static class DependencyInjection
       .ValidateOnStart();
 
     // Repositories & Unit of Work
+    services.AddScoped<IBettingRepository, BettingRepository>();
     services.AddScoped<IMatchRepository, MatchRepository>();
     services.AddScoped<IClubRepository, ClubRepository>();
     services.AddScoped<ILeagueRepository, LeagueRepository>();
     services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+    services.AddSemanticKernelServices(configuration);
 
     // Browser automation
     services.AddSingleton<PlaywrightBrowserService>();

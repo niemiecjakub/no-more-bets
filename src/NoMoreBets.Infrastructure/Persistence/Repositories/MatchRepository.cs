@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Infrastructure.Persistence.Repositories;
@@ -21,9 +22,29 @@ public class MatchRepository : IMatchRepository
       .FirstOrDefaultAsync();
   }
 
+  public Task<Match?> GetMatchByIdAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return _db.Match
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .FirstOrDefaultAsync(m => m.Id == matchId, cancellationToken);
+  }
+
   public Task<Lineup?> GetLineup(int matchId)
   {
     return _db.Lineup.SingleOrDefaultAsync(l => l.MatchId == matchId);
+  }
+
+  public async Task<IReadOnlyList<Match>> GetRecentMatchesForClubAsync(int clubId, int count, CancellationToken cancellationToken = default)
+  {
+    return await _db.Match
+      .Where(m => (m.HomeClubId == clubId || m.AwayClubId == clubId) && m.MatchStatusId == (int)MatchStatus.Finished)
+      .OrderByDescending(m => m.MatchDate)
+      .Take(count)
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
   }
 
   public Task<Match?> GetMatchBySoccerdataId(int soccerdataId)
