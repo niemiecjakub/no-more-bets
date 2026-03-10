@@ -149,6 +149,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
       .Include(m => m.MatchStatusEntity)
+      .Where(m => m.MatchStatus == MatchStatus.Upcomming)
       .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
       .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
       .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))

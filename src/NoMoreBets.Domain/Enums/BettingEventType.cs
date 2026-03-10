@@ -18,7 +18,7 @@ public enum BettingEventType
   [Display(Name = "Wynik meczu (z wyłączeniem dogrywki)")]
   MatchResult = 5,
 
-  [Display(Name = "Która drużyna strzeli pierwszego gola?")]
+  [Display(Name = "Która drużyna strzeli pierwszego gola")]
   FirstTeamToScore = 6,
 
   [Display(Name = "Zawodnik lub jego zmiennik strzeli gola (90 min)")]

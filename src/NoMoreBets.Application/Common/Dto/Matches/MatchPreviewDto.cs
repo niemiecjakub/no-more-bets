@@ -1,3 +1,5 @@
+using NoMoreBets.Domain.Matches;
+
 namespace NoMoreBets.Application.Common.Dto.Matches;
 
 /// <summary>Match preview data from SoccerData API.</summary>

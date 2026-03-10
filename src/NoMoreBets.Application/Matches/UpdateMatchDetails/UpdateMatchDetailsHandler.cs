@@ -45,6 +45,17 @@ public class UpdateMatchDetailsHandler(
       return Unit.Value;
     }
 
+    // Path A: existing match by FotmobUrl
+    var existingDetails = await unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(fotmobGameUrl, cancellationToken).ConfigureAwait(false);
+    if (existingDetails != null)
+    {
+      logger.LogInformation(
+        "Handler {HandlerName} match details for MatchId={MatchId} alredy exists.",
+        nameof(UpdateMatchDetailsHandler),
+        existingDetails.MatchId);
+      return Unit.Value;
+    }
+
     MatchDetailsDto dto;
     try
     {
@@ -62,21 +73,6 @@ public class UpdateMatchDetailsHandler(
     var payload = new FotmobDetailsPayload(dto.HomeLineup, dto.AwayLineup, dto.Statistics, dto.Players);
     var json = JsonSerializer.Serialize(payload, JsonOptions);
 
-    // Path A: existing match by FotmobUrl
-    var existingDetails = await unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(fotmobGameUrl, cancellationToken).ConfigureAwait(false);
-    if (existingDetails != null)
-    {
-      existingDetails.FotmobUrl = fotmobGameUrl;
-      existingDetails.FotmobDetailsJson = json;
-      ApplyStatusAndScoreIfUpcoming(existingDetails.Match, dto);
-      await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-      logger.LogInformation(
-        "Handler {HandlerName} updated existing MatchDetails by FotmobUrl for MatchId={MatchId}.",
-        nameof(UpdateMatchDetailsHandler),
-        existingDetails.MatchId);
-      return Unit.Value;
-    }
-
     // Path B: find match by teams + date
     if (!dto.MatchDate.HasValue)
     {
@@ -88,7 +84,7 @@ public class UpdateMatchDetailsHandler(
         fotmobGameUrl);
       return Unit.Value;
     }
-    
+
     var matchDate = dto.MatchDate.Value.UtcDateTime;
     var matchesOnDay = await unitOfWork.Matches.GetMatches(matchDate).ConfigureAwait(false);
     var candidates = matchesOnDay

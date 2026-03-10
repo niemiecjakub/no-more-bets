@@ -26,4 +26,5 @@ public class LeagueTableSnapshotRow
 
   public LeagueTableSnapshot Snapshot { get; set; } = null!;
   public Club Club { get; set; } = null!;
+
 }

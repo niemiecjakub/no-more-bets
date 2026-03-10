@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Infrastructure.Persistence.Repositories;
@@ -23,7 +24,15 @@ public class ClubRepository : IClubRepository
       .ConfigureAwait(false);
   }
 
-
+  public async Task<ClubLeagueStats?> GetCurrentClubLeagueStatsAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _db.LeagueTableSnapshotRow
+      .Where(r => r.ClubId == clubId)
+      .OrderByDescending(r => r.SnapshotId)
+      .Select(r => new ClubLeagueStats(r))
+      .FirstOrDefaultAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
 
   public async Task<ClubDailySummary?> GetLatestDailySummaryAsync(int clubId, CancellationToken cancellationToken = default)
   {

@@ -8,4 +8,9 @@ public class ClubDailySummary
   public string Summary { get; set; } = null!;
 
   public Club Club { get; set; } = null!;
+
+  public override string ToString()
+  {
+    return $"[{Date}] {Summary}";
+  }
 }

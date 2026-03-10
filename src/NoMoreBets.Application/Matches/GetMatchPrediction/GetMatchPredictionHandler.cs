@@ -29,19 +29,79 @@ public class GetMatchPredictionHandler(
     string homeName = match.HomeClub?.Name ?? "Home";
     string awayName = match.AwayClub?.Name ?? "Away";
 
-    const string predictionPrompt = """
-      You are an expert football match analyst focused on betting. You have access to tools to fetch match data. Use them to gather information for this match, then reason about the betting outcome.
+    //const string preGameAnalysisPrompt = """
+    //You are a professional football tactical analyst and sharp bettor. 
+    //Your goal is to produce a comprehensive Pre-Game Intelligence Report for: {{$matchInfo}}.
 
-      Match: {{$matchInfo}}
-      Use these IDs when calling tools: homeClubId = {{$homeClubId}}, awayClubId = {{$awayClubId}}.
+    //### MANDATORY DATA COLLECTION
+    //Before reasoning, you MUST use the provided tools to retrieve:
+    //1. Tactical Context: Match preview and recent daily summaries (homeId: {{$homeClubId}}, awayId: {{$awayClubId}}).
+    //2. Personnel: Confirmed or projected lineups and the current injury/suspension list.
+    //3. Performance: Recent form (last 5 games) and historical Head-to-Head patterns.
+    //4. Market Sentiment: Current betting odds and historical odds movement.
 
-      Call the appropriate tools to fetch: match lineup, match preview, head-to-head stats, daily summary for each club, recent games for each club, betting events, and betting odds history. Then, using ONLY the data returned by the tools, provide:
-      1. Your view on the most likely outcome from a betting perspective: home win, draw, or away win (do not predict an exact score).
-      2. Two or three brief reasons based on the data (form, head-to-head, lineups, injuries, etc.).
-      3. Reasoning about betting value: which markets or outcomes look mispriced or interesting given the odds and the data; where you see value or caution. If odds/betting data is present, focus on this; otherwise omit.
+    //### ANALYSIS REQUIREMENTS
+    //Using ONLY the gathered evidence, structure your analysis as follows:
 
-      Keep the reply concise and evidence-based. Do not invent data.
-      """;
+    //1. TACTICAL MATCH-UP: Identify the "battleground." Based on lineups and previews, how will these teams clash? Mention key player absences and their likely impact on the team's style.
+    //2. MOMENTUM & TRENDS: Contrast the recent form and H2H data. Is one team over-performing their underlying stats or historical trend?
+    //3. MARKET ANALYSIS: Compare your tactical findings against the 'MatchBettingOddsHistory'. 
+    //   - Does the market (odds) accurately reflect the injury news and form? 
+    //   - Identify if the odds are 'drifting' (getting higher) or 'shortening' (getting lower) and what that implies.
+    //4. BETTING VERDICT: 
+    //   - Primary Angle: (e.g., Home Win, Over/Under, Asian Handicap).
+    //   - Confidence Level: (Low/Medium/High) based on data completeness.
+    //   - Value Note: Point out a specific market (e.g., "Away Win is mispriced given the Home Team's midfield injuries").
+
+    //Keep the reply concise and evidence-based. Do not invent data.
+    //""";
+
+    const string preGameAnalysisPrompt = """
+    ### ROLE
+    You are a Senior Football Tactical Analyst and Professional Odds Trader. Your goal is to provide a "Sharps-level" pre-game report for the following match: {{$matchInfo}}.
+
+    ### MANDATORY WORKFLOW
+    You must execute your analysis in the following sequence:
+    1. DATA RETRIEVAL: Use your tools to fetch:
+       - Lineups and Injuries (Check for key absences).
+       - League Statistics (Focus on xG, xGA, and xPts performance).
+       - Head-to-Head and Recent Games (Look for momentum and historical patterns).
+       - Match Preview and Daily Summaries (For qualitative news/tactical shifts).
+       - Betting Odds History (Analyze price movement/market sentiment).
+
+    2. CROSS-REFERENCING: Compare qualitative news (Injuries/Daily Summaries) against quantitative data (xG/League Stats).
+
+    3. MARKET VALIDATION: Determine if the current 'MarketPriceHistory' accurately reflects the tactical reality you discovered.
+
+    ### ANALYSIS GUIDELINES
+    - NO HALLUCINATIONS: If a tool returns null or "No data available," state that clearly. Do not invent scores or players.
+    - XG INTERPRETATION: Use xPtsDiff and xGDiff to identify if a team is "lucky" (over-performing) or "unlucky" (under-performing).
+    - MARKET SENTIMENT: Use the 'OddsTimeline'. If a price is shortening (dropping), explain why based on the data (e.g., a star player is starting).
+
+    ### OUTPUT STRUCTURE
+    Your report must follow this Markdown format:
+
+    # Pre-Game Intelligence: [Home Team] vs [Away Team]
+
+    ## 1. Tactical Personnel Report
+    - **Impactful Absences:** List injuries and how they disrupt the team's system.
+    - **Expected Setup:** Brief tactical expectation based on lineups.
+
+    ## 2. Performance & Form Analysis
+    - **Statistical Profile:** Compare xG/xGA for both teams. Who is more efficient?
+    - **Momentum:** Summarize the last 5 games and H2H context.
+
+    ## 3. Market Sentiment & Value
+    - **Odds Movement:** Describe if the market is moving toward the Home or Away side and why.
+    - **The "Sharps" Angle:** Identify any "mispricing" where the data contradicts the odds.
+
+    ## 4. Final Betting Verdict
+    - **Primary Recommendation:** (e.g., Home Win, Over 2.5, etc.)
+    - **Confidence Level:** [Low / Medium / High]
+    - **Key Trigger:** One sentence summarizing the main reason for this pick.
+
+    Use these IDs for tool calls: HomeID: {{$homeClubId}}, AwayID: {{$awayClubId}}.
+    """;
 
     var executionSettings = new OpenAIPromptExecutionSettings
     {
@@ -55,7 +115,7 @@ public class GetMatchPredictionHandler(
       ["awayClubId"] = awayClubId
     };
 
-    var result = await kernel.InvokePromptAsync(predictionPrompt, arguments, cancellationToken: cancellationToken).ConfigureAwait(false);
+    var result = await kernel.InvokePromptAsync(preGameAnalysisPrompt, arguments, cancellationToken: cancellationToken).ConfigureAwait(false);
     return result.ToString() ?? string.Empty;
   }
 }
