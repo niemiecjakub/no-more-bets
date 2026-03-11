@@ -1,4 +1,4 @@
-namespace NoMoreBets.Application.Common.Dto.Matches;
+namespace NoMoreBets.Domain.Matches.Dto;
 
 /// <summary>Head-to-head data between two teams from SoccerData API.</summary>
 public record HeadToHead

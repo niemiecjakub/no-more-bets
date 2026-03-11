@@ -7,6 +7,7 @@ using NoMoreBets.Infrastructure.Scraping.External.SoccerData.Exceptions;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Infrastructure.Scraping.External.SoccerData;
 

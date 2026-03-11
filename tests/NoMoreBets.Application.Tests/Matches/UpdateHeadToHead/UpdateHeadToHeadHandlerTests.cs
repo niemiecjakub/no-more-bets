@@ -3,12 +3,11 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Common.Dto.Matches;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Matches.UpdateHeadToHead;
-using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Matches;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Application.Tests.Matches.UpdateHeadToHead;
 

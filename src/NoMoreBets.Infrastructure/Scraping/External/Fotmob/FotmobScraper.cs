@@ -139,18 +139,23 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     };
   }
 
-  /// <summary>Parses all StatGroupContainer elements from Statistics tab HTML. Returns empty list if none found.</summary>
+  /// <summary>Parses all StatGroupContainer elements from Statistics tab HTML. Returns empty list if none found. Groups are deduplicated by Title (first occurrence kept).</summary>
   internal static async Task<IReadOnlyList<FotmobStatGroup>> ParseStatisticsFromDocumentAsync(string html)
   {
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
     var containers = doc.QuerySelectorAll("[class*='StatGroupContainer']");
     var groups = new List<FotmobStatGroup>();
+    var seenTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
     foreach (var container in containers)
     {
       var containerGroups = ParseStatGroupsFromContainer(container);
-      groups.AddRange(containerGroups);
+      foreach (var g in containerGroups)
+      {
+        if (seenTitles.Add(g.Title))
+          groups.Add(g);
+      }
     }
 
     return groups;

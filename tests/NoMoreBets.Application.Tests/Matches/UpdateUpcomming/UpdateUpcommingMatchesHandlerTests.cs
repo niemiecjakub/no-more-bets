@@ -11,6 +11,7 @@ using NoMoreBets.Domain.Leagues;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
 using DomainMatch = NoMoreBets.Domain.Matches.Match;
 using DomainStage = NoMoreBets.Domain.Matches.Stage;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Application.Tests.Matches.UpdateUpcomming;
 

@@ -9,6 +9,7 @@ using NoMoreBets.Domain.Matches;
 using NoMoreBets.Application.Common.Dto.Matches;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
 using Sut = NoMoreBets.Application.Common.MatchMatcher.MatchMatcher;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Application.Tests.Common.MatchMatcher;
 

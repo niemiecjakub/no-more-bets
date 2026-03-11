@@ -1,4 +1,4 @@
-using NoMoreBets.Application.Common.Dto.Matches;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Application.Matches;
 

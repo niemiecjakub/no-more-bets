@@ -8,6 +8,7 @@ using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Matches.UpdateMatchPreview;
 using NoMoreBets.Domain.Matches;
 using DomainMatch = NoMoreBets.Domain.Matches.Match;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Application.Tests.Matches.UpdateMatchPreview;
 
