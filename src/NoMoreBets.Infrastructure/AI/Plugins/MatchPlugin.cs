@@ -4,6 +4,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
 using System.ComponentModel;
 using System.Text.Json;
@@ -202,6 +203,76 @@ public class MatchPlugin
     }).ToList();
 
     return sections;
+  }
+
+
+  [KernelFunction("GetClubRollingPerformance")]
+  [Description("Gets performance data for a club from its latest 5 games: top players with recent ratings and average rating, team performances (recent team ratings and average), and formations used in each match.")]
+  public async Task<TeamPerformanceResult?> GetClubRollingPerformanceAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    var club = await _unitOfWork.Clubs.GetByIdAsync(clubId, cancellationToken).ConfigureAwait(false);
+    if (club == null)
+      return null;
+
+    var matches = await _unitOfWork.Matches.GetRecentMatchesForClubAsync(clubId, 5, cancellationToken).ConfigureAwait(false);
+    if (matches.Count == 0)
+      return new TeamPerformanceResult(TopPlayers: Array.Empty<PlayerRecentRatings>(), RecentTeamRatings: Array.Empty<double>(), AvgTeamRating: 0, Formations: Array.Empty<string>());
+
+    var matchesByDateAsc = matches.OrderBy(m => m.MatchDate).ToList();
+    var playerToRatingsAndDates = new Dictionary<string, List<(double Rating, DateTime MatchDate)>>(StringComparer.Ordinal);
+    var teamRatingsAndDates = new List<(double Rating, DateTime MatchDate)>();
+    var formationsByDate = new List<(string Formation, DateTime MatchDate)>();
+
+    foreach (var match in matchesByDateAsc)
+    {
+      var details = await _unitOfWork.Matches.GetMatchDetailsByMatchIdAsync(match.Id, cancellationToken).ConfigureAwait(false);
+      var payload = details?.GetFotmobDetails();
+      if (payload == null)
+        continue;
+
+      var lineup = match.HomeClubId == clubId ? payload.HomeLineup : payload.AwayLineup;
+      if (lineup == null)
+        continue;
+
+      if (lineup.TeamRating.HasValue)
+        teamRatingsAndDates.Add((lineup.TeamRating.Value, match.MatchDate));
+      formationsByDate.Add((lineup.Formation ?? string.Empty, match.MatchDate));
+
+      if (lineup.Players == null)
+        continue;
+
+      foreach (var p in lineup.Players)
+      {
+        if (!p.Rating.HasValue)
+          continue;
+        var name = p.Name;
+        if (string.IsNullOrWhiteSpace(name))
+          continue;
+        if (!playerToRatingsAndDates.TryGetValue(name, out var list))
+        {
+          list = new List<(double, DateTime)>();
+          playerToRatingsAndDates[name] = list;
+        }
+        list.Add((p.Rating.Value, match.MatchDate));
+      }
+    }
+
+    var recentTeamRatings = teamRatingsAndDates.OrderBy(x => x.MatchDate).Select(x => x.Rating).ToList();
+    var avgTeamRating = recentTeamRatings.Count > 0 ? Math.Round(recentTeamRatings.Average(), 2) : 0d;
+    var formations = formationsByDate.OrderBy(x => x.MatchDate).Select(x => x.Formation).ToList();
+
+    var topPlayers = playerToRatingsAndDates
+      .Select(kv =>
+      {
+        var sorted = kv.Value.OrderBy(x => x.MatchDate).ToList();
+        var recentRatings = sorted.Select(x => x.Rating).ToList();
+        var avgRating = recentRatings.Count > 0 ? recentRatings.Average() : 0d;
+        return new PlayerRecentRatings(Player: kv.Key, RecentRatings: recentRatings, AvgRating: Math.Round(avgRating, 2));
+      })
+      .OrderByDescending(p => p.AvgRating)
+      .ToList();
+
+    return new TeamPerformanceResult(TopPlayers: topPlayers, RecentTeamRatings: recentTeamRatings, AvgTeamRating: avgTeamRating, Formations: formations);
   }
 
   private static IReadOnlyList<PricePoint> CollapseToSegments(IReadOnlyList<(double Odds, DateTime At)> points)

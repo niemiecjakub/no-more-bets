@@ -14,8 +14,8 @@ public class MatchDetails
   public int? MatchId { get; set; }
   public Match? Match { get; set; }
 
-  //public MatchDetailsDto? GetFotmobDetails() =>
-  //  string.IsNullOrEmpty(FotmobDetailsJson)
-  //    ? null
-  //    : JsonSerializer.Deserialize<MatchDetailsDto>(FotmobDetailsJson, JsonOptions);
+  public FotmobDetailsPayload? GetFotmobDetails() =>
+    string.IsNullOrEmpty(FotmobDetailsJson)
+      ? null
+      : JsonSerializer.Deserialize<FotmobDetailsPayload>(FotmobDetailsJson, JsonOptions);
 }
