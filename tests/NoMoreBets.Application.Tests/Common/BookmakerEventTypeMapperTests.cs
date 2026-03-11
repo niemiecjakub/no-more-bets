@@ -125,6 +125,32 @@ public class BookmakerEventTypeMapperTests
     result.Should().Be(expected);
   }
 
+  [Fact]
+  public void Map_WhenTitleStartsWithExactScoreDisplayNameWithNonTeamSuffix_ReturnsNull()
+  {
+    // Arrange - "Dokładny wynik 1. połowa" must NOT match "Dokładny wynik" (only exact or " - Team" suffix)
+    var title = "Dokładny wynik 1. połowa";
+
+    // Act
+    var result = BookmakerEventTypeMapper.Map(title);
+
+    // Assert
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public void Map_WhenTitleStartsWithBothTeamsToScoreDisplayNameWithNonTeamSuffix_ReturnsNull()
+  {
+    // Arrange - "Oba zespoły strzelą gola lub ..." must NOT match "Oba zespoły strzelą gola" (only exact or " - Team" suffix)
+    var title = "Oba zespoły strzelą gola lub coś innego";
+
+    // Act
+    var result = BookmakerEventTypeMapper.Map(title);
+
+    // Assert
+    result.Should().BeNull();
+  }
+
   [Theory]
   [InlineData("1. połowa Wynik")]
   [InlineData("2. połowa Wynik")]

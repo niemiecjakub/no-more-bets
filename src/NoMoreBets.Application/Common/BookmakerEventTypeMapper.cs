@@ -47,9 +47,14 @@ public static class BookmakerEventTypeMapper
       {
         return type;
       }
-      if (normalized.StartsWith(displayName, comp))
+      // Prefix match only when the remainder is " - TeamName" (not arbitrary text like " 1. połowa" or " lub ...")
+      if (normalized.Length > displayName.Length && normalized.StartsWith(displayName, comp))
       {
-        return type;
+        var after = normalized[displayName.Length..].TrimStart();
+        if (after.StartsWith("-", StringComparison.Ordinal))
+        {
+          return type;
+        }
       }
     }
 

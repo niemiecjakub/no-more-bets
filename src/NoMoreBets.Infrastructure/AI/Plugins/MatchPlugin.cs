@@ -201,8 +201,6 @@ public class MatchPlugin
       return new MarketPriceHistory(acc.EventTypeName, acc.Title, options);
     }).ToList();
 
-
-
     return sections;
   }
 
