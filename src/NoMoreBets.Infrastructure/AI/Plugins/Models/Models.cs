@@ -45,6 +45,34 @@ public record PricePoint(
     [Description("The timestamp when this price changed or the market closed. Null if current.")] DateTime? EffectiveTo
 );
 
+public record H2H
+{
+  public string Summary { get; init; } = null!; // e.g., "Arsenal vs Liverpool"
+  public int TotalMatches { get; init; }
+  public int TotalDraws { get; init; }
+
+  public TeamMetrics TeamA { get; init; } = null!;
+  public TeamMetrics TeamB { get; init; } = null!;
+}
+
+public record TeamMetrics
+{
+  public string Name { get; init; } = null!;
+
+  // Aggregates
+  public int TotalWins { get; init; }
+  public int TotalGoalsScored { get; init; }
+  public int TotalGoalsConceded { get; init; }
+
+  // Venue Breakdown
+  public int HomeWins { get; init; }
+  public int AwayWins { get; init; }
+
+  public double WinPercentage { get; init; }
+  public double AvgGoalsScored { get; init; }
+  public double AvgGoalsConceded { get; init; }
+}
+
 internal sealed class EventTypeOddsAccumulator
 {
   public string EventTypeName { get; set; } = "";

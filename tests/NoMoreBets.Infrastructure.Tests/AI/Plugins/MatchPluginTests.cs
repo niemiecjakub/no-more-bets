@@ -323,19 +323,82 @@ public class MatchPluginTests
   }
 
   [Fact]
-  public async Task GetHead2HeadStatsAsync_WhenHead2HeadExists_ReturnsJson()
+  public async Task GetHead2HeadStatsAsync_WhenHead2HeadExists_ReturnsLlmFriendlyH2H()
   {
-    // Arrange
-    var json = "{\"meetings\":[]}";
-    var (match, _, _) = BuildMatchWithClubs(MatchId, 1, 2);
+    // Arrange: valid HeadToHead JSON (camelCase from JsonSerializerDefaults.Web)
+    var json = """
+    {"team1":{"id":1,"name":"Team One"},"team2":{"id":2,"name":"Team Two"},"stats":{"overall":{"overallGamesPlayed":10,"overallTeam1Wins":4,"overallTeam2Wins":3,"overallDraws":3,"overallTeam1Scored":12,"overallTeam2Scored":10},"team1AtHome":{"team1GamesPlayedAtHome":5,"team1WinsAtHome":2,"team1LossesAtHome":1,"team1DrawsAtHome":2,"team1ScoredAtHome":6,"team1ConcededAtHome":5},"team2AtHome":{"team2GamesPlayedAtHome":5,"team2WinsAtHome":2,"team2LossesAtHome":2,"team2DrawsAtHome":1,"team2ScoredAtHome":5,"team2ConcededAtHome":6}}}
+    """;
+    var (match, _, _) = BuildMatchWithClubs(MatchId, 1, 2, "Home FC", "Away FC");
     _matchRepo.GetMatchByIdAsync(MatchId, Arg.Any<CancellationToken>()).Returns(match);
-    _matchRepo.GetHeadToHead(1, 2).Returns(new Head2Head { Head2HeadJson = json });
+    _matchRepo.GetHeadToHead(1, 2).Returns(new Head2Head { Team1Id = 1, Team2Id = 2, Head2HeadJson = json });
 
     // Act
     var result = await _sut.GetHead2HeadStatsAsync();
 
     // Assert
-    result.Should().Be(json);
+    result.Should().NotBeNull();
+    result!.Summary.Should().Be("Home FC vs Away FC");
+    result.TotalMatches.Should().Be(10);
+    result.TotalDraws.Should().Be(3);
+    result.TeamA.Name.Should().Be("Home FC");
+    result.TeamB.Name.Should().Be("Away FC");
+    result.TeamA.TotalWins.Should().Be(4);
+    result.TeamA.TotalGoalsScored.Should().Be(12);
+    result.TeamA.TotalGoalsConceded.Should().Be(10);
+    result.TeamA.HomeWins.Should().Be(2);
+    result.TeamA.AwayWins.Should().Be(2); // Team2's home losses
+    result.TeamA.WinPercentage.Should().Be(40);
+    result.TeamA.AvgGoalsScored.Should().Be(1.2);
+    result.TeamA.AvgGoalsConceded.Should().Be(1.0);
+    result.TeamB.TotalWins.Should().Be(3);
+    result.TeamB.TotalGoalsScored.Should().Be(10);
+    result.TeamB.TotalGoalsConceded.Should().Be(12);
+    result.TeamB.HomeWins.Should().Be(2);
+    result.TeamB.AwayWins.Should().Be(1); // Team1's home losses
+    result.TeamB.WinPercentage.Should().Be(30);
+    result.TeamB.AvgGoalsScored.Should().Be(1.0);
+    result.TeamB.AvgGoalsConceded.Should().Be(1.2);
+  }
+
+  [Fact]
+  public async Task GetHead2HeadStatsAsync_WhenHomeIsTeam2_MapsTeamAAndTeamBCorrectly()
+  {
+    // Arrange: match has HomeClubId=2, AwayClubId=1 so home is Team2 in stored H2H (entity Team1Id=1, Team2Id=2)
+    var json = """
+    {"team1":{"id":1,"name":"Liverpool"},"team2":{"id":2,"name":"Arsenal"},"stats":{"overall":{"overallGamesPlayed":8,"overallTeam1Wins":2,"overallTeam2Wins":4,"overallDraws":2,"overallTeam1Scored":8,"overallTeam2Scored":11},"team1AtHome":{"team1GamesPlayedAtHome":4,"team1WinsAtHome":1,"team1LossesAtHome":2,"team1DrawsAtHome":1,"team1ScoredAtHome":4,"team1ConcededAtHome":6},"team2AtHome":{"team2GamesPlayedAtHome":4,"team2WinsAtHome":2,"team2LossesAtHome":1,"team2DrawsAtHome":1,"team2ScoredAtHome":5,"team2ConcededAtHome":2}}}
+    """;
+    var (match, _, _) = BuildMatchWithClubs(MatchId, 2, 1, "Arsenal", "Liverpool");
+    _matchRepo.GetMatchByIdAsync(MatchId, Arg.Any<CancellationToken>()).Returns(match);
+    _matchRepo.GetHeadToHead(2, 1).Returns(new Head2Head { Team1Id = 1, Team2Id = 2, Head2HeadJson = json });
+
+    // Act
+    var result = await _sut.GetHead2HeadStatsAsync();
+
+    // Assert: TeamA = home = Arsenal (Team2 in H2H), TeamB = away = Liverpool (Team1 in H2H)
+    result.Should().NotBeNull();
+    result!.Summary.Should().Be("Arsenal vs Liverpool");
+    result.TeamA.Name.Should().Be("Arsenal");
+    result.TeamB.Name.Should().Be("Liverpool");
+    result.TeamA.TotalWins.Should().Be(4); // overallTeam2Wins
+    result.TeamB.TotalWins.Should().Be(2); // overallTeam1Wins
+    result.TeamA.HomeWins.Should().Be(2); // Team2WinsAtHome
+    result.TeamA.AwayWins.Should().Be(2); // Team1LossesAtHome (when Arsenal played away, Liverpool was at home)
+  }
+
+  [Fact]
+  public async Task GetHead2HeadStatsAsync_WhenHead2HeadJsonInvalid_ReturnsNull()
+  {
+    // Arrange: JSON does not match HeadToHead schema, so Stats/Overall will be null
+    var (match, _, _) = BuildMatchWithClubs(MatchId, 1, 2);
+    _matchRepo.GetMatchByIdAsync(MatchId, Arg.Any<CancellationToken>()).Returns(match);
+    _matchRepo.GetHeadToHead(1, 2).Returns(new Head2Head { Team1Id = 1, Team2Id = 2, Head2HeadJson = "{\"meetings\":[]}" });
+
+    // Act
+    var result = await _sut.GetHead2HeadStatsAsync();
+
+    // Assert
+    result.Should().BeNull();
   }
 
   // ---- GetClubDailySummaryAsync ----
