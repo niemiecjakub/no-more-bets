@@ -245,3 +245,14 @@ CREATE TABLE "MatchDetails" (
 );
 CREATE INDEX idx_matchdetails_match ON public."MatchDetails" USING btree ("MatchId");
 CREATE UNIQUE INDEX uq_matchdetails_fotmoburl ON public."MatchDetails" ("FotmobUrl") WHERE "FotmobUrl" IS NOT NULL;
+
+CREATE TABLE "MatchAnalysis" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"MatchId" int4 NOT NULL,
+	"Code" varchar(255) NOT NULL,
+	"Content" text NOT NULL,
+	CONSTRAINT "MatchAnalysis_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT fk_matchanalysis_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE CASCADE
+);
+
+CREATE INDEX idx_matchanalysis_match ON public."MatchAnalysis" USING btree ("MatchId");

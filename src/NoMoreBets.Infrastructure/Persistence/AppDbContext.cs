@@ -28,6 +28,7 @@ public class AppDbContext : DbContext
   public DbSet<BettingOddsSnapshot> BettingOddsSnapshot { get; set; }
   public DbSet<BettingOddsSnapshotRow> BettingOddsSnapshotRow { get; set; }
   public DbSet<MatchDetails> MatchDetails { get; set; }
+  public DbSet<MatchAnalysis> MatchAnalysis { get; set; }
   public DbSet<ClubDailySummary> ClubDailySummary { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -221,6 +222,17 @@ public class AppDbContext : DbContext
       entity.Property(e => e.FotmobDetailsJson).IsRequired(false).HasColumnType("jsonb");
       entity.HasIndex(e => e.MatchId).IsUnique().HasFilter("\"MatchId\" IS NOT NULL");
       entity.HasOne(e => e.Match).WithOne(m => m.MatchDetails).HasForeignKey<MatchDetails>(e => e.MatchId).OnDelete(DeleteBehavior.SetNull);
+    });
+
+    modelBuilder.Entity<MatchAnalysis>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.MatchId).IsRequired();
+      entity.Property(e => e.Code).IsRequired().HasMaxLength(255);
+      entity.Property(e => e.Content).IsRequired();
+      entity.HasIndex(e => e.MatchId);
+      entity.HasOne(e => e.Match).WithMany(m => m.MatchAnalyses).HasForeignKey(e => e.MatchId).OnDelete(DeleteBehavior.Cascade);
     });
 
     modelBuilder.Entity<ClubDailySummary>(entity =>

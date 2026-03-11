@@ -25,6 +25,7 @@ public class Match
   public Lineup? Lineup { get; set; }
   public MatchPreview? MatchPreview { get; set; }
   public MatchDetails? MatchDetails { get; set; }
+  public ICollection<MatchAnalysis> MatchAnalyses { get; set; } = new List<MatchAnalysis>();
   public ICollection<BettingOddsSnapshot> BettingOddsSnapshots { get; set; } = new List<BettingOddsSnapshot>();
 
   [NotMapped]

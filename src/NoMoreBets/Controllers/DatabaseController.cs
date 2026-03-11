@@ -78,7 +78,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetMatches(CancellationToken cancellationToken = default)
   {
     var completeMatchIds = await db.Match
-      .Where(m => m.MatchStatus == MatchStatus.Upcomming)
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
       .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
       .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
       .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
@@ -141,7 +141,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .ToListAsync(cancellationToken);
 
     var completeMatchIds = await db.Match
-      .Where(m => m.MatchStatus == MatchStatus.Upcomming)
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
       .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
       .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
       .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
@@ -184,7 +184,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
       .Include(m => m.MatchStatusEntity)
-      .Where(m => m.MatchStatus == MatchStatus.Upcomming)
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
       .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
       .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
       .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))

@@ -105,7 +105,7 @@ public class GetMatchPredictionHandler(
 
     var executionSettings = new OpenAIPromptExecutionSettings
     {
-      FunctionChoiceBehavior = FunctionChoiceBehavior.Auto()
+      FunctionChoiceBehavior = FunctionChoiceBehavior.Required()
     };
 
     var arguments = new KernelArguments(executionSettings)
