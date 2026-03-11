@@ -77,11 +77,27 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   [HttpGet("matches")]
   public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetMatches(CancellationToken cancellationToken = default)
   {
+    var completeMatchIds = await db.Match
+      .Where(m => m.MatchStatus == MatchStatus.Upcomming)
+      .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
+      .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
+      .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
+      .Where(m => db.Head2Head.Any(h =>
+        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
+        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
+      .Select(m => m.Id)
+      .ToListAsync(cancellationToken);
+
+    var completeSet = completeMatchIds.ToHashSet();
+
     var list = await db.Match
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
       .Include(m => m.MatchStatusEntity)
       .OrderByDescending(m => m.MatchDate)
+      .ToListAsync(cancellationToken);
+
+    var result = list
       .Select(m => new MatchDto(
         m.Id,
         m.MatchDate,
@@ -93,9 +109,11 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         m.MatchStatusEntity!.Name,
         m.HomeGoals,
         m.AwayGoals,
-        m.BetclicUrl))
-      .ToListAsync(cancellationToken);
-    return Ok(list);
+        m.BetclicUrl,
+        completeSet.Contains(m.Id)))
+      .ToList();
+
+    return Ok(result);
   }
 
   /// <summary>
@@ -120,6 +138,21 @@ public class DatabaseController(AppDbContext db) : ControllerBase
 
     var list = await query
       .OrderBy(m => m.MatchDate)
+      .ToListAsync(cancellationToken);
+
+    var completeMatchIds = await db.Match
+      .Where(m => m.MatchStatus == MatchStatus.Upcomming)
+      .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
+      .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
+      .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
+      .Where(m => db.Head2Head.Any(h =>
+        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
+        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
+      .Select(m => m.Id)
+      .ToListAsync(cancellationToken);
+    var completeSet = completeMatchIds.ToHashSet();
+
+    var result = list
       .Select(m => new MatchDto(
         m.Id,
         m.MatchDate,
@@ -131,9 +164,11 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         m.MatchStatusEntity!.Name,
         m.HomeGoals,
         m.AwayGoals,
-        m.BetclicUrl))
-      .ToListAsync(cancellationToken);
-    return Ok(list);
+        m.BetclicUrl,
+        completeSet.Contains(m.Id)))
+      .ToList();
+
+    return Ok(result);
   }
 
   /// <summary>
@@ -168,7 +203,8 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         m.MatchStatusEntity!.Name,
         m.HomeGoals,
         m.AwayGoals,
-        m.BetclicUrl))
+        m.BetclicUrl,
+        true))
       .ToListAsync(cancellationToken);
     return Ok(list);
   }
@@ -217,7 +253,8 @@ public class DatabaseController(AppDbContext db) : ControllerBase
           m.MatchStatusEntity!.Name,
           m.HomeGoals,
           m.AwayGoals,
-          m.BetclicUrl)).ToList()))
+          m.BetclicUrl,
+          false)).ToList()))
       .ToList();
 
     return Ok(result);
@@ -400,7 +437,8 @@ public record MatchDto(
   string MatchStatusName,
   int? HomeGoals,
   int? AwayGoals,
-  string? BetclicUrl);
+  string? BetclicUrl,
+  bool IsReadyToPredict = false);
 
 public record LeagueTableDto(
   long SnapshotId,

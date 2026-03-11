@@ -14,6 +14,7 @@ export interface MatchListItem {
   homeGoals: number | null;
   awayGoals: number | null;
   betclicUrl: string | null;
+  isReadyToPredict: boolean;
 }
 
 /** MatchStatusId from backend enum: Upcomming = 1, Finished = 2 */

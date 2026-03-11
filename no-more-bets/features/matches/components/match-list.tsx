@@ -41,6 +41,11 @@ export function MatchList({ matches }: MatchListProps) {
             </span>
           </div>
           <div className="flex items-center gap-4 shrink-0">
+            {match.isReadyToPredict ? (
+              <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30">
+                Ready to predict
+              </span>
+            ) : null}
             {score ? (
               <span className="font-semibold tabular-nums">{score}</span>
             ) : null}
