@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { MatchListItem } from "../interfaces";
 import { MATCH_STATUS } from "../interfaces";
 import { formatMatchDate } from "../../../utils/format-date";
@@ -26,36 +27,52 @@ export function MatchList({ matches }: MatchListProps) {
     <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
       {matches.map((match) => {
         const score = formatScore(match);
+        const rowContent = (
+          <>
+            <div className="min-w-0 flex-1">
+              <span className="font-medium text-foreground">
+                {match.homeClubName}
+              </span>
+              <span className="mx-2 text-zinc-500 dark:text-zinc-400">vs</span>
+              <span className="font-medium text-foreground">
+                {match.awayClubName}
+              </span>
+            </div>
+            <div className="flex items-center gap-4 shrink-0">
+              {match.hasAnalysis ? (
+                <span className="inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 ring-1 ring-inset ring-violet-600/20 dark:bg-violet-900/40 dark:text-violet-400 dark:ring-violet-500/30">
+                  Analysis
+                </span>
+              ) : null}
+              {match.isReadyToPredict ? (
+                <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30">
+                  Ready to predict
+                </span>
+              ) : null}
+              {score ? (
+                <span className="font-semibold tabular-nums">{score}</span>
+              ) : null}
+              <time
+                dateTime={match.matchDate}
+                className="text-sm text-zinc-600 dark:text-zinc-400 tabular-nums"
+              >
+                {formatMatchDate(match.matchDate)}
+              </time>
+            </div>
+          </>
+        );
         return (
         <li
           key={match.id}
           className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-zinc-950 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
         >
-          <div className="min-w-0 flex-1">
-            <span className="font-medium text-foreground">
-              {match.homeClubName}
-            </span>
-            <span className="mx-2 text-zinc-500 dark:text-zinc-400">vs</span>
-            <span className="font-medium text-foreground">
-              {match.awayClubName}
-            </span>
-          </div>
-          <div className="flex items-center gap-4 shrink-0">
-            {match.isReadyToPredict ? (
-              <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30">
-                Ready to predict
-              </span>
-            ) : null}
-            {score ? (
-              <span className="font-semibold tabular-nums">{score}</span>
-            ) : null}
-            <time
-              dateTime={match.matchDate}
-              className="text-sm text-zinc-600 dark:text-zinc-400 tabular-nums"
-            >
-              {formatMatchDate(match.matchDate)}
-            </time>
-          </div>
+          {match.hasAnalysis ? (
+            <Link href={`/match/${match.id}`} className="contents">
+              {rowContent}
+            </Link>
+          ) : (
+            rowContent
+          )}
         </li>
         );
       })}

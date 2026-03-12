@@ -56,7 +56,8 @@ public class GetMatchPredictionHandler(
     {
       logger.LogDebug("Running analysis prompt: {Code} for MatchId {MatchId}", code, command.MatchId);
 
-      var result = await kernel.InvokePromptAsync(prompt, arguments, cancellationToken: cancellationToken).ConfigureAwait(false);
+      var kernelClone = kernel.Clone();
+      var result = await kernelClone.InvokePromptAsync(prompt, arguments, cancellationToken: cancellationToken).ConfigureAwait(false);
       var analysis = result.ToString() ?? string.Empty;
 
       analysisList.Add(new MatchAnalysis
@@ -88,7 +89,6 @@ public class GetMatchPredictionHandler(
     return new List<Tuple<string, string>> {
       gemini,
       gemini_betting,
-      chat,
       chat,
       chat_betting,
       claude,
@@ -257,10 +257,10 @@ public class GetMatchPredictionHandler(
     """;
 
   const string Chat_Betting = """
-        Match Information:
-    {matchInfo}  
-    Home Club ID: {homeClubId}  
-    Away Club ID: {awayClubId}
+    Match Information:
+    {{$matchInfo}}
+    Home Club: {{$homeClub}} (ID = {{$homeClubId}})  
+    Away Club: {{$awayClub}} (ID = {{$awayClubId}})
 
     You are an elite football betting analyst AI. Your only task is to **identify the most valuable betting opportunities** for this match based on the data provided from MatchPlugin functions. Ignore writing general previews, narratives, or player/tactical analysis unless it directly affects betting value.
 
@@ -328,7 +328,7 @@ public class GetMatchPredictionHandler(
     8. GetClubDailySummary      → Call TWICE — once per club (home, then away)
     9. GetMatchBettingOddsHistory → Get odds movement for this match
 
-    Do NOT begin writing the report until all 12 tool calls are complete.
+    Do NOT begin writing the report until all tool calls are complete.
 
     ## STEP 2 — ANALYSIS & REPORT
 
@@ -420,7 +420,7 @@ public class GetMatchPredictionHandler(
     7. GetHead2HeadStats            → Historical H2H record
     8. GetClubDailySummary          → Call TWICE (home club, then away club)
 
-    Do NOT begin writing until all 10 tool calls are complete.
+    Do NOT begin writing the report until all tool calls are complete..
 
     ## STEP 2 — BETTING ANALYSIS REPORT
 

@@ -15,6 +15,7 @@ export interface MatchListItem {
   awayGoals: number | null;
   betclicUrl: string | null;
   isReadyToPredict: boolean;
+  hasAnalysis: boolean;
 }
 
 /** MatchStatusId from backend enum: Upcomming = 1, Finished = 2 */
@@ -22,3 +23,19 @@ export const MATCH_STATUS = {
   Upcoming: 1,
   Finished: 2,
 } as const;
+
+/** Single analysis item from GET api/Database/matches/:id/analyses */
+export interface MatchAnalysisItemDto {
+  id: number;
+  code: string;
+  content: string;
+}
+
+/** Match analysis page payload: match header + analyses list */
+export interface MatchAnalysisPageDto {
+  matchId: number;
+  homeClubName: string;
+  awayClubName: string;
+  matchDate: string;
+  analyses: MatchAnalysisItemDto[];
+}

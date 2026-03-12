@@ -90,6 +90,12 @@ public class DatabaseController(AppDbContext db) : ControllerBase
 
     var completeSet = completeMatchIds.ToHashSet();
 
+    var matchIdsWithAnalysis = await db.MatchAnalysis
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
+
     var list = await db.Match
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
@@ -110,7 +116,8 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         m.HomeGoals,
         m.AwayGoals,
         m.BetclicUrl,
-        completeSet.Contains(m.Id)))
+        completeSet.Contains(m.Id),
+        hasAnalysisSet.Contains(m.Id)))
       .ToList();
 
     return Ok(result);
@@ -152,6 +159,12 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .ToListAsync(cancellationToken);
     var completeSet = completeMatchIds.ToHashSet();
 
+    var matchIdsWithAnalysis = await db.MatchAnalysis
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
+
     var result = list
       .Select(m => new MatchDto(
         m.Id,
@@ -165,7 +178,8 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         m.HomeGoals,
         m.AwayGoals,
         m.BetclicUrl,
-        completeSet.Contains(m.Id)))
+        completeSet.Contains(m.Id),
+        hasAnalysisSet.Contains(m.Id)))
       .ToList();
 
     return Ok(result);
@@ -180,6 +194,12 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetMatchesWithCompleteData(
     CancellationToken cancellationToken = default)
   {
+    var matchIdsWithAnalysis = await db.MatchAnalysis
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
+
     var list = await db.Match
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
@@ -192,6 +212,9 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
         (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
       .OrderByDescending(m => m.MatchDate)
+      .ToListAsync(cancellationToken);
+
+    var result = list
       .Select(m => new MatchDto(
         m.Id,
         m.MatchDate,
@@ -204,9 +227,10 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         m.HomeGoals,
         m.AwayGoals,
         m.BetclicUrl,
-        true))
-      .ToListAsync(cancellationToken);
-    return Ok(list);
+        true,
+        hasAnalysisSet.Contains(m.Id)))
+      .ToList();
+    return Ok(result);
   }
 
   /// <summary>
@@ -237,6 +261,12 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .ThenBy(m => m.MatchDate)
       .ToListAsync(cancellationToken);
 
+    var matchIdsWithAnalysis = await db.MatchAnalysis
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
+
     var result = matches
       .GroupBy(m => m.BetclicUrl!)
       .OrderBy(g => g.Key)
@@ -254,7 +284,8 @@ public class DatabaseController(AppDbContext db) : ControllerBase
           m.HomeGoals,
           m.AwayGoals,
           m.BetclicUrl,
-          false)).ToList()))
+          false,
+          hasAnalysisSet.Contains(m.Id))).ToList()))
       .ToList();
 
     return Ok(result);
@@ -418,6 +449,40 @@ public class DatabaseController(AppDbContext db) : ControllerBase
 
     return Ok(response);
   }
+
+  /// <summary>
+  /// Gets match header and all analyses for the specified match.
+  /// </summary>
+  /// <param name="matchId">Match ID.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Match header and analyses, or 404 if match not found.</returns>
+  [HttpGet("matches/{matchId:int}/analyses")]
+  public async Task<ActionResult<MatchAnalysisPageDto>> GetMatchAnalyses(
+    int matchId,
+    CancellationToken cancellationToken = default)
+  {
+    var match = await db.Match
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .FirstOrDefaultAsync(m => m.Id == matchId, cancellationToken);
+
+    if (match == null)
+      return NotFound();
+
+    var analyses = await db.MatchAnalysis
+      .Where(a => a.MatchId == matchId)
+      .OrderBy(a => a.Id)
+      .Select(a => new MatchAnalysisItemDto(a.Id, a.Code, a.Content))
+      .ToListAsync(cancellationToken);
+
+    var page = new MatchAnalysisPageDto(
+      match.Id,
+      match.HomeClub.Name,
+      match.AwayClub.Name,
+      match.MatchDate,
+      analyses);
+    return Ok(page);
+  }
 }
 
 public record LeagueDto(int Id, string Name);
@@ -438,7 +503,8 @@ public record MatchDto(
   int? HomeGoals,
   int? AwayGoals,
   string? BetclicUrl,
-  bool IsReadyToPredict = false);
+  bool IsReadyToPredict = false,
+  bool HasAnalysis = false);
 
 public record LeagueTableDto(
   long SnapshotId,
@@ -487,3 +553,12 @@ public record BettingOddsHistoryResponseDto(
   BettingOddsHistorySectionDto History);
 
 public record DuplicatedMatchesByGameUrlDto(string GameUrl, IReadOnlyList<MatchDto> Matches);
+
+public record MatchAnalysisItemDto(int Id, string Code, string Content);
+
+public record MatchAnalysisPageDto(
+  int MatchId,
+  string HomeClubName,
+  string AwayClubName,
+  DateTime MatchDate,
+  IReadOnlyList<MatchAnalysisItemDto> Analyses);
