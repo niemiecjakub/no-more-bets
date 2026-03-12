@@ -120,4 +120,9 @@ public class MatchRepository : IMatchRepository
   {
     await _db.MatchPreview.AddAsync(matchPreview);
   }
+
+  public async Task AddMatchAnalysesAsync(IEnumerable<MatchAnalysis> analyses, CancellationToken cancellationToken = default)
+  {
+    await _db.MatchAnalysis.AddRangeAsync(analyses, cancellationToken);
+  }
 }

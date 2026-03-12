@@ -1,6 +1,5 @@
 namespace NoMoreBets.Domain.Matches;
 
-/// <summary>Repository for the Match aggregate root. Add* methods persist children attached via the root.</summary>
 public interface IMatchRepository
 {
   public Task<Match?> GetMatchByIdAsync(int matchId, CancellationToken cancellationToken = default);
@@ -16,4 +15,5 @@ public interface IMatchRepository
   public Task AddMatchDetailsAsync(MatchDetails matchDetails, CancellationToken cancellationToken = default);
   public Task AddLineup(Lineup lineup);
   public Task AddMatchPreview(MatchPreview matchPreview);
+  public Task AddMatchAnalysesAsync(IEnumerable<MatchAnalysis> analyses, CancellationToken cancellationToken = default);
 }
