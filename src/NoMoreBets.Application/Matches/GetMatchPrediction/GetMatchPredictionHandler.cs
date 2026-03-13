@@ -4,6 +4,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Application.Matches.GetMatchPrediction;
 

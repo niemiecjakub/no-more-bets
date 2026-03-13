@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace NoMoreBets.Application.Matches.GetMatchPrediction;
+namespace NoMoreBets.Domain.Matches.Dto;
 public class StructuredMatchAnalysis
 {
   [Description("Basic contextual information about the match")]
@@ -27,3 +27,4 @@ public class StructuredMatchAnalysis
   [Description("The match prediction with outcome, confidence and key reasoning")]
   public string Prediction { get; set; }
 }
+
