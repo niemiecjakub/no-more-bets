@@ -115,14 +115,14 @@ public class MatchRepository : IMatchRepository
   {
     await _db.MatchDetails.AddAsync(matchDetails, cancellationToken);
   }
-  
+
   public async Task AddMatchPreview(MatchPreview matchPreview)
   {
     await _db.MatchPreview.AddAsync(matchPreview);
   }
 
-  public async Task AddMatchAnalysesAsync(IEnumerable<MatchAnalysis> analyses, CancellationToken cancellationToken = default)
+  public async Task AddMatchAnalysisAsync(MatchAnalysis analysis, CancellationToken cancellationToken = default)
   {
-    await _db.MatchAnalysis.AddRangeAsync(analyses, cancellationToken);
+    await _db.MatchAnalysis.AddAsync(analysis, cancellationToken);
   }
 }

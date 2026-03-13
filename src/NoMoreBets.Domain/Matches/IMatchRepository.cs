@@ -15,5 +15,5 @@ public interface IMatchRepository
   public Task AddMatchDetailsAsync(MatchDetails matchDetails, CancellationToken cancellationToken = default);
   public Task AddLineup(Lineup lineup);
   public Task AddMatchPreview(MatchPreview matchPreview);
-  public Task AddMatchAnalysesAsync(IEnumerable<MatchAnalysis> analyses, CancellationToken cancellationToken = default);
+  public Task AddMatchAnalysisAsync(MatchAnalysis analysis, CancellationToken cancellationToken = default);
 }

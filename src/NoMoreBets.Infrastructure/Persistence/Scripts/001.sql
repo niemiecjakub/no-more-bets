@@ -250,7 +250,7 @@ CREATE TABLE "MatchAnalysis" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"MatchId" int4 NOT NULL,
 	"Code" varchar(255) NOT NULL,
-	"Content" text NOT NULL,
+	"Content" jsonb NOT NULL,
 	CONSTRAINT "MatchAnalysis_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT fk_matchanalysis_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE CASCADE
 );

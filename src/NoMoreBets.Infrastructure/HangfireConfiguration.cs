@@ -50,6 +50,12 @@ public static class HangfireConfiguration
         jobService => jobService.GetLineups(),
         "0 16 * * *");
 
+    // Runs once per day at 17:00
+    RecurringJob.AddOrUpdate<JobService>(
+        "generate-match-predictions",
+        jobService => jobService.GenerateMissingMatchPredictions(),
+        "0 17 * * *");
+
     // Runs once per day at 10:00
     RecurringJob.AddOrUpdate<JobService>(
         "get-league-table",
