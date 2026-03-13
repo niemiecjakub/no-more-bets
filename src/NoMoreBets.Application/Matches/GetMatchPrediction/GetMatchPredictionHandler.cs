@@ -39,17 +39,19 @@ public class GetMatchPredictionHandler(
     {
       FunctionChoiceBehavior = FunctionChoiceBehavior.Required(),
       ResponseFormat = typeof(StructuredMatchAnalysis),
-      ReasoningEffort = "medium"
+      ReasoningEffort = "medium",
+      ChatSystemPrompt = prompt
     };
 
-    var arguments = new KernelArguments(executionSettings)
-    {
-      ["matchInfo"] = $"{homeName} vs {awayName}. Date: {match.MatchDate:yyyy-MM-dd HH:mm} UTC.",
-      ["homeClub"] = homeName,
-      ["awayClub"] = awayName,
-      ["homeClubId"] = homeClubId,
-      ["awayClubId"] = awayClubId
-    };
+    string query = $$$"""
+      MATCH INFORMATION:
+
+      {{{homeName}}} vs {{{awayName}}}. Date: {{{match.MatchDate:yyyy-MM-dd HH:mm}}} UTC. 
+      Home Club: {{$homeClub}} (ID = {{$homeClubId}})  
+      Away Club: {{$awayClub}} (ID = {{$awayClubId}})  
+      """;
+
+    var arguments = new KernelArguments(executionSettings);
 
     logger.LogInformation("Starting match prediction for MatchId {MatchId}: {HomeName} vs {AwayName}", command.MatchId, homeName, awayName);
 
@@ -122,12 +124,5 @@ public class GetMatchPredictionHandler(
     • Relate statistics, tactics, and form clearly.  
     • Highlight both advantages and risks for each team.  
     • Keep paragraphs concise and focused; use bullet points where appropriate for clarity.  
-    
-    # MATCH INFORMATION
-
-    {{$matchInfo}}
-    
-    Home Club: {{$homeClub}} (ID = {{$homeClubId}})  
-    Away Club: {{$awayClub}} (ID = {{$awayClubId}})  
     """;
 }

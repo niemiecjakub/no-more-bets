@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.Persistence;
 
 namespace NoMoreBets.Controllers;
@@ -469,11 +470,18 @@ public class DatabaseController(AppDbContext db) : ControllerBase
     if (match == null)
       return NotFound();
 
-    var analyses = await db.MatchAnalysis
+    var analysisEntities = await db.MatchAnalysis
       .Where(a => a.MatchId == matchId)
       .OrderBy(a => a.Id)
-      .Select(a => new MatchAnalysisItemDto(a.Id, a.Code, a.Content))
       .ToListAsync(cancellationToken);
+
+    var analyses = analysisEntities
+      .Select(a => new MatchAnalysisItemDto(
+        a.Id,
+        a.Code,
+        a.Content,
+        MapStructured(a.GetAnalysis())))
+      .ToList();
 
     var page = new MatchAnalysisPageDto(
       match.Id,
@@ -483,6 +491,19 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       analyses);
     return Ok(page);
   }
+
+  private static StructuredMatchAnalysisDto? MapStructured(StructuredMatchAnalysis? analysis) =>
+    analysis == null
+      ? null
+      : new StructuredMatchAnalysisDto(
+        analysis.Context,
+        analysis.Form,
+        analysis.Tactics,
+        analysis.Squad,
+        analysis.Statistics,
+        analysis.Market,
+        analysis.MatchProjection,
+        analysis.Prediction);
 }
 
 public record LeagueDto(int Id, string Name);
@@ -554,7 +575,21 @@ public record BettingOddsHistoryResponseDto(
 
 public record DuplicatedMatchesByGameUrlDto(string GameUrl, IReadOnlyList<MatchDto> Matches);
 
-public record MatchAnalysisItemDto(int Id, string Code, string Content);
+public record StructuredMatchAnalysisDto(
+  string? Context,
+  string? Form,
+  string? Tactics,
+  string? Squad,
+  string? Statistics,
+  string? Market,
+  string? MatchProjection,
+  string? Prediction);
+
+public record MatchAnalysisItemDto(
+  int Id,
+  string Code,
+  string Content,
+  StructuredMatchAnalysisDto? Structured);
 
 public record MatchAnalysisPageDto(
   int MatchId,

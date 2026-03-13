@@ -24,11 +24,24 @@ export const MATCH_STATUS = {
   Finished: 2,
 } as const;
 
+/** Structured analysis sections returned when Content is valid JSON. */
+export interface StructuredMatchAnalysis {
+  context?: string | null;
+  form?: string | null;
+  tactics?: string | null;
+  squad?: string | null;
+  statistics?: string | null;
+  market?: string | null;
+  matchProjection?: string | null;
+  prediction?: string | null;
+}
+
 /** Single analysis item from GET api/Database/matches/:id/analyses */
 export interface MatchAnalysisItemDto {
   id: number;
   code: string;
   content: string;
+  structured?: StructuredMatchAnalysis | null;
 }
 
 /** Match analysis page payload: match header + analyses list */

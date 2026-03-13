@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { MatchAnalysisContent } from "../../../features/matches/components/match-analysis-content";
+import { StructuredMatchAnalysisView } from "../../../features/matches/components/structured-match-analysis-view";
 import { fetchMatchAnalysisPage } from "../../../features/matches/services/matches-api";
 import { formatMatchDate } from "../../../utils/format-date";
 
@@ -61,7 +61,13 @@ export default async function MatchPage({ params }: MatchPageProps) {
                   {analysis.code}
                 </h2>
                 <div className="px-4 pb-4 pt-2">
-                  <MatchAnalysisContent content={analysis.content} />
+                  {analysis.structured ? (
+                    <StructuredMatchAnalysisView analysis={analysis.structured} />
+                  ) : (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      Analysis not available.
+                    </p>
+                  )}
                 </div>
               </li>
             ))}

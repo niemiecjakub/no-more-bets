@@ -230,7 +230,7 @@ public class AppDbContext : DbContext
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
       entity.Property(e => e.MatchId).IsRequired();
       entity.Property(e => e.Code).IsRequired().HasMaxLength(255);
-      entity.Property(e => e.Content).IsRequired();
+      entity.Property(e => e.Content).IsRequired().HasColumnType("jsonb");
       entity.HasIndex(e => e.MatchId);
       entity.HasOne(e => e.Match).WithMany(m => m.MatchAnalyses).HasForeignKey(e => e.MatchId).OnDelete(DeleteBehavior.Cascade);
     });

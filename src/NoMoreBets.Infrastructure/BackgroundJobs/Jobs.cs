@@ -505,7 +505,6 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
   /// betting odds snapshot and head-to-head data, but do not yet have any
   /// MatchAnalysis records, and enqueues individual prediction jobs for them.
   /// </summary>
-  [AutomaticRetry(Attempts = 3)]
   public async Task GenerateMissingMatchPredictions()
   {
     logger.LogInformation(
@@ -565,7 +564,6 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
   /// <summary>
   /// Executes match prediction generation for a single match via MediatR.
   /// </summary>
-  [AutomaticRetry(Attempts = 3)]
   public async Task RunMatchPrediction(int matchId)
   {
     logger.LogInformation(
