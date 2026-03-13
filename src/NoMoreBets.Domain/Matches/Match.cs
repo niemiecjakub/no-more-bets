@@ -27,6 +27,7 @@ public class Match
   public MatchDetails? MatchDetails { get; set; }
   public ICollection<MatchAnalysis> MatchAnalyses { get; set; } = new List<MatchAnalysis>();
   public ICollection<BettingOddsSnapshot> BettingOddsSnapshots { get; set; } = new List<BettingOddsSnapshot>();
+  public ICollection<BetSelection> BetSelections { get; set; } = new List<BetSelection>();
 
   [NotMapped]
   public MatchStatus MatchStatus

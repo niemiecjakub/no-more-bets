@@ -30,6 +30,9 @@ public class AppDbContext : DbContext
   public DbSet<MatchDetails> MatchDetails { get; set; }
   public DbSet<MatchAnalysis> MatchAnalysis { get; set; }
   public DbSet<ClubDailySummary> ClubDailySummary { get; set; }
+  public DbSet<BetStatusEntity> BetStatus { get; set; }
+  public DbSet<BetSlip> BetSlip { get; set; }
+  public DbSet<BetSelection> BetSelection { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -245,6 +248,62 @@ public class AppDbContext : DbContext
       entity.HasIndex(e => e.ClubId);
       entity.HasIndex(e => new { e.ClubId, e.Date });
       entity.HasOne(e => e.Club).WithMany(c => c.ClubDailySummaries).HasForeignKey(e => e.ClubId).OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<BetStatusEntity>(entity =>
+    {
+      entity.ToTable(BetStatusEntity.TABLE_NAME);
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+      entity.HasData(
+        Enum.GetValues(typeof(BetStatus))
+          .Cast<BetStatus>()
+          .Select(e => new BetStatusEntity()
+          {
+            Id = (int)e,
+            Name = e.ToString()
+          }));
+    });
+
+    modelBuilder.Entity<BetSlip>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.StakeAmount).IsRequired().HasPrecision(18, 4);
+      entity.Property(e => e.TotalOdds).IsRequired().HasPrecision(18, 4);
+      entity.Property(e => e.PotentialPayout).IsRequired().HasPrecision(18, 4);
+      entity.Property(e => e.StatusId).IsRequired();
+      entity.Property(e => e.CreatedAt).IsRequired();
+      entity.HasIndex(e => e.StatusId);
+      entity.HasOne(e => e.BetStatusEntity)
+        .WithMany()
+        .HasForeignKey(e => e.StatusId)
+        .OnDelete(DeleteBehavior.Restrict);
+    });
+
+    modelBuilder.Entity<BetSelection>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.BetSlipId).IsRequired();
+      entity.Property(e => e.MatchId).IsRequired();
+      entity.Property(e => e.EventTypeId).IsRequired();
+      entity.Property(e => e.OutcomeKey).IsRequired().HasMaxLength(255);
+      entity.Property(e => e.OddsAtPlacement).IsRequired().HasPrecision(18, 4);
+      entity.Property(e => e.StatusId).IsRequired();
+      entity.HasIndex(e => e.BetSlipId);
+      entity.HasIndex(e => e.MatchId);
+      entity.HasIndex(e => e.StatusId);
+      entity.HasOne(e => e.BetSlip).WithMany(s => s.Selections).HasForeignKey(e => e.BetSlipId).OnDelete(DeleteBehavior.Cascade);
+      entity.HasOne(e => e.Match).WithMany(m => m.BetSelections).HasForeignKey(e => e.MatchId).OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.EventTypeEntity)
+        .WithMany()
+        .HasForeignKey(e => e.EventTypeId)
+        .OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.BetStatusEntity)
+        .WithMany()
+        .HasForeignKey(e => e.StatusId)
+        .OnDelete(DeleteBehavior.Restrict);
     });
   }
 }

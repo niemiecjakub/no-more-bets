@@ -256,3 +256,40 @@ CREATE TABLE "MatchAnalysis" (
 );
 
 CREATE INDEX idx_matchanalysis_match ON public."MatchAnalysis" USING btree ("MatchId");
+
+
+CREATE TABLE "BetStatus" (
+	"Id" int4 NOT NULL,
+	"Name" varchar(50) NOT NULL,
+	CONSTRAINT "BetStatus_pkey" PRIMARY KEY ("Id")
+);
+
+CREATE TABLE "BetSlip" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"StakeAmount" numeric(18, 4) NOT NULL,
+	"TotalOdds" numeric(18, 4) NOT NULL,
+	"PotentialPayout" numeric(18, 4) NOT NULL,
+	"StatusId" int4 NOT NULL,
+	"CreatedAt" timestamp NOT NULL,
+	CONSTRAINT "BetSlip_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT fk_betslip_status FOREIGN KEY ("StatusId") REFERENCES "BetStatus"("Id") ON DELETE RESTRICT
+);
+CREATE INDEX idx_betslip_statusid ON public."BetSlip" USING btree ("StatusId");
+
+CREATE TABLE "BetSelection" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"BetSlipId" int4 NOT NULL,
+	"MatchId" int4 NOT NULL,
+	"EventTypeId" int4 NOT NULL,
+	"OutcomeKey" varchar(255) NOT NULL,
+	"OddsAtPlacement" numeric(18, 4) NOT NULL,
+	"StatusId" int4 NOT NULL,
+	CONSTRAINT "BetSelection_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT fk_betselection_betslip FOREIGN KEY ("BetSlipId") REFERENCES "BetSlip"("Id") ON DELETE CASCADE,
+	CONSTRAINT fk_betselection_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_betselection_eventtype FOREIGN KEY ("EventTypeId") REFERENCES "BettingEventType"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_betselection_status FOREIGN KEY ("StatusId") REFERENCES "BetStatus"("Id") ON DELETE RESTRICT
+);
+CREATE INDEX idx_betselection_betslipid ON public."BetSelection" USING btree ("BetSlipId");
+CREATE INDEX idx_betselection_matchid ON public."BetSelection" USING btree ("MatchId");
+CREATE INDEX idx_betselection_statusid ON public."BetSelection" USING btree ("StatusId");

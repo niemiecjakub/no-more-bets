@@ -18,6 +18,13 @@ INSERT INTO "BettingEventType" ("Id", "Name") VALUES
     (12, 'ExactScore')
 ON CONFLICT ("Id") DO NOTHING;
 
+INSERT INTO "BetStatus" ("Id", "Name") VALUES
+    (1, 'Pending'),
+    (2, 'Won'),
+    (3, 'Lost'),
+    (4, 'CashedOut')
+ON CONFLICT ("Id") DO NOTHING;
+
 
 INSERT INTO "League" ("Id", "Name", "SoccerdataId") OVERRIDING SYSTEM VALUE VALUES
   (1, 'Premier League', 228)
