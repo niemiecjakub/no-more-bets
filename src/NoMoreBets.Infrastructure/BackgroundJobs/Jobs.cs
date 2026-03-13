@@ -564,6 +564,7 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
   /// <summary>
   /// Executes match prediction generation for a single match via MediatR.
   /// </summary>
+  [AutomaticRetry(Attempts = 0)]
   public async Task RunMatchPrediction(int matchId)
   {
     logger.LogInformation(

@@ -41,8 +41,7 @@ public record OutcomePriceTimeline(
 
 public record PricePoint(
     [Description("The decimal odds value")] double Price,
-    [Description("The timestamp when this price became live")] DateTime EffectiveFrom,
-    [Description("The timestamp when this price changed or the market closed. Null if current.")] DateTime? EffectiveTo
+    [Description("The timestamp when this price became live")] DateTime Timestamp
 );
 
 public record H2H

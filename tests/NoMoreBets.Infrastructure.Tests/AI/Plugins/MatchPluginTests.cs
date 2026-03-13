@@ -642,7 +642,6 @@ public class MatchPluginTests
     result[0].Outcomes.Should().HaveCount(2);
     result[0].Outcomes.Select(o => o.OutcomeName).Should().Contain("Home").And.Contain("Draw");
     result[0].Outcomes[0].Timeline.Should().HaveCount(1);
-    result[0].Outcomes[0].Timeline[0].EffectiveTo.Should().BeNull();
   }
 
   [Fact]
@@ -694,9 +693,7 @@ public class MatchPluginTests
     var timeline = result![0].Outcomes[0].Timeline;
     timeline.Should().HaveCount(2);
     timeline[0].Price.Should().Be(1.9);
-    timeline[0].EffectiveTo.Should().Be(t2);
     timeline[1].Price.Should().Be(2.0);
-    timeline[1].EffectiveTo.Should().BeNull();
   }
 
   [Fact]
@@ -718,7 +715,6 @@ public class MatchPluginTests
     result.Should().HaveCount(1);
     var overOutcome = result![0].Outcomes.First(o => o.OutcomeName == "Over 2.5");
     overOutcome.Timeline.Should().HaveCount(1);
-    overOutcome.Timeline[0].EffectiveTo.Should().BeNull();
     var underOutcome = result[0].Outcomes.First(o => o.OutcomeName == "Under 2.5");
     underOutcome.Timeline.Should().HaveCount(2);
   }

@@ -278,29 +278,24 @@ public class MatchPlugin
 
     return new TeamPerformanceResult(TopPlayers: topPlayers, RecentTeamRatings: recentTeamRatings, AvgTeamRating: avgTeamRating, Formations: formations);
   }
-
-  private static IReadOnlyList<PricePoint> CollapseToSegments(IReadOnlyList<(double Odds, DateTime At)> points)
-  {
+private static IReadOnlyList<PricePoint> CollapseToSegments(IReadOnlyList<(double Odds, DateTime At)> points)
+{
     if (points.Count == 0)
-      return Array.Empty<PricePoint>();
+        return Array.Empty<PricePoint>();
 
     var sorted = points.OrderBy(p => p.At).ToList();
-    var segments = new List<PricePoint>();
-    var startTime = sorted[0].At;
-    var currentOdds = sorted[0].Odds;
+    var segments = new List<PricePoint> { new(sorted[0].Odds, sorted[0].At) };
 
-    for (var i = 1; i < sorted.Count; i++)
+    foreach (var point in sorted.Skip(1))
     {
-      if (sorted[i].Odds != currentOdds)
-      {
-        segments.Add(new PricePoint(currentOdds, startTime, sorted[i].At));
-        currentOdds = sorted[i].Odds;
-        startTime = sorted[i].At;
-      }
+        if (point.Odds != segments[^1].Price)
+        {
+            segments.Add(new PricePoint(point.Odds, point.At));
+        }
     }
-    segments.Add(new PricePoint(currentOdds, startTime, EffectiveTo: null));
+
     return segments;
-  }
+}
 
   private static H2H MapToH2H(HeadToHead dto, Match match, Head2Head entity)
   {
