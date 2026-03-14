@@ -125,4 +125,12 @@ public class MatchRepository : IMatchRepository
   {
     await _db.MatchAnalysis.AddAsync(analysis, cancellationToken);
   }
+
+  public Task<MatchAnalysis?> GetLatestMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return _db.MatchAnalysis
+      .Where(a => a.MatchId == matchId)
+      .OrderByDescending(a => a.Id)
+      .FirstOrDefaultAsync(cancellationToken);
+  }
 }

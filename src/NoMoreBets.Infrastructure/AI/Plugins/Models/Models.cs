@@ -1,3 +1,4 @@
+using NoMoreBets.Domain.Enums;
 using System.ComponentModel;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins.Models;
@@ -79,3 +80,11 @@ internal sealed class EventTypeOddsAccumulator
   public List<string> OptionOrder { get; set; } = new();
   public Dictionary<string, List<(double Odds, DateTime At)>> OddsByLabel { get; set; } = new(StringComparer.Ordinal);
 }
+
+
+public record CurrentOddsMarket(int EventTypeId, string EventTypeName, string Title, IReadOnlyList<CurrentOddsOption> Options);
+
+public record CurrentOddsOption(string Label, double Odds);
+
+[Description("Match available for betting: use Id when calling GetCurrentOdds and GetMatchAnalysis")]
+public record AvailableMatch(int Id, string HomeClubName, string AwayClubName, DateTime MatchDate);

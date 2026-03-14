@@ -4,6 +4,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NoMoreBets.Domain.Betting;
 
+public record BetSelectionRecord(int MatchId, BettingEventType EventType, string OutcomeKey);
+
 public class BetSelection
 {
   public int Id { get; set; }

@@ -14,17 +14,6 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 
 public class MatchPlugin
 {
-  private static readonly HashSet<BettingEventType> BettingOddsHistoryEventTypeWhitelist = new()
-  {
-    BettingEventType.OverUnderGoals,
-    BettingEventType.TeamGoals,
-    BettingEventType.DoubleChance,
-    BettingEventType.BothTeamsToScore,
-    BettingEventType.MatchResult,
-    BettingEventType.Handicap,
-    BettingEventType.ExactScore,
-  };
-
   private readonly int _matchId;
   private readonly IUnitOfWork _unitOfWork;
   private readonly ILogger<MatchPlugin> _logger;
@@ -155,7 +144,7 @@ public class MatchPlugin
       foreach (var row in snapshot.Rows)
       {
         var eventType = (BettingEventType)row.EventTypeId;
-        if (!BettingOddsHistoryEventTypeWhitelist.Contains(eventType))
+        if (!PluginConst.BettingOddsHistoryEventTypeWhitelist.Contains(eventType))
           continue;
 
         if (!byEventType.TryGetValue(row.EventTypeId, out var acc))

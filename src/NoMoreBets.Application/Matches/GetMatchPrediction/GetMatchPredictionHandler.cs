@@ -37,9 +37,8 @@ public class GetMatchPredictionHandler(
 
     var executionSettings = new OpenAIPromptExecutionSettings
     {
-      FunctionChoiceBehavior = FunctionChoiceBehavior.Required(),
+      FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
       ResponseFormat = typeof(StructuredMatchAnalysis),
-      ReasoningEffort = "medium",
       ChatSystemPrompt = prompt
     };
 
@@ -55,14 +54,13 @@ public class GetMatchPredictionHandler(
 
     logger.LogInformation("Starting match prediction for MatchId {MatchId}: {HomeName} vs {AwayName}", command.MatchId, homeName, awayName);
 
-    var kernelClone = kernel.Clone();
-    var result = await kernelClone.InvokePromptAsync(prompt, arguments, cancellationToken: cancellationToken).ConfigureAwait(false);
+    var result = await kernel.InvokePromptAsync(query, arguments, cancellationToken: cancellationToken).ConfigureAwait(false);
     var restultStr = result.ToString() ?? string.Empty;
 
     var analysis = new MatchAnalysis
     {
       MatchId = command.MatchId,
-      Code = "gpt-5.1 - medium",
+      Code = "gpt-5.1",
       Content = restultStr
     };
 

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Application.Common.Dto.Betting;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
@@ -68,6 +69,55 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       return NotFound();
 
     return Ok(new ClubDailySummaryDto(summary.Id, summary.Club.Name, summary.Date, summary.Summary));
+  }
+
+  /// <summary>
+  /// Gets all bet slips from the database, newest first.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of bet slips with selections and match info.</returns>
+  [HttpGet("bet-slips")]
+  public async Task<ActionResult<IReadOnlyList<BetSlipListItemDto>>> GetBetSlips(CancellationToken cancellationToken = default)
+  {
+    var slips = await db.BetSlip
+      .Include(s => s.BetStatusEntity)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.EventTypeEntity)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.BetStatusEntity)
+      .OrderByDescending(s => s.CreatedAt)
+      .ToListAsync(cancellationToken);
+
+    var result = slips
+      .Select(s => new BetSlipListItemDto(
+        s.Id,
+        s.CreatedAt,
+        s.StakeAmount,
+        s.TotalOdds,
+        s.PotentialPayout,
+        s.StatusId,
+        s.BetStatusEntity.Name,
+        s.Selections
+          .OrderBy(sel => sel.Id)
+          .Select(sel => new BetSelectionItemDto(
+            sel.MatchId,
+            sel.Match.HomeClub.Name,
+            sel.Match.AwayClub.Name,
+            sel.EventTypeEntity.Name,
+            sel.OutcomeKey,
+            sel.OddsAtPlacement,
+            sel.StatusId,
+            sel.BetStatusEntity.Name))
+          .ToList()))
+      .ToList();
+
+    return Ok(result);
   }
 
   /// <summary>
@@ -597,3 +647,23 @@ public record MatchAnalysisPageDto(
   string AwayClubName,
   DateTime MatchDate,
   IReadOnlyList<MatchAnalysisItemDto> Analyses);
+
+public record BetSelectionItemDto(
+  int MatchId,
+  string HomeClubName,
+  string AwayClubName,
+  string EventTypeName,
+  string OutcomeKey,
+  decimal OddsAtPlacement,
+  int StatusId,
+  string StatusName);
+
+public record BetSlipListItemDto(
+  int Id,
+  DateTime CreatedAt,
+  decimal StakeAmount,
+  decimal TotalOdds,
+  decimal PotentialPayout,
+  int StatusId,
+  string StatusName,
+  IReadOnlyList<BetSelectionItemDto> Selections);

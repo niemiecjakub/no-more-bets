@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Application.Betting.PlaceBetSlip;
 using NoMoreBets.Application.Matches.GetMatchPrediction;
 using NoMoreBets.Infrastructure.Persistence;
 
@@ -42,6 +43,18 @@ public class PredictionController(IMediator mediator, AppDbContext db) : Control
       return NotFound();
 
     await mediator.Send(new GetMatchPredictionCommand(matchId), cancellationToken).ConfigureAwait(false);
+    return NoContent();
+  }
+
+  /// <summary>
+  /// Triggers AI to analyze available matches and place a bet slip.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>204 No Content on success.</returns>
+  [HttpPost("place-bet-slip")]
+  public async Task<ActionResult> PlaceBetSlip(CancellationToken cancellationToken = default)
+  {
+    await mediator.Send(new PlaceBetSlipCommand(), cancellationToken).ConfigureAwait(false);
     return NoContent();
   }
 }

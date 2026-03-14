@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
@@ -11,5 +11,10 @@ public class PluginFactory : IPluginFactory
   public object CreateMatchPlugin(int matchId)
   {
     return ActivatorUtilities.CreateInstance<MatchPlugin>(_sp, matchId);
+  }
+
+  public object CreateBettingPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<BettingPlugin>(_sp);
   }
 }
