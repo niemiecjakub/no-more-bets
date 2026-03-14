@@ -1,20 +1,8 @@
-import { Suspense } from "react";
-import { ClubList } from "../../features/clubs/components/club-list";
-import { fetchClubs } from "../../features/clubs/services/clubs-api";
+"use client";
 
-async function ClubsContent() {
-  try {
-    const clubs = await fetchClubs();
-    return <ClubList clubs={clubs} />;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load clubs.";
-    return (
-      <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
-        {message}
-      </p>
-    );
-  }
-}
+import { useEffect } from "react";
+import { ClubList } from "../../features/clubs/components/club-list";
+import { useClubStore } from "@/store/club-store";
 
 function ClubsFallback() {
   return (
@@ -30,15 +18,27 @@ function ClubsFallback() {
 }
 
 export default function ClubsPage() {
+  const { clubs, isLoading, error, setClubs } = useClubStore();
+
+  useEffect(() => {
+    setClubs();
+  }, [setClubs]);
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
           Clubs
         </h1>
-        <Suspense fallback={<ClubsFallback />}>
-          <ClubsContent />
-        </Suspense>
+        {isLoading && clubs.length === 0 ? (
+          <ClubsFallback />
+        ) : error ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+            {error}
+          </p>
+        ) : (
+          <ClubList clubs={clubs} />
+        )}
       </main>
     </div>
   );

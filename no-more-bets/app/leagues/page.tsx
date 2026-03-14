@@ -1,20 +1,8 @@
-import { Suspense } from "react";
-import { LeagueList } from "../../features/leagues/components/league-list";
-import { fetchLeagues } from "../../features/leagues/services/leagues-api";
+"use client";
 
-async function LeaguesContent() {
-  try {
-    const leagues = await fetchLeagues();
-    return <LeagueList leagues={leagues} />;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load leagues.";
-    return (
-      <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
-        {message}
-      </p>
-    );
-  }
-}
+import { useEffect } from "react";
+import { LeagueList } from "../../features/leagues/components/league-list";
+import { useLeagueStore } from "@/store/league-store";
 
 function LeaguesFallback() {
   return (
@@ -29,15 +17,27 @@ function LeaguesFallback() {
 }
 
 export default function LeaguesPage() {
+  const { leagues, isLoading, error, setLeagues } = useLeagueStore();
+
+  useEffect(() => {
+    setLeagues();
+  }, [setLeagues]);
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
           Leagues
         </h1>
-        <Suspense fallback={<LeaguesFallback />}>
-          <LeaguesContent />
-        </Suspense>
+        {isLoading && leagues.length === 0 ? (
+          <LeaguesFallback />
+        ) : error ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+            {error}
+          </p>
+        ) : (
+          <LeagueList leagues={leagues} />
+        )}
       </main>
     </div>
   );

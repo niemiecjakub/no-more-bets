@@ -1,9 +1,12 @@
-import { apiGet } from "../../../lib/api-client";
+import axiosInstance from "../../../lib/axios";
 import type { ClubListItem } from "../interfaces";
 
 /**
  * Fetches all clubs from the backend.
  */
 export async function fetchClubs(): Promise<ClubListItem[]> {
-  return apiGet<ClubListItem[]>("/api/Database/clubs", "clubs");
+  const { data } = await axiosInstance.get<ClubListItem[]>(
+    "/api/Database/clubs"
+  );
+  return data;
 }

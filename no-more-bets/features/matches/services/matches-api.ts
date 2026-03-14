@@ -1,11 +1,14 @@
-import { apiGet } from "../../../lib/api-client";
+import axiosInstance from "../../../lib/axios";
 import type { MatchAnalysisPageDto, MatchListItem } from "../interfaces";
 
 /**
  * Fetches all matches from the backend.
  */
 export async function fetchMatches(): Promise<MatchListItem[]> {
-  return apiGet<MatchListItem[]>("/api/Database/matches", "matches");
+  const { data } = await axiosInstance.get<MatchListItem[]>(
+    "/api/Database/matches"
+  );
+  return data;
 }
 
 /**
@@ -14,8 +17,8 @@ export async function fetchMatches(): Promise<MatchListItem[]> {
 export async function fetchMatchAnalysisPage(
   matchId: number
 ): Promise<MatchAnalysisPageDto> {
-  return apiGet<MatchAnalysisPageDto>(
-    `/api/Database/matches/${matchId}/analyses`,
-    "match analyses"
+  const { data } = await axiosInstance.get<MatchAnalysisPageDto>(
+    `/api/Database/matches/${matchId}/analyses`
   );
+  return data;
 }

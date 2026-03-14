@@ -1,20 +1,8 @@
-import { Suspense } from "react";
-import { MatchList } from "../features/matches/components/match-list";
-import { fetchMatches } from "../features/matches/services/matches-api";
+"use client";
 
-async function MatchesContent() {
-  try {
-    const matches = await fetchMatches();
-    return <MatchList matches={matches} />;
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Failed to load matches.";
-    return (
-      <p className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-red-800 dark:text-red-200">
-        {message}
-      </p>
-    );
-  }
-}
+import { useEffect } from "react";
+import { MatchList } from "../features/matches/components/match-list";
+import { useMatchStore } from "@/store/match-store";
 
 function MatchesFallback() {
   return (
@@ -31,15 +19,27 @@ function MatchesFallback() {
 }
 
 export default function Home() {
+  const { matches, isLoading, error, setMatches } = useMatchStore();
+
+  useEffect(() => {
+    setMatches();
+  }, [setMatches]);
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
         <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
           Matches
         </h1>
-        <Suspense fallback={<MatchesFallback />}>
-          <MatchesContent />
-        </Suspense>
+        {isLoading && matches.length === 0 ? (
+          <MatchesFallback />
+        ) : error ? (
+          <p className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-red-800 dark:text-red-200">
+            {error}
+          </p>
+        ) : (
+          <MatchList matches={matches} />
+        )}
       </main>
     </div>
   );
