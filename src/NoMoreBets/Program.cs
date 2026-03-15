@@ -12,17 +12,23 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHangfireConfiguration(builder.Configuration);
 builder.Services.AddControllers();
-builder.Services.AddCors(options =>
-{
-  options.AddDefaultPolicy(policy =>
-  {
-    policy.WithOrigins("http://localhost:3000").AllowAnyHeader().AllowAnyMethod();
-  });
-});
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
   c.CustomSchemaIds(type => type.FullName?.Replace("+", ".") ?? type.Name);
+});
+
+string[] allowedOrigins = builder.Configuration["AllowedOrigins"]!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) ?? Array.Empty<string>();
+
+builder.Services.AddCors(options =>
+{
+  options.AddPolicy("AllowFrontend", policy =>
+  {
+    policy
+        .WithOrigins(allowedOrigins)
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+  });
 });
 
 var app = builder.Build();
@@ -52,7 +58,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors();
+app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

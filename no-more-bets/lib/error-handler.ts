@@ -1,6 +1,6 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
-function getRequestUrl(error: axios.AxiosError): string | null {
+function getRequestUrl(error: AxiosError): string | null {
   const base = error.config?.baseURL;
   const url = error.config?.url;
   if (base && url) return `${base}${url.startsWith("/") ? url : `/${url}`}`;

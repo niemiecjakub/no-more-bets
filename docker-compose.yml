@@ -10,6 +10,7 @@ services:
     env_file:
       - .env
     environment:
+      - AllowedOrigins=${ALLOWED_ORIGINS}
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
       - ASPNETCORE_URLS=http://+:8080;http://+:8081
       - ConnectionStrings__DefaultConnection=Host=${POSTGRES_HOST};Port=${POSTGRES_PORT};Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
@@ -46,6 +47,18 @@ services:
       retries: 5
     networks:
       - backend_db
+
+  frontend:
+    container_name: no-more-bets-front
+    build:
+      context: ./no-more-bets
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
