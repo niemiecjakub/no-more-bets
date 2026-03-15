@@ -2,6 +2,7 @@
 .vs/
 .vscode/
 .cursor/
+.agents/
 .idea/
 
 # Build outputs
