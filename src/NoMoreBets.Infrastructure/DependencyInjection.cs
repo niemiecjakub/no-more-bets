@@ -2,15 +2,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NoMoreBets.Application.Betting;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Clubs;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
-using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Infrastructure.AI;
 using NoMoreBets.Infrastructure.BackgroundJobs;
 using NoMoreBets.Infrastructure.Http;
 using NoMoreBets.Infrastructure.Persistence;
@@ -21,11 +24,11 @@ using NoMoreBets.Infrastructure.Scraping.External.Betclic;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 using NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
-using NoMoreBets.Infrastructure.AI.Plugins;
-using NoMoreBets.Infrastructure.AI;
+using NoMoreBets.Infrastructure.Search;
 using Polly;
 using System.Net;
-using Microsoft.SemanticKernel;
+using System.Net.Http.Headers;
+using static System.Net.WebRequestMethods;
 
 namespace NoMoreBets.Infrastructure;
 
@@ -53,6 +56,7 @@ public static class DependencyInjection
     services.Configure<BetclicScraperOptions>(configuration.GetSection(BetclicScraperOptions.SectionName));
     services.Configure<SoccerDataOptions>(configuration.GetSection(SoccerDataOptions.SectionName));
     services.Configure<ProxyOptions>(configuration.GetSection(ProxyOptions.SectionName));
+    services.Configure<BraveSearchOptions>(configuration.GetSection(BraveSearchOptions.SectionName));
 
     services.AddOptions<SoccerDataOptions>()
       .Bind(configuration.GetSection(SoccerDataOptions.SectionName))
@@ -72,9 +76,10 @@ public static class DependencyInjection
     services.AddSingleton<PlaywrightBrowserService>();
     services.AddTransient<PlaywrightPageFetcher>();
 
+    //Jobs
     services.AddScoped<JobService>();
 
-    //HTTP resilience &SoccerData client
+    //HTTP resilience & external clients
     services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>
       ResilienceHttpHandler.CreatePipeline(sp.GetService<ILogger<ResilienceHttpHandler>>()));
     services.AddTransient<ResilienceHttpHandler>();
@@ -101,6 +106,20 @@ public static class DependencyInjection
     services.AddTransient<IMatchDetailsProvider>(sp => sp.GetRequiredService<FotmobScraper>());
     services.AddTransient<IBookmakerMatchesProvider>(sp => sp.GetRequiredService<BetclicScraper>());
     services.AddTransient<IBetEventsProvider>(sp => sp.GetRequiredService<BetclicScraper>());
+
+    services.AddHttpClient<ISearchService, BraveSearch>((serviceProvider, client) =>
+    {
+      var options = serviceProvider.GetRequiredService<IOptions<BraveSearchOptions>>().Value;
+      client.BaseAddress = new Uri("https://api.search.brave.com");
+      client.DefaultRequestHeaders.Accept.Clear();
+      client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+      client.DefaultRequestHeaders.TryAddWithoutValidation("X-Subscription-Token", options.ApiKey);
+    })
+    .AddHttpMessageHandler<ResilienceHttpHandler>()
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+      AutomaticDecompression = DecompressionMethods.All
+    });
 
     return services;
   }
