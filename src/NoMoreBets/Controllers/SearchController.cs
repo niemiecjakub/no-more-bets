@@ -1,7 +1,10 @@
 using System.Threading;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using NoMoreBets.Application.Search;
+using NoMoreBets.Application.Search.SearchBasic;
+using NoMoreBets.Application.Search.SearchLlmContext;
+using NoMoreBets.Application.Search.SearchNews;
 
 namespace NoMoreBets.Controllers;
 
@@ -9,23 +12,23 @@ namespace NoMoreBets.Controllers;
 [Route("api/[controller]")]
 public sealed class SearchController : ControllerBase
 {
-  private readonly ISearchService _searchService;
+  private readonly IMediator _mediator;
 
-  public SearchController(ISearchService searchService)
+  public SearchController(IMediator mediator)
   {
-    _searchService = searchService;
+    _mediator = mediator;
   }
 
   [HttpGet]
-  public async Task<ActionResult<SearchResultDto>> Search(
+  public async Task<ActionResult<SearchBasicResultDto>> Search(
     [FromQuery] string q,
-    [FromQuery] SearchOptions options,
+    [FromQuery] SearchBasicOptions options,
     CancellationToken cancellationToken)
   {
     if (string.IsNullOrWhiteSpace(q))
       return BadRequest("Query 'q' is required.");
 
-    var result = await _searchService.SearchAsync(q, options, cancellationToken);
+    var result = await _mediator.Send(new SearchBasicQuery(q, options ?? new SearchBasicOptions()), cancellationToken);
     return Ok(result);
   }
 
@@ -38,7 +41,7 @@ public sealed class SearchController : ControllerBase
     if (string.IsNullOrWhiteSpace(q))
       return BadRequest("Query 'q' is required.");
 
-    var result = await _searchService.SearchNewsAsync(q, options, cancellationToken);
+    var result = await _mediator.Send(new SearchNewsQuery(q, options ?? new SearchNewsOptions()), cancellationToken);
     return Ok(result);
   }
 
@@ -51,8 +54,7 @@ public sealed class SearchController : ControllerBase
     if (string.IsNullOrWhiteSpace(q))
       return BadRequest("Query 'q' is required.");
 
-    var result = await _searchService.SearchLlmContextAsync(q, options, cancellationToken);
+    var result = await _mediator.Send(new SearchLlmContextQuery(q, options ?? new SearchLlmContextOptions()), cancellationToken);
     return Ok(result);
   }
 }
-

@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace NoMoreBets.Application.Search;
+namespace NoMoreBets.Application.Search.SearchBasic;
 
-public sealed class SearchOptions
+public sealed class SearchBasicOptions
 {
   /// <summary>
   /// Optional Brave goggles identifier (e.g. "local" or custom).
@@ -26,4 +26,3 @@ public sealed class SearchOptions
   /// </summary>
   public string? ResultFilter { get; init; }
 }
-

@@ -4,7 +4,9 @@ using System.Text;
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
-using NoMoreBets.Application.Search;
+using NoMoreBets.Application.Search.SearchBasic;
+using NoMoreBets.Application.Search.SearchLlmContext;
+using NoMoreBets.Application.Search.SearchNews;
 using NoMoreBets.Infrastructure.Search;
 
 namespace NoMoreBets.Infrastructure.Tests.Http;
@@ -40,7 +42,7 @@ public class BraveSearchTests
       Content = new StringContent(payload, Encoding.UTF8, "application/json")
     });
 
-    var result = await client.SearchAsync("brave", new SearchOptions());
+    var result = await client.SearchBasicAsync("brave", new SearchBasicOptions());
 
     result.Items.Should().HaveCount(1);
     result.Items[0].Title.Should().Be("Brave");
@@ -82,7 +84,7 @@ public class BraveSearchTests
       Content = new StringContent(payload, Encoding.UTF8, "application/json")
     });
 
-    var result = await client.SearchAsync("premier league", new SearchOptions());
+    var result = await client.SearchBasicAsync("premier league", new SearchBasicOptions());
 
     result.Items.Should().HaveCount(1);
     result.Items[0].Hostname.Should().Be("www.example.com");
@@ -104,7 +106,7 @@ public class BraveSearchTests
       };
     });
 
-    await client.SearchAsync("premier league", new SearchOptions());
+    await client.SearchBasicAsync("premier league", new SearchBasicOptions());
 
     capturedRequest.Should().NotBeNull();
     capturedRequest!.RequestUri!.AbsolutePath.Should().Be("/res/v1/web/search");
@@ -116,7 +118,7 @@ public class BraveSearchTests
   {
     var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.OK));
 
-    var act = () => client.SearchAsync("", new SearchOptions());
+    var act = () => client.SearchBasicAsync("", new SearchBasicOptions());
 
     await act.Should().ThrowAsync<ArgumentException>().WithParameterName("q");
   }
@@ -130,7 +132,7 @@ public class BraveSearchTests
       Content = new StringContent(payload, Encoding.UTF8, "application/json")
     });
 
-    var result = await client.SearchAsync("test", new SearchOptions());
+    var result = await client.SearchBasicAsync("test", new SearchBasicOptions());
 
     result.Items.Should().BeEmpty();
   }
@@ -292,7 +294,7 @@ public class BraveSearchTests
   {
     var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.InternalServerError));
 
-    var act = () => client.SearchAsync("test", new SearchOptions());
+    var act = () => client.SearchBasicAsync("test", new SearchBasicOptions());
 
     await act.Should().ThrowAsync<BraveSearchException>();
   }
@@ -305,7 +307,7 @@ public class BraveSearchTests
       Content = new StringContent("not valid json {", Encoding.UTF8, "application/json")
     });
 
-    var act = () => client.SearchAsync("test", new SearchOptions());
+    var act = () => client.SearchBasicAsync("test", new SearchBasicOptions());
 
     await act.Should().ThrowAsync<JsonException>();
   }

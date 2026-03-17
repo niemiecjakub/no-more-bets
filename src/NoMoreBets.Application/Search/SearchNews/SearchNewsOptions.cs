@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace NoMoreBets.Application.Search;
+namespace NoMoreBets.Application.Search.SearchNews;
 
 public sealed class SearchNewsOptions
 {
@@ -26,4 +26,3 @@ public sealed class SearchNewsOptions
   [DefaultValue(false)]
   public bool ExtraSnippets { get; init; } = false;
 }
-

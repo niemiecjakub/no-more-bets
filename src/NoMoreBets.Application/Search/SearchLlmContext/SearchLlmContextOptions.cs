@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
-namespace NoMoreBets.Application.Search;
+namespace NoMoreBets.Application.Search.SearchLlmContext;
 
 public sealed class SearchLlmContextOptions
 {
@@ -27,4 +27,3 @@ public sealed class SearchLlmContextOptions
   /// </summary>
   public string? ContextThresholdMode { get; init; }
 }
-

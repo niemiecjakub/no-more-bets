@@ -3,6 +3,9 @@ using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Search;
+using NoMoreBets.Application.Search.SearchBasic;
+using NoMoreBets.Application.Search.SearchLlmContext;
+using NoMoreBets.Application.Search.SearchNews;
 
 namespace NoMoreBets.Infrastructure.Search;
 
@@ -21,12 +24,12 @@ public sealed class BraveSearch : ISearchService
     _logger = logger;
   }
 
-  public async Task<SearchResultDto> SearchAsync(string q, SearchOptions options, CancellationToken cancellationToken = default)
+  public async Task<SearchBasicResultDto> SearchBasicAsync(string q, SearchBasicOptions options, CancellationToken cancellationToken = default)
   {
     if (string.IsNullOrWhiteSpace(q))
       throw new ArgumentException("Query 'q' is required.", nameof(q));
 
-    options ??= new SearchOptions();
+    options ??= new SearchBasicOptions();
 
     var query = new Dictionary<string, string?>
     {
@@ -111,18 +114,18 @@ public sealed class BraveSearch : ISearchService
     return result;
   }
 
-  private static SearchResultDto MapSearchResults(BraveWebSearchResponse response)
+  private static SearchBasicResultDto MapSearchResults(BraveWebSearchResponse response)
   {
     if (response.Web.Results is null || response.Web.Results.Count == 0)
-      return new SearchResultDto();
+      return new SearchBasicResultDto();
 
-    var items = new List<SearchResultItemDto>();
+    var items = new List<SearchBasicResultItemDto>();
     foreach (var item in response.Web.Results)
     {
       if (string.IsNullOrWhiteSpace(item.Url))
         continue;
 
-      items.Add(new SearchResultItemDto
+      items.Add(new SearchBasicResultItemDto
       {
         Title = item.Title ?? string.Empty,
         Url = item.Url,
@@ -133,7 +136,7 @@ public sealed class BraveSearch : ISearchService
       });
     }
 
-    return new SearchResultDto { Items = items };
+    return new SearchBasicResultDto { Items = items };
   }
 
   private static SearchNewsResultDto MapNewsResults(BraveNewsSearchResponse response)
