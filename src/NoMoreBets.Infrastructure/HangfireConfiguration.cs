@@ -51,11 +51,11 @@ public static class HangfireConfiguration
         jobService => jobService.GetLineups(),
         "0 16 * * *");
 
-    // Runs once per day at 17:00
+    // Runs once per day at 18:00
     RecurringJob.AddOrUpdate<JobService>(
         "generate-match-predictions",
         jobService => jobService.GenerateMissingMatchPredictions(),
-        "0 17 * * *");
+        "0 18 * * *");
 
     // Runs once per day at 10:00
     RecurringJob.AddOrUpdate<JobService>(
@@ -75,10 +75,10 @@ public static class HangfireConfiguration
         jobService => jobService.CloseStartingSoonMatches(),
         "0 * * * *");
 
-    // Runs every 6 hours at 15 min past the hour (00:15, 06:15, 12:15, 18:15)
+    // Runs once per day at 17:00
     RecurringJob.AddOrUpdate<JobService>(
         "get-betting-odds",
         jobService => jobService.ScheduleBettingOddsJob(),
-        "15 */6 * * *");
+        "0 17 * * *");
   }
 }

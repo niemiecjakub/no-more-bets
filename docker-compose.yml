@@ -20,6 +20,7 @@ services:
       - SoccerData__ApiKey=${SOCCERDATA_API_KEY}
       - OpenAI__ApiKey=${OPENAI_API_KEY}
       - OpenAI__ModelId=${OPENAI_MODEL}
+      - BraveSearch__ApiKey=${BRAVE_SEARCH_API_KEY}
       - ProxyOptions__ProxyUser=${PROXY_USER}
       - ProxyOptions__ProxyPassword=${PROXY_PASSWORD}
       - ProxyOptions__ProxyServer=${PROXY_SERVER}
