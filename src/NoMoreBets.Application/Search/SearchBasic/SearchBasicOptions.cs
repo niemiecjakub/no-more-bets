@@ -25,4 +25,18 @@ public sealed class SearchBasicOptions
   /// When null, Brave's default mix of results is returned.
   /// </summary>
   public string? ResultFilter { get; init; }
+
+  /// <summary>Builds a query dictionary for the web search API. Include <paramref name="q"/> to add the search query.</summary>
+  public Dictionary<string, string?> ToQueryDictionary(string? q = null)
+  {
+    var d = new Dictionary<string, string?>
+    {
+      ["goggles"] = Goggles,
+      ["result_filter"] = ResultFilter,
+      ["safesearch"] = Safesearch
+    };
+    if (!string.IsNullOrWhiteSpace(q))
+      d["q"] = q;
+    return d;
+  }
 }

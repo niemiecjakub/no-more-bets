@@ -10,10 +10,9 @@ public sealed class SearchLlmContextResultDto
 
 public sealed class SearchLlmContextItemDto
 {
-  public string Text { get; init; } = string.Empty;
   public string? Url { get; init; }
-  public int? TokenCount { get; init; }
   public string? Title { get; init; }
-  public double? Score { get; init; }
-  public string? SourceType { get; init; }
+  public IReadOnlyList<string> Snippets { get; init; } = Array.Empty<string>();
+  public string? Hostname { get; init; }
+  public string? Age { get; init; }
 }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace NoMoreBets.Infrastructure.Search;
@@ -132,35 +133,48 @@ public sealed class BraveNewsResult
   public List<string> ExtraSnippets { get; set; } = [];
 }
 
-// LLM context
+// LLM context (grounding + sources shape)
 
 public sealed class BraveLlmContextResponse
 {
-  [JsonPropertyName("type")]
-  public string Type { get; set; } = string.Empty;
+  [JsonPropertyName("grounding")]
+  public BraveLlmContextGrounding? Grounding { get; set; }
 
-  [JsonPropertyName("results")]
-  public List<BraveLlmContextItem> Results { get; set; } = [];
+  /// <summary>Metadata for all referenced URLs, keyed by URL.</summary>
+  [JsonPropertyName("sources")]
+  public Dictionary<string, BraveLlmContextSource>? Sources { get; set; }
 }
 
-public sealed class BraveLlmContextItem
+public sealed class BraveLlmContextGrounding
 {
-  [JsonPropertyName("content")]
-  public string Content { get; set; } = string.Empty;
+  [JsonPropertyName("generic")]
+  public List<BraveLlmContextGenericItem> Generic { get; set; } = [];
 
+  [JsonPropertyName("map")]
+  public List<JsonElement> Map { get; set; } = [];
+}
+
+public sealed class BraveLlmContextGenericItem
+{
   [JsonPropertyName("url")]
-  public string? Url { get; set; }
-
-  [JsonPropertyName("tokens")]
-  public int Tokens { get; set; }
+  public string Url { get; set; } = string.Empty;
 
   [JsonPropertyName("title")]
-  public string? Title { get; set; }
+  public string Title { get; set; } = string.Empty;
 
-  [JsonPropertyName("score")]
-  public double? Score { get; set; }
+  [JsonPropertyName("snippets")]
+  public List<string> Snippets { get; set; } = [];
+}
 
-  [JsonPropertyName("source_type")]
-  public string? SourceType { get; set; }
+public sealed class BraveLlmContextSource
+{
+  [JsonPropertyName("title")]
+  public string Title { get; set; } = string.Empty;
+
+  [JsonPropertyName("hostname")]
+  public string Hostname { get; set; } = string.Empty;
+
+  [JsonPropertyName("age")]
+  public List<string> Age { get; set; } = [];
 }
 

@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using System.Text.Json;
 using Microsoft.AspNetCore.WebUtilities;
@@ -30,15 +31,7 @@ public sealed class BraveSearch : ISearchService
       throw new ArgumentException("Query 'q' is required.", nameof(q));
 
     options ??= new SearchBasicOptions();
-
-    var query = new Dictionary<string, string?>
-    {
-      ["q"] = q,
-      ["goggles"] = options.Goggles,
-      ["result_filter"] = options.ResultFilter,
-      ["safesearch"] = options.Safesearch
-    };
-
+    var query = options.ToQueryDictionary(q);
     var web = await SendAsync<BraveWebSearchResponse>("/res/v1/web/search", query, cancellationToken).ConfigureAwait(false);
     return MapSearchResults(web);
   }
@@ -49,15 +42,7 @@ public sealed class BraveSearch : ISearchService
       throw new ArgumentException("Query 'q' is required.", nameof(q));
 
     options ??= new SearchNewsOptions();
-
-    var query = new Dictionary<string, string?>
-    {
-      ["q"] = q,
-      ["freshness"] = options.Freshness,
-      ["country"] = options.Country,
-      ["extra_snippets"] = options.ExtraSnippets ? "true" : "false"
-    };
-
+    var query = options.ToQueryDictionary(q);
     var news = await SendAsync<BraveNewsSearchResponse>("/res/v1/news/search", query, cancellationToken).ConfigureAwait(false);
     return MapNewsResults(news);
   }
@@ -68,18 +53,7 @@ public sealed class BraveSearch : ISearchService
       throw new ArgumentException("Query 'q' is required.", nameof(q));
 
     options ??= new SearchLlmContextOptions();
-
-    var maxTokens = Math.Clamp(options.MaximumNumberOfTokens, 128, 4096);
-    var count = Math.Clamp(options.Count, 1, 50);
-
-    var query = new Dictionary<string, string?>
-    {
-      ["q"] = q,
-      ["maximum_number_of_tokens"] = maxTokens.ToString(),
-      ["count"] = count.ToString(),
-      ["context_threshold_mode"] = options.ContextThresholdMode
-    };
-
+    var query = options.ToQueryDictionary(q);
     var ctx = await SendAsync<BraveLlmContextResponse>("/res/v1/llm/context", query, cancellationToken).ConfigureAwait(false);
     return MapLlmContextResults(ctx);
   }
@@ -174,23 +148,39 @@ public sealed class BraveSearch : ISearchService
 
   private static SearchLlmContextResultDto MapLlmContextResults(BraveLlmContextResponse response)
   {
-    if (response.Results is null || response.Results.Count == 0)
+    var generic = response.Grounding?.Generic;
+    if (generic is null || generic.Count == 0)
       return new SearchLlmContextResultDto();
 
+    var sources = response.Sources ?? new Dictionary<string, BraveLlmContextSource>();
     var items = new List<SearchLlmContextItemDto>();
-    foreach (var item in response.Results)
+
+    foreach (var item in generic)
     {
-      if (string.IsNullOrWhiteSpace(item.Content))
+      if (item.Snippets is null || item.Snippets.Count == 0)
         continue;
+
+      var snippets = item.Snippets.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+      if (snippets.Count == 0)
+        continue;
+
+      string? hostname = null;
+      string? age = null;
+      if (sources.TryGetValue(item.Url, out var source) && source is not null)
+      {
+        if (!string.IsNullOrWhiteSpace(source.Hostname))
+          hostname = source.Hostname;
+        if (source.Age is { Count: > 0 })
+          age = source.Age[^1];
+      }
 
       items.Add(new SearchLlmContextItemDto
       {
-        Text = item.Content,
+        Snippets = snippets,
         Url = item.Url,
-        TokenCount = item.Tokens,
         Title = item.Title,
-        Score = item.Score,
-        SourceType = item.SourceType
+        Hostname = hostname,
+        Age = age
       });
     }
 

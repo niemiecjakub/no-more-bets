@@ -65,7 +65,7 @@ export function StructuredMatchAnalysisView({
   analysis,
 }: StructuredMatchAnalysisViewProps) {
   return (
-    <div className="flex max-w-[65ch] flex-col gap-4">
+    <div className="flex w-full flex-col gap-4">
       {SECTIONS.map(({ key, label, isPrediction }) => {
         const value = analysis[key];
         if (value == null || String(value).trim() === "") return null;

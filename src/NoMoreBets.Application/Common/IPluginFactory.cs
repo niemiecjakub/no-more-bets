@@ -4,4 +4,5 @@ public interface IPluginFactory
 {
   object CreateMatchPlugin(int matchId);
   object CreateBettingPlugin();
+  object CreateSearchPlugin();
 }
