@@ -1,9 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
+using NoMoreBets.Application.Clubs.GetClubRecentGames;
+using NoMoreBets.Application.Clubs.GetClubRollingPerformance;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Leagues.GetClubLeagueStatistics;
+using NoMoreBets.Application.Matches.GetHeadToHeadStats;
+using NoMoreBets.Application.Matches.GetMatchInjuries;
+using NoMoreBets.Application.Matches.GetMatchLineups;
+using NoMoreBets.Application.Matches.GetMatchPreview;
 using NoMoreBets.Domain.Clubs;
-using NoMoreBets.Infrastructure.AI.Plugins;
-using NoMoreBets.Infrastructure.AI.Plugins.Models;
 using NoMoreBets.Infrastructure.Persistence;
 
 namespace NoMoreBets.Controllers;
@@ -11,7 +18,7 @@ namespace NoMoreBets.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class MatchInsightsController(
-  IPluginFactory pluginFactory,
+  IMediator mediator,
   IUnitOfWork unitOfWork,
   AppDbContext db) : ControllerBase
 {
@@ -21,8 +28,7 @@ public class MatchInsightsController(
     if (!await MatchExists(matchId, cancellationToken).ConfigureAwait(false))
       return NotFound();
 
-    var plugin = CreatePlugin(matchId);
-    var result = await plugin.GetLineupsAsync(cancellationToken).ConfigureAwait(false);
+    var result = await mediator.Send(new GetMatchLineupsQuery(matchId), cancellationToken).ConfigureAwait(false);
     return Ok(result);
   }
 
@@ -32,8 +38,7 @@ public class MatchInsightsController(
     if (!await MatchExists(matchId, cancellationToken).ConfigureAwait(false))
       return NotFound();
 
-    var plugin = CreatePlugin(matchId);
-    var result = await plugin.GetInjuriesAsync(cancellationToken).ConfigureAwait(false);
+    var result = await mediator.Send(new GetMatchInjuriesQuery(matchId), cancellationToken).ConfigureAwait(false);
     return Ok(result);
   }
 
@@ -43,8 +48,7 @@ public class MatchInsightsController(
     if (!await MatchExists(matchId, cancellationToken).ConfigureAwait(false))
       return NotFound();
 
-    var plugin = CreatePlugin(matchId);
-    var result = await plugin.GetMatchPreviewAsync(cancellationToken).ConfigureAwait(false);
+    var result = await mediator.Send(new GetMatchPreviewQuery(matchId), cancellationToken).ConfigureAwait(false);
     return Ok(result);
   }
 
@@ -57,9 +61,8 @@ public class MatchInsightsController(
     if (match == null)
       return NotFound();
 
-    var plugin = CreatePlugin(matchId);
-    var home = await plugin.GetClubRecentGamesAsync(match.HomeClubId, cancellationToken).ConfigureAwait(false);
-    var away = await plugin.GetClubRecentGamesAsync(match.AwayClubId, cancellationToken).ConfigureAwait(false);
+    var home = await mediator.Send(new GetClubRecentGamesQuery(match.HomeClubId), cancellationToken).ConfigureAwait(false);
+    var away = await mediator.Send(new GetClubRecentGamesQuery(match.AwayClubId), cancellationToken).ConfigureAwait(false);
     return Ok(new ClubPairDto<IReadOnlyList<RecentMatch>?>(home, away));
   }
 
@@ -72,9 +75,8 @@ public class MatchInsightsController(
     if (match == null)
       return NotFound();
 
-    var plugin = CreatePlugin(matchId);
-    var home = await plugin.GetClubStatistics(match.HomeClubId, cancellationToken).ConfigureAwait(false);
-    var away = await plugin.GetClubStatistics(match.AwayClubId, cancellationToken).ConfigureAwait(false);
+    var home = await mediator.Send(new GetClubLeagueStatisticsQuery(match.HomeClubId), cancellationToken).ConfigureAwait(false);
+    var away = await mediator.Send(new GetClubLeagueStatisticsQuery(match.AwayClubId), cancellationToken).ConfigureAwait(false);
     return Ok(new ClubPairDto<ClubLeagueStats?>(home, away));
   }
 
@@ -84,8 +86,7 @@ public class MatchInsightsController(
     if (!await MatchExists(matchId, cancellationToken).ConfigureAwait(false))
       return NotFound();
 
-    var plugin = CreatePlugin(matchId);
-    var result = await plugin.GetHead2HeadStatsAsync(cancellationToken).ConfigureAwait(false);
+    var result = await mediator.Send(new GetHeadToHeadStatsQuery(matchId), cancellationToken).ConfigureAwait(false);
     return Ok(result);
   }
 
@@ -97,8 +98,7 @@ public class MatchInsightsController(
     if (!await MatchExists(matchId, cancellationToken).ConfigureAwait(false))
       return NotFound();
 
-    var plugin = CreatePlugin(matchId);
-    var result = await plugin.GetMatchBettingOddsHistoryAsync(cancellationToken).ConfigureAwait(false);
+    var result = await mediator.Send(new GetMatchBettingOddsHistoryQuery(matchId), cancellationToken).ConfigureAwait(false);
     return Ok(result);
   }
 
@@ -111,13 +111,10 @@ public class MatchInsightsController(
     if (match == null)
       return NotFound();
 
-    var plugin = CreatePlugin(matchId);
-    var home = await plugin.GetClubRollingPerformanceAsync(match.HomeClubId, cancellationToken).ConfigureAwait(false);
-    var away = await plugin.GetClubRollingPerformanceAsync(match.AwayClubId, cancellationToken).ConfigureAwait(false);
+    var home = await mediator.Send(new GetClubRollingPerformanceQuery(match.HomeClubId), cancellationToken).ConfigureAwait(false);
+    var away = await mediator.Send(new GetClubRollingPerformanceQuery(match.AwayClubId), cancellationToken).ConfigureAwait(false);
     return Ok(new ClubPairDto<TeamPerformanceResult?>(home, away));
   }
-
-  private MatchPlugin CreatePlugin(int matchId) => (MatchPlugin)pluginFactory.CreateMatchPlugin(matchId);
 
   private Task<bool> MatchExists(int matchId, CancellationToken cancellationToken) =>
     db.Match.AnyAsync(m => m.Id == matchId, cancellationToken);
