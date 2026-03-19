@@ -55,9 +55,10 @@ public class UpdateMatchDetailsHandlerTests
     await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
-  [Fact]
-  public async Task Handle_WhenExistingDetailsByFotmobUrl_UpdatesJsonAndCallsSaveChangesOnce()
+[Fact]
+public async Task Handle_WhenExistingDetailsByFotmobUrl_ReturnsWithoutUpdatingOrSaving()
   {
+  // Arrange
     var url = "https://fotmob.com/match/1";
     var dto = new MatchDetailsDto
     {
@@ -71,11 +72,14 @@ public class UpdateMatchDetailsHandlerTests
     var existingDetails = new MatchDetails { Id = 1, MatchId = 42, Match = existingMatch, FotmobUrl = url, FotmobDetailsJson = "old" };
     _unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(url, Arg.Any<CancellationToken>()).Returns(existingDetails);
 
+  // Act
     await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
 
-    existingDetails.FotmobDetailsJson.Should().NotBe("old");
+  // Assert
+  existingDetails.FotmobDetailsJson.Should().Be("old");
     existingDetails.FotmobUrl.Should().Be(url);
-    await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+  await _matchDetailsProvider.DidNotReceive().GetMatchDetailsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+  await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
     await _unitOfWork.Matches.DidNotReceive().AddMatch(Arg.Any<Match>(), Arg.Any<CancellationToken>());
     await _unitOfWork.Matches.DidNotReceive().AddMatchDetailsAsync(Arg.Any<MatchDetails>(), Arg.Any<CancellationToken>());
   }
