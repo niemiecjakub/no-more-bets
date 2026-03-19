@@ -222,17 +222,26 @@ public class BraveSearchTests
   {
     var payload = """
     {
-      "type": "llm_context",
-      "results": [
-        {
-          "content": "The Premier League is a professional football league.",
-          "url": "https://en.wikipedia.org/wiki/Premier_League",
-          "tokens": 42,
+      "grounding": {
+        "generic": [
+          {
+            "url": "https://en.wikipedia.org/wiki/Premier_League",
+            "title": "Premier League",
+            "snippets": [
+              "The Premier League is a professional football league.",
+              "It is the top level of the English football league system."
+            ]
+          }
+        ],
+        "map": []
+      },
+      "sources": {
+        "https://en.wikipedia.org/wiki/Premier_League": {
           "title": "Premier League",
-          "score": 0.95,
-          "source_type": "generic"
+          "hostname": "en.wikipedia.org",
+          "age": ["2026-03-16", "2 days ago"]
         }
-      ]
+      }
     }
     """;
 
@@ -244,19 +253,19 @@ public class BraveSearchTests
     var result = await client.SearchLlmContextAsync("premier league", new SearchLlmContextOptions());
 
     result.Items.Should().HaveCount(1);
-    result.Items[0].Text.Should().Contain("Premier League");
+    result.Items[0].Snippets.Should().HaveCount(2);
+    result.Items[0].Snippets[0].Should().Contain("Premier League");
     result.Items[0].Url.Should().Be("https://en.wikipedia.org/wiki/Premier_League");
-    result.Items[0].TokenCount.Should().Be(42);
     result.Items[0].Title.Should().Be("Premier League");
-    result.Items[0].Score.Should().Be(0.95);
-    result.Items[0].SourceType.Should().Be("generic");
+    result.Items[0].Hostname.Should().Be("en.wikipedia.org");
+    result.Items[0].Age.Should().Be("2 days ago");
   }
 
   [Fact]
   public async Task SearchLlmContextAsync_BuildsExpectedLlmContextUrl()
   {
     HttpRequestMessage? capturedRequest = null;
-    var payload = """{"type":"llm_context","results":[]}""";
+    var payload = """{"grounding":{"generic":[],"map":[]},"sources":{}}""";
     var client = CreateClient(req =>
     {
       capturedRequest = req;
