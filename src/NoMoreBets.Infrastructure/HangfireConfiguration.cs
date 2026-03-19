@@ -80,5 +80,11 @@ public static class HangfireConfiguration
         "get-betting-odds",
         jobService => jobService.ScheduleBettingOddsJob(),
         "0 17 * * *");
+
+    // Runs once per day at 23:50
+    RecurringJob.AddOrUpdate<JobService>(
+        "fill-missing-finished-match-scores",
+        jobService => jobService.FillMissingFinishedMatchScoresFromSoccerData(),
+        "50 23 * * *");
   }
 }

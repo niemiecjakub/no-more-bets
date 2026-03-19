@@ -21,10 +21,16 @@ using NoMoreBets.Application.Clubs.GetOverview;
 using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Application.Matches.UpdateMatchDetails;
 using NoMoreBets.Application.Matches.GetMatchPrediction;
+using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
 
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
-public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fotmobConstants, ILogger<JobService> logger)
+public class JobService(
+  IMediator mediator,
+  AppDbContext db,
+  IFotmobConstants fotmobConstants,
+  SoccerDataClient soccerDataClient,
+  ILogger<JobService> logger)
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -360,6 +366,57 @@ public class JobService(IMediator mediator, AppDbContext db, IFotmobConstants fo
       "Job {JobName} received {GameCount} upcoming Betclic games",
       nameof(GetBetclicGames),
       upcommingGames.Count);
+  }
+
+  [AutomaticRetry(Attempts = 1)]
+  public async Task FillMissingFinishedMatchScoresFromSoccerData()
+  {
+    logger.LogInformation(
+      "Starting job {JobName} to fill missing scores for finished matches",
+      nameof(FillMissingFinishedMatchScoresFromSoccerData));
+
+    var dbMatches = await db.Match
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Finished)
+      .Where(m => m.HomeGoals == null || m.AwayGoals == null)
+      .Where(m => m.SoccerdataId.HasValue)
+      .ToListAsync();
+
+    if (dbMatches.Count == 0)
+    {
+      logger.LogInformation(
+        "Job {JobName} found no finished matches with missing scores",
+        nameof(FillMissingFinishedMatchScoresFromSoccerData));
+      return;
+    }
+
+    var premierLeagueMatches = await soccerDataClient.GetMatchesAsync(
+      leagueId: SoccerDataConstants.PremierLeagueId);
+
+    var soccerDataMatchesById = premierLeagueMatches
+      .SelectMany(league => league.Stage)
+      .SelectMany(stage => stage.Matches)
+      .GroupBy(match => match.Id)
+      .ToDictionary(g => g.Key, g => g.First());
+
+    var updatedCount = 0;
+    foreach (var dbMatch in dbMatches)
+    {
+      var soccerdataId = dbMatch.SoccerdataId!.Value;
+      if (!soccerDataMatchesById.TryGetValue(soccerdataId, out var soccerDataMatch))
+        continue;
+
+      dbMatch.HomeGoals = soccerDataMatch.Goals.HomeFtGoals;
+      dbMatch.AwayGoals = soccerDataMatch.Goals.AwayFtGoals;
+      updatedCount++;
+    }
+
+    if (updatedCount > 0)
+      await db.SaveChangesAsync();
+
+    logger.LogInformation(
+      "Job {JobName} updated scores for {UpdatedCount} matches",
+      nameof(FillMissingFinishedMatchScoresFromSoccerData),
+      updatedCount);
   }
 
   public async Task ScheduleBettingOddsJob()
