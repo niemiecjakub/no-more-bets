@@ -52,3 +52,109 @@ export interface MatchAnalysisPageDto {
   matchDate: string;
   analyses: MatchAnalysisItemDto[];
 }
+
+export interface Player {
+  name: string;
+  position: string;
+}
+
+export interface TeamLineupResult {
+  lineupType: string;
+  players: Player[];
+}
+
+export interface MatchLineupResult {
+  home: TeamLineupResult;
+  away: TeamLineupResult;
+}
+
+export interface InjuredPlayer extends Player {
+  injuryStatus: string;
+}
+
+export interface TeamInjuriesResult {
+  injuries: InjuredPlayer[];
+}
+
+export interface MatchInjuriesResult {
+  home: TeamInjuriesResult;
+  away: TeamInjuriesResult;
+}
+
+export interface RecentMatch {
+  matchId: number;
+  opponent: string;
+  score: string;
+  result: string;
+  date: string;
+}
+
+export interface ClubLeagueStats {
+  position: number;
+  points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  xg: number;
+  xgDiff: number;
+  xga: number;
+  xgaDiff: number;
+  xpts: number;
+  xptsDiff: number;
+}
+
+export interface TeamMetrics {
+  name: string;
+  totalWins: number;
+  totalGoalsScored: number;
+  totalGoalsConceded: number;
+  homeWins: number;
+  awayWins: number;
+  winPercentage: number;
+  avgGoalsScored: number;
+  avgGoalsConceded: number;
+}
+
+export interface HeadToHead {
+  summary: string;
+  totalMatches: number;
+  totalDraws: number;
+  teamA: TeamMetrics;
+  teamB: TeamMetrics;
+}
+
+export interface PricePoint {
+  price: number;
+  timestamp: string;
+}
+
+export interface OutcomePriceTimeline {
+  outcomeName: string;
+  timeline: PricePoint[];
+}
+
+export interface MarketPriceHistory {
+  marketKey: string;
+  marketDisplayName: string | null;
+  outcomes: OutcomePriceTimeline[];
+}
+
+export interface PlayerRecentRatings {
+  player: string;
+  recentRatings: number[];
+  avgRating: number;
+}
+
+export interface TeamPerformanceResult {
+  topPlayers: PlayerRecentRatings[];
+  recentTeamRatings: number[];
+  avgTeamRating: number;
+  formations: string[];
+}
+
+export interface ClubPair<T> {
+  home: T;
+  away: T;
+}
