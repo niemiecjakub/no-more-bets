@@ -33,7 +33,7 @@ public class GetClubRollingPerformanceHandlerTests
 
     var older = new Match { Id = 100, HomeClubId = clubId, MatchDate = DateTime.UtcNow.AddDays(-4) };
     var newer = new Match { Id = 101, HomeClubId = clubId, MatchDate = DateTime.UtcNow.AddDays(-1) };
-    _matchRepository.GetRecentMatchesForClubAsync(clubId, 5, Arg.Any<CancellationToken>())
+    _matchRepository.GetRecentMatchesForClubAsync(clubId, 5, null, Arg.Any<CancellationToken>())
       .Returns(new List<Match> { newer, older });
 
     _matchRepository.GetMatchDetailsByMatchIdAsync(older.Id, Arg.Any<CancellationToken>())
@@ -52,6 +52,23 @@ public class GetClubRollingPerformanceHandlerTests
     result.TopPlayers[0].AvgRating.Should().Be(8.5);
     result.TopPlayers[1].Player.Should().Be("Low");
     result.TopPlayers[1].AvgRating.Should().Be(6.5);
+  }
+
+  [Fact]
+  public async Task Handle_WithDate_PassesDateToGetRecentMatches()
+  {
+    // Arrange
+    const int clubId = 8;
+    var date = new DateOnly(2026, 2, 10);
+    _clubRepository.GetByIdAsync(clubId, Arg.Any<CancellationToken>()).Returns(new ClubEntity { Id = clubId, Name = "Club B" });
+    _matchRepository.GetRecentMatchesForClubAsync(clubId, 5, date, Arg.Any<CancellationToken>())
+      .Returns(new List<Match>());
+
+    // Act
+    await _sut.Handle(new GetClubRollingPerformanceQuery(clubId, date), CancellationToken.None);
+
+    // Assert
+    await _matchRepository.Received(1).GetRecentMatchesForClubAsync(clubId, 5, date, Arg.Any<CancellationToken>());
   }
 
   private static string SerializePayload(double teamRating, string formation, params (string Name, double Rating)[] players)

@@ -32,7 +32,7 @@ public class UpdateDailySummaryHandler(
     }
 
 
-    var latest = await unitOfWork.Clubs.GetLatestDailySummaryAsync(club.Id, cancellationToken).ConfigureAwait(false);
+    var latest = await unitOfWork.Clubs.GetDailySummaryAsync(club.Id, null, cancellationToken).ConfigureAwait(false);
 
     if (latest?.Summary == request.Summary)
     {

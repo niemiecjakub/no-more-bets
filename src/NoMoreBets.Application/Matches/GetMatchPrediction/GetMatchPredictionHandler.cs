@@ -26,7 +26,7 @@ public class GetMatchPredictionHandler(
       return Unit.Value;
     }
 
-    var matchPlugin = pluginFactory.CreateMatchPlugin(command.MatchId);
+    var matchPlugin = await pluginFactory.CreateMatchPluginAsync(command.MatchId, cancellationToken).ConfigureAwait(false);
     kernel.Plugins.AddFromObject(matchPlugin);
 
     var searchPlugin = pluginFactory.CreateSearchPlugin();

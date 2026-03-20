@@ -3,7 +3,7 @@ using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Clubs.GetClubRecentGames;
 
-public record GetClubRecentGamesQuery(int ClubId) : IRequest<IReadOnlyList<RecentMatch>?>;
+public record GetClubRecentGamesQuery(int ClubId, DateOnly? Date = null) : IRequest<IReadOnlyList<RecentMatch>?>;
 
 public sealed class GetClubRecentGamesHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetClubRecentGamesQuery, IReadOnlyList<RecentMatch>?>
 {
@@ -13,7 +13,7 @@ public sealed class GetClubRecentGamesHandler(IUnitOfWork unitOfWork) : IRequest
     if (club == null)
       return null;
 
-    var matches = await unitOfWork.Matches.GetRecentMatchesForClubAsync(request.ClubId, 5, cancellationToken).ConfigureAwait(false);
+    var matches = await unitOfWork.Matches.GetRecentMatchesForClubAsync(request.ClubId, 5, request.Date, cancellationToken).ConfigureAwait(false);
     if (matches.Count == 0)
       return Array.Empty<RecentMatch>();
 

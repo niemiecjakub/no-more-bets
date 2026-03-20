@@ -3,7 +3,7 @@ using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Clubs.GetClubRollingPerformance;
 
-public record GetClubRollingPerformanceQuery(int ClubId) : IRequest<TeamPerformanceResult?>;
+public record GetClubRollingPerformanceQuery(int ClubId, DateOnly? Date = null) : IRequest<TeamPerformanceResult?>;
 
 public sealed class GetClubRollingPerformanceHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetClubRollingPerformanceQuery, TeamPerformanceResult?>
 {
@@ -13,7 +13,7 @@ public sealed class GetClubRollingPerformanceHandler(IUnitOfWork unitOfWork) : I
     if (club == null)
       return null;
 
-    var matches = await unitOfWork.Matches.GetRecentMatchesForClubAsync(request.ClubId, 5, cancellationToken).ConfigureAwait(false);
+    var matches = await unitOfWork.Matches.GetRecentMatchesForClubAsync(request.ClubId, 5, request.Date, cancellationToken).ConfigureAwait(false);
     if (matches.Count == 0)
       return new TeamPerformanceResult(TopPlayers: Array.Empty<PlayerRecentRatings>(), RecentTeamRatings: Array.Empty<double>(), AvgTeamRating: 0, Formations: Array.Empty<string>());
 

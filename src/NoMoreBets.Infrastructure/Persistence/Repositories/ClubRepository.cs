@@ -24,20 +24,31 @@ public class ClubRepository : IClubRepository
       .ConfigureAwait(false);
   }
 
-  public async Task<ClubLeagueStats?> GetCurrentClubLeagueStatsAsync(int clubId, CancellationToken cancellationToken = default)
+  public async Task<ClubLeagueStats?> GetCurrentClubLeagueStatsAsync(int clubId, DateOnly? date = null, CancellationToken cancellationToken = default)
   {
-    return await _db.LeagueTableSnapshotRow
-      .Where(r => r.ClubId == clubId)
-      .OrderByDescending(r => r.SnapshotId)
+    var query = _db.LeagueTableSnapshotRow
+      .Where(r => r.ClubId == clubId);
+
+    if (date.HasValue)
+      query = query.Where(r => r.Snapshot.SnapshotDate <= date.Value);
+
+    return await query
+      .OrderByDescending(r => r.Snapshot.SnapshotDate)
+      .ThenByDescending(r => r.SnapshotId)
       .Select(r => new ClubLeagueStats(r))
       .FirstOrDefaultAsync(cancellationToken)
       .ConfigureAwait(false);
   }
 
-  public async Task<ClubDailySummary?> GetLatestDailySummaryAsync(int clubId, CancellationToken cancellationToken = default)
+  public async Task<ClubDailySummary?> GetDailySummaryAsync(int clubId, DateOnly? date = null, CancellationToken cancellationToken = default)
   {
-    return await _db.ClubDailySummary
-      .Where(s => s.ClubId == clubId)
+    var query = _db.ClubDailySummary
+      .Where(s => s.ClubId == clubId);
+
+    if (date.HasValue)
+      query = query.Where(s => s.Date <= date.Value);
+
+    return await query
       .OrderByDescending(s => s.Date)
       .FirstOrDefaultAsync(cancellationToken);
   }

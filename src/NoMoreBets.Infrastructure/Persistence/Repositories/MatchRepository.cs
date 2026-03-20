@@ -35,10 +35,15 @@ public class MatchRepository : IMatchRepository
     return _db.Lineup.SingleOrDefaultAsync(l => l.MatchId == matchId);
   }
 
-  public async Task<IReadOnlyList<Match>> GetRecentMatchesForClubAsync(int clubId, int count, CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<Match>> GetRecentMatchesForClubAsync(int clubId, int count, DateOnly? upToDate = null, CancellationToken cancellationToken = default)
   {
-    return await _db.Match
-      .Where(m => (m.HomeClubId == clubId || m.AwayClubId == clubId) && m.MatchStatusId == (int)MatchStatus.Finished)
+    var query = _db.Match
+      .Where(m => (m.HomeClubId == clubId || m.AwayClubId == clubId) && m.MatchStatusId == (int)MatchStatus.Finished);
+
+    if (upToDate.HasValue)
+      query = query.Where(m => DateOnly.FromDateTime(m.MatchDate) <= upToDate.Value);
+
+    return await query
       .OrderByDescending(m => m.MatchDate)
       .Take(count)
       .Include(m => m.HomeClub)

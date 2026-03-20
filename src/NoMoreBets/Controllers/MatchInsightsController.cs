@@ -111,8 +111,9 @@ public class MatchInsightsController(
     if (match == null)
       return NotFound();
 
-    var home = await mediator.Send(new GetClubRollingPerformanceQuery(match.HomeClubId), cancellationToken).ConfigureAwait(false);
-    var away = await mediator.Send(new GetClubRollingPerformanceQuery(match.AwayClubId), cancellationToken).ConfigureAwait(false);
+    var asOfDate = DateOnly.FromDateTime(match.MatchDate);
+    var home = await mediator.Send(new GetClubRollingPerformanceQuery(match.HomeClubId, asOfDate), cancellationToken).ConfigureAwait(false);
+    var away = await mediator.Send(new GetClubRollingPerformanceQuery(match.AwayClubId, asOfDate), cancellationToken).ConfigureAwait(false);
     return Ok(new ClubPairDto<TeamPerformanceResult?>(home, away));
   }
 

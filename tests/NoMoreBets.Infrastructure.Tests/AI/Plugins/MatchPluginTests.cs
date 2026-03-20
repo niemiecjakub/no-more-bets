@@ -2,6 +2,7 @@ using FluentAssertions;
 using MediatR;
 using NSubstitute;
 using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
+using NoMoreBets.Application.Clubs.GetClubDailySummary;
 using NoMoreBets.Application.Clubs.GetClubRecentGames;
 using NoMoreBets.Application.Clubs.GetClubRollingPerformance;
 using NoMoreBets.Application.Leagues.GetClubLeagueStatistics;
@@ -10,6 +11,7 @@ using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
 using NoMoreBets.Application.Matches.GetMatchPreview;
 using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Plugins;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
@@ -17,13 +19,15 @@ namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 public class MatchPluginTests
 {
   private const int MatchId = 42;
+  private readonly Match _match;
   private readonly IMediator _mediator;
   private readonly MatchPlugin _sut;
 
   public MatchPluginTests()
   {
+    _match = new Match { Id = MatchId, MatchDate = new DateTime(2026, 3, 1, 14, 30, 0, DateTimeKind.Utc) };
     _mediator = Substitute.For<IMediator>();
-    _sut = new MatchPlugin(MatchId, _mediator);
+    _sut = new MatchPlugin(_match, _mediator);
   }
 
   [Fact]
@@ -57,9 +61,10 @@ public class MatchPluginTests
   }
 
   [Fact]
-  public async Task GetClubRollingPerformanceAsync_WhenCalled_DispatchesGetClubRollingPerformanceQuery()
+  public async Task GetClubRollingPerformanceAsync_WhenCalled_DispatchesGetClubRollingPerformanceQueryWithMatchDate()
   {
     // Arrange
+    var matchDate = new DateOnly(2026, 3, 1);
     var expected = new TeamPerformanceResult([], [], 0, []);
     _mediator.Send(Arg.Any<GetClubRollingPerformanceQuery>(), Arg.Any<CancellationToken>()).Returns(expected);
 
@@ -68,7 +73,9 @@ public class MatchPluginTests
 
     // Assert
     result.Should().BeSameAs(expected);
-    await _mediator.Received(1).Send(Arg.Is<GetClubRollingPerformanceQuery>(q => q.ClubId == 7), Arg.Any<CancellationToken>());
+    await _mediator.Received(1).Send(
+      Arg.Is<GetClubRollingPerformanceQuery>(q => q.ClubId == 7 && q.Date == matchDate),
+      Arg.Any<CancellationToken>());
   }
 
   [Fact]
@@ -116,25 +123,45 @@ public class MatchPluginTests
   public async Task GetClubRecentGamesAsync_WhenCalled_DispatchesGetClubRecentGamesQuery()
   {
     // Arrange
+    var matchDate = new DateOnly(2026, 3, 1);
     _mediator.Send(Arg.Any<GetClubRecentGamesQuery>(), Arg.Any<CancellationToken>()).Returns(new List<RecentMatch>());
 
     // Act
     await _sut.GetClubRecentGamesAsync(5);
 
     // Assert
-    await _mediator.Received(1).Send(Arg.Is<GetClubRecentGamesQuery>(q => q.ClubId == 5), Arg.Any<CancellationToken>());
+    await _mediator.Received(1).Send(Arg.Is<GetClubRecentGamesQuery>(q => q.ClubId == 5 && q.Date == matchDate), Arg.Any<CancellationToken>());
   }
 
   [Fact]
-  public async Task GetClubStatistics_WhenCalled_DispatchesGetClubLeagueStatisticsQuery()
+  public async Task GetClubStatistics_WhenCalled_DispatchesGetClubLeagueStatisticsQueryWithMatchDate()
   {
     // Arrange
+    var matchDate = new DateOnly(2026, 3, 1);
     _mediator.Send(Arg.Any<GetClubLeagueStatisticsQuery>(), Arg.Any<CancellationToken>()).Returns((ClubLeagueStats?)null);
 
     // Act
     await _sut.GetClubStatistics(11);
 
     // Assert
-    await _mediator.Received(1).Send(Arg.Is<GetClubLeagueStatisticsQuery>(q => q.ClubId == 11), Arg.Any<CancellationToken>());
+    await _mediator.Received(1).Send(
+      Arg.Is<GetClubLeagueStatisticsQuery>(q => q.ClubId == 11 && q.Date == matchDate),
+      Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task GetClubDailySummaryAsync_WhenCalled_DispatchesGetClubDailySummaryQueryWithMatchDate()
+  {
+    // Arrange
+    var matchDate = new DateOnly(2026, 3, 1);
+    _mediator.Send(Arg.Any<GetClubDailySummaryQuery>(), Arg.Any<CancellationToken>()).Returns("summary");
+
+    // Act
+    await _sut.GetClubDailySummaryAsync(9);
+
+    // Assert
+    await _mediator.Received(1).Send(
+      Arg.Is<GetClubDailySummaryQuery>(q => q.ClubId == 9 && q.Date == matchDate),
+      Arg.Any<CancellationToken>());
   }
 }
