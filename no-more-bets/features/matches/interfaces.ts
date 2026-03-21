@@ -51,6 +51,11 @@ export interface MatchAnalysisPageDto {
   matchId: number;
   homeClubName: string;
   awayClubName: string;
+  homeClubSlug?: string;
+  awayClubSlug?: string;
+  matchStatusId: number;
+  homeGoals: number | null;
+  awayGoals: number | null;
   matchDate: string;
   analyses: MatchAnalysisItemDto[];
 }

@@ -547,6 +547,11 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       match.Id,
       match.HomeClub.Name,
       match.AwayClub.Name,
+      match.HomeClub.Slug,
+      match.AwayClub.Slug,
+      match.MatchStatusId,
+      match.HomeGoals,
+      match.AwayGoals,
       match.MatchDate,
       analyses);
     return Ok(page);
@@ -665,6 +670,11 @@ public record MatchAnalysisPageDto(
   int MatchId,
   string HomeClubName,
   string AwayClubName,
+  string HomeClubSlug,
+  string AwayClubSlug,
+  int MatchStatusId,
+  int? HomeGoals,
+  int? AwayGoals,
   DateTime MatchDate,
   IReadOnlyList<MatchAnalysisItemDto> Analyses);
 

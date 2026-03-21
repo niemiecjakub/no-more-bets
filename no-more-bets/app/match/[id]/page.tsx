@@ -4,22 +4,25 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { SlugIcon } from "@/components/slug-icon";
 import { StructuredMatchAnalysisView } from "../../../features/matches/components/structured-match-analysis-view";
 import { useMatchStore } from "@/store/match-store";
+import { clubLogoSlugSegment } from "../../../utils/club-logo-slug";
 import { formatMatchDate } from "../../../utils/format-date";
 import { handleServiceError } from "@/lib/error-handler";
-import type {
-  ClubLeagueStats,
-  ClubPair,
-  HeadToHead,
-  MarketPriceHistory,
-  MatchInjuriesResult,
-  MatchLineupResult,
-  RecentMatch,
-  TeamInjuriesResult,
-  TeamLineupResult,
-  TeamPerformanceResult,
-  TeamMetrics,
+import {
+  MATCH_STATUS,
+  type ClubLeagueStats,
+  type ClubPair,
+  type HeadToHead,
+  type MarketPriceHistory,
+  type MatchInjuriesResult,
+  type MatchLineupResult,
+  type RecentMatch,
+  type TeamInjuriesResult,
+  type TeamLineupResult,
+  type TeamPerformanceResult,
+  type TeamMetrics,
 } from "@/features/matches/interfaces";
 import {
   fetchMatchBettingOddsHistory,
@@ -167,6 +170,12 @@ export default function MatchPage() {
   }
 
   const matchDateFormatted = formatMatchDate(data.matchDate);
+  const homeLogoSlug = clubLogoSlugSegment(data.homeClubSlug, data.homeClubName);
+  const awayLogoSlug = clubLogoSlugSegment(data.awayClubSlug, data.awayClubName);
+  const showFinishedScore =
+    data.matchStatusId === MATCH_STATUS.Finished &&
+    data.homeGoals != null &&
+    data.awayGoals != null;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -177,14 +186,28 @@ export default function MatchPage() {
         >
           ← Back to matches
         </Link>
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-foreground">
-          {data.homeClubName}
-          <span className="mx-2 text-zinc-500 dark:text-zinc-400">vs</span>
-          {data.awayClubName}
-        </h1>
-        <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-          {matchDateFormatted}
-        </p>
+        <header className="mb-6 flex flex-col items-center">
+          <h1 className="grid w-full max-w-3xl grid-cols-1 items-center gap-3 text-2xl font-semibold tracking-tight text-foreground sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-0">
+            <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-end">
+              <span className="min-w-0 text-balance text-end">{data.homeClubName}</span>
+              <SlugIcon kind="club" slug={homeLogoSlug} alt={data.homeClubName} className="h-10 w-10" />
+            </span>
+            <span
+              className={
+                showFinishedScore
+                  ? "inline-block min-w-[5.5rem] shrink-0 text-center text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl"
+                  : "shrink-0 text-center text-lg font-medium text-zinc-500 dark:text-zinc-400 sm:text-2xl sm:font-semibold"
+              }
+            >
+              {showFinishedScore ? `${data.homeGoals} - ${data.awayGoals}` : "vs"}
+            </span>
+            <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-start">
+              <SlugIcon kind="club" slug={awayLogoSlug} alt={data.awayClubName} className="h-10 w-10" />
+              <span className="min-w-0 text-balance text-start">{data.awayClubName}</span>
+            </span>
+          </h1>
+          <p className="mt-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDateFormatted}</p>
+        </header>
 
         {insightsError ? (
           <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
