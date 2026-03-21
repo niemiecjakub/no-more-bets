@@ -1,0 +1,46 @@
+name: Deployment
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore
+        run: dotnet restore NoMoreBets.sln
+
+      - name: Build
+        run: dotnet build NoMoreBets.sln --no-restore --configuration Release
+
+      - name: Run Tests
+        run: dotnet test NoMoreBets.sln --no-build --verbosity normal
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Deploy backend
+        run: railway up --service ${{ secrets.API_SERVICE_NAME }} --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Deploy frontend
+        run: railway up --service ${{ secrets.FRONTEND_SERVICE_NAME }} --root no-more-bets --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
