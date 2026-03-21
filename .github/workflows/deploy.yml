@@ -20,6 +20,6 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
 
       - name: Deploy frontend
-        run: railway up --service ${{ secrets.FRONTEND_SERVICE_NAME }} --root no-more-bets --detach
+        run: railway up --service ${{ secrets.FRONTEND_SERVICE_NAME }} --path-as-root no-more-bets --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
