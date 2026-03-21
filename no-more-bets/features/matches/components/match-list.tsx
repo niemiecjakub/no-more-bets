@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { SlugIcon } from "@/components/slug-icon";
 import type { MatchListItem } from "../interfaces";
 import { MATCH_STATUS } from "../interfaces";
-import { formatMatchDate } from "../../../utils/format-date";
+import { clubLogoSlugSegment } from "../../../utils/club-logo-slug";
+import { formatMatchTime } from "../../../utils/format-date";
 
 interface MatchListProps {
   matches: MatchListItem[];
@@ -13,11 +15,11 @@ interface MatchDateGroup {
   matches: MatchListItem[];
 }
 
-function formatScore(match: MatchListItem): string {
+function centerScoreOrTime(match: MatchListItem): string {
   if (match.matchStatusId === MATCH_STATUS.Finished && match.homeGoals != null && match.awayGoals != null) {
     return `${match.homeGoals} - ${match.awayGoals}`;
   }
-  return "";
+  return formatMatchTime(match.matchDate);
 }
 
 function toDateKey(matchDate: string): string {
@@ -85,48 +87,78 @@ export function MatchList({ matches }: MatchListProps) {
           </h3>
           <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             {group.matches.map((match) => {
-              const score = formatScore(match);
-              const rowContent = (
-                <>
-                  <div className="min-w-0 flex-1">
-                    <span className="font-medium text-foreground">
-                      {match.homeClubName}
-                    </span>
-                    <span className="mx-2 text-zinc-500 dark:text-zinc-400">vs</span>
-                    <span className="font-medium text-foreground">
-                      {match.awayClubName}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-4 shrink-0">
-                    {match.hasAnalysis ? (
-                      <span className="inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 ring-1 ring-inset ring-violet-600/20 dark:bg-violet-900/40 dark:text-violet-400 dark:ring-violet-500/30">
-                        Analysis
-                      </span>
-                    ) : null}
-                    {match.isReadyToPredict && !match.hasAnalysis ? (
-                      <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30">
-                        Ready to predict
-                      </span>
-                    ) : null}
-                    {score ? (
-                      <span className="font-semibold tabular-nums">{score}</span>
-                    ) : null}
-                    <time
-                      dateTime={match.matchDate}
-                      className="text-sm text-zinc-600 dark:text-zinc-400 tabular-nums"
-                    >
-                      {formatMatchDate(match.matchDate)}
-                    </time>
-                  </div>
-                </>
+              const center = centerScoreOrTime(match);
+              const showScore =
+                match.matchStatusId === MATCH_STATUS.Finished &&
+                match.homeGoals != null &&
+                match.awayGoals != null;
+              const homeLogoSlug = clubLogoSlugSegment(
+                match.homeClubSlug,
+                match.homeClubName
               );
-              return (
-                <li
-                  key={match.id}
-                  className="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-3 transition-colors hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+              const awayLogoSlug = clubLogoSlugSegment(
+                match.awayClubSlug,
+                match.awayClubName
+              );
+              const centerCell = showScore ? (
+                <span className="inline-block min-w-[5.5rem] text-center text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                  {center}
+                </span>
+              ) : (
+                <time
+                  dateTime={match.matchDate}
+                  className="inline-block min-w-[5rem] text-center text-lg font-semibold tabular-nums text-foreground"
                 >
-                  <Link href={`/match/${match.id}`} className="contents">
-                    {rowContent}
+                  {center}
+                </time>
+              );
+              const showChips =
+                match.hasAnalysis || match.isReadyToPredict;
+              return (
+                <li key={match.id} className="bg-white dark:bg-zinc-950">
+                  <Link
+                    href={`/match/${match.id}`}
+                    className="flex flex-col gap-1.5 px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
+                  >
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2">
+                      <div className="flex min-w-0 items-center justify-end gap-2">
+                        <span className="min-w-0 truncate text-end font-medium text-foreground">
+                          {match.homeClubName}
+                        </span>
+                        <SlugIcon
+                          kind="club"
+                          slug={homeLogoSlug}
+                          alt={match.homeClubName}
+                          className="h-7 w-7"
+                        />
+                      </div>
+                      <div className="flex justify-center px-1">{centerCell}</div>
+                      <div className="flex min-w-0 items-center justify-start gap-2">
+                        <SlugIcon
+                          kind="club"
+                          slug={awayLogoSlug}
+                          alt={match.awayClubName}
+                          className="h-7 w-7"
+                        />
+                        <span className="min-w-0 truncate font-medium text-foreground">
+                          {match.awayClubName}
+                        </span>
+                      </div>
+                    </div>
+                    {showChips ? (
+                      <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5">
+                        {match.hasAnalysis ? (
+                          <span className="inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 ring-1 ring-inset ring-violet-600/20 dark:bg-violet-900/40 dark:text-violet-400 dark:ring-violet-500/30">
+                            Analysis
+                          </span>
+                        ) : null}
+                        {match.isReadyToPredict && !match.hasAnalysis ? (
+                          <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30">
+                            Ready to predict
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </Link>
                 </li>
               );

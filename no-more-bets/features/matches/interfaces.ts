@@ -9,6 +9,8 @@ export interface MatchListItem {
   awayClubId: number;
   homeClubName: string;
   awayClubName: string;
+  homeClubSlug: string;
+  awayClubSlug: string;
   matchStatusId: number;
   matchStatusName: string;
   homeGoals: number | null;

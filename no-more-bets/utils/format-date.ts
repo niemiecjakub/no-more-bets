@@ -13,3 +13,15 @@ export function formatMatchDate(isoDateString: string): string {
     timeZone: "UTC",
   }).format(date);
 }
+
+/**
+ * Time only (HH:MM), UTC — consistent with formatMatchDate for list rows.
+ */
+export function formatMatchTime(isoDateString: string): string {
+  const date = new Date(isoDateString);
+  return new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+  }).format(date);
+}

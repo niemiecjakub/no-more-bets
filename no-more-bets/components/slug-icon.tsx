@@ -16,10 +16,11 @@ export function SlugIcon({
   className = "h-6 w-6",
 }: SlugIconProps) {
   const [hidden, setHidden] = useState(false);
-  if (hidden || !slug) return null;
+  const segment = slug.trim().toLowerCase();
+  if (hidden || !segment) return null;
 
   const src =
-    kind === "club" ? `/clubs/${slug}.svg` : `/leagues/${slug}.svg`;
+    kind === "club" ? `/clubs/${segment}.svg` : `/leagues/${segment}.svg`;
 
   return (
     <img
