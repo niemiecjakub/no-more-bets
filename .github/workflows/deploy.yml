@@ -8,7 +8,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup
@@ -23,7 +23,7 @@ jobs:
         run: dotnet build NoMoreBets.sln --no-restore --configuration Release
 
       - name: Run Tests
-        run: dotnet test NoMoreBets.sln --no-build --verbosity normal
+        run: dotnet test NoMoreBets.sln --no-build --configuration Release
 
   deploy:
     needs: test
