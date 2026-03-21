@@ -378,6 +378,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         r.Position,
         r.ClubId,
         r.Club.Name,
+        r.Club.Slug,
         r.MatchesPlayed,
         r.Wins,
         r.Draws,
@@ -400,6 +401,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       snapshot.SeasonId,
       snapshot.SnapshotDate,
       snapshot.League.Name,
+      snapshot.League.Slug,
       rows));
   }
 
@@ -599,12 +601,14 @@ public record LeagueTableDto(
   int SeasonId,
   DateOnly SnapshotDate,
   string LeagueName,
+  string LeagueSlug,
   IReadOnlyList<LeagueTableRowDto> Rows);
 
 public record LeagueTableRowDto(
   int Position,
   int ClubId,
   string ClubName,
+  string ClubSlug,
   int MatchesPlayed,
   int Wins,
   int Draws,

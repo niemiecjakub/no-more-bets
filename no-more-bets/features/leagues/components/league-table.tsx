@@ -1,3 +1,4 @@
+import { SlugIcon } from "@/components/slug-icon";
 import type { LeagueTableDto } from "../interfaces";
 
 interface LeagueTableProps {
@@ -39,7 +40,17 @@ export function LeagueTable({ data }: LeagueTableProps) {
               className="border-b border-zinc-200 bg-white last:border-b-0 dark:border-zinc-800 dark:bg-zinc-950 dark:last:border-b-0"
             >
               <td className="px-3 py-2 text-zinc-600 dark:text-zinc-400">{row.position}</td>
-              <td className="px-3 py-2 font-medium text-foreground">{row.clubName}</td>
+              <td className="px-3 py-2 font-medium text-foreground">
+                <span className="flex items-center gap-2">
+                  <SlugIcon
+                    kind="club"
+                    slug={row.clubSlug}
+                    alt={row.clubName}
+                    className="h-5 w-5"
+                  />
+                  {row.clubName}
+                </span>
+              </td>
               <td className="px-3 py-2 text-center text-foreground">{row.matchesPlayed}</td>
               <td className="px-3 py-2 text-center text-foreground">{row.wins}</td>
               <td className="px-3 py-2 text-center text-foreground">{row.draws}</td>

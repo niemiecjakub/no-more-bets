@@ -3,6 +3,7 @@
 import { notFound } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
+import { SlugIcon } from "@/components/slug-icon";
 import { LeagueTable } from "../../../features/leagues/components/league-table";
 import { useLeagueStore } from "@/store/league-store";
 
@@ -87,7 +88,13 @@ export default function LeaguePage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="mb-1 flex items-center gap-3 text-2xl font-semibold tracking-tight text-foreground">
+          <SlugIcon
+            kind="league"
+            slug={leagueTable.leagueSlug}
+            alt={leagueTable.leagueName}
+            className="h-10 w-10"
+          />
           {leagueTable.leagueName}
         </h1>
         {snapshotDate && (

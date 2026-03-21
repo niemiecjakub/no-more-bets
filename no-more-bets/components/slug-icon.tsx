@@ -4,7 +4,7 @@ import { useState } from "react";
 
 type SlugIconProps = {
   kind: "club" | "league";
-  slug: string;
+  slug: string | null | undefined;
   alt: string;
   className?: string;
 };
@@ -16,7 +16,7 @@ export function SlugIcon({
   className = "h-6 w-6",
 }: SlugIconProps) {
   const [hidden, setHidden] = useState(false);
-  const segment = slug.trim().toLowerCase();
+  const segment = (slug ?? "").trim().toLowerCase();
   if (hidden || !segment) return null;
 
   const src =

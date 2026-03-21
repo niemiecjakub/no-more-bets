@@ -15,6 +15,7 @@ export interface LeagueTableRowDto {
   position: number;
   clubId: number;
   clubName: string;
+  clubSlug: string;
   matchesPlayed: number;
   wins: number;
   draws: number;
@@ -41,5 +42,6 @@ export interface LeagueTableDto {
   seasonId: number;
   snapshotDate: string;
   leagueName: string;
+  leagueSlug: string;
   rows: LeagueTableRowDto[];
 }
