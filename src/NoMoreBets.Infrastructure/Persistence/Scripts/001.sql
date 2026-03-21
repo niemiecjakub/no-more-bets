@@ -1,9 +1,11 @@
 CREATE TABLE "League" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"Name" varchar(200) NOT NULL,
+	"Slug" varchar(200) NOT NULL,
 	"SoccerdataId" int4 NOT NULL,
 	CONSTRAINT "League_pkey" PRIMARY KEY ("Id"),
-	CONSTRAINT uq_league_soccerdata UNIQUE ("SoccerdataId")
+	CONSTRAINT uq_league_soccerdata UNIQUE ("SoccerdataId"),
+	CONSTRAINT uq_league_slug UNIQUE ("Slug")
 );
 CREATE INDEX idx_league_name ON public."League" USING btree ("Name");
 
@@ -19,10 +21,12 @@ CREATE TABLE "MatchStatus" (
 CREATE TABLE "Club" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"Name" varchar(200) NOT NULL,
+	"Slug" varchar(200) NOT NULL,
 	"LeagueId" int4 NOT NULL,
 	"SoccerdataId" int4 NOT NULL,
 	CONSTRAINT "Club_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT uq_club_soccerdata UNIQUE ("SoccerdataId"),
+	CONSTRAINT uq_club_slug UNIQUE ("Slug"),
 	CONSTRAINT fk_club_league FOREIGN KEY ("LeagueId") REFERENCES "League"("Id") ON DELETE CASCADE
 );
 CREATE INDEX idx_club_league ON public."Club" USING btree ("LeagueId");

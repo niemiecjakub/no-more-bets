@@ -7,6 +7,7 @@ public class Club
 {
   public int Id { get; set; }
   public string Name { get; set; } = null!;
+  public string Slug { get; set; } = null!;
   public int LeagueId { get; set; }
   public int SoccerdataId { get; set; }
 

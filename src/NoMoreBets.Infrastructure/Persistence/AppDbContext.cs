@@ -43,8 +43,10 @@ public class AppDbContext : DbContext
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
       entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+      entity.Property(e => e.Slug).IsRequired().HasMaxLength(200);
       entity.Property(e => e.SoccerdataId).IsRequired();
       entity.HasIndex(e => e.SoccerdataId).IsUnique();
+      entity.HasIndex(e => e.Slug).IsUnique();
     });
 
     modelBuilder.Entity<Club>(entity =>
@@ -52,9 +54,11 @@ public class AppDbContext : DbContext
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
       entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+      entity.Property(e => e.Slug).IsRequired().HasMaxLength(200);
       entity.Property(e => e.LeagueId).IsRequired();
       entity.Property(e => e.SoccerdataId).IsRequired();
       entity.HasIndex(e => e.SoccerdataId).IsUnique();
+      entity.HasIndex(e => e.Slug).IsUnique();
       entity.HasOne(e => e.League).WithMany(e => e.Clubs).HasForeignKey(e => e.LeagueId);
     });
 
