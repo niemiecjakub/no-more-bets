@@ -27,7 +27,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
   {
     var list = await db.League
       .OrderBy(l => l.Name)
-      .Select(l => new LeagueDto(l.Id, l.Name))
+      .Select(l => new LeagueDto(l.Id, l.Name, l.Slug))
       .ToListAsync(cancellationToken);
     return Ok(list);
   }
@@ -43,7 +43,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
     var list = await db.Club
       .Include(c => c.League)
       .OrderBy(c => c.Name)
-      .Select(c => new ClubDto(c.Id, c.Name, c.LeagueId, c.League.Name))
+      .Select(c => new ClubDto(c.Id, c.Name, c.LeagueId, c.League.Name, c.Slug, c.League.Slug))
       .ToListAsync(cancellationToken);
     return Ok(list);
   }
@@ -556,9 +556,15 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         analysis.Prediction);
 }
 
-public record LeagueDto(int Id, string Name);
+public record LeagueDto(int Id, string Name, string Slug);
 
-public record ClubDto(int Id, string Name, int LeagueId, string LeagueName);
+public record ClubDto(
+  int Id,
+  string Name,
+  int LeagueId,
+  string LeagueName,
+  string Slug,
+  string LeagueSlug);
 
 public record ClubDailySummaryDto(int Id, string ClubName, DateOnly Date, string Summary);
 

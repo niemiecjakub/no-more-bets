@@ -1,3 +1,4 @@
+import { SlugIcon } from "@/components/slug-icon";
 import type { ClubListItem } from "../interfaces";
 
 interface ClubListProps {
@@ -20,8 +21,14 @@ export function ClubList({ clubs }: ClubListProps) {
           key={club.id}
           className="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-3 transition-colors hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900"
         >
-          <span className="font-medium text-foreground">{club.name}</span>
-          <span className="text-sm text-zinc-600 dark:text-zinc-400">{club.leagueName}</span>
+          <span className="flex min-w-0 items-center gap-2 font-medium text-foreground">
+            <SlugIcon kind="club" slug={club.slug} alt={club.name} />
+            <span className="truncate">{club.name}</span>
+          </span>
+          <span className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
+            <SlugIcon kind="league" slug={club.leagueSlug} alt={club.leagueName} />
+            <span className="truncate">{club.leagueName}</span>
+          </span>
         </li>
       ))}
     </ul>

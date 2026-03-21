@@ -7,4 +7,6 @@ export interface ClubListItem {
   name: string;
   leagueId: number;
   leagueName: string;
+  slug: string;
+  leagueSlug: string;
 }

@@ -5,6 +5,7 @@
 export interface LeagueListItem {
   id: number;
   name: string;
+  slug: string;
 }
 
 /**

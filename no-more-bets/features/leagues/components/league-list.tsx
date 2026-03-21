@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SlugIcon } from "@/components/slug-icon";
 import type { LeagueListItem } from "../interfaces";
 
 interface LeagueListProps {
@@ -23,9 +24,10 @@ export function LeagueList({ leagues }: LeagueListProps) {
         >
           <Link
             href={`/league/${league.id}`}
-            className="block px-4 py-3 font-medium"
+            className="flex items-center gap-2 px-4 py-3 font-medium"
           >
-            {league.name}
+            <SlugIcon kind="league" slug={league.slug} alt={league.name} />
+            <span className="truncate">{league.name}</span>
           </Link>
         </li>
       ))}
