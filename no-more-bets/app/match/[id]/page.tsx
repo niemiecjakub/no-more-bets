@@ -1,7 +1,6 @@
 "use client";
 
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SlugIcon } from "@/components/slug-icon";
@@ -39,7 +38,6 @@ function LoadingSkeleton() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        <div className="mb-4 h-4 w-24 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
         <div className="mb-1 h-7 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
         <div className="mb-6 h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
         <div className="space-y-4">
@@ -151,12 +149,6 @@ export default function MatchPage() {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-          <Link
-            href="/"
-            className="mb-4 inline-block text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-          >
-            ← Back to matches
-          </Link>
           <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
             {error}
           </p>
@@ -180,12 +172,6 @@ export default function MatchPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <Link
-          href="/"
-          className="mb-4 inline-block text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-        >
-          ← Back to matches
-        </Link>
         <header className="mb-6 flex flex-col items-center">
           <h1 className="grid w-full max-w-3xl grid-cols-1 items-center gap-3 text-2xl font-semibold tracking-tight text-foreground sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-0">
             <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-end">
@@ -219,11 +205,15 @@ export default function MatchPage() {
           <div className="space-y-6">
             <Card title="Lineups" icon="📋">
               {isInsightsLoading && !insights ? (
-                <MutedText>Loading lineups...</MutedText>
+                <div className="px-4 py-4">
+                  <MutedText>Loading lineups...</MutedText>
+                </div>
               ) : (
                 <TeamColumns
                   homeClubName={data.homeClubName}
                   awayClubName={data.awayClubName}
+                  homeLogoSlug={homeLogoSlug}
+                  awayLogoSlug={awayLogoSlug}
                   home={<LineupList lineup={insights?.lineups?.home} />}
                   away={<LineupList lineup={insights?.lineups?.away} />}
                 />
@@ -232,11 +222,15 @@ export default function MatchPage() {
 
             <Card title="Injuries / Unavailable players" icon="🏥">
               {isInsightsLoading && !insights ? (
-                <MutedText>Loading injuries...</MutedText>
+                <div className="px-4 py-4">
+                  <MutedText>Loading injuries...</MutedText>
+                </div>
               ) : (
                 <TeamColumns
                   homeClubName={data.homeClubName}
                   awayClubName={data.awayClubName}
+                  homeLogoSlug={homeLogoSlug}
+                  awayLogoSlug={awayLogoSlug}
                   home={<InjuriesList injuries={insights?.injuries?.home} />}
                   away={<InjuriesList injuries={insights?.injuries?.away} />}
                 />
@@ -245,11 +239,15 @@ export default function MatchPage() {
 
             <Card title="Recent games per club" icon="🕒">
               {isInsightsLoading && !insights ? (
-                <MutedText>Loading recent games...</MutedText>
+                <div className="px-4 py-4">
+                  <MutedText>Loading recent games...</MutedText>
+                </div>
               ) : (
                 <TeamColumns
                   homeClubName={data.homeClubName}
                   awayClubName={data.awayClubName}
+                  homeLogoSlug={homeLogoSlug}
+                  awayLogoSlug={awayLogoSlug}
                   home={<RecentGamesList games={insights?.recentGames?.home} />}
                   away={<RecentGamesList games={insights?.recentGames?.away} />}
                 />
@@ -258,11 +256,15 @@ export default function MatchPage() {
 
             <Card title="Rolling performance" icon="📈">
               {isInsightsLoading && !insights ? (
-                <MutedText>Loading rolling performance...</MutedText>
+                <div className="px-4 py-4">
+                  <MutedText>Loading rolling performance...</MutedText>
+                </div>
               ) : (
                 <TeamColumns
                   homeClubName={data.homeClubName}
                   awayClubName={data.awayClubName}
+                  homeLogoSlug={homeLogoSlug}
+                  awayLogoSlug={awayLogoSlug}
                   home={<RollingPerformanceSection data={insights?.rollingPerformance?.home} />}
                   away={<RollingPerformanceSection data={insights?.rollingPerformance?.away} />}
                 />
@@ -271,9 +273,11 @@ export default function MatchPage() {
 
             <Card title="Match analysis" icon="🧠">
               {data.analyses.length === 0 ? (
-                <MutedText>Analysis not available yet.</MutedText>
+                <div className="px-4 py-4">
+                  <MutedText>Analysis not available yet.</MutedText>
+                </div>
               ) : (
-                <ul className="flex flex-col gap-6">
+                <ul className="flex flex-col gap-6 px-4 py-4">
                   {data.analyses.map((analysis) => (
                     <li
                       key={analysis.id}
@@ -298,16 +302,22 @@ export default function MatchPage() {
 
           <div className="space-y-6">
             <Card title="Match preview" icon="📰">
-              <PreviewSection preview={insights?.preview} isLoading={isInsightsLoading && !insights} />
+              <div className="px-4 py-4">
+                <PreviewSection preview={insights?.preview} isLoading={isInsightsLoading && !insights} />
+              </div>
             </Card>
 
             <Card title="League statistics" icon="🏆">
               {isInsightsLoading && !insights ? (
-                <MutedText>Loading league statistics...</MutedText>
+                <div className="px-4 py-4">
+                  <MutedText>Loading league statistics...</MutedText>
+                </div>
               ) : (
                 <TeamColumns
                   homeClubName={data.homeClubName}
                   awayClubName={data.awayClubName}
+                  homeLogoSlug={homeLogoSlug}
+                  awayLogoSlug={awayLogoSlug}
                   home={<LeagueStatsSection stats={insights?.leagueStatistics?.home} />}
                   away={<LeagueStatsSection stats={insights?.leagueStatistics?.away} />}
                 />
@@ -315,7 +325,12 @@ export default function MatchPage() {
             </Card>
 
             <Card title="Head-to-head stats" icon="⚔️">
-              <HeadToHeadSection data={insights?.headToHead} isLoading={isInsightsLoading && !insights} />
+              <HeadToHeadSection
+                data={insights?.headToHead}
+                isLoading={isInsightsLoading && !insights}
+                homeLogoSlug={homeLogoSlug}
+                awayLogoSlug={awayLogoSlug}
+              />
             </Card>
 
             <Card title="Betting odds movement / history" icon="💹">
@@ -358,7 +373,7 @@ function Card({ title, icon, children }: CardProps) {
             ▼
           </span>
         </summary>
-        <div className="p-4">{children}</div>
+        <div>{children}</div>
       </details>
     </section>
   );
@@ -371,19 +386,27 @@ function MutedText({ children }: { children: React.ReactNode }) {
 interface TeamColumnsProps {
   homeClubName: string;
   awayClubName: string;
+  homeLogoSlug: string;
+  awayLogoSlug: string;
   home: React.ReactNode;
   away: React.ReactNode;
 }
 
-function TeamColumns({ homeClubName, awayClubName, home, away }: TeamColumnsProps) {
+function TeamColumns({ homeClubName, awayClubName, homeLogoSlug, awayLogoSlug, home, away }: TeamColumnsProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2">
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">{homeClubName}</h3>
+    <div className="grid divide-y divide-zinc-200 dark:divide-zinc-800 md:grid-cols-2 md:divide-x md:divide-y-0">
+      <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
+        <div className="mb-3 flex min-w-0 items-center gap-2.5">
+          <SlugIcon kind="club" slug={homeLogoSlug} alt={homeClubName} className="h-7 w-7" />
+          <h3 className="min-w-0 truncate text-sm font-semibold text-foreground">{homeClubName}</h3>
+        </div>
         {home}
       </div>
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">{awayClubName}</h3>
+      <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
+        <div className="mb-3 flex min-w-0 items-center gap-2.5">
+          <SlugIcon kind="club" slug={awayLogoSlug} alt={awayClubName} className="h-7 w-7" />
+          <h3 className="min-w-0 truncate text-sm font-semibold text-foreground">{awayClubName}</h3>
+        </div>
         {away}
       </div>
     </div>
@@ -434,12 +457,20 @@ function RecentGamesList({ games }: { games?: RecentMatch[] | null }) {
     <ul className="flex flex-col gap-2 text-sm">
       {games.map((game) => (
         <li key={game.matchId} className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="min-w-0">
-            <p className="truncate font-medium text-foreground">{game.opponent}</p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">{game.date}</p>
+          <div className="flex min-w-0 items-center gap-2.5">
+            <SlugIcon
+              kind="club"
+              slug={clubLogoSlugSegment(null, game.opponent)}
+              alt={game.opponent}
+              className="h-7 w-7"
+            />
+            <div className="min-w-0">
+              <p className="truncate font-medium text-foreground">{game.opponent}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">{game.date}</p>
+            </div>
           </div>
-          <div className="shrink-0 text-right">
-            <p className="font-semibold text-foreground">{game.score}</p>
+          <div className="flex shrink-0 items-center justify-end gap-2">
+            <p className="font-semibold tabular-nums text-foreground">{game.score}</p>
             <ResultBadge result={game.result} />
           </div>
         </li>
@@ -480,50 +511,102 @@ function LeagueStatsSection({ stats }: { stats?: ClubLeagueStats | null }) {
   );
 }
 
-function HeadToHeadSection({ data, isLoading }: { data?: HeadToHead | null; isLoading: boolean }) {
-  if (isLoading && !data) return <MutedText>Loading head-to-head...</MutedText>;
-  if (!data) return <MutedText>No head-to-head data available.</MutedText>;
-  return (
-    <div className="space-y-3">
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">{data.summary}</p>
-      <div className="grid gap-3 md:grid-cols-2">
-        <TeamMetricsCard team={data.teamA} />
-        <TeamMetricsCard team={data.teamB} />
+function HeadToHeadSection({
+  data,
+  isLoading,
+  homeLogoSlug,
+  awayLogoSlug,
+}: {
+  data?: HeadToHead | null;
+  isLoading: boolean;
+  homeLogoSlug: string;
+  awayLogoSlug: string;
+}) {
+  if (isLoading && !data) {
+    return (
+      <div className="px-4 py-4">
+        <MutedText>Loading head-to-head...</MutedText>
       </div>
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+    );
+  }
+  if (!data) {
+    return (
+      <div className="px-4 py-4">
+        <MutedText>No head-to-head data available.</MutedText>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="grid divide-y divide-zinc-200 dark:divide-zinc-800 md:grid-cols-2 md:divide-x md:divide-y-0">
+        <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
+          <div className="mb-3 flex min-w-0 items-center gap-2.5">
+            <SlugIcon kind="club" slug={homeLogoSlug} alt={data.teamA.name} className="h-7 w-7" />
+            <h3 className="min-w-0 truncate text-sm font-semibold text-foreground">{data.teamA.name}</h3>
+          </div>
+          <HeadToHeadMetricsList team={data.teamA} />
+        </div>
+        <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
+          <div className="mb-3 flex min-w-0 items-center gap-2.5">
+            <SlugIcon kind="club" slug={awayLogoSlug} alt={data.teamB.name} className="h-7 w-7" />
+            <h3 className="min-w-0 truncate text-sm font-semibold text-foreground">{data.teamB.name}</h3>
+          </div>
+          <HeadToHeadMetricsList team={data.teamB} />
+        </div>
+      </div>
+      <p className="border-t border-zinc-200 px-4 py-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
         Total matches: {data.totalMatches} · Draws: {data.totalDraws}
       </p>
     </div>
   );
 }
 
-function TeamMetricsCard({ team }: { team: TeamMetrics }) {
+function HeadToHeadMetricsList({ team }: { team: TeamMetrics }) {
+  const rows: [string, string | number][] = [
+    ["Wins", team.totalWins],
+    ["Goals", team.totalGoalsScored],
+    ["Conceded", team.totalGoalsConceded],
+    ["Win %", `${team.winPercentage.toFixed(1)}%`],
+  ];
   return (
-    <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
-      <h4 className="mb-2 text-sm font-semibold text-foreground">{team.name}</h4>
-      <ul className="flex flex-col gap-1 text-sm">
-        <li className="flex justify-between gap-2"><span>Wins</span><span>{team.totalWins}</span></li>
-        <li className="flex justify-between gap-2"><span>Goals</span><span>{team.totalGoalsScored}</span></li>
-        <li className="flex justify-between gap-2"><span>Conceded</span><span>{team.totalGoalsConceded}</span></li>
-        <li className="flex justify-between gap-2"><span>Win %</span><span>{team.winPercentage.toFixed(1)}%</span></li>
-      </ul>
-    </div>
+    <ul className="flex flex-col gap-1 text-sm">
+      {rows.map(([label, value]) => (
+        <li key={label} className="flex justify-between gap-2">
+          <span className="text-zinc-500 dark:text-zinc-400">{label}</span>
+          <span className="font-medium text-foreground">{value}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
 function BettingOddsSection({ data, isLoading }: { data?: MarketPriceHistory[] | null; isLoading: boolean }) {
-  if (isLoading && !data) return <MutedText>Loading odds history...</MutedText>;
-  if (!data || data.length === 0) return <MutedText>No betting odds history.</MutedText>;
+  if (isLoading && !data) {
+    return (
+      <div className="px-4 py-4">
+        <MutedText>Loading odds history...</MutedText>
+      </div>
+    );
+  }
+  if (!data || data.length === 0) {
+    return (
+      <div className="px-4 py-4">
+        <MutedText>No betting odds history.</MutedText>
+      </div>
+    );
+  }
   return (
-    <div className="flex flex-col gap-3">
+    <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
       {data.map((market) => (
-        <div key={market.marketKey} className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-800 dark:bg-zinc-900/40">
-          <h4 className="mb-2 text-sm font-semibold text-foreground">{market.marketDisplayName ?? market.marketKey}</h4>
+        <div key={market.marketKey} className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
+          <h4 className="mb-3 text-sm font-semibold text-foreground">
+            {market.marketDisplayName ?? market.marketKey}
+          </h4>
           <ul className="flex flex-col gap-2 text-sm">
             {market.outcomes.map((outcome) => (
               <li key={outcome.outcomeName} className="flex justify-between gap-3">
                 <span className="text-zinc-600 dark:text-zinc-300">{outcome.outcomeName}</span>
-                <span className="font-medium text-foreground">
+                <span className="shrink-0 font-medium tabular-nums text-foreground">
                   {outcome.timeline.length === 0
                     ? "No data"
                     : `${outcome.timeline[0].price.toFixed(2)} -> ${outcome.timeline[outcome.timeline.length - 1].price.toFixed(2)}`}

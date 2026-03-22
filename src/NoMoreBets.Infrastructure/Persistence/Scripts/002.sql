@@ -41,7 +41,7 @@ ON CONFLICT ("SoccerdataId") DO NOTHING;
 INSERT INTO "Club" ("Name", "Slug", "LeagueId", "SoccerdataId")
 VALUES
     ('Liverpool', 'liverpool', 1, 4138),
-    ('AFC Bournemouth', 'bournemouth', 1, 3072),
+    ('AFC Bournemouth', 'afc-bournemouth', 1, 3072),
     ('Aston Villa', 'aston-villa', 1, 2912),
     ('Newcastle United', 'newcastle-united', 1, 3071),
     ('Tottenham Hotspur', 'tottenham-hotspur', 1, 2909),
@@ -50,9 +50,9 @@ VALUES
     ('Brentford', 'brentford', 1, 4148),
     ('Sunderland', 'sunderland', 1, 3073),
     ('West Ham United', 'west-ham-united', 1, 3059),
-    ('Brighton & Hove Albion', 'brighton', 1, 3200),
+    ('Brighton & Hove Albion', 'brighton-hove-albion', 1, 3200),
     ('Fulham', 'fulham', 1, 4145),
-    ('Wolverhampton Wanderers', 'wolverhampton', 1, 3074),
+    ('Wolverhampton Wanderers', 'wolverhampton-wanderers', 1, 3074),
     ('Manchester City', 'manchester-city', 1, 4136),
     ('Chelsea', 'chelsea', 1, 2916),
     ('Crystal Palace', 'crystal-palace', 1, 4140),
