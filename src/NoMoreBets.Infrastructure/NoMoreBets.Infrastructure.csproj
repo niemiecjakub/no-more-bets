@@ -34,5 +34,9 @@
     <InternalsVisibleTo Include="NoMoreBets.Tests" />
     <InternalsVisibleTo Include="NoMoreBets.Infrastructure.Tests" />
   </ItemGroup>
-  
+
+  <ItemGroup>
+    <Content Include="AI\Plugins\Files\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

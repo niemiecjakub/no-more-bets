@@ -26,4 +26,9 @@ public class PluginFactory : IPluginFactory
   {
     return ActivatorUtilities.CreateInstance<SearchPlugin>(_sp);
   }
+
+  public object CreateMemoriesPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<MemoriesPlugin>(_sp);
+  }
 }
