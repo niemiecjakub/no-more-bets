@@ -27,6 +27,9 @@ public class MatchRepository : IMatchRepository
     return _db.Match
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
+      .Include(m => m.Stage)
+        .ThenInclude(s => s!.Season)
+        .ThenInclude(se => se.League)
       .FirstOrDefaultAsync(m => m.Id == matchId, cancellationToken);
   }
 

@@ -64,4 +64,21 @@ public class BettingRepository : IBettingRepository
   {
     await _db.BetSlip.AddAsync(slip, cancellationToken).ConfigureAwait(false);
   }
+
+  public async Task<IReadOnlyList<BetSlip>> GetPendingBetSlipsAsync(CancellationToken cancellationToken = default)
+  {
+    return await _db.BetSlip
+      .Where(s => s.StatusId == (int)BetStatus.Pending)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.EventTypeEntity)
+      .OrderByDescending(s => s.CreatedAt)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
 }

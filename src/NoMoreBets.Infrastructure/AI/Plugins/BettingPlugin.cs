@@ -148,5 +148,30 @@ public class BettingPlugin
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
   }
 
+  [KernelFunction("GetPendingBets")]
+  [Description("Returns all bet slips that are currently in pending state (not yet won, lost, or cashed out), newest first.")]
+  public async Task<IReadOnlyList<PendingBetSlip>> GetPendingBetsAsync(CancellationToken cancellationToken = default)
+  {
+    var slips = await _unitOfWork.Betting.GetPendingBetSlipsAsync(cancellationToken).ConfigureAwait(false);
+    return slips
+      .Select(s => new PendingBetSlip(
+        s.Id,
+        s.CreatedAt,
+        s.StakeAmount,
+        s.TotalOdds,
+        s.PotentialPayout,
+        s.Selections
+          .OrderBy(sel => sel.Id)
+          .Select(sel => new PendingBetSelection(
+            sel.MatchId,
+            sel.Match.HomeClub.Name,
+            sel.Match.AwayClub.Name,
+            sel.EventTypeEntity.Name,
+            sel.OutcomeKey,
+            sel.OddsAtPlacement))
+          .ToList()))
+      .ToList();
+  }
+
   private sealed record PlaceBetSlipArgs(List<BetSelectionRecord>? BetSelections);
 }

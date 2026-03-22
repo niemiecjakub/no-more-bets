@@ -5,11 +5,13 @@ using NoMoreBets.Application.Clubs.GetClubDailySummary;
 using NoMoreBets.Application.Clubs.GetClubRecentGames;
 using NoMoreBets.Application.Clubs.GetClubRollingPerformance;
 using NoMoreBets.Application.Leagues.GetClubLeagueStatistics;
+using NoMoreBets.Application.Leagues.GetLeagueTable;
 using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
 using NoMoreBets.Application.Matches.GetMatchPreview;
 using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 using System.ComponentModel;
 
@@ -76,6 +78,17 @@ public class MatchPlugin
   {
     var matchDate = DateOnly.FromDateTime(_match.MatchDate);
     return await _mediator.Send(new GetClubLeagueStatisticsQuery(clubId, matchDate), cancellationToken).ConfigureAwait(false);
+  }
+
+  [KernelFunction("GetLeagueTable")]
+  [Description("Returns the full league table for this match's league")]
+  public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsync(CancellationToken cancellationToken = default)
+  {
+    if (_match.Stage?.Season?.League is not { } league)
+      return null;
+
+    var asOfDate = DateOnly.FromDateTime(_match.MatchDate);
+    return await _mediator.Send(new GetLeagueTableQuery(league.Id, asOfDate), cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction("GetMatchBettingOddsHistory")]

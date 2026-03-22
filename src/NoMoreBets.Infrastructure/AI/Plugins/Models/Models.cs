@@ -88,3 +88,21 @@ public record CurrentOddsOption(string Label, double Odds);
 
 [Description("Match available for betting: use Id when calling GetCurrentOdds and GetMatchAnalysis")]
 public record AvailableMatch(int Id, string HomeClubName, string AwayClubName, DateTime MatchDate);
+
+[Description("Bet slip that is still pending settlement")]
+public record PendingBetSlip(
+  int Id,
+  DateTime CreatedAt,
+  decimal StakeAmount,
+  decimal TotalOdds,
+  decimal PotentialPayout,
+  IReadOnlyList<PendingBetSelection> Selections);
+
+[Description("Single selection on a pending bet slip")]
+public record PendingBetSelection(
+  int MatchId,
+  string HomeClubName,
+  string AwayClubName,
+  string EventTypeName,
+  string OutcomeKey,
+  decimal OddsAtPlacement);

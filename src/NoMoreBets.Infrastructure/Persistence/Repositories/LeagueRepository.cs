@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 
@@ -30,6 +31,26 @@ public class LeagueRepository : ILeagueRepository
       .Include(s => s.Rows)
       .OrderByDescending(s => s.SnapshotDate)
       .FirstOrDefaultAsync();
+  }
+
+  public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsOfAsync(int leagueId, DateOnly asOfDate, CancellationToken cancellationToken = default)
+  {
+    var snapshot = await _db.LeagueTableSnapshot
+      .AsNoTracking()
+      .Where(s => s.LeagueId == leagueId && s.SnapshotDate <= asOfDate)
+      .OrderByDescending(s => s.SnapshotDate)
+      .Include(s => s.Rows)
+      .ThenInclude(r => r.Club)
+      .FirstOrDefaultAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    if (snapshot is null)
+      return null;
+
+    return snapshot.Rows
+      .OrderBy(r => r.Position)
+      .Select(r => new LeagueTableStanding(r.ClubId, r.Club.Name, new ClubLeagueStats(r)))
+      .ToList();
   }
 
   public Task<List<League>> GetLeagues()
