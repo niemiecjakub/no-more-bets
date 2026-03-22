@@ -65,10 +65,13 @@ public class BettingRepository : IBettingRepository
     await _db.BetSlip.AddAsync(slip, cancellationToken).ConfigureAwait(false);
   }
 
-  public async Task<IReadOnlyList<BetSlip>> GetPendingBetSlipsAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default)
   {
-    return await _db.BetSlip
-      .Where(s => s.StatusId == (int)BetStatus.Pending)
+    var query = _db.BetSlip.AsQueryable();
+    if (slipStatus is { } status)
+      query = query.Where(s => s.StatusId == (int)status);
+
+    return await query
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
           .ThenInclude(m => m!.HomeClub)

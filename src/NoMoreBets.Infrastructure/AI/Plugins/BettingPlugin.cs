@@ -1,7 +1,9 @@
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MediatR;
 using Microsoft.SemanticKernel;
+using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
@@ -29,10 +31,12 @@ public class BettingPlugin
   };
 
   private readonly IUnitOfWork _unitOfWork;
+  private readonly IMediator _mediator;
 
-  public BettingPlugin(IUnitOfWork unitOfWork)
+  public BettingPlugin(IUnitOfWork unitOfWork, IMediator mediator)
   {
     _unitOfWork = unitOfWork;
+    _mediator = mediator;
   }
 
   [KernelFunction("GetAvailableMatches")]
@@ -148,30 +152,12 @@ public class BettingPlugin
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction("GetPendingBets")]
-  [Description("Returns all bet slips that are currently in pending state (not yet won, lost, or cashed out), newest first.")]
-  public async Task<IReadOnlyList<PendingBetSlip>> GetPendingBetsAsync(CancellationToken cancellationToken = default)
-  {
-    var slips = await _unitOfWork.Betting.GetPendingBetSlipsAsync(cancellationToken).ConfigureAwait(false);
-    return slips
-      .Select(s => new PendingBetSlip(
-        s.Id,
-        s.CreatedAt,
-        s.StakeAmount,
-        s.TotalOdds,
-        s.PotentialPayout,
-        s.Selections
-          .OrderBy(sel => sel.Id)
-          .Select(sel => new PendingBetSelection(
-            sel.MatchId,
-            sel.Match.HomeClub.Name,
-            sel.Match.AwayClub.Name,
-            sel.EventTypeEntity.Name,
-            sel.OutcomeKey,
-            sel.OddsAtPlacement))
-          .ToList()))
-      .ToList();
-  }
+  [KernelFunction("GetBetSlips")]
+  [Description("Returns bet slips, newest first. Optional status: Pending, Won, Lost, or CashedOut — omit the argument to return slips in every status.")]
+  public Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(
+    [Description("Filter by slip status, or omit for all statuses.")] BetStatus? status = null,
+    CancellationToken cancellationToken = default) =>
+    _mediator.Send(new GetBetSlipsQuery(status), cancellationToken);
 
   private sealed record PlaceBetSlipArgs(List<BetSelectionRecord>? BetSelections);
 }
