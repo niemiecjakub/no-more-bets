@@ -22,6 +22,26 @@ public class MemoriesPlugin
     return Path.Combine(FilesDirectory, name);
   }
 
+  [KernelFunction]
+  [Description("Lists all available documentation and log file names.")]
+  public List<string> GetMemoryFilenames()
+  {
+    if (!Directory.Exists(FilesDirectory))
+    {
+      Directory.CreateDirectory(FilesDirectory);
+      return new List<string>();
+    }
+
+    var allowedExtensions = new[] { "*.md", "*.log" };
+
+    return allowedExtensions
+        .SelectMany(pattern => Directory.GetFiles(FilesDirectory, pattern))
+        .Select(Path.GetFileName)
+        .Where(name => name != null)
+        .Select(name => name!)
+        .ToList();
+  }
+
   [KernelFunction("Read")]
   [Description("Loads the full contents of a saved memory file (markdown or plain text) from the plugin memory directory. Use this before editing so snippets match exactly. Fails if the file is missing.")]
   public string Read(
@@ -38,7 +58,7 @@ public class MemoriesPlugin
   }
 
   [KernelFunction("Write")]
-  [Description("Replaces the entire memory file with new content. Creates the memory directory if needed. Prefer Append or Replace for small changes so you do not drop existing text.")]
+  [Description("Replaces the entire memory file with new content. Creates the file if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.")]
   public string Write(
     [Description("Base file name only, no folders or path separators (e.g. STRATEGY.md).")]
     string filename,
