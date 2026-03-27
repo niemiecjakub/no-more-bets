@@ -9,11 +9,6 @@ INSERT INTO "BettingEventType" ("Id", "Name") VALUES
     (3, 'DoubleChance'),
     (4, 'BothTeamsToScore'),
     (5, 'MatchResult'),
-    (6, 'FirstTeamToScore'),
-    (7, 'PlayerOrSubToScore'),
-    (8, 'Goalscorer'),
-    (9, 'PlayerGoalOrAssist'),
-    (10, 'AnyPlayerToScore'),
     (11, 'Handicap'),
     (12, 'ExactScore')
 ON CONFLICT ("Id") DO NOTHING;

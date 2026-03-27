@@ -84,36 +84,9 @@ public class BookmakerEventTypeMapperTests
     result.Should().Be(BettingEventType.TeamGoals);
   }
 
-  [Fact]
-  public void Map_PrefixMatchPlayerOrSubToScore_ReturnsCorrectType()
-  {
-    // Arrange
-    var title = "Zawodnik lub jego zmiennik strzeli gola (90 min) - Aston Villa";
-
-    // Act
-    var result = BookmakerEventTypeMapper.Map(title);
-
-    // Assert
-    result.Should().Be(BettingEventType.PlayerOrSubToScore);
-  }
-
-  [Fact]
-  public void Map_PrefixMatchGoalscorer_ReturnsCorrectType()
-  {
-    // Arrange
-    var title = "Strzelec - Aston Villa";
-
-    // Act
-    var result = BookmakerEventTypeMapper.Map(title);
-
-    // Assert
-    result.Should().Be(BettingEventType.Goalscorer);
-  }
-
   [Theory]
   [InlineData("Gole Powyżej/Poniżej", BettingEventType.OverUnderGoals)]
   [InlineData("Oba zespoły strzelą gola", BettingEventType.BothTeamsToScore)]
-  [InlineData("Którykolwiek zawodnik strzeli gola", BettingEventType.AnyPlayerToScore)]
   [InlineData("Handicap", BettingEventType.Handicap)]
   [InlineData("Dokładny wynik", BettingEventType.ExactScore)]
   public void Map_SampleTitlesFromBetclic_ReturnsExpectedType(string title, BettingEventType expected)

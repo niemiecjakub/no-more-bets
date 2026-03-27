@@ -82,7 +82,7 @@ public class BettingPlugin
   [KernelFunction("PlaceBetSlip")]
   [Description("Places a bet slip with one or more selections across one or more matches. Call this once you have finished analyzing all available matches and have selected the best value bets.")]
   public async Task PlaceBetSlip(
-    [Description("JSON object with a single property 'betSelections': an array of selection objects. Each object must have: MatchId (int, from GetAvailableMatches), EventType (string, one of: OverUnderGoals, TeamGoals, DoubleChance, BothTeamsToScore, MatchResult, FirstTeamToScore, PlayerOrSubToScore, Goalscorer, PlayerGoalOrAssist, AnyPlayerToScore, Handicap, ExactScore), OutcomeKey (string, exact label from GetCurrentOdds for that market). Example: {\"betSelections\":[{\"MatchId\":39,\"EventType\":\"BothTeamsToScore\",\"OutcomeKey\":\"Tak\"}]}")]
+    [Description("JSON object with a single property 'betSelections': an array of selection objects. Each object must have: MatchId (int, from GetAvailableMatches), EventType (string, one of: OverUnderGoals, TeamGoals, DoubleChance, BothTeamsToScore, MatchResult, Handicap, ExactScore), OutcomeKey (string, exact label from GetCurrentOdds for that market). Example: {\"betSelections\":[{\"MatchId\":39,\"EventType\":\"BothTeamsToScore\",\"OutcomeKey\":\"Tak\"}]}")]
     string betSelectionsJson,
     CancellationToken cancellationToken = default)
   {
