@@ -7,7 +7,6 @@ public class BettingOddsSnapshotRow
 {
   public long Id { get; set; }
   public long SnapshotId { get; set; }
-  public string EventJson { get; set; } = null!;
   public int EventTypeId { get; set; }
   public int? EventOptionId { get; set; }
   public decimal? Odds { get; set; }

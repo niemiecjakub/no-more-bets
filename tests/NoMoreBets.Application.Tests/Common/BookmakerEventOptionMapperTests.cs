@@ -2,7 +2,6 @@ using System.Text.Json;
 using FluentAssertions;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto.Betting;
-using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
@@ -60,7 +59,7 @@ public class BookmakerEventOptionMapperTests
     };
 
     rows.Select(r => r.EventOption!.Value).Should().Equal(expected);
-    rows.Should().OnlyContain(r => r.EventJson.Contains("\"options\"", StringComparison.Ordinal));
+    rows.Should().OnlyContain(r => r.EventType == BettingEventType.OverUnderGoals);
   }
 
   [Fact]
@@ -129,7 +128,7 @@ public class BookmakerEventOptionMapperTests
     var match = CreateMatch("Everton", "Burnley");
     var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match, ev.Title);
 
-    var byLabel = rows.ToDictionary(r => DeserializeSingleLabel(r), r => r.EventOption);
+    var byLabel = ev.Options.Zip(rows).ToDictionary(z => z.First.Label, z => z.Second.EventOption);
 
     byLabel["1 - 0"].Should().Be(BettingEventOption.CorrectScore_1_0);
     byLabel["0 - 0"].Should().Be(BettingEventOption.CorrectScore_0_0);
@@ -174,24 +173,4 @@ public class BookmakerEventOptionMapperTests
     rows[0].Odds.Should().BeNull();
   }
 
-  [Fact]
-  public void MapToRows_each_row_event_json_has_single_option_for_history_aggregation()
-  {
-    var ev = LoadEvent("btts.json");
-    var eventType = BookmakerEventTypeMapper.Map(ev.Title)!.Value;
-    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType, CreateMatch("a", "b"), ev.Title);
-
-    for (var i = 0; i < rows.Count; i++)
-    {
-      var parsed = JsonSerializer.Deserialize<BookmakerEvent>(rows[i].EventJson, JsonOpts);
-      parsed!.Options.Should().HaveCount(1);
-      parsed.Options[0].Label.Should().Be(ev.Options[i].Label);
-    }
-  }
-
-  private static string DeserializeSingleLabel(BettingOddsSnapshotRow row)
-  {
-    var ev = JsonSerializer.Deserialize<BookmakerEvent>(row.EventJson, JsonOpts);
-    return ev!.Options[0].Label;
-  }
 }

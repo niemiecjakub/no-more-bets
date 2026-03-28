@@ -1,9 +1,7 @@
-using System.Text.Json;
 using FluentAssertions;
 using NSubstitute;
 using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 
@@ -47,16 +45,14 @@ public class GetMatchBettingOddsHistoryHandlerTests
 
   private static BettingOddsSnapshot BuildSnapshot(DateTime snapshotTime, double homeOdds)
   {
-    var ev = new BookmakerEvent
-    {
-      Title = "Match Result",
-      Options = [new EventOption { Label = "Home", Odds = homeOdds }]
-    };
+    const string homeOutcome = "MatchResult_Home";
     var row = new BettingOddsSnapshotRow
     {
       EventTypeId = (int)BettingEventType.MatchResult,
       EventTypeEntity = new BettingEventTypeEntity { Id = (int)BettingEventType.MatchResult, Name = "Match Result" },
-      EventJson = JsonSerializer.Serialize(ev, new JsonSerializerOptions(JsonSerializerDefaults.Web))
+      EventOptionId = (int)BettingEventOption.MatchResult_Home,
+      EventOptionEntity = new BettingEventOptionEntity { Id = (int)BettingEventOption.MatchResult_Home, Name = homeOutcome },
+      Odds = (decimal)homeOdds
     };
 
     var snapshot = new BettingOddsSnapshot { SnapshotTime = snapshotTime, MatchId = 10 };

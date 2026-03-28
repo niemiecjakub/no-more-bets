@@ -225,7 +225,6 @@ CREATE TABLE "BettingEventOption" (
 CREATE TABLE "BettingOddsSnapshotRow" (
     "Id"          bigserial PRIMARY KEY,
     "SnapshotId"   bigint NOT NULL,
-    "EventJson"   jsonb NOT NULL,
     "EventTypeId" int4 NOT NULL,
     "EventOptionId" int4 NULL,
     "Odds" numeric(18, 4) NULL,

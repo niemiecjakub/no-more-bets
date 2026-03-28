@@ -1,6 +1,4 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
@@ -9,8 +7,6 @@ namespace NoMoreBets.Infrastructure.Persistence.Repositories;
 
 public class BettingRepository : IBettingRepository
 {
-  private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
-
   private readonly AppDbContext _db;
 
   public BettingRepository(AppDbContext db)
@@ -41,13 +37,11 @@ public class BettingRepository : IBettingRepository
     var eventTypeId = (int)eventType;
     foreach (var row in latest.Rows.Where(r => r.EventTypeId == eventTypeId))
     {
-      var ev = JsonSerializer.Deserialize<BookmakerEvent>(row.EventJson, SerializerOptions);
-      if (ev == null)
+      var name = row.EventOptionEntity?.Name;
+      if (name is null || !string.Equals(name, outcomeKey, StringComparison.Ordinal))
         continue;
-
-      var option = ev.Options.FirstOrDefault(o => string.Equals(o.Label, outcomeKey, StringComparison.Ordinal));
-      if (option != null)
-        return (decimal)option.Odds;
+      if (row.Odds.HasValue)
+        return row.Odds.Value;
     }
 
     return null;

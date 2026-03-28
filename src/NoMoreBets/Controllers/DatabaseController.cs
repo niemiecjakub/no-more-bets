@@ -1,7 +1,5 @@
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
@@ -454,50 +452,41 @@ public class DatabaseController(AppDbContext db) : ControllerBase
       .Where(s => s.MatchId == matchId)
       .Include(s => s.Rows)
       .ThenInclude(r => r.EventTypeEntity)
+      .Include(s => s.Rows)
+      .ThenInclude(r => r.EventOptionEntity)
       .OrderByDescending(s => s.SnapshotTime)
       .ToListAsync(cancellationToken);
 
     string? eventTypeName = null;
     string? historyTitle = null;
-    List<string>? optionOrder = null;
+    var optionOrder = new List<string>();
     var oddsByLabel = new Dictionary<string, List<OddsPointDto>>(StringComparer.Ordinal);
 
     foreach (var snapshot in snapshots)
     {
-      var row = snapshot.Rows.FirstOrDefault(r => r.EventTypeId == eventTypeId);
-      if (row == null)
-        continue;
-
-      eventTypeName ??= row.EventTypeEntity.Name;
-
-      BookmakerEvent? ev;
-      try
+      foreach (var row in snapshot.Rows.Where(r => r.EventTypeId == eventTypeId))
       {
-        ev = JsonSerializer.Deserialize<BookmakerEvent>(row.EventJson, new JsonSerializerOptions(JsonSerializerDefaults.Web));
-      }
-      catch
-      {
-        continue;
-      }
+        var outcomeName = row.EventOptionEntity?.Name;
+        if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
+          continue;
 
-      if (ev == null)
-        continue;
+        eventTypeName ??= row.EventTypeEntity.Name;
+        historyTitle ??= row.EventTypeEntity.Name;
 
-      historyTitle ??= ev.Title;
-      optionOrder ??= ev.Options.Select(o => o.Label).ToList();
+        if (!optionOrder.Contains(outcomeName))
+          optionOrder.Add(outcomeName);
 
-      foreach (var opt in ev.Options)
-      {
-        if (!oddsByLabel.TryGetValue(opt.Label, out var list))
+        if (!oddsByLabel.TryGetValue(outcomeName, out var list))
         {
           list = new List<OddsPointDto>();
-          oddsByLabel[opt.Label] = list;
+          oddsByLabel[outcomeName] = list;
         }
-        list.Add(new OddsPointDto(opt.Odds, snapshot.SnapshotTime));
+
+        list.Add(new OddsPointDto((double)row.Odds.Value, snapshot.SnapshotTime));
       }
     }
 
-    var historyOptions = (optionOrder ?? (IReadOnlyList<string>)Array.Empty<string>())
+    var historyOptions = optionOrder
       .Select(label => new BettingOddsHistoryOptionDto(
         label,
         oddsByLabel.TryGetValue(label, out var odds) ? odds : (IReadOnlyList<OddsPointDto>)Array.Empty<OddsPointDto>()))

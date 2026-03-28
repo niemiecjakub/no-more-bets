@@ -226,7 +226,6 @@ public class AppDbContext : DbContext
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityByDefaultColumn();
       entity.Property(e => e.SnapshotId).IsRequired();
-      entity.Property(e => e.EventJson).IsRequired().HasColumnType("jsonb");
       entity.Property(e => e.EventTypeId).IsRequired();
       entity.Property(e => e.EventOptionId).IsRequired(false);
       entity.Property(e => e.Odds).IsRequired(false).HasPrecision(18, 4);

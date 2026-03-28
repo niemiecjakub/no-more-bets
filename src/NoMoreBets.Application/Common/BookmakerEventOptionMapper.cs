@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using FuzzySharp;
 using NoMoreBets.Application.Common.Dto.Betting;
@@ -11,14 +10,12 @@ namespace NoMoreBets.Application.Common;
 
 /// <summary>
 /// Maps bookmaker option labels to <see cref="BettingEventOption"/> and builds
-/// one <see cref="BettingOddsSnapshotRow"/> per option (single-option <c>EventJson</c> each).
+/// one <see cref="BettingOddsSnapshotRow"/> per option.
 /// </summary>
 public static class BookmakerEventOptionMapper
 {
   /// <summary>Minimum fuzzy score (0–100) when comparing bookmaker labels to club names from <c>Match</c>.</summary>
   public const int ClubNameFuzzyScoreCutoff = 86;
-
-  private static readonly JsonSerializerOptions DefaultJsonOptions = new(JsonSerializerDefaults.Web);
 
   private static readonly Regex OverUnderRegex = new(
     @"^(?<dir>Powyżej|Poniżej)\s*(?<num>[\d,\.]+)\s*$",
@@ -37,25 +34,20 @@ public static class BookmakerEventOptionMapper
     RegexOptions.CultureInvariant);
 
   /// <summary>
-  /// Builds snapshot rows for each option; <see cref="BettingOddsSnapshotRow.EventJson"/> contains
-  /// the same market title and a single option for history aggregation.
+  /// Builds snapshot rows for each scraped option (typed ids and odds only; no raw bookmaker JSON).
   /// </summary>
   public static IReadOnlyList<BettingOddsSnapshotRow> MapToRows(
     IReadOnlyList<EventOption> options,
     BettingEventType eventType,
     SoccerMatch match,
-    string eventTitle,
-    JsonSerializerOptions? jsonOptions = null)
+    string eventTitle)
   {
-    jsonOptions ??= DefaultJsonOptions;
     var rows = new List<BettingOddsSnapshotRow>(options.Count);
     foreach (var opt in options)
     {
       var mapped = MapOption(opt.Label, eventType, match, eventTitle);
-      var single = new BookmakerEvent { Title = eventTitle, Options = [opt] };
       rows.Add(new BettingOddsSnapshotRow
       {
-        EventJson = JsonSerializer.Serialize(single, jsonOptions),
         EventType = eventType,
         EventOption = mapped,
         Odds = mapped.HasValue ? (decimal)opt.Odds : null

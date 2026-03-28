@@ -1,7 +1,5 @@
-using System.Text.Json;
 using MediatR;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
@@ -10,8 +8,6 @@ public record GetMatchBettingOddsHistoryQuery(int MatchId) : IRequest<IReadOnlyL
 
 public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetMatchBettingOddsHistoryQuery, IReadOnlyList<MarketPriceHistory>?>
 {
-  private readonly JsonSerializerOptions _serializerOptions = new(JsonSerializerDefaults.Web);
-
   public async Task<IReadOnlyList<MarketPriceHistory>?> Handle(GetMatchBettingOddsHistoryQuery request, CancellationToken cancellationToken)
   {
     var snapshots = await unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
@@ -35,25 +31,23 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
           byEventType[row.EventTypeId] = acc;
         }
 
-        var ev = JsonSerializer.Deserialize<BookmakerEvent>(row.EventJson, _serializerOptions);
-        if (ev == null)
+        var outcomeName = row.EventOptionEntity?.Name;
+        if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
           continue;
 
         if (acc.Title == null)
-          acc.Title = ev.Title;
-        if (acc.OptionOrder.Count == 0)
-          acc.OptionOrder.AddRange(ev.Options.Select(o => o.Label));
+          acc.Title = row.EventTypeEntity.Name;
 
-        foreach (var opt in ev.Options)
+        if (!acc.OptionOrder.Contains(outcomeName))
+          acc.OptionOrder.Add(outcomeName);
+
+        if (!acc.OddsByLabel.TryGetValue(outcomeName, out var list))
         {
-          if (!acc.OddsByLabel.TryGetValue(opt.Label, out var list))
-          {
-            list = new List<(double Odds, DateTime At)>();
-            acc.OddsByLabel[opt.Label] = list;
-          }
-
-          list.Add((opt.Odds, snapshot.SnapshotTime));
+          list = new List<(double Odds, DateTime At)>();
+          acc.OddsByLabel[outcomeName] = list;
         }
+
+        list.Add(((double)row.Odds.Value, snapshot.SnapshotTime));
       }
     }
 

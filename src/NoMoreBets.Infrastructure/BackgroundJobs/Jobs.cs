@@ -16,7 +16,6 @@ using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Persistence;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
-using System.Text.Json;
 using NoMoreBets.Application.Clubs.GetOverview;
 using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Application.Matches.UpdateMatchDetails;
@@ -32,8 +31,6 @@ public class JobService(
   SoccerDataClient soccerDataClient,
   ILogger<JobService> logger)
 {
-  private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
   [AutomaticRetry(Attempts = 3)]
   public async Task GetUpcommingSoccerdataMatches(int soccerdataLeagueId)
   {
@@ -521,8 +518,7 @@ public class JobService(
                    ev.Options,
                    eventType.Value,
                    match,
-                   ev.Title,
-                   JsonOptions))
+                   ev.Title))
         {
           snapshot.Rows.Add(row);
         }

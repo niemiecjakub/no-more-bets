@@ -3,7 +3,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Common.Dto.Betting;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
@@ -51,20 +50,19 @@ public class BettingPlugin
 
     foreach (var row in latest.Rows.Where(r => PluginConst.BettingOddsHistoryEventTypeWhitelist.Contains(r.EventType)))
     {
-      BookmakerEvent? ev = JsonSerializer.Deserialize<BookmakerEvent>(row.EventJson, SerializerOptions);
-
-
-      if (ev == null)
+      var outcomeName = row.EventOptionEntity?.Name;
+      if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
         continue;
 
-      var options = ev.Options
-        .Select(o => new CurrentOddsOption(o.Label, o.Odds))
-        .ToList();
+      var options = new List<CurrentOddsOption>
+      {
+        new(outcomeName, (double)row.Odds.Value)
+      };
 
       markets.Add(new CurrentOddsMarket(
         row.EventTypeId,
         row.EventTypeEntity.Name,
-        ev.Title,
+        row.EventTypeEntity.Name,
         options));
     }
 
@@ -82,7 +80,7 @@ public class BettingPlugin
   [KernelFunction("PlaceBetSlip")]
   [Description("Places a bet slip with one or more selections across one or more matches. Call this once you have finished analyzing all available matches and have selected the best value bets.")]
   public async Task PlaceBetSlip(
-    [Description("JSON object with a single property 'betSelections': an array of selection objects. Each object must have: MatchId (int, from GetAvailableMatches), EventType (string, one of: OverUnderGoals, TeamGoals, DoubleChance, BothTeamsToScore, MatchResult, Handicap, ExactScore), OutcomeKey (string, exact label from GetCurrentOdds for that market). Example: {\"betSelections\":[{\"MatchId\":39,\"EventType\":\"BothTeamsToScore\",\"OutcomeKey\":\"Tak\"}]}")]
+    [Description("JSON object with a single property 'betSelections': an array of selection objects. Each object must have: MatchId (int, from GetAvailableMatches), EventType (string, one of: OverUnderGoals, TeamGoals, DoubleChance, BothTeamsToScore, MatchResult, Handicap, ExactScore), OutcomeKey (string, exact outcome id from GetCurrentOdds — same as BettingEventOption name, e.g. BothTeamsToScore_Yes). Example: {\"betSelections\":[{\"MatchId\":39,\"EventType\":\"BothTeamsToScore\",\"OutcomeKey\":\"BothTeamsToScore_Yes\"}]}")]
     string betSelectionsJson,
     CancellationToken cancellationToken = default)
   {
