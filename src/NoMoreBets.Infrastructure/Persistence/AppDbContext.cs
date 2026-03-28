@@ -237,7 +237,7 @@ public class AppDbContext : DbContext
         .HasForeignKey(e => e.EventTypeId)
         .OnDelete(DeleteBehavior.Restrict);
       entity.HasOne(e => e.EventOptionEntity)
-        .WithMany(o => o.BettingOddsSnapshotRows)
+        .WithMany()
         .HasForeignKey(e => e.EventOptionId)
         .OnDelete(DeleteBehavior.Restrict);
     });

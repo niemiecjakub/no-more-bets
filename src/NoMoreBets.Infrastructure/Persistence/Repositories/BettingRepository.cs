@@ -39,16 +39,18 @@ public class BettingRepository : IBettingRepository
 
     var latest = snapshots[0];
     var eventTypeId = (int)eventType;
-    var row = latest.Rows.FirstOrDefault(r => r.EventTypeId == eventTypeId);
-    if (row == null)
-      return null;
+    foreach (var row in latest.Rows.Where(r => r.EventTypeId == eventTypeId))
+    {
+      var ev = JsonSerializer.Deserialize<BookmakerEvent>(row.EventJson, SerializerOptions);
+      if (ev == null)
+        continue;
 
-    var ev = JsonSerializer.Deserialize<BookmakerEvent>(row.EventJson, SerializerOptions);
-    if (ev == null)
-      return null;
+      var option = ev.Options.FirstOrDefault(o => string.Equals(o.Label, outcomeKey, StringComparison.Ordinal));
+      if (option != null)
+        return (decimal)option.Odds;
+    }
 
-    var option = ev.Options.FirstOrDefault(o => string.Equals(o.Label, outcomeKey, StringComparison.Ordinal));
-    return option != null ? (decimal)option.Odds : null;
+    return null;
   }
 
   public async Task<IReadOnlyList<Match>> GetMatchesAvailableForBettingAsync(CancellationToken cancellationToken = default)

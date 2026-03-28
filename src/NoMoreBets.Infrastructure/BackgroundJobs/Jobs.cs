@@ -478,6 +478,8 @@ public class JobService(
       }
 
       var match = await db.Match
+        .Include(m => m.HomeClub)
+        .Include(m => m.AwayClub)
         .Where(m => m.BetclicUrl == gameUrl)
         .SingleOrDefaultAsync();
 
@@ -515,13 +517,15 @@ public class JobService(
           continue;
         }
 
-        var eventJson = JsonSerializer.Serialize(ev, JsonOptions);
-
-        snapshot.Rows.Add(new BettingOddsSnapshotRow
+        foreach (var row in BookmakerEventOptionMapper.MapToRows(
+                   ev.Options,
+                   eventType.Value,
+                   match,
+                   ev.Title,
+                   JsonOptions))
         {
-          EventJson = eventJson,
-          EventType = eventType.Value
-        });
+          snapshot.Rows.Add(row);
+        }
       }
 
       if (snapshot.Rows.Count == 0)
