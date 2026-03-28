@@ -17,6 +17,17 @@ public class BettingPlugin
   {
     Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true) }
   };
+
+  private static readonly HashSet<BettingEventType> BettingOddsHistoryEventTypeWhitelist = new()
+  {
+    BettingEventType.OverUnderGoals,
+    BettingEventType.DoubleChance,
+    BettingEventType.BothTeamsToScore,
+    BettingEventType.MatchResult,
+    BettingEventType.Handicap,
+    BettingEventType.ExactScore,
+  };
+
   private readonly IUnitOfWork _unitOfWork;
 
   public BettingPlugin(IUnitOfWork unitOfWork)
@@ -48,7 +59,7 @@ public class BettingPlugin
     var markets = new List<CurrentOddsMarket>(latest.Rows.Count);
 
 
-    foreach (var row in latest.Rows.Where(r => PluginConst.BettingOddsHistoryEventTypeWhitelist.Contains(r.EventType)))
+    foreach (var row in latest.Rows.Where(r => BettingOddsHistoryEventTypeWhitelist.Contains(r.EventType)))
     {
       var outcomeName = row.EventOptionEntity?.Name;
       if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
