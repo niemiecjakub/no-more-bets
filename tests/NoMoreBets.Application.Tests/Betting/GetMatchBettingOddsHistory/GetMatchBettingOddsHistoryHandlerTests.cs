@@ -4,6 +4,7 @@ using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Tests.Betting.GetMatchBettingOddsHistory;
 
@@ -11,11 +12,15 @@ public class GetMatchBettingOddsHistoryHandlerTests
 {
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _bettingRepository = Substitute.For<IBettingRepository>();
+  private readonly IMatchRepository _matchRepository = Substitute.For<IMatchRepository>();
   private readonly GetMatchBettingOddsHistoryHandler _sut;
 
   public GetMatchBettingOddsHistoryHandlerTests()
   {
     _unitOfWork.Betting.Returns(_bettingRepository);
+    _unitOfWork.Matches.Returns(_matchRepository);
+    _matchRepository.GetMatchByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+      .Returns(Task.FromResult<Match?>(null));
     _sut = new GetMatchBettingOddsHistoryHandler(_unitOfWork);
   }
 
@@ -43,13 +48,82 @@ public class GetMatchBettingOddsHistoryHandlerTests
     timeline[1].Price.Should().Be(2.05);
   }
 
+  [Fact]
+  public async Task Handle_WhenNoSnapshots_ReturnsNull()
+  {
+    // Arrange
+    _bettingRepository.GetBettingOddsSnapshotsForMatchAsync(99, Arg.Any<CancellationToken>())
+      .Returns(new List<BettingOddsSnapshot>());
+
+    // Act
+    var result = await _sut.Handle(new GetMatchBettingOddsHistoryQuery(99), CancellationToken.None);
+
+    // Assert
+    result.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task Handle_WithMatch_UsesDisplayNamesForMarketAndOutcome()
+  {
+    // Arrange
+    var t1 = DateTime.UtcNow.AddHours(-1);
+    var snapshot = BuildSnapshot(t1, 2.0);
+    _bettingRepository.GetBettingOddsSnapshotsForMatchAsync(10, Arg.Any<CancellationToken>())
+      .Returns(new List<BettingOddsSnapshot> { snapshot });
+    var match = new Match
+    {
+      Id = 10,
+      HomeClub = new NoMoreBets.Domain.Clubs.Club { Name = "Arsenal" },
+      AwayClub = new NoMoreBets.Domain.Clubs.Club { Name = "Chelsea" },
+    };
+    _matchRepository.GetMatchByIdAsync(10, Arg.Any<CancellationToken>())
+      .Returns(Task.FromResult<Match?>(match));
+
+    // Act
+    var result = await _sut.Handle(new GetMatchBettingOddsHistoryQuery(10), CancellationToken.None);
+
+    // Assert
+    result.Should().NotBeNull();
+    var market = result![0];
+    market.MarketKey.Should().Be(nameof(BettingEventType.MatchResult));
+    market.MarketDisplayName.Should().Be("Match Result (90 min)");
+    market.Outcomes.Should().ContainSingle();
+    market.Outcomes[0].OutcomeName.Should().Be("Arsenal");
+  }
+
+  [Fact]
+  public async Task Handle_WhenOptionLabelDoesNotParse_KeepsRawLabel()
+  {
+    // Arrange
+    var t1 = DateTime.UtcNow.AddHours(-1);
+    var row = new BettingOddsSnapshotRow
+    {
+      EventTypeId = (int)BettingEventType.MatchResult,
+      EventTypeEntity = new BettingEventTypeEntity { Id = (int)BettingEventType.MatchResult, Name = nameof(BettingEventType.MatchResult) },
+      EventOptionId = null,
+      EventOptionEntity = new BettingEventOptionEntity { Id = 0, Name = "UnknownFutureOption" },
+      Odds = 1.5m,
+    };
+    var snapshot = new BettingOddsSnapshot { SnapshotTime = t1, MatchId = 10 };
+    snapshot.Rows.Add(row);
+    _bettingRepository.GetBettingOddsSnapshotsForMatchAsync(10, Arg.Any<CancellationToken>())
+      .Returns(new List<BettingOddsSnapshot> { snapshot });
+
+    // Act
+    var result = await _sut.Handle(new GetMatchBettingOddsHistoryQuery(10), CancellationToken.None);
+
+    // Assert
+    result.Should().NotBeNull();
+    result![0].Outcomes[0].OutcomeName.Should().Be("UnknownFutureOption");
+  }
+
   private static BettingOddsSnapshot BuildSnapshot(DateTime snapshotTime, double homeOdds)
   {
     const string homeOutcome = "MatchResult_Home";
     var row = new BettingOddsSnapshotRow
     {
       EventTypeId = (int)BettingEventType.MatchResult,
-      EventTypeEntity = new BettingEventTypeEntity { Id = (int)BettingEventType.MatchResult, Name = "Match Result" },
+      EventTypeEntity = new BettingEventTypeEntity { Id = (int)BettingEventType.MatchResult, Name = nameof(BettingEventType.MatchResult) },
       EventOptionId = (int)BettingEventOption.MatchResult_Home,
       EventOptionEntity = new BettingEventOptionEntity { Id = (int)BettingEventOption.MatchResult_Home, Name = homeOutcome },
       Odds = (decimal)homeOdds

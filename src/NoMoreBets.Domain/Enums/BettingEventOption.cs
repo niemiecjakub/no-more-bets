@@ -26,17 +26,6 @@ public enum BettingEventOption
   TotalGoals_Over_5_5 = 19,
   TotalGoals_Under_5_5 = 20,
 
-  TeamGoals_Home_Over_0_5 = 21,
-  TeamGoals_Home_Under_0_5 = 22,
-  TeamGoals_Home_Over_1_5 = 23,
-  TeamGoals_Home_Under_1_5 = 24,
-  TeamGoals_Home_Over_2_5 = 25,
-  TeamGoals_Home_Under_2_5 = 26,
-  TeamGoals_Home_Over_3_5 = 27,
-  TeamGoals_Home_Under_3_5 = 28,
-  TeamGoals_Home_Over_4_5 = 29,
-  TeamGoals_Home_Under_4_5 = 30,
-
   Handicap_Home_Minus_4 = 31,
   Handicap_Draw_Minus_4 = 32,
   Handicap_Away_Plus_4 = 33,

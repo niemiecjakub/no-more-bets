@@ -15,6 +15,10 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
     if (snapshots.Count == 0)
       return null;
 
+    var match = await unitOfWork.Matches.GetMatchByIdAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
+    var homeName = match?.HomeClub?.Name;
+    var awayName = match?.AwayClub?.Name;
+
     var byEventType = new Dictionary<int, EventTypeOddsAccumulator>();
 
     foreach (var snapshot in snapshots)
@@ -35,9 +39,6 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
         if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
           continue;
 
-        if (acc.Title == null)
-          acc.Title = row.EventTypeEntity.Name;
-
         if (!acc.OptionOrder.Contains(outcomeName))
           acc.OptionOrder.Add(outcomeName);
 
@@ -54,12 +55,17 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
     return byEventType.Select(kv =>
     {
       var acc = kv.Value;
+      var eventType = (BettingEventType)kv.Key;
+      var marketDisplayName = BettingEventTypeDisplay.GetDisplayName(eventType);
       var options = acc.OptionOrder.Select(label =>
       {
         var segments = CollapseToSegments(acc.OddsByLabel.TryGetValue(label, out var o) ? o : Array.Empty<(double, DateTime)>());
-        return new OutcomePriceTimeline(label, segments);
+        var outcomeDisplay = Enum.TryParse<BettingEventOption>(label, ignoreCase: false, out var parsedOption)
+          ? BettingEventOptionDisplay.GetDisplayName(parsedOption, homeName, awayName)
+          : label;
+        return new OutcomePriceTimeline(outcomeDisplay, segments);
       }).ToList();
-      return new MarketPriceHistory(acc.EventTypeName, acc.Title, options);
+      return new MarketPriceHistory(acc.EventTypeName, marketDisplayName, options);
     }).ToList();
   }
 
@@ -93,7 +99,6 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
   private sealed class EventTypeOddsAccumulator
   {
     public string EventTypeName { get; set; } = "";
-    public string? Title { get; set; }
     public List<string> OptionOrder { get; set; } = [];
     public Dictionary<string, List<(double Odds, DateTime At)>> OddsByLabel { get; set; } = new(StringComparer.Ordinal);
   }
