@@ -514,11 +514,16 @@ public class JobService(
           continue;
         }
 
-        foreach (var row in BookmakerEventOptionMapper.MapToRows(
+        var rows = BookmakerEventOptionMapper.MapToRows(
                    ev.Options,
                    eventType.Value,
-                   match))
+                   match);
+        foreach (var row in rows)
         {
+          if (row.EventOptionId == null)
+          {
+            continue;
+          }
           snapshot.Rows.Add(row);
         }
       }
