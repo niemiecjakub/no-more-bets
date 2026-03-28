@@ -86,8 +86,6 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         .ThenInclude(sel => sel.Match)
           .ThenInclude(m => m!.AwayClub)
       .Include(s => s.Selections)
-        .ThenInclude(sel => sel.EventTypeEntity)
-      .Include(s => s.Selections)
         .ThenInclude(sel => sel.BetStatusEntity)
       .OrderByDescending(s => s.CreatedAt)
       .ToListAsync(cancellationToken);
@@ -107,8 +105,8 @@ public class DatabaseController(AppDbContext db) : ControllerBase
             sel.MatchId,
             sel.Match.HomeClub.Name,
             sel.Match.AwayClub.Name,
-            sel.EventTypeEntity.Name,
-            sel.OutcomeKey,
+            BettingEventTypeDisplay.GetDisplayName(sel.BetEventType),
+            BettingEventOptionDisplay.GetDisplayName(sel.BetEventOption, sel.Match.HomeClub.Name, sel.Match.AwayClub.Name),
             sel.OddsAtPlacement,
             sel.StatusId,
             sel.BetStatusEntity.Name))
@@ -672,7 +670,7 @@ public record BetSelectionItemDto(
   string HomeClubName,
   string AwayClubName,
   string EventTypeName,
-  string OutcomeKey,
+  string EventOptionName,
   decimal OddsAtPlacement,
   int StatusId,
   string StatusName);

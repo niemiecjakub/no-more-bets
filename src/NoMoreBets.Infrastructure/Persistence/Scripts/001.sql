@@ -297,15 +297,17 @@ CREATE TABLE "BetSelection" (
 	"BetSlipId" int4 NOT NULL,
 	"MatchId" int4 NOT NULL,
 	"EventTypeId" int4 NOT NULL,
-	"OutcomeKey" varchar(255) NOT NULL,
+	"EventOptionId" int4 NOT NULL,
 	"OddsAtPlacement" numeric(18, 4) NOT NULL,
 	"StatusId" int4 NOT NULL,
 	CONSTRAINT "BetSelection_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT fk_betselection_betslip FOREIGN KEY ("BetSlipId") REFERENCES "BetSlip"("Id") ON DELETE CASCADE,
 	CONSTRAINT fk_betselection_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE RESTRICT,
 	CONSTRAINT fk_betselection_eventtype FOREIGN KEY ("EventTypeId") REFERENCES "BettingEventType"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_betselection_eventoption FOREIGN KEY ("EventOptionId") REFERENCES "BettingEventOption"("Id") ON DELETE RESTRICT,
 	CONSTRAINT fk_betselection_status FOREIGN KEY ("StatusId") REFERENCES "BetStatus"("Id") ON DELETE RESTRICT
 );
 CREATE INDEX idx_betselection_betslipid ON public."BetSelection" USING btree ("BetSlipId");
 CREATE INDEX idx_betselection_matchid ON public."BetSelection" USING btree ("MatchId");
+CREATE INDEX idx_betselection_eventoptionid ON public."BetSelection" USING btree ("EventOptionId");
 CREATE INDEX idx_betselection_statusid ON public."BetSelection" USING btree ("StatusId");

@@ -313,17 +313,22 @@ public class AppDbContext : DbContext
       entity.Property(e => e.BetSlipId).IsRequired();
       entity.Property(e => e.MatchId).IsRequired();
       entity.Property(e => e.EventTypeId).IsRequired();
-      entity.Property(e => e.OutcomeKey).IsRequired().HasMaxLength(255);
+      entity.Property(e => e.EventOptionId).IsRequired();
       entity.Property(e => e.OddsAtPlacement).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.StatusId).IsRequired();
       entity.HasIndex(e => e.BetSlipId);
       entity.HasIndex(e => e.MatchId);
+      entity.HasIndex(e => e.EventOptionId);
       entity.HasIndex(e => e.StatusId);
       entity.HasOne(e => e.BetSlip).WithMany(s => s.Selections).HasForeignKey(e => e.BetSlipId).OnDelete(DeleteBehavior.Cascade);
       entity.HasOne(e => e.Match).WithMany(m => m.BetSelections).HasForeignKey(e => e.MatchId).OnDelete(DeleteBehavior.Restrict);
       entity.HasOne(e => e.EventTypeEntity)
         .WithMany()
         .HasForeignKey(e => e.EventTypeId)
+        .OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.EventOptionEntity)
+        .WithMany()
+        .HasForeignKey(e => e.EventOptionId)
         .OnDelete(DeleteBehavior.Restrict);
       entity.HasOne(e => e.BetStatusEntity)
         .WithMany()

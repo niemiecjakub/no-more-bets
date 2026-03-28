@@ -45,7 +45,7 @@ function SelectionRow({ selection }: { selection: BetSelectionItem }) {
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-zinc-600 dark:text-zinc-400">
           <span>{selection.eventTypeName}</span>
-          <span className="font-medium text-foreground">{selection.outcomeKey}</span>
+          <span className="font-medium text-foreground">{selection.eventOptionName}</span>
           <span className="tabular-nums">@{selection.oddsAtPlacement.toFixed(2)}</span>
         </div>
       </Link>

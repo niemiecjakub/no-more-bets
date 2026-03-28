@@ -91,7 +91,7 @@ public class BettingPlugin
   [KernelFunction("PlaceBetSlip")]
   [Description("Places a bet slip with one or more selections across one or more matches. Call this once you have finished analyzing all available matches and have selected the best value bets.")]
   public async Task PlaceBetSlip(
-    [Description("JSON object with a single property 'betSelections': an array of selection objects. Each object must have: MatchId (int, from GetAvailableMatches), EventType (string, one of: OverUnderGoals, DoubleChance, BothTeamsToScore, MatchResult, Handicap, ExactScore), OutcomeKey (string, exact outcome id from GetCurrentOdds — same as BettingEventOption name, e.g. BothTeamsToScore_Yes). Example: {\"betSelections\":[{\"MatchId\":39,\"EventType\":\"BothTeamsToScore\",\"OutcomeKey\":\"BothTeamsToScore_Yes\"}]}")]
+    [Description("JSON object with a single property 'betSelections': an array of selection objects. Each object must have: matchId (int, from GetAvailableMatches), eventType (string, one of: OverUnderGoals, DoubleChance, BothTeamsToScore, MatchResult, Handicap, ExactScore), eventOption (string, BettingEventOption enum name, e.g. bothTeamsToScore_Yes in camelCase or BothTeamsToScore_Yes). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
     string betSelectionsJson,
     CancellationToken cancellationToken = default)
   {
@@ -104,7 +104,7 @@ public class BettingPlugin
     }
     catch (JsonException ex)
     {
-      throw new ArgumentException("Invalid betSelections JSON. Expected object with betSelections array of { MatchId (int), EventType (enum name, e.g. BothTeamsToScore), OutcomeKey (string) }.", nameof(betSelectionsJson), ex);
+      throw new ArgumentException("Invalid betSelections JSON. Expected object with betSelections array of { matchId (int), eventType (enum name), eventOption (BettingEventOption enum name) }.", nameof(betSelectionsJson), ex);
     }
 
     if (betSelections is null || betSelections.Count == 0)
@@ -113,9 +113,9 @@ public class BettingPlugin
     var selectionOdds = new List<decimal>(betSelections.Count);
     foreach (var record in betSelections)
     {
-      var odds = await _unitOfWork.Betting.GetCurrentOddsForSelectionAsync(record.MatchId, record.EventType, record.OutcomeKey, cancellationToken).ConfigureAwait(false);
+      var odds = await _unitOfWork.Betting.GetCurrentOddsForSelectionAsync(record.MatchId, record.EventType, record.EventOption, cancellationToken).ConfigureAwait(false);
       if (odds is null)
-        throw new InvalidOperationException($"Current odds not found for match {record.MatchId}, event {record.EventType}, outcome '{record.OutcomeKey}'.");
+        throw new InvalidOperationException($"Current odds not found for match {record.MatchId}, event {record.EventType}, option {record.EventOption}.");
       selectionOdds.Add(odds.Value);
     }
 
@@ -138,7 +138,7 @@ public class BettingPlugin
       {
         MatchId = record.MatchId,
         EventTypeId = (int)record.EventType,
-        OutcomeKey = record.OutcomeKey,
+        EventOptionId = (int)record.EventOption,
         OddsAtPlacement = selectionOdds[i],
         StatusId = (int)BetStatus.Pending
       });

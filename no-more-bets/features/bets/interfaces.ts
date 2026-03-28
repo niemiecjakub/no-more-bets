@@ -21,7 +21,7 @@ export interface BetSelectionItem {
   homeClubName: string;
   awayClubName: string;
   eventTypeName: string;
-  outcomeKey: string;
+  eventOptionName: string;
   oddsAtPlacement: number;
   statusId: number;
   statusName: string;

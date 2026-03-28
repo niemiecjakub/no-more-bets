@@ -27,7 +27,7 @@ public class BettingRepository : IBettingRepository
       .ConfigureAwait(false);
   }
 
-  public async Task<decimal?> GetCurrentOddsForSelectionAsync(int matchId, BettingEventType eventType, string outcomeKey, CancellationToken cancellationToken = default)
+  public async Task<decimal?> GetCurrentOddsForSelectionAsync(int matchId, BettingEventType eventType, BettingEventOption eventOption, CancellationToken cancellationToken = default)
   {
     var snapshots = await GetBettingOddsSnapshotsForMatchAsync(matchId, cancellationToken).ConfigureAwait(false);
     if (snapshots.Count == 0)
@@ -35,11 +35,9 @@ public class BettingRepository : IBettingRepository
 
     var latest = snapshots[0];
     var eventTypeId = (int)eventType;
-    foreach (var row in latest.Rows.Where(r => r.EventTypeId == eventTypeId))
+    var optionId = (int)eventOption;
+    foreach (var row in latest.Rows.Where(r => r.EventTypeId == eventTypeId && r.EventOptionId == optionId))
     {
-      var name = row.EventOptionEntity?.Name;
-      if (name is null || !string.Equals(name, outcomeKey, StringComparison.Ordinal))
-        continue;
       if (row.Odds.HasValue)
         return row.Odds.Value;
     }
