@@ -24,6 +24,8 @@ public class BettingRepository : IBettingRepository
       .Where(s => s.MatchId == matchId)
       .Include(s => s.Rows)
       .ThenInclude(r => r.EventTypeEntity)
+      .Include(s => s.Rows)
+      .ThenInclude(r => r.EventOptionEntity)
       .OrderByDescending(s => s.SnapshotTime)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);

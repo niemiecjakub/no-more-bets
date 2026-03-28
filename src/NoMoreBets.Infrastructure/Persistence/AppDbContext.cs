@@ -228,11 +228,17 @@ public class AppDbContext : DbContext
       entity.Property(e => e.SnapshotId).IsRequired();
       entity.Property(e => e.EventJson).IsRequired().HasColumnType("jsonb");
       entity.Property(e => e.EventTypeId).IsRequired();
+      entity.Property(e => e.EventOptionId).IsRequired(false);
+      entity.Property(e => e.Odds).IsRequired(false).HasPrecision(18, 4);
       entity.HasIndex(e => new { e.SnapshotId, e.EventTypeId });
       entity.HasOne(e => e.Snapshot).WithMany(s => s.Rows).HasForeignKey(e => e.SnapshotId).OnDelete(DeleteBehavior.Cascade);
       entity.HasOne(e => e.EventTypeEntity)
         .WithMany()
         .HasForeignKey(e => e.EventTypeId)
+        .OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.EventOptionEntity)
+        .WithMany(o => o.BettingOddsSnapshotRows)
+        .HasForeignKey(e => e.EventOptionId)
         .OnDelete(DeleteBehavior.Restrict);
     });
 

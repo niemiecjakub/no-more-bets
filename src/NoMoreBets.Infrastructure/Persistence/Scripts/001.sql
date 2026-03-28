@@ -216,11 +216,19 @@ CREATE TABLE "BettingEventType" (
     CONSTRAINT "BettingEventType_pkey" PRIMARY KEY ("Id")
 );
 
+CREATE TABLE "BettingEventOption" (
+    "Id"   int4 NOT NULL,
+    "Name" varchar(80) NOT NULL,
+    CONSTRAINT "BettingEventOption_pkey" PRIMARY KEY ("Id")
+);
+
 CREATE TABLE "BettingOddsSnapshotRow" (
     "Id"          bigserial PRIMARY KEY,
     "SnapshotId"   bigint NOT NULL,
     "EventJson"   jsonb NOT NULL,
     "EventTypeId" int4 NOT NULL,
+    "EventOptionId" int4 NULL,
+    "Odds" numeric(18, 4) NULL,
 
     CONSTRAINT fk_bettingoddssnapshotrow_snapshot
         FOREIGN KEY ("SnapshotId")
@@ -230,6 +238,11 @@ CREATE TABLE "BettingOddsSnapshotRow" (
     CONSTRAINT fk_bettingoddssnapshotrow_eventtype
         FOREIGN KEY ("EventTypeId")
         REFERENCES "BettingEventType"("Id")
+        ON DELETE RESTRICT,
+
+    CONSTRAINT fk_bettingoddssnapshotrow_eventoption
+        FOREIGN KEY ("EventOptionId")
+        REFERENCES "BettingEventOption"("Id")
         ON DELETE RESTRICT
 );
 
@@ -297,9 +310,3 @@ CREATE TABLE "BetSelection" (
 CREATE INDEX idx_betselection_betslipid ON public."BetSelection" USING btree ("BetSlipId");
 CREATE INDEX idx_betselection_matchid ON public."BetSelection" USING btree ("MatchId");
 CREATE INDEX idx_betselection_statusid ON public."BetSelection" USING btree ("StatusId");
-
-CREATE TABLE "BettingEventOption" (
-    "Id"   int4 NOT NULL,
-    "Name" varchar(80) NOT NULL,
-    CONSTRAINT "BettingEventOption_pkey" PRIMARY KEY ("Id")
-);
