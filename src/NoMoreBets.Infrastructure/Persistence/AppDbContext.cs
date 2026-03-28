@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
   public DbSet<LeagueTableSnapshot> LeagueTableSnapshot { get; set; }
   public DbSet<LeagueTableSnapshotRow> LeagueTableSnapshotRow { get; set; }
   public DbSet<BettingEventTypeEntity> BettingEventType { get; set; }
+  public DbSet<BettingEventOptionEntity> BettingEventOption { get; set; }
   public DbSet<BettingOddsSnapshot> BettingOddsSnapshot { get; set; }
   public DbSet<BettingOddsSnapshotRow> BettingOddsSnapshotRow { get; set; }
   public DbSet<MatchDetails> MatchDetails { get; set; }
@@ -189,6 +190,21 @@ public class AppDbContext : DbContext
         Enum.GetValues(typeof(BettingEventType))
           .Cast<BettingEventType>()
           .Select(e => new BettingEventTypeEntity()
+          {
+            Id = (int)e,
+            Name = e.ToString()
+          }));
+    });
+
+    modelBuilder.Entity<BettingEventOptionEntity>(entity =>
+    {
+      entity.ToTable(BettingEventOptionEntity.TABLE_NAME);
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(80);
+      entity.HasData(
+        Enum.GetValues(typeof(BettingEventOption))
+          .Cast<BettingEventOption>()
+          .Select(e => new BettingEventOptionEntity()
           {
             Id = (int)e,
             Name = e.ToString()

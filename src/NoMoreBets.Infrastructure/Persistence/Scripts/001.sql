@@ -297,3 +297,9 @@ CREATE TABLE "BetSelection" (
 CREATE INDEX idx_betselection_betslipid ON public."BetSelection" USING btree ("BetSlipId");
 CREATE INDEX idx_betselection_matchid ON public."BetSelection" USING btree ("MatchId");
 CREATE INDEX idx_betselection_statusid ON public."BetSelection" USING btree ("StatusId");
+
+CREATE TABLE "BettingEventOption" (
+    "Id"   int4 NOT NULL,
+    "Name" varchar(80) NOT NULL,
+    CONSTRAINT "BettingEventOption_pkey" PRIMARY KEY ("Id")
+);
