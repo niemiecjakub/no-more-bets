@@ -517,8 +517,7 @@ public class JobService(
         foreach (var row in BookmakerEventOptionMapper.MapToRows(
                    ev.Options,
                    eventType.Value,
-                   match,
-                   ev.Title))
+                   match))
         {
           snapshot.Rows.Add(row);
         }

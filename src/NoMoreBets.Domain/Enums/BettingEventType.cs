@@ -6,9 +6,6 @@ public enum BettingEventType
   [Display(Name = "Gole Powyżej/Poniżej")]
   OverUnderGoals = 1,
 
-  [Display(Name = "Liczba goli")]
-  TeamGoals = 2,
-
   [Display(Name = "Podwójna szansa")]
   DoubleChance = 3,
 

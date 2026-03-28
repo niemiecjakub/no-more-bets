@@ -37,7 +37,7 @@ public class BookmakerEventOptionMapperTests
     eventType.Should().Be(BettingEventType.OverUnderGoals);
 
     var match = CreateMatch("Everton", "Burnley");
-    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match, ev.Title);
+    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match);
 
     rows.Should().HaveCount(12);
     rows.Should().OnlyContain(r => r.EventOption.HasValue && r.Odds.HasValue);
@@ -69,7 +69,7 @@ public class BookmakerEventOptionMapperTests
     var eventType = BookmakerEventTypeMapper.Map(ev.Title);
     eventType.Should().Be(BettingEventType.BothTeamsToScore);
 
-    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, CreateMatch("a", "b"), ev.Title);
+    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, CreateMatch("a", "b"));
     rows.Should().HaveCount(2);
     rows[0].EventOption.Should().Be(BettingEventOption.BothTeamsToScore_Yes);
     rows[1].EventOption.Should().Be(BettingEventOption.BothTeamsToScore_No);
@@ -83,7 +83,7 @@ public class BookmakerEventOptionMapperTests
     eventType.Should().Be(BettingEventType.MatchResult);
 
     var match = CreateMatch("Everton", "Burnley");
-    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match, ev.Title);
+    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match);
     rows.Should().HaveCount(3);
     rows[0].EventOption.Should().Be(BettingEventOption.MatchResult_Home);
     rows[1].EventOption.Should().Be(BettingEventOption.MatchResult_Draw);
@@ -98,7 +98,7 @@ public class BookmakerEventOptionMapperTests
     eventType.Should().Be(BettingEventType.DoubleChance);
 
     var match = CreateMatch("Everton", "Burnley");
-    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match, ev.Title);
+    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match);
     rows.Should().HaveCount(3);
     rows[0].EventOption.Should().Be(BettingEventOption.DoubleChance_HomeOrDraw);
     rows[1].EventOption.Should().Be(BettingEventOption.DoubleChance_HomeOrAway);
@@ -113,7 +113,7 @@ public class BookmakerEventOptionMapperTests
     eventType.Should().Be(BettingEventType.Handicap);
 
     var match = CreateMatch("Everton", "Burnley");
-    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match, ev.Title);
+    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match);
     rows.Should().HaveCount(ev.Options.Count);
     rows.Should().OnlyContain(r => r.EventOption.HasValue);
   }
@@ -126,7 +126,7 @@ public class BookmakerEventOptionMapperTests
     eventType.Should().Be(BettingEventType.ExactScore);
 
     var match = CreateMatch("Everton", "Burnley");
-    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match, ev.Title);
+    var rows = BookmakerEventOptionMapper.MapToRows(ev.Options, eventType!.Value, match);
 
     var byLabel = ev.Options.Zip(rows).ToDictionary(z => z.First.Label, z => z.Second.EventOption);
 
@@ -134,43 +134,6 @@ public class BookmakerEventOptionMapperTests
     byLabel["0 - 0"].Should().Be(BettingEventOption.CorrectScore_0_0);
     byLabel["Inny"].Should().Be(BettingEventOption.CorrectScore_Other);
     byLabel["3 - 4"].Should().BeNull();
-  }
-
-  [Fact]
-  public void MapToRows_team_goals_when_title_suffix_is_home_club_maps_home_team_lines()
-  {
-    var match = CreateMatch("Everton", "Burnley");
-    var options = new List<EventOption>
-    {
-      new() { Label = "Powyżej 0,5", Odds = 2.1 },
-      new() { Label = "Poniżej 2,5", Odds = 1.5 }
-    };
-
-    var rows = BookmakerEventOptionMapper.MapToRows(
-      options,
-      BettingEventType.TeamGoals,
-      match,
-      "Liczba goli - Everton");
-
-    rows.Should().HaveCount(2);
-    rows[0].EventOption.Should().Be(BettingEventOption.TeamGoals_Home_Over_0_5);
-    rows[1].EventOption.Should().Be(BettingEventOption.TeamGoals_Home_Under_2_5);
-  }
-
-  [Fact]
-  public void MapToRows_team_goals_when_title_suffix_is_away_club_does_not_map()
-  {
-    var match = CreateMatch("Everton", "Burnley");
-    var options = new List<EventOption> { new() { Label = "Powyżej 0,5", Odds = 2.1 } };
-
-    var rows = BookmakerEventOptionMapper.MapToRows(
-      options,
-      BettingEventType.TeamGoals,
-      match,
-      "Liczba goli - Burnley");
-
-    rows[0].EventOption.Should().BeNull();
-    rows[0].Odds.Should().BeNull();
   }
 
 }

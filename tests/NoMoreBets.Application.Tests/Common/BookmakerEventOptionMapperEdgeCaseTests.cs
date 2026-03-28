@@ -15,8 +15,8 @@ public class BookmakerEventOptionMapperEdgeCaseTests
     AwayClub = new ClubEntity { Name = awayName }
   };
 
-  private static BettingEventOption? MapSingle(string label, BettingEventType type, Match match, string title = "Market") =>
-    BookmakerEventOptionMapper.MapToRows([new EventOption { Label = label, Odds = 1 }], type, match, title)[0]
+  private static BettingEventOption? MapSingle(string label, BettingEventType type, Match match) =>
+    BookmakerEventOptionMapper.MapToRows([new EventOption { Label = label, Odds = 1 }], type, match)[0]
       .EventOption;
 
   public static TheoryData<string, string, bool> ClubNameFuzzyPairs => new()
@@ -94,19 +94,6 @@ public class BookmakerEventOptionMapperEdgeCaseTests
       .Should().Be(BettingEventOption.Handicap_Away_Plus_2);
     MapSingle("Remis (Everton -2)", BettingEventType.Handicap, match)
       .Should().Be(BettingEventOption.Handicap_Draw_Minus_2);
-  }
-
-  [Fact]
-  public void TeamGoals_title_suffix_fuzzy_matches_home_club()
-  {
-    var match = CreateMatch("Everton FC", "Burnley FC");
-    var rows = BookmakerEventOptionMapper.MapToRows(
-      [new EventOption { Label = "Powyżej 0,5", Odds = 2 }],
-      BettingEventType.TeamGoals,
-      match,
-      "Liczba goli - Everton");
-
-    rows[0].EventOption.Should().Be(BettingEventOption.TeamGoals_Home_Over_0_5);
   }
 
   [Fact]

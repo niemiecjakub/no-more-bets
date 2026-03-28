@@ -86,7 +86,6 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
     BettingEventType.DoubleChance,
     BettingEventType.OverUnderGoals,
     BettingEventType.BothTeamsToScore,
-    BettingEventType.TeamGoals,
     BettingEventType.Handicap,
     BettingEventType.ExactScore
   ];

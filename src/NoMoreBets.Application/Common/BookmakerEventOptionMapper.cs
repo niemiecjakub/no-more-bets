@@ -39,13 +39,12 @@ public static class BookmakerEventOptionMapper
   public static IReadOnlyList<BettingOddsSnapshotRow> MapToRows(
     IReadOnlyList<EventOption> options,
     BettingEventType eventType,
-    SoccerMatch match,
-    string eventTitle)
+    SoccerMatch match)
   {
     var rows = new List<BettingOddsSnapshotRow>(options.Count);
     foreach (var opt in options)
     {
-      var mapped = MapOption(opt.Label, eventType, match, eventTitle);
+      var mapped = MapOption(opt.Label, eventType, match);
       rows.Add(new BettingOddsSnapshotRow
       {
         EventType = eventType,
@@ -60,8 +59,7 @@ public static class BookmakerEventOptionMapper
   private static BettingEventOption? MapOption(
     string label,
     BettingEventType eventType,
-    SoccerMatch match,
-    string eventTitle)
+    SoccerMatch match)
   {
     return eventType switch
     {
@@ -71,7 +69,6 @@ public static class BookmakerEventOptionMapper
       BettingEventType.DoubleChance => MapDoubleChance(label, match),
       BettingEventType.Handicap => MapHandicap(label, match),
       BettingEventType.ExactScore => MapExactScore(label),
-      BettingEventType.TeamGoals => MapTeamGoals(label, match, eventTitle),
       _ => null
     };
   }
@@ -106,38 +103,7 @@ public static class BookmakerEventOptionMapper
     if (suffix is null)
       return null;
 
-    return TryParseTotalOrTeamGoalsEnum(over, suffix, teamHome: false);
-  }
-
-  private static BettingEventOption? MapTeamGoals(string label, SoccerMatch match, string eventTitle)
-  {
-    var teamFromTitle = ExtractTeamSuffix(eventTitle);
-    if (string.IsNullOrEmpty(teamFromTitle))
-      return null;
-
-    if (!ClubNameMatches(teamFromTitle, match.HomeClub?.Name))
-      return null;
-
-    var m = OverUnderRegex.Match(label.Trim());
-    if (!m.Success)
-      return null;
-
-    var over = m.Groups["dir"].Value.Equals("Powyżej", StringComparison.OrdinalIgnoreCase);
-
-    var suffix = ParseGoalLineSuffix(m.Groups["num"].Value);
-    if (suffix is null)
-      return null;
-
-    return TryParseTotalOrTeamGoalsEnum(over, suffix, teamHome: true);
-  }
-
-  private static string? ExtractTeamSuffix(string title)
-  {
-    const string sep = " - ";
-    var i = title.LastIndexOf(sep, StringComparison.Ordinal);
-    if (i < 0)
-      return null;
-    return title[(i + sep.Length)..].Trim();
+    return TryParseTotalGoalsEnum(over, suffix);
   }
 
   private static string? ParseGoalLineSuffix(string numRaw)
@@ -155,11 +121,10 @@ public static class BookmakerEventOptionMapper
     return $"{whole}_{frac}";
   }
 
-  private static BettingEventOption? TryParseTotalOrTeamGoalsEnum(bool over, string lineSuffix, bool teamHome)
+  private static BettingEventOption? TryParseTotalGoalsEnum(bool over, string lineSuffix)
   {
     var ou = over ? "Over" : "Under";
-    var prefix = teamHome ? "TeamGoals_Home" : "TotalGoals";
-    var name = $"{prefix}_{ou}_{lineSuffix}";
+    var name = $"TotalGoals_{ou}_{lineSuffix}";
     return Enum.TryParse(name, ignoreCase: false, out BettingEventOption option) ? option : null;
   }
 

@@ -71,19 +71,6 @@ public class BookmakerEventTypeMapperTests
     result.Should().Be(BettingEventType.DoubleChance);
   }
 
-  [Fact]
-  public void Map_PrefixMatchWithTeamSuffix_ReturnsCorrectType()
-  {
-    // Arrange - "Liczba goli - Wolverhampton"
-    var title = "Liczba goli - Wolverhampton";
-
-    // Act
-    var result = BookmakerEventTypeMapper.Map(title);
-
-    // Assert
-    result.Should().Be(BettingEventType.TeamGoals);
-  }
-
   [Theory]
   [InlineData("Gole Powyżej/Poniżej", BettingEventType.OverUnderGoals)]
   [InlineData("Oba zespoły strzelą gola", BettingEventType.BothTeamsToScore)]
