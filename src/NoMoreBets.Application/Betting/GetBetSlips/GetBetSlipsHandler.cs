@@ -32,8 +32,11 @@ public sealed class GetBetSlipsHandler(IUnitOfWork unitOfWork)
             sel.MatchId,
             sel.Match.HomeClub.Name,
             sel.Match.AwayClub.Name,
-            sel.EventTypeEntity.Name,
-            sel.OutcomeKey,
+            BettingEventTypeDisplay.GetDisplayName(sel.BetEventType),
+            BettingEventOptionDisplay.GetDisplayName(
+              sel.BetEventOption,
+              sel.Match.HomeClub.Name,
+              sel.Match.AwayClub.Name),
             sel.OddsAtPlacement,
             sel.BetStatus))
           .ToList()))
