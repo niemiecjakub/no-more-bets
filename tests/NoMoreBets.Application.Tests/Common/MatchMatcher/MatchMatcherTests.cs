@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Application.Common.Dto.Clubs;
+using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
@@ -349,7 +350,7 @@ public class MatchMatcherTests
   public void FindXgStats_WhenEmptyList_ReturnsNull()
   {
     // Arrange
-    var xgStats = new List<XgStatsDto>();
+    var xgStats = new List<XgStats>();
 
     // Act
     var result = _sut.FindXgStats("Arsenal", xgStats);
@@ -362,9 +363,23 @@ public class MatchMatcherTests
   public void FindXgStats_WhenNoMatch_ReturnsNull()
   {
     // Arrange
-    var xgStats = new List<XgStatsDto>
+    var xgStats = new List<XgStats>
     {
-      new(1, null, 1, "Arsenal", "ARS", "", 42.5, "+1", 16.0, "+0.5", 51.0, "+2")
+      new()
+      {
+        Position = 1,
+        PositionChange = null,
+        TeamId = 1,
+        TeamName = "Arsenal",
+        TeamShortname = "ARS",
+        TeamLogoUrl = "",
+        Xg = 42.5,
+        XgDiff = "+1",
+        Xga = 16.0,
+        XgaDiff = "+0.5",
+        Xpts = 51.0,
+        XptsDiff = "+2"
+      }
     };
 
     // Act
@@ -378,8 +393,22 @@ public class MatchMatcherTests
   public void FindXgStats_ExactMatch_ReturnsStat()
   {
     // Arrange
-    var stat = new XgStatsDto(1, null, 9825, "Arsenal", "Arsenal", "", 42.66, "+3.3", 16.42, "+0.6", 51.23, "+2");
-    var xgStats = new List<XgStatsDto> { stat };
+    var stat = new XgStats
+    {
+      Position = 1,
+      PositionChange = null,
+      TeamId = 9825,
+      TeamName = "Arsenal",
+      TeamShortname = "Arsenal",
+      TeamLogoUrl = "",
+      Xg = 42.66,
+      XgDiff = "+3.3",
+      Xga = 16.42,
+      XgaDiff = "+0.6",
+      Xpts = 51.23,
+      XptsDiff = "+2"
+    };
+    var xgStats = new List<XgStats> { stat };
 
     // Act
     var result = _sut.FindXgStats("Arsenal", xgStats);
@@ -394,8 +423,22 @@ public class MatchMatcherTests
   public void FindXgStats_PartialNameContains_ReturnsStat()
   {
     // Arrange: "Arsenal" contained in "Arsenal" (exact) - partial match path uses Contains
-    var stat = new XgStatsDto(1, null, 9825, "Arsenal", "ARS", "", 42.0, null, 16.0, null, 50.0, null);
-    var xgStats = new List<XgStatsDto> { stat };
+    var stat = new XgStats
+    {
+      Position = 1,
+      PositionChange = null,
+      TeamId = 9825,
+      TeamName = "Arsenal",
+      TeamShortname = "ARS",
+      TeamLogoUrl = "",
+      Xg = 42.0,
+      XgDiff = null,
+      Xga = 16.0,
+      XgaDiff = null,
+      Xpts = 50.0,
+      XptsDiff = null
+    };
+    var xgStats = new List<XgStats> { stat };
 
     // Act
     var result = _sut.FindXgStats("Arsenal", xgStats);

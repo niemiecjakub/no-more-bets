@@ -3,7 +3,6 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
-using NoMoreBets.Application.Common.Dto.Clubs;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Domain.Leagues;
@@ -64,8 +63,6 @@ public class UpdateTableHandler(
     var tableClubs = tableTask.Result;
     var xgStats = xgTask.Result;
 
-    var xgStatsDtos = xgStats.Select(XgStatsDto.From).ToList();
-
     var latestSnapshot = await unitOfWork.Leagues.GetLatestTableSnapshot(request.LeagueId) ?? new();
 
     if (latestSnapshot.Rows.Count > 0 && latestSnapshot.Rows.Count == tableClubs.Count)
@@ -101,7 +98,7 @@ public class UpdateTableHandler(
     foreach (var club in tableClubs)
     {
       var domainClub = matchMatcher.FindClub(club.TeamName, domainClubs);
-      var xg = matchMatcher.FindXgStats(club.TeamName, xgStatsDtos);
+      var xg = matchMatcher.FindXgStats(club.TeamName, xgStats);
       var row = new LeagueTableSnapshotRow
       {
         ClubId = domainClub.Id,

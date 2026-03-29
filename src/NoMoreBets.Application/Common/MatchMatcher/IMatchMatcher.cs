@@ -1,5 +1,6 @@
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Application.Common.Dto.Clubs;
+using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Application.Common.Dto.Matches;
 
@@ -27,7 +28,7 @@ public interface IMatchMatcher
   Club FindClub(string teamName, IReadOnlyList<Club> clubs);
 
   /// <summary>Finds xG stats by team name (exact or fuzzy).</summary>
-  XgStatsDto? FindXgStats(string teamName, IReadOnlyList<XgStatsDto> xgStats);
+  XgStats? FindXgStats(string teamName, IReadOnlyList<XgStats> xgStats);
 
   /// <summary>Finds the best matching candidate by home/away team names (exact or fuzzy).</summary>
   T? FindBestMatch<T>(string home, string away, IReadOnlyList<(string HomeName, string AwayName, T Value)> candidates);

@@ -5,11 +5,7 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 
 public class MemoriesPlugin
 {
-  private static readonly string FilesDirectory = Path.Combine(
-    AppContext.BaseDirectory,
-    "AI",
-    "Plugins",
-    "Files");
+  private static readonly string FilesDirectory = Path.Combine(AppContext.BaseDirectory,"AI","Plugins","Files");
 
   private static string ResolvePath(string filename)
   {

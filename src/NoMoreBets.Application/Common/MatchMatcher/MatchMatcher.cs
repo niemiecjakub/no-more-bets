@@ -2,6 +2,7 @@ using FuzzySharp;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Application.Common.Dto.Clubs;
+using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Application.Common.Dto.Matches;
 
@@ -203,7 +204,7 @@ public sealed class MatchMatcher : IMatchMatcher
   }
 
   /// <inheritdoc />
-  public XgStatsDto? FindXgStats(string teamName, IReadOnlyList<XgStatsDto> xgStats)
+  public XgStats? FindXgStats(string teamName, IReadOnlyList<XgStats> xgStats)
   {
     if (xgStats.Count == 0)
     {
