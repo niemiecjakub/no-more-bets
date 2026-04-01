@@ -19,6 +19,8 @@ src/NoMoreBets/NoMoreBets.Data/Resources/*
 .env
 plans/
 
+nanobot/
+
 src/NoMoreBets/appsettings.Development.json
 src/NoMoreBets/appsettings.json
 

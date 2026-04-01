@@ -2,19 +2,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Infrastructure.AI.Agent;
 using NoMoreBets.Infrastructure.AI.Plugins;
+using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Infrastructure.AI;
 public static class SemanticKernelProvider
 {
   public static IServiceCollection AddSemanticKernelServices(this IServiceCollection services, IConfiguration configuration)
   {
-    services.AddSingleton<AgentThreadState>();
-
-    services.AddScoped<IPluginFactory, PluginFactory>();
-
-    services.AddScoped(sp =>
+    services.AddSingleton<IPluginFactory, PluginFactory>();
+    services.AddScoped<Kernel>(sp =>
     {
       var builder = Kernel.CreateBuilder();
       var config = sp.GetRequiredService<IConfiguration>();
@@ -24,9 +21,9 @@ public static class SemanticKernelProvider
       return builder.Build();
     });
 
-    services.AddScoped<ContextBuilder>();
-    services.AddScoped<AgentBuilder>();
-    services.AddScoped<Runner>();
+    services.AddSingleton<ContextBuilder>();
+    services.AddSingleton<AgentBuilder>();
+    services.AddSingleton<Runner>();
 
     return services;
   }

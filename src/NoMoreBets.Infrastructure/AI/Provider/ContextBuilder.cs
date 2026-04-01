@@ -1,6 +1,4 @@
-using Microsoft.SemanticKernel.ChatCompletion;
-
-namespace NoMoreBets.Infrastructure.AI.Agent;
+namespace NoMoreBets.Infrastructure.AI.Provider;
 
 public sealed class ContextBuilder
 {
@@ -8,7 +6,7 @@ public sealed class ContextBuilder
 
   public ContextBuilder()
   {
-    var workspace = Path.Combine(AppContext.BaseDirectory, "AI", "Agent");
+    var workspace = Path.Combine(AppContext.BaseDirectory, "AI", "Provider");
     var path = Path.Combine(workspace, "SOUL.md");
     _systemMessage = File.Exists(path)
       ? $"# SOUL\n\n{File.ReadAllText(path)}"

@@ -1,7 +1,7 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.Simulation.Simulate;
-using NoMoreBets.Infrastructure.AI.Agent;
+using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Controllers;
 
@@ -24,7 +24,7 @@ public sealed class TrashController(IMediator mediator, Runner runner) : Control
   /// Request body: JSON string, e.g. <c>"Hello"</c>.
   /// </summary>
   [HttpPost("agent/message")]
-  public async Task<ActionResult<string>> PostAgentMessage(
+  public async Task<ActionResult<List<string>>> PostAgentMessage(
     [FromBody] string message,
     CancellationToken cancellationToken = default)
   {
@@ -33,7 +33,8 @@ public sealed class TrashController(IMediator mediator, Runner runner) : Control
       return BadRequest("Message is required.");
     }
 
-    var reply = await runner.RunTurnAsync(message.Trim(), cancellationToken).ConfigureAwait(false);
-    return Ok(reply.Content ?? string.Empty);
+    var messages = await runner.RunTurnAsync(message.Trim(), cancellationToken).ConfigureAwait(false);
+
+    return Ok(messages.Select(m => m.Content).ToArray());
   }
 }

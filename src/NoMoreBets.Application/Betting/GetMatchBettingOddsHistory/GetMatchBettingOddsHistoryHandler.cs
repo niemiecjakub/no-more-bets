@@ -25,10 +25,6 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
     {
       foreach (var row in snapshot.Rows)
       {
-        var eventType = (BettingEventType)row.EventTypeId;
-        if (!BettingOddsHistoryEventTypeWhitelist.Contains(eventType))
-          continue;
-
         if (!byEventType.TryGetValue(row.EventTypeId, out var acc))
         {
           acc = new EventTypeOddsAccumulator { EventTypeName = row.EventTypeEntity.Name };
@@ -85,16 +81,6 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
 
     return segments;
   }
-
-  private static readonly HashSet<BettingEventType> BettingOddsHistoryEventTypeWhitelist =
-  [
-    BettingEventType.MatchResult,
-    BettingEventType.DoubleChance,
-    BettingEventType.OverUnderGoals,
-    BettingEventType.BothTeamsToScore,
-    BettingEventType.Handicap,
-    BettingEventType.ExactScore
-  ];
 
   private sealed class EventTypeOddsAccumulator
   {
