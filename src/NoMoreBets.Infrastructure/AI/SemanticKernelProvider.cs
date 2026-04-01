@@ -1,5 +1,5 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Infrastructure.AI.Plugins;
@@ -8,22 +8,23 @@ using NoMoreBets.Infrastructure.AI.Provider;
 namespace NoMoreBets.Infrastructure.AI;
 public static class SemanticKernelProvider
 {
-  public static IServiceCollection AddSemanticKernelServices(this IServiceCollection services, IConfiguration configuration)
+  public static IServiceCollection AddSemanticKernelServices(this IServiceCollection services)
   {
-    services.AddSingleton<IPluginFactory, PluginFactory>();
+    services.AddSingleton<ThreadProvider>();
+    services.AddScoped<IPluginFactory, PluginFactory>();
     services.AddScoped<Kernel>(sp =>
     {
       var builder = Kernel.CreateBuilder();
-      var config = sp.GetRequiredService<IConfiguration>();
-      string modelId = config["OpenAI:ModelId"] ?? throw new ArgumentNullException("OpenAI ModelId is missing");
-      string apiKey = config["OpenAI:ApiKey"] ?? throw new ArgumentNullException("OpenAI ApiKey is missing");
+      var openAi = sp.GetRequiredService<IOptions<OpenAIOptions>>().Value;
+      string modelId = openAi.ModelId;
+      string apiKey = openAi.ApiKey;
       builder.AddOpenAIChatCompletion(modelId, apiKey);
       return builder.Build();
     });
 
-    services.AddSingleton<ContextBuilder>();
-    services.AddSingleton<AgentBuilder>();
-    services.AddSingleton<Runner>();
+    services.AddScoped<ContextBuilder>();
+    services.AddScoped<AgentBuilder>();
+    services.AddScoped<Runner>();
 
     return services;
   }

@@ -1,19 +1,19 @@
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Search;
-using NoMoreBets.Infrastructure.AI.Plugins;
 
 namespace NoMoreBets.Infrastructure.AI.Provider;
 
 public sealed class Runner
 {
-  private Agent? _agent;
-  private AgentThread? _thread;
-  private AgentInvokeOptions? _options;
+  private Agent _agent;
+  private AgentThread _thread;
+  private AgentInvokeOptions _options;
+  private ThreadProvider _threadProvider;
 
-  public Runner(AgentBuilder agentBuilder, IPluginFactory pluginFactory)
+  public Runner(AgentBuilder agentBuilder, ThreadProvider threadProvider, IPluginFactory pluginFactory)
   {
+    _threadProvider = threadProvider;
     var config = agentBuilder.Build();
     _agent ??= config.Agent;
     _thread ??= config.Thread;
@@ -24,9 +24,10 @@ public sealed class Runner
   public async Task<List<ChatMessageContent>> RunTurnAsync(string userMessage, CancellationToken cancellationToken = default)
   {
     var messages = new List<ChatMessageContent>();
-    await foreach (var message in _agent!.InvokeAsync(userMessage, _thread, _options, cancellationToken))
+    await foreach (var message in _agent.InvokeAsync(userMessage, _thread, _options, cancellationToken))
     {
       messages.Add(message.Message);
+      _threadProvider.ThreadId = message.Thread.Id;
     }
 
     return messages;

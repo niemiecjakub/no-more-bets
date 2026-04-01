@@ -1,6 +1,7 @@
 using MediatR;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using NoMoreBets.Infrastructure.AI;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents.OpenAI;
 using NoMoreBets.Application.Search;
@@ -14,29 +15,28 @@ namespace NoMoreBets.Infrastructure.AI.Provider;
 public sealed class AgentBuilder
 {
   private readonly ContextBuilder _contextBuilder;
-  private readonly IConfiguration _configuration;
+  private readonly OpenAIOptions _openAi;
+  private readonly ThreadProvider _threadProvider;
 
   public AgentBuilder(
     ContextBuilder contextBuilder,
-    IConfiguration configuration,
-
-    IMediator mediator,
-    ILogger<AgentBuilder> logger)
+    IOptions<OpenAIOptions> openAiOptions,
+    ThreadProvider threadProvider)
   {
     _contextBuilder = contextBuilder;
-    _configuration = configuration;
+    _openAi = openAiOptions.Value;
+    _threadProvider = threadProvider;
   }
 
   public AgentConfig Build()
   {
-    string modelId = _configuration["OpenAI:ModelId"] ?? throw new InvalidOperationException("OpenAI ModelId is missing.");
-    string apiKey = _configuration["OpenAI:ApiKey"] ?? throw new InvalidOperationException("OpenAI ApiKey is missing.");
-
-    var credential = new ApiKeyCredential(apiKey);
+    var credential = new ApiKeyCredential(_openAi.ApiKey);
     var openAiClient = new OpenAIClient(credential);
     ResponsesClient responsesClient = openAiClient.GetResponsesClient();
 
-    OpenAIResponseAgentThread thread = new OpenAIResponseAgentThread(responsesClient);
+    OpenAIResponseAgentThread thread = string.IsNullOrEmpty(_threadProvider.ThreadId)
+      ? new OpenAIResponseAgentThread(responsesClient)
+      : new OpenAIResponseAgentThread(responsesClient, _threadProvider.ThreadId);
 
     OpenAIResponseAgentInvokeOptions options = new OpenAIResponseAgentInvokeOptions()
     {
@@ -48,7 +48,7 @@ public sealed class AgentBuilder
       },
     };
 
-    OpenAIResponseAgent agent = new OpenAIResponseAgent(responsesClient, modelId)
+    OpenAIResponseAgent agent = new OpenAIResponseAgent(responsesClient, _openAi.ModelId)
     {
       Instructions = _contextBuilder.Instructions,
       StoreEnabled = true

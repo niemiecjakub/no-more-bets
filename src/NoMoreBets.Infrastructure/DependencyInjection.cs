@@ -57,6 +57,7 @@ public static class DependencyInjection
     services.Configure<SoccerDataOptions>(configuration.GetSection(SoccerDataOptions.SectionName));
     services.Configure<ProxyOptions>(configuration.GetSection(ProxyOptions.SectionName));
     services.Configure<BraveSearchOptions>(configuration.GetSection(BraveSearchOptions.SectionName));
+    services.Configure<OpenAIOptions>(configuration.GetSection(OpenAIOptions.SectionName));
 
     services.AddOptions<SoccerDataOptions>()
       .Bind(configuration.GetSection(SoccerDataOptions.SectionName))
@@ -70,7 +71,7 @@ public static class DependencyInjection
     services.AddScoped<ILeagueRepository, LeagueRepository>();
     services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-    services.AddSemanticKernelServices(configuration);
+    services.AddSemanticKernelServices();
 
     // Browser automation
     services.AddSingleton<PlaywrightBrowserService>();
