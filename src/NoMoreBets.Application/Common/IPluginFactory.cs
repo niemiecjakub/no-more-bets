@@ -2,7 +2,7 @@ namespace NoMoreBets.Application.Common;
 
 public interface IPluginFactory
 {
-  Task<object> CreateMatchPluginAsync(int matchId, CancellationToken cancellationToken = default);
+  object CreateMatchPlugin();
   object CreateBettingPlugin();
   object CreateSearchPlugin();
   object CreateMemoriesPlugin();

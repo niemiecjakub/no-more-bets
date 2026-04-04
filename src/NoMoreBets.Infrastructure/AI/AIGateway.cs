@@ -22,8 +22,7 @@ public sealed class AIGateway(IPluginFactory pluginFactory, IOptions<OpenAIOptio
   public async Task<string> InvokeAsync(MatchPredictionPromptRequest request, CancellationToken cancellationToken = default)
   {
     Kernel kernel = CreateKernel();
-    var matchPlugin = await pluginFactory.CreateMatchPluginAsync(request.Match.Id, cancellationToken).ConfigureAwait(false);
-    kernel.Plugins.AddFromObject(matchPlugin);
+    kernel.Plugins.AddFromObject(pluginFactory.CreateMatchPlugin());
 
     var searchPlugin = pluginFactory.CreateSearchPlugin();
     kernel.Plugins.AddFromObject(searchPlugin);
@@ -38,9 +37,10 @@ public sealed class AIGateway(IPluginFactory pluginFactory, IOptions<OpenAIOptio
     string query = $"""
       MATCH INFORMATION:
 
-      {request.Match.HomeClub.Name} vs {request.Match.AwayClub.Name}. Date: {request.Match.MatchDate:yyyy-MM-dd HH:mm} UTC. 
-      Home Club: {request.Match.HomeClub.Name} (ID = {request.Match.HomeClub.Id})  
-      Away Club: {request.Match.AwayClub.Name} (ID = {request.Match.AwayClub.Id})  
+      Match ID = {request.Match.Id}
+      {request.Match.HomeClub.Name} vs {request.Match.AwayClub.Name}. Date: {request.Match.MatchDate:yyyy-MM-dd HH:mm} UTC.
+      Home Club: {request.Match.HomeClub.Name} (ID = {request.Match.HomeClub.Id})
+      Away Club: {request.Match.AwayClub.Name} (ID = {request.Match.AwayClub.Id})
       """;
 
     var arguments = new KernelArguments(executionSettings);
@@ -58,11 +58,11 @@ public sealed class AIGateway(IPluginFactory pluginFactory, IOptions<OpenAIOptio
     # WORKFLOW
 
     ## STEP 1: FOUNDATIONAL DATA RETRIEVAL (Internal)
-    First, retrieve the core "Truth" from the `MatchPlugin`:
-    • GetLineups, GetInjuries, and GetMatchPreview.
-    • GetClubRecentGames and GetClubLeagueStatistics (xG, xGA, position).
-    • GetHead2HeadStats and GetMatchBettingOddsHistory.
-    • GetClubRollingPerformance (Player/Team ratings and formations).
+    First, retrieve the core "Truth" from the `MatchPlugin`. Pass **matchId** from MATCH INFORMATION for every match-scoped tool; for club-scoped tools pass **clubId** from MATCH INFORMATION.
+    • GetLineups, GetInjuries, GetMatchPreview, GetLeagueTable — use matchId.
+    • GetClubDailySummary, GetClubRecentGames, and GetClubLeagueStatistics (xG, xGA, position) — use clubId.
+    • GetHead2HeadStats and GetMatchBettingOddsHistory — use matchId.
+    • GetClubRollingPerformance (Player/Team ratings and formations) — use clubId.
 
     ## STEP 2: CONTEXTUAL INTELLIGENCE (External Search)
     Once you have the stats, use the `SearchPlugin` to fill the gaps. **Do not skip this step.**

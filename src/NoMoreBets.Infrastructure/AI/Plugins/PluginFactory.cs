@@ -8,14 +8,8 @@ public class PluginFactory : IPluginFactory
   private readonly IServiceProvider _sp;
   public PluginFactory(IServiceProvider sp) => _sp = sp;
 
-  public async Task<object> CreateMatchPluginAsync(int matchId, CancellationToken cancellationToken = default)
-  {
-    var unitOfWork = _sp.GetRequiredService<IUnitOfWork>();
-    var match = await unitOfWork.Matches.GetMatchByIdAsync(matchId, cancellationToken).ConfigureAwait(false)
-      ?? throw new ArgumentException($"Match {matchId} not found.");
-
-    return ActivatorUtilities.CreateInstance<MatchPlugin>(_sp, match);
-  }
+  public object CreateMatchPlugin() =>
+    ActivatorUtilities.CreateInstance<MatchPlugin>(_sp);
 
   public object CreateBettingPlugin()
   {

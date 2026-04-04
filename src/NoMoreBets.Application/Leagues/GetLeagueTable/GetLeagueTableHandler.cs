@@ -4,7 +4,7 @@ using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.GetLeagueTable;
 
-public record GetLeagueTableQuery(int LeagueId, DateOnly AsOfDate) : IRequest<IReadOnlyList<LeagueTableStanding>?>;
+public record GetLeagueTableQuery(int LeagueId, DateOnly? AsOfDate = null) : IRequest<IReadOnlyList<LeagueTableStanding>?>;
 
 public sealed class GetLeagueTableHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetLeagueTableQuery, IReadOnlyList<LeagueTableStanding>?>
 {

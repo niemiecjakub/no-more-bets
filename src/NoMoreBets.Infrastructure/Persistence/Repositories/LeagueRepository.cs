@@ -33,11 +33,11 @@ public class LeagueRepository : ILeagueRepository
       .FirstOrDefaultAsync();
   }
 
-  public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsOfAsync(int leagueId, DateOnly asOfDate, CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsOfAsync(int leagueId, DateOnly? asOfDate, CancellationToken cancellationToken = default)
   {
     var snapshot = await _db.LeagueTableSnapshot
       .AsNoTracking()
-      .Where(s => s.LeagueId == leagueId && s.SnapshotDate <= asOfDate)
+      .Where(s => s.LeagueId == leagueId && (asOfDate == null || s.SnapshotDate <= asOfDate))
       .OrderByDescending(s => s.SnapshotDate)
       .Include(s => s.Rows)
       .ThenInclude(r => r.Club)
