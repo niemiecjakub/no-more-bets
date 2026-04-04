@@ -82,14 +82,15 @@ public class BaseScraperTests
         var fetcher = PlaywrightPageFetcherMockHelper.CreateMock();
         fetcher.GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromException<string>(new InvalidOperationException("Transient failure")));
-        var opts = DefaultOptions() with { RetryCount = 2, RetryDelaySeconds = 0.01 };
+        // Allow the sliding-window rate limiter to release a new permit between attempts (window uses DelaySeconds).
+        var opts = DefaultOptions() with { RetryCount = 2, RetryDelaySeconds = 0.05, DelaySeconds = 0.01 };
         var sut = CreateSut(pageFetcher: fetcher, opts);
 
         var act = () => sut.FetchAsync(url);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage($"*Failed to fetch {url} after 2 attempts*");
-        await fetcher.Received(2).GetHtmlAsync(url, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+        await fetcher.Received(2).GetHtmlAsync(url, TimeSpan.FromSeconds(opts.TimeoutSeconds), Arg.Any<CancellationToken>());
     }
 
     [Fact]
