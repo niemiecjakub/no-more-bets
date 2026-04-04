@@ -1,3 +1,4 @@
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -14,6 +15,7 @@ public class BetSlip
 
   public BetStatusEntity BetStatusEntity { get; set; } = null!;
   public ICollection<BetSelection> Selections { get; set; } = new List<BetSelection>();
+  public ICollection<Bankroll> Bankrolls { get; set; } = new List<Bankroll>();
 
   [NotMapped]
   public BetStatus BetStatus

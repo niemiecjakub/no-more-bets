@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Memories;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
@@ -34,6 +36,8 @@ public class AppDbContext : DbContext
   public DbSet<BetStatusEntity> BetStatus { get; set; }
   public DbSet<BetSlip> BetSlip { get; set; }
   public DbSet<BetSelection> BetSelection { get; set; }
+  public DbSet<Memory> Memory { get; set; }
+  public DbSet<Bankroll> Bankroll { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -334,6 +338,32 @@ public class AppDbContext : DbContext
         .WithMany()
         .HasForeignKey(e => e.StatusId)
         .OnDelete(DeleteBehavior.Restrict);
+    });
+
+    modelBuilder.Entity<Memory>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+      entity.Property(e => e.Description).IsRequired(false);
+      entity.Property(e => e.Content).IsRequired();
+      entity.Property(e => e.CreatedAt).IsRequired();
+      entity.Property(e => e.UpdatedAt).IsRequired();
+      entity.HasIndex(e => e.Name);
+    });
+
+    modelBuilder.Entity<Bankroll>(entity =>
+    {
+      entity.ToTable("Bankroll", t => t.HasCheckConstraint("chk_bankroll_flow", "\"Flow\" IN ('IN', 'OUT')"));
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+      entity.Property(e => e.Amount).IsRequired().HasPrecision(18, 4);
+      entity.Property(e => e.Flow).IsRequired().HasMaxLength(3);
+      entity.Property(e => e.BetId).IsRequired(false);
+      entity.Property(e => e.CreatedAt).IsRequired();
+      entity.HasIndex(e => e.BetId);
+      entity.HasOne(e => e.BetSlip).WithMany(s => s.Bankrolls).HasForeignKey(e => e.BetId).OnDelete(DeleteBehavior.Restrict);
     });
   }
 }

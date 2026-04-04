@@ -311,3 +311,27 @@ CREATE INDEX idx_betselection_betslipid ON public."BetSelection" USING btree ("B
 CREATE INDEX idx_betselection_matchid ON public."BetSelection" USING btree ("MatchId");
 CREATE INDEX idx_betselection_eventoptionid ON public."BetSelection" USING btree ("EventOptionId");
 CREATE INDEX idx_betselection_statusid ON public."BetSelection" USING btree ("StatusId");
+
+CREATE TABLE "Memory" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"Name" varchar(200) NOT NULL,
+	"Description" text NULL,
+	"Content" text NOT NULL,
+	"CreatedAt" timestamp NOT NULL,
+	"UpdatedAt" timestamp NOT NULL,
+	CONSTRAINT "Memory_pkey" PRIMARY KEY ("Id")
+);
+CREATE INDEX idx_memory_name ON public."Memory" USING btree ("Name");
+
+CREATE TABLE "Bankroll" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"Name" varchar(200) NOT NULL,
+	"Amount" numeric(18, 4) NOT NULL,
+	"Flow" varchar(3) NOT NULL,
+	"BetId" int4 NULL,
+	"CreatedAt" timestamp NOT NULL,
+	CONSTRAINT "Bankroll_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT chk_bankroll_flow CHECK ("Flow" IN ('IN', 'OUT')),
+	CONSTRAINT fk_bankroll_betslip FOREIGN KEY ("BetId") REFERENCES "BetSlip"("Id") ON DELETE RESTRICT
+);
+CREATE INDEX idx_bankroll_betid ON public."Bankroll" USING btree ("BetId");
