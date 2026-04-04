@@ -1,24 +1,12 @@
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using NoMoreBets.Application.Simulation.Simulate;
 using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class TrashController(IMediator mediator, Runner runner) : ControllerBase
+public sealed class TrashController(Runner runner) : ControllerBase
 {
-  /// <summary>
-  /// Runs the Corporate Carl simulation: research, news, analysis, optional bet slip, memory files.
-  /// </summary>
-  [HttpPost("simulate")]
-  public async Task<ActionResult> Simulate(CancellationToken cancellationToken = default)
-  {
-    await mediator.Send(new SimulateQuery(), cancellationToken).ConfigureAwait(false);
-    return NoContent();
-  }
-
   /// <summary>
   /// Sends a user message to the OpenAI assistant runner and returns the assistant reply text.
   /// Request body: JSON string, e.g. <c>"Hello"</c>.

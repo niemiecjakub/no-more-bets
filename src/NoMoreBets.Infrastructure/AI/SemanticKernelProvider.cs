@@ -1,7 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Matches.GetMatchPrediction;
 using NoMoreBets.Infrastructure.AI.Plugins;
 using NoMoreBets.Infrastructure.AI.Provider;
 
@@ -12,16 +11,7 @@ public static class SemanticKernelProvider
   {
     services.AddSingleton<ThreadProvider>();
     services.AddScoped<IPluginFactory, PluginFactory>();
-    services.AddScoped<Kernel>(sp =>
-    {
-      var builder = Kernel.CreateBuilder();
-      var openAi = sp.GetRequiredService<IOptions<OpenAIOptions>>().Value;
-      string modelId = openAi.ModelId;
-      string apiKey = openAi.ApiKey;
-      builder.AddOpenAIChatCompletion(modelId, apiKey);
-      return builder.Build();
-    });
-
+    services.AddScoped<IMatchPrediction, AIGateway>();
     services.AddScoped<ContextBuilder>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<Runner>();
