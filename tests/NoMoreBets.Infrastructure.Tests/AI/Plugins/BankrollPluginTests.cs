@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MediatR;
 using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Bankrolls;
@@ -10,12 +11,13 @@ public class BankrollPluginTests
 {
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBankrollRepository _bankrolls = Substitute.For<IBankrollRepository>();
+  private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly BankrollPlugin _sut;
 
   public BankrollPluginTests()
   {
     _unitOfWork.Bankroll.Returns(_bankrolls);
-    _sut = new BankrollPlugin(_unitOfWork);
+    _sut = new BankrollPlugin(_unitOfWork, _mediator);
   }
 
   [Fact]

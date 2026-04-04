@@ -25,7 +25,7 @@ public class BankrollPlugin
   }
 
   [KernelFunction("GetDaysUntilPayday")]
-  [Description("Returns the number of whole calendar days until the next payday. Paydays are the last day of each month (UTC); on month-end, the next payday is the last day of the following month.")]
+  [Description("Returns whole calendar days until payday (last day of the current month, UTC), or 0 when today is payday.")]
   public async Task<int> GetDaysUntilPaydayAsync(CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetDaysUntilPaydayQuery(), cancellationToken).ConfigureAwait(false);

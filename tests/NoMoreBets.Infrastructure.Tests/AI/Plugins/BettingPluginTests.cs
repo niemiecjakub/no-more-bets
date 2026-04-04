@@ -2,8 +2,10 @@ using FluentAssertions;
 using MediatR;
 using NSubstitute;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Plugins;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
@@ -15,12 +17,15 @@ public class BettingPluginTests
 {
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
+  private readonly IBankrollRepository _bankroll = Substitute.For<IBankrollRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly BettingPlugin _sut;
 
   public BettingPluginTests()
   {
     _unitOfWork.Betting.Returns(_betting);
+    _unitOfWork.Bankroll.Returns(_bankroll);
+    _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
     _sut = new BettingPlugin(_unitOfWork, _mediator);
   }
 
@@ -100,5 +105,57 @@ public class BettingPluginTests
     market.EventTypeId.Should().Be(5);
     market.Options.Should().ContainSingle()
       .Which.Should().Be(new CurrentOddsOption("Away", 2.1));
+  }
+
+  [Fact]
+  public async Task PlaceBetSlip_WhenStakeIsZero_ThrowsAndDoesNotAddBetSlip()
+  {
+    const string json =
+      """{"betSelections":[{"matchId":1,"eventType":"bothTeamsToScore","eventOption":"bothTeamsToScore_Yes"}]}""";
+
+    var act = async () => await _sut.PlaceBetSlip(0m, json, CancellationToken.None);
+
+    await act.Should().ThrowAsync<ArgumentException>()
+      .WithMessage("*stakeAmount must be greater than zero*")
+      .Where(e => e.ParamName == "stakeAmount");
+    await _betting.DidNotReceive().AddBetSlipAsync(Arg.Any<BetSlip>(), Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task PlaceBetSlip_WhenStakeExceedsBalance_ThrowsAndDoesNotAddBetSlip()
+  {
+    const string json =
+      """{"betSelections":[{"matchId":1,"eventType":"bothTeamsToScore","eventOption":"bothTeamsToScore_Yes"}]}""";
+    _bankroll.GetCurrentBalanceAsync(Arg.Any<CancellationToken>()).Returns(40m);
+
+    var act = async () => await _sut.PlaceBetSlip(50m, json, CancellationToken.None);
+
+    await act.Should().ThrowAsync<ArgumentException>()
+      .WithMessage("*cannot exceed the current bankroll balance*");
+    await _betting.DidNotReceive().AddBetSlipAsync(Arg.Any<BetSlip>(), Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task PlaceBetSlip_WhenValid_AddsSlipWithBankrollOutAndSaves()
+  {
+    const string json =
+      """{"betSelections":[{"matchId":1,"eventType":"bothTeamsToScore","eventOption":"bothTeamsToScore_Yes"}]}""";
+    _bankroll.GetCurrentBalanceAsync(Arg.Any<CancellationToken>()).Returns(100m);
+    _betting.GetCurrentOddsForSelectionAsync(1, BettingEventType.BothTeamsToScore, BettingEventOption.BothTeamsToScore_Yes, Arg.Any<CancellationToken>())
+      .Returns(2.0m);
+
+    await _sut.PlaceBetSlip(25m, json, CancellationToken.None);
+
+    await _betting.Received(1).AddBetSlipAsync(
+      Arg.Is<BetSlip>(s =>
+        s.StakeAmount == 25m
+        && s.TotalOdds == 2.0m
+        && s.PotentialPayout == 50m
+        && s.Bankrolls.Count == 1
+        && s.Bankrolls.Single().Amount == 25m
+        && s.Bankrolls.Single().Direction == BankrollFlow.Out
+        && s.Bankrolls.Single().Name == "Bet stake"),
+      Arg.Any<CancellationToken>());
+    await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 }

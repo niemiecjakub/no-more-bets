@@ -5,7 +5,7 @@ namespace NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 public record GetDaysUntilPaydayQuery : IRequest<int>;
 
 /// <summary>
-/// Paydays are the last calendar day of each month (UTC). On month-end, the next payday is the last day of the following month.
+/// Paydays are the last calendar day of each month (UTC). Returns 0 on that day; otherwise whole days until then.
 /// </summary>
 public sealed class GetDaysUntilPaydayHandler : IRequestHandler<GetDaysUntilPaydayQuery, int>
 {
@@ -14,18 +14,12 @@ public sealed class GetDaysUntilPaydayHandler : IRequestHandler<GetDaysUntilPayd
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
     var lastThisMonth = LastDayOfMonth(today.Year, today.Month);
 
-    DateOnly nextPayday;
-    if (today < lastThisMonth)
+    if (today == lastThisMonth)
     {
-      nextPayday = lastThisMonth;
-    }
-    else
-    {
-      var nextMonth = today.AddMonths(1);
-      nextPayday = LastDayOfMonth(nextMonth.Year, nextMonth.Month);
+      return Task.FromResult(0);
     }
 
-    var days = nextPayday.DayNumber - today.DayNumber;
+    var days = lastThisMonth.DayNumber - today.DayNumber;
     return Task.FromResult(days);
   }
 

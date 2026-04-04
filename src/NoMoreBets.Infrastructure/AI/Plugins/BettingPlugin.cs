@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
@@ -85,14 +86,18 @@ public class BettingPlugin
   [KernelFunction("PlaceBetSlip")]
   [Description("Places a bet slip with one or more selections across one or more matches. Call this once you have finished analyzing all available matches and have selected the best value bets.")]
   public async Task PlaceBetSlip(
-    [Description("JSON object with a single property 'betSelections': an array of selection objects. Each object must have: matchId (int, from GetAvailableMatches), eventType (string, one of: OverUnderGoals, DoubleChance, BothTeamsToScore, MatchResult, Handicap, ExactScore), eventOption (string, BettingEventOption enum name, e.g. bothTeamsToScore_Yes in camelCase or BothTeamsToScore_Yes). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
+    [Description("Stake in currency units. Required; must be greater than zero and must not exceed GetCurrentBalance (call GetCurrentBalance first).")]
+    decimal stakeAmount,
+    [Description("JSON object with property betSelections: an array of selection objects. Each object must have: matchId (int, from GetAvailableMatches), eventType (string enum name), eventOption (string BettingEventOption enum name). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
     string betSelectionsJson,
     CancellationToken cancellationToken = default)
   {
+    if (stakeAmount <= 0m)
+      throw new ArgumentException("stakeAmount must be greater than zero.", nameof(stakeAmount));
+
     List<BetSelectionRecord>? betSelections;
     try
     {
-      // Agent sends full arguments object: {"betSelections":[...]}
       var wrapper = JsonSerializer.Deserialize<PlaceBetSlipArgs>(betSelectionsJson, SerializerOptions);
       betSelections = wrapper?.BetSelections;
     }
@@ -104,6 +109,10 @@ public class BettingPlugin
     if (betSelections is null || betSelections.Count == 0)
       throw new ArgumentException("At least one selection is required to place a bet slip.", nameof(betSelectionsJson));
 
+    var balance = await _unitOfWork.Bankroll.GetCurrentBalanceAsync(cancellationToken).ConfigureAwait(false);
+    if (stakeAmount > balance)
+      throw new ArgumentException($"stakeAmount ({stakeAmount}) cannot exceed the current bankroll balance ({balance}).", nameof(stakeAmount));
+
     var selectionOdds = new List<decimal>(betSelections.Count);
     foreach (var record in betSelections)
     {
@@ -114,7 +123,6 @@ public class BettingPlugin
     }
 
     var totalOdds = selectionOdds.Aggregate(1m, (acc, o) => acc * o);
-    const decimal stakeAmount = 10m;
     var betSlip = new BetSlip
     {
       StakeAmount = stakeAmount,
@@ -124,6 +132,8 @@ public class BettingPlugin
       CreatedAt = DateTime.UtcNow,
       Selections = new List<BetSelection>()
     };
+
+    betSlip.Bankrolls.Add(Bankroll.Create("Bet stake", stakeAmount, BankrollFlow.Out));
 
     for (var i = 0; i < betSelections.Count; i++)
     {
@@ -143,7 +153,7 @@ public class BettingPlugin
   }
 
   [KernelFunction("GetBetSlips")]
-  [Description("Returns bet slips, newest first. Optional status: Pending, Won, Lost, or CashedOut — omit the argument to return slips in every status.")]
+  [Description("Returns bet slips, newest first. Optional status: Pending, Won, Lost — omit the argument to return slips in every status.")]
   public Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(
     [Description("Filter by slip status, or omit for all statuses.")] BetStatus? status = null,
     CancellationToken cancellationToken = default) =>

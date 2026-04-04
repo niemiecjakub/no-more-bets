@@ -86,5 +86,11 @@ public static class HangfireConfiguration
         "fill-missing-finished-match-scores",
         jobService => jobService.FillMissingFinishedMatchScoresFromSoccerData(),
         "50 23 * * *");
+
+    // Runs once per day at 00:20 UTC — applies salary when today is payday (last day of month)
+    RecurringJob.AddOrUpdate<JobService>(
+        "apply-payday-if-due",
+        jobService => jobService.ApplyPaydayIfDue(),
+        "20 0 * * *");
   }
 }
