@@ -21,7 +21,7 @@ public sealed class TrashController(Runner runner) : ControllerBase
       return BadRequest("Message is required.");
     }
 
-    var messages = await runner.RunTurnAsync(message.Trim(), cancellationToken).ConfigureAwait(false);
+    var messages = await runner.Chat(message.Trim(), cancellationToken).ConfigureAwait(false);
 
     return Ok(messages.Select(m => m.Content).ToArray());
   }

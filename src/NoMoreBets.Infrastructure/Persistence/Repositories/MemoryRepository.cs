@@ -12,12 +12,12 @@ public class MemoryRepository : IMemoryRepository
     _db = db;
   }
 
-  public async Task<IReadOnlyList<string>> GetNamesAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<MemoryRecordListItem>> GetRecordsAsync(CancellationToken cancellationToken = default)
   {
     return await _db.Memory
       .AsNoTracking()
       .OrderBy(m => m.Name)
-      .Select(m => m.Name)
+      .Select(m => new MemoryRecordListItem(m.Name, m.Description, m.UpdatedAt))
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
   }

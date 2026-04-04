@@ -1,11 +1,5 @@
-using MediatR;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Infrastructure.AI;
-using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents.OpenAI;
-using NoMoreBets.Application.Search;
-using NoMoreBets.Infrastructure.AI.Plugins;
 using OpenAI;
 using OpenAI.Responses;
 using System.ClientModel;

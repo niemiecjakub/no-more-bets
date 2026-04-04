@@ -22,11 +22,11 @@ public class MemoriesPlugin
   }
 
   [KernelFunction]
-  [Description("Lists all saved memory record names.")]
-  public async Task<List<string>> GetMemoryFilenamesAsync(CancellationToken cancellationToken = default)
+  [Description("Lists all saved memory records with name, description, and last update time (UTC).")]
+  public async Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default)
   {
-    var names = await _unitOfWork.Memories.GetNamesAsync(cancellationToken).ConfigureAwait(false);
-    return names.ToList();
+    var records = await _unitOfWork.Memories.GetRecordsAsync(cancellationToken).ConfigureAwait(false);
+    return records.ToList();
   }
 
   [KernelFunction("Read")]

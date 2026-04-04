@@ -19,17 +19,22 @@ public class MemoriesPluginTests
   }
 
   [Fact]
-  public async Task GetMemoryFilenamesAsync_ReturnsNamesFromRepository()
+  public async Task GetMemoryRecordsAsync_ReturnsRecordsFromRepository()
   {
-    // Arrange
-    _memories.GetNamesAsync(Arg.Any<CancellationToken>())
-      .Returns(new[] { "a.md", "b.md" });
+    var t1 = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+    var t2 = new DateTime(2026, 1, 2, 12, 0, 0, DateTimeKind.Utc);
+    IReadOnlyList<MemoryRecordListItem> fromRepo =
+    [
+      new("a.md", "First", t1),
+      new("b.md", null, t2)
+    ];
+    _memories.GetRecordsAsync(Arg.Any<CancellationToken>()).Returns(fromRepo);
 
-    // Act
-    var result = await _sut.GetMemoryFilenamesAsync(CancellationToken.None);
+    var result = await _sut.GetMemoryRecordsAsync(CancellationToken.None);
 
-    // Assert
-    result.Should().Equal("a.md", "b.md");
+    result.Should().HaveCount(2);
+    result[0].Should().Be(new MemoryRecordListItem("a.md", "First", t1));
+    result[1].Should().Be(new MemoryRecordListItem("b.md", null, t2));
   }
 
   [Fact]

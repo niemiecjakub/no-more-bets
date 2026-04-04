@@ -26,7 +26,7 @@ public class UnitOfWork : IUnitOfWork
     Clubs = clubRepository;
     Leagues = leagueRepository;
     Memories = memoryRepository;
-    Bankrolls = bankrollRepository;
+    Bankroll = bankrollRepository;
   }
 
   public IBettingRepository Betting { get; }
@@ -35,7 +35,7 @@ public class UnitOfWork : IUnitOfWork
 
   public ILeagueRepository Leagues { get; }
   public IMemoryRepository Memories { get; }
-  public IBankrollRepository Bankrolls { get; }
+  public IBankrollRepository Bankroll { get; }
 
   public async Task SaveChangesAsync(CancellationToken cancellationToken)
   {

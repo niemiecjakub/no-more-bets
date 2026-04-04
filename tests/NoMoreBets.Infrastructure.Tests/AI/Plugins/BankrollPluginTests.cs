@@ -14,7 +14,7 @@ public class BankrollPluginTests
 
   public BankrollPluginTests()
   {
-    _unitOfWork.Bankrolls.Returns(_bankrolls);
+    _unitOfWork.Bankroll.Returns(_bankrolls);
     _sut = new BankrollPlugin(_unitOfWork);
   }
 

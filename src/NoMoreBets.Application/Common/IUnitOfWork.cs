@@ -13,6 +13,6 @@ public interface IUnitOfWork
   IClubRepository Clubs { get; }
   ILeagueRepository Leagues { get; }
   IMemoryRepository Memories { get; }
-  IBankrollRepository Bankrolls { get; }
+  IBankrollRepository Bankroll { get; }
   Task SaveChangesAsync(CancellationToken cancellationToken);
 }
