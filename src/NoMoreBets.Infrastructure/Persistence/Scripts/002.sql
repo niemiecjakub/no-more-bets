@@ -124,3 +124,16 @@ VALUES
     ('Everton', 'everton', 1, 4139)
 ON CONFLICT ("SoccerdataId") DO NOTHING;
 
+INSERT INTO "Bankroll" ("Name", "Amount", "Flow", "BetId", "CreatedAt")
+SELECT 'Salary', 8000, 'IN', NULL, timezone('utc', now())
+WHERE NOT EXISTS (
+  SELECT 1 FROM "Bankroll" WHERE "Name" = 'Salary' AND "Flow" = 'IN' LIMIT 1
+);
+
+INSERT INTO "Memory" ("Name", "Description", "Content", "CreatedAt", "UpdatedAt") VALUES
+    ('STRATEGY', 'Contains the core betting strategy and decision-making rules.', '', timezone('utc', now()), timezone('utc', now())),
+    ('BANKROLL_MANAGEMENT', 'Contains rules and limits for managing capital.', '', timezone('utc', now()), timezone('utc', now())),
+    ('KNOWLEDGE', 'Stores general facts, patterns, and insights about matches and betting.', '', timezone('utc', now()), timezone('utc', now())),
+    ('REFLECTIONS', 'Stores lessons and observations from past bets and outcomes.', '', timezone('utc', now()), timezone('utc', now())),
+    ('MEMORIES', 'Stores miscellaneous or temporary information.', '', timezone('utc', now()), timezone('utc', now()))
+ON CONFLICT ("Name") DO NOTHING;
