@@ -9,6 +9,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Search;
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
@@ -71,6 +72,7 @@ public static class DependencyInjection
     services.AddScoped<IClubRepository, ClubRepository>();
     services.AddScoped<ILeagueRepository, LeagueRepository>();
     services.AddScoped<IMemoryRepository, MemoryRepository>();
+    services.AddScoped<IBankrollRepository, BankrollRepository>();
     services.AddScoped<IUnitOfWork, UnitOfWork>();
 
     services.AddSemanticKernelServices();

@@ -357,7 +357,7 @@ public class AppDbContext : DbContext
       entity.ToTable("Bankroll", t => t.HasCheckConstraint("chk_bankroll_flow", "\"Flow\" IN ('IN', 'OUT')"));
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
-      entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(NoMoreBets.Domain.Bankrolls.Bankroll.MaxNameLength);
       entity.Property(e => e.Amount).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.Flow).IsRequired().HasMaxLength(3);
       entity.Property(e => e.BetId).IsRequired(false);

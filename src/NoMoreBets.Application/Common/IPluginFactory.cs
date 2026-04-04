@@ -6,4 +6,5 @@ public interface IPluginFactory
   object CreateBettingPlugin();
   object CreateSearchPlugin();
   object CreateMemoriesPlugin();
+  object CreateBankrollPlugin();
 }
