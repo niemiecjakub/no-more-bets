@@ -2,6 +2,7 @@ using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Memories;
 
 namespace NoMoreBets.Application.Common;
 public interface IUnitOfWork
@@ -10,5 +11,6 @@ public interface IUnitOfWork
   IMatchRepository Matches { get; }
   IClubRepository Clubs { get; }
   ILeagueRepository Leagues { get; }
+  IMemoryRepository Memories { get; }
   Task SaveChangesAsync(CancellationToken cancellationToken);
 }

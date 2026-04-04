@@ -3,6 +3,7 @@ using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Memories;
 
 namespace NoMoreBets.Infrastructure.Persistence.Repositories;
 public class UnitOfWork : IUnitOfWork
@@ -14,13 +15,15 @@ public class UnitOfWork : IUnitOfWork
     IBettingRepository bettingRepository,
     ILeagueRepository leagueRepository,
     IMatchRepository matchRepository,
-    IClubRepository clubRepository)
+    IClubRepository clubRepository,
+    IMemoryRepository memoryRepository)
   {
     _db = db;
     Betting = bettingRepository;
     Matches = matchRepository;
     Clubs = clubRepository;
     Leagues = leagueRepository;
+    Memories = memoryRepository;
   }
 
   public IBettingRepository Betting { get; }
@@ -28,6 +31,7 @@ public class UnitOfWork : IUnitOfWork
   public IClubRepository Clubs { get; }
 
   public ILeagueRepository Leagues { get; }
+  public IMemoryRepository Memories { get; }
 
   public async Task SaveChangesAsync(CancellationToken cancellationToken)
   {

@@ -1,145 +1,119 @@
 using System.ComponentModel;
 using Microsoft.SemanticKernel;
+using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Memories;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
 public class MemoriesPlugin
 {
-  private static readonly string FilesDirectory = Path.Combine(AppContext.BaseDirectory,"AI","Plugins","Files");
+  private readonly IUnitOfWork _unitOfWork;
 
-  private static string ResolvePath(string filename)
+  public MemoriesPlugin(IUnitOfWork unitOfWork)
+  {
+    _unitOfWork = unitOfWork;
+  }
+
+  private static string NormalizeName(string filename)
   {
     var name = Path.GetFileName(filename);
-    if (string.IsNullOrEmpty(name))
-    {
-      throw new ArgumentException("Filename must not be empty.", nameof(filename));
-    }
-
-    return Path.Combine(FilesDirectory, name);
+    Memory.ValidateName(name);
+    return name;
   }
 
   [KernelFunction]
-  [Description("Lists all available documentation and log file names.")]
-  public List<string> GetMemoryFilenames()
+  [Description("Lists all saved memory record names.")]
+  public async Task<List<string>> GetMemoryFilenamesAsync(CancellationToken cancellationToken = default)
   {
-    if (!Directory.Exists(FilesDirectory))
-    {
-      Directory.CreateDirectory(FilesDirectory);
-      return new List<string>();
-    }
-
-    var allowedExtensions = new[] { "*.md", "*.log" };
-
-    return allowedExtensions
-        .SelectMany(pattern => Directory.GetFiles(FilesDirectory, pattern))
-        .Select(Path.GetFileName)
-        .Where(name => name != null)
-        .Select(name => name!)
-        .ToList();
+    var names = await _unitOfWork.Memories.GetNamesAsync(cancellationToken).ConfigureAwait(false);
+    return names.ToList();
   }
 
   [KernelFunction("Read")]
-  [Description("Loads the full contents of a saved memory file (markdown or plain text) from the plugin memory directory. Use this before editing so snippets match exactly. Fails if the file is missing.")]
-  public string Read(
-    [Description("Base file name only, no folders or path separators (e.g. STRATEGY.md).")]
-    string filename)
+  [Description("Loads the full content of a saved memory record by name. Use this before editing so snippets match exactly. Fails if the record is missing.")]
+  public async Task<string> ReadAsync(
+    [Description("Base name only, no folders or path separators (e.g. STRATEGY.md).")]
+    string filename,
+    CancellationToken cancellationToken = default)
   {
-    var path = ResolvePath(filename);
-    if (!File.Exists(path))
+    var name = NormalizeName(filename);
+    var memory = await _unitOfWork.Memories.GetByNameAsync(name, cancellationToken).ConfigureAwait(false);
+    if (memory == null)
     {
-      throw new FileNotFoundException("Memory file does not exist.", path);
+      throw new KeyNotFoundException($"Memory '{name}' does not exist.");
     }
 
-    return File.ReadAllText(path);
+    return memory.Content;
   }
 
   [KernelFunction("Write")]
-  [Description("Replaces the entire memory file with new content. Creates the file if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.")]
-  public string Write(
-    [Description("Base file name only, no folders or path separators (e.g. STRATEGY.md).")]
+  [Description("Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.")]
+  public async Task<string> WriteAsync(
+    [Description("Base name only, no folders or path separators (e.g. STRATEGY.md).")]
     string filename,
-    [Description("Complete new file body to persist (overwrites everything previously in the file).")]
-    string text)
+    [Description("Complete new body to persist (overwrites everything previously stored).")]
+    string text,
+    CancellationToken cancellationToken = default)
   {
-    var path = ResolvePath(filename);
-    Directory.CreateDirectory(FilesDirectory);
-    File.WriteAllText(path, text);
+    var name = NormalizeName(filename);
+
+    var existing = await _unitOfWork.Memories.GetByNameAsync(name, cancellationToken).ConfigureAwait(false);
+    if (existing != null)
+    {
+      existing.ReplaceContent(text);
+    }
+    else
+    {
+      await _unitOfWork.Memories.AddAsync(Memory.Create(name, text), cancellationToken).ConfigureAwait(false);
+    }
+
+    await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return "Strategy updated successfully";
   }
 
   [KernelFunction("Append")]
-  [Description("Adds text to the end of an existing memory file without reading or rewriting the whole file. Fails if the file does not exist; use Write to create a new file.")]
-  public string Append(
-    [Description("Base file name only, no folders or path separators (e.g. STRATEGY.md).")]
+  [Description("Adds text to the end of an existing memory record without reading the whole record first in a separate step. Fails if the record does not exist; use Write to create a new record.")]
+  public async Task<string> AppendAsync(
+    [Description("Base name only, no folders or path separators (e.g. STRATEGY.md).")]
     string filename,
-    [Description("Content to add after the current end of the file (e.g. a new section or log line).")]
-    string text)
+    [Description("Content to add after the current end (e.g. a new section or log line).")]
+    string text,
+    CancellationToken cancellationToken = default)
   {
-    var path = ResolvePath(filename);
-    if (!File.Exists(path))
+    var name = NormalizeName(filename);
+    var memory = await _unitOfWork.Memories.GetByNameAsync(name, cancellationToken).ConfigureAwait(false);
+    if (memory == null)
     {
-      throw new FileNotFoundException("Memory file does not exist.", path);
+      throw new KeyNotFoundException($"Memory '{name}' does not exist.");
     }
 
-    File.AppendAllText(path, text);
+    memory.AppendContent(text);
+    await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return "Text appended successfully";
   }
 
   [KernelFunction("Replace")]
-  [Description("Finds an exact byte-for-byte substring in a memory file and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.")]
-  public string Replace(
-    [Description("Base file name only, no folders or path separators (e.g. STRATEGY.md).")]
+  [Description("Finds an exact byte-for-byte substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.")]
+  public async Task<string> ReplaceAsync(
+    [Description("Base name only, no folders or path separators (e.g. STRATEGY.md).")]
     string filename,
     [Description("Literal text to find; copy from Read output so spacing and casing match.")]
     string oldText,
     [Description("Replacement for matched text; may be empty to delete the matched segment.")]
-    string newText,
+    string? newText,
     [Description("True: replace every match. False: replace only if oldText appears once (safer for targeted edits).")]
-    bool replaceAll = false)
+    bool replaceAll = false,
+    CancellationToken cancellationToken = default)
   {
-    if (string.IsNullOrEmpty(oldText))
+    var name = NormalizeName(filename);
+    var memory = await _unitOfWork.Memories.GetByNameAsync(name, cancellationToken).ConfigureAwait(false);
+    if (memory == null)
     {
-      throw new ArgumentException("oldText must not be null or empty.", nameof(oldText));
+      throw new KeyNotFoundException($"Memory '{name}' does not exist.");
     }
 
-    var path = ResolvePath(filename);
-    if (!File.Exists(path))
-    {
-      throw new FileNotFoundException("Memory file does not exist.", path);
-    }
-
-    var content = File.ReadAllText(path);
-    newText ??= string.Empty;
-
-    string updated;
-    if (replaceAll)
-    {
-      if (content.IndexOf(oldText, StringComparison.Ordinal) < 0)
-      {
-        throw new InvalidOperationException("oldText was not found in the file.");
-      }
-
-      updated = content.Replace(oldText, newText, StringComparison.Ordinal);
-    }
-    else
-    {
-      var first = content.IndexOf(oldText, StringComparison.Ordinal);
-      if (first < 0)
-      {
-        throw new InvalidOperationException("oldText was not found in the file.");
-      }
-
-      var second = content.IndexOf(oldText, first + oldText.Length, StringComparison.Ordinal);
-      if (second >= 0)
-      {
-        throw new InvalidOperationException(
-          "oldText appears more than once; use a longer unique snippet, or set replaceAll to true.");
-      }
-
-      updated = string.Concat(content.AsSpan(0, first), newText, content.AsSpan(first + oldText.Length));
-    }
-
-    File.WriteAllText(path, updated);
+    memory.ReplaceSubstring(oldText, newText, replaceAll);
+    await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return "Replacement applied successfully";
   }
 }

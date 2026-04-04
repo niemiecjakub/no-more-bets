@@ -344,12 +344,12 @@ public class AppDbContext : DbContext
     {
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
-      entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(NoMoreBets.Domain.Memories.Memory.MaxNameLength);
       entity.Property(e => e.Description).IsRequired(false);
       entity.Property(e => e.Content).IsRequired();
       entity.Property(e => e.CreatedAt).IsRequired();
       entity.Property(e => e.UpdatedAt).IsRequired();
-      entity.HasIndex(e => e.Name);
+      entity.HasIndex(e => e.Name).IsUnique();
     });
 
     modelBuilder.Entity<Bankroll>(entity =>

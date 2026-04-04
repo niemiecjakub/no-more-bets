@@ -321,7 +321,7 @@ CREATE TABLE "Memory" (
 	"UpdatedAt" timestamp NOT NULL,
 	CONSTRAINT "Memory_pkey" PRIMARY KEY ("Id")
 );
-CREATE INDEX idx_memory_name ON public."Memory" USING btree ("Name");
+CREATE UNIQUE INDEX idx_memory_name ON public."Memory" USING btree ("Name");
 
 CREATE TABLE "Bankroll" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
