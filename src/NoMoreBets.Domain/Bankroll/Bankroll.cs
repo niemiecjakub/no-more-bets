@@ -8,6 +8,9 @@ public class Bankroll
 {
   public const int MaxNameLength = 200;
 
+  private const string SalaryName = "Salary";
+  private const decimal SalaryAmount = 8000m;
+
   private Bankroll()
   {
   }
@@ -23,6 +26,8 @@ public class Bankroll
 
   [NotMapped]
   public BankrollFlow Direction => BankrollFlowExtensions.FromStorageCode(Flow);
+
+  public static Bankroll CreateSalary() => Create(SalaryName, SalaryAmount, BankrollFlow.In);
 
   public static Bankroll Create(string name, decimal amount, BankrollFlow flow, int? betId = null)
   {

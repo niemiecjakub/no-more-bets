@@ -26,4 +26,9 @@ public class BankrollRepository : IBankrollRepository
     var totalOut = rows.Where(r => r.Flow == BankrollFlowExtensions.OutCode).Select(r => r.Sum).FirstOrDefault();
     return totalIn - totalOut;
   }
+
+  public async Task AddAsync(Bankroll entity, CancellationToken cancellationToken = default)
+  {
+    await _db.Bankroll.AddAsync(entity, cancellationToken).ConfigureAwait(false);
+  }
 }
