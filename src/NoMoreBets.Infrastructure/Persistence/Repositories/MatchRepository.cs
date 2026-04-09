@@ -84,6 +84,17 @@ public class MatchRepository : IMatchRepository
          .ToListAsync();
   }
 
+  public async Task<IReadOnlyList<Match>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default)
+  {
+    return await _db.Match
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
+      .OrderBy(m => m.MatchDate)
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public Task<MatchPreview?> GetMatchPreview(int matchId)
   {
     return _db.MatchPreview.FirstOrDefaultAsync(e => e.MatchId == matchId);

@@ -18,14 +18,14 @@ public class BankrollPlugin
   }
 
   [KernelFunction("GetCurrentBalance")]
-  [Description("Returns the current bankroll balance: sum of all IN amounts minus sum of all OUT amounts.")]
+  [Description("Returns bank account balance")]
   public async Task<decimal> GetCurrentBalanceAsync(CancellationToken cancellationToken = default)
   {
     return await _unitOfWork.Bankroll.GetCurrentBalanceAsync(cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction("GetDaysUntilPayday")]
-  [Description("Returns whole calendar days until payday (last day of the current month, UTC), or 0 when today is payday.")]
+  [Description("Returns number of days untill next payday.")]
   public async Task<int> GetDaysUntilPaydayAsync(CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetDaysUntilPaydayQuery(), cancellationToken).ConfigureAwait(false);

@@ -83,6 +83,9 @@ public static class DependencyInjection
 
     //Jobs
     services.AddScoped<JobService>();
+    services.AddScoped<ResearchCronService>();
+    services.AddScoped<BettingCronService>();
+    services.AddScoped<ReflectionCronService>();
 
     //HTTP resilience & external clients
     services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>

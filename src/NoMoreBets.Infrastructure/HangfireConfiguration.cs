@@ -92,5 +92,23 @@ public static class HangfireConfiguration
         "apply-payday-if-due",
         jobService => jobService.ApplyPaydayIfDue(),
         "20 0 * * *");
+
+    // Runs every 6 hours at minute 0 (00:00, 06:00, 12:00, 18:00)
+    RecurringJob.AddOrUpdate<ResearchCronService>(
+        "betting-agent-research",
+        s => s.RunAsync(),
+        "0 */6 * * *");
+
+    // Runs daily at 18:30
+    RecurringJob.AddOrUpdate<BettingCronService>(
+        "betting-agent-execution",
+        s => s.RunAsync(),
+        "30 18 * * *");
+
+    // Runs daily at 02:30
+    RecurringJob.AddOrUpdate<ReflectionCronService>(
+        "betting-agent-reflection",
+        s => s.RunAsync(),
+        "30 2 * * *");
   }
 }

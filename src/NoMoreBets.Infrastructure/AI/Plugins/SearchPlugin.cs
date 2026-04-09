@@ -17,7 +17,7 @@ public class SearchPlugin
   }
 
   [KernelFunction("SearchNews")]
-  [Description("Search for recent news articles and current events. Use this for queries about trending topics, breaking news, or specific recent occurrences.")]
+  [Description("Search for recent news articles and current events.")]
   public async Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
     [Description("The specific news topic or keywords to search for.")]
     string query,
@@ -25,10 +25,10 @@ public class SearchPlugin
   {
     var src = await _searchService.SearchNewsAsync(query, new SearchNewsOptions()
     {
-        Count = 5,
-        Freshness = "pd",
-        Country = "GB",
-        ExtraSnippets = true
+      Count = 5,
+      Freshness = "pd",
+      Country = "GB",
+      ExtraSnippets = true
     }, cancellationToken).ConfigureAwait(false);
     return src.Items
       .OrderByDescending(item => item.PublishedAt ?? DateTimeOffset.MinValue)

@@ -31,7 +31,7 @@ public class BettingPlugin
   }
 
   [KernelFunction("GetAvailableMatches")]
-  [Description("Returns matches that are upcoming, have at least one betting odds snapshot, and have match analysis.")]
+  [Description("Retrieves matches for which bets can currently be placed.")]
   public async Task<IReadOnlyList<AvailableMatch>> GetAvailableMatchesAsync(CancellationToken cancellationToken = default)
   {
     var matches = await _unitOfWork.Betting.GetMatchesAvailableForBettingAsync(cancellationToken).ConfigureAwait(false);
@@ -41,7 +41,7 @@ public class BettingPlugin
   }
 
   [KernelFunction("GetCurrentOdds")]
-  [Description("Returns the current betting odds from the latest snapshot for the given match.")]
+  [Description("Returns the current betting odds for the given match.")]
   public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(int matchId, CancellationToken cancellationToken = default)
   {
     var snapshots = await _unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(matchId, cancellationToken).ConfigureAwait(false);
@@ -76,7 +76,7 @@ public class BettingPlugin
   }
 
   [KernelFunction("GetMatchAnalysis")]
-  [Description("Returns the latest structured match analysis for the given match.")]
+  [Description("Returns structured match analysis for the given match.")]
   public async Task<StructuredMatchAnalysis?> GetMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
   {
     var analysis = await _unitOfWork.Matches.GetLatestMatchAnalysisAsync(matchId, cancellationToken).ConfigureAwait(false);

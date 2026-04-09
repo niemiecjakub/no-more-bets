@@ -15,6 +15,7 @@ public static class SemanticKernelProvider
     services.AddScoped<ContextBuilder>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<Runner>();
+    services.AddScoped<IAgentPhaseRunner>(sp => sp.GetRequiredService<Runner>());
 
     return services;
   }

@@ -14,6 +14,7 @@ using NoMoreBets.Application.Matches.GetMatchPreview;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using System.ComponentModel;
+using AvailableMatch = NoMoreBets.Infrastructure.AI.Plugins.Models.AvailableMatch;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
@@ -29,28 +30,28 @@ public class MatchPlugin
   }
 
   [KernelFunction("GetLineups")]
-  [Description("Retrieves the starting lineups for both the home and away teams for the match identified by matchId.")]
+  [Description("Retrieves the starting lineups for both the home and away teams for the match.")]
   public async Task<MatchLineupResult?> GetLineupsAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetMatchLineupsQuery(matchId), cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction("GetInjuries")]
-  [Description("Gets a list of injured or unavailable players for both teams involved in the match identified by matchId.")]
+  [Description("Gets a list of injured or unavailable players for both teams involved in the match.")]
   public async Task<MatchInjuriesResult?> GetInjuriesAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetMatchInjuriesQuery(matchId), cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction("GetMatchPreview")]
-  [Description("Retrieves a textual preview of the match identified by matchId.")]
+  [Description("Retrieves a textual preview of the match.")]
   public async Task<string?> GetMatchPreviewAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetMatchPreviewQuery(matchId), cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction("GetHead2HeadStats")]
-  [Description("Provides historical head-to-head statistics between the two clubs for the match identified by matchId.")]
+  [Description("Provides historical head-to-head statistics between the two clubs for the match.")]
   public async Task<H2H?> GetHead2HeadStatsAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetHeadToHeadStatsQuery(matchId), cancellationToken).ConfigureAwait(false);
@@ -78,7 +79,7 @@ public class MatchPlugin
   }
 
   [KernelFunction("GetLeagueTable")]
-  [Description("Returns the full league table for the league of the match identified by matchId.")]
+  [Description("Returns the full league table for the league of the match.")]
   public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsync(int matchId, CancellationToken cancellationToken = default)
   {
     var match = await _unitOfWork.Matches.GetMatchByIdAsync(matchId, cancellationToken).ConfigureAwait(false);
@@ -89,7 +90,7 @@ public class MatchPlugin
   }
 
   [KernelFunction("GetMatchBettingOddsHistory")]
-  [Description("Provides the historical movement of betting odds for this match, showing how prices have changed over time across different event types.")]
+  [Description("Provides the movement of betting odds for this match, showing how prices have changed over time across different event types.")]
   public async Task<IReadOnlyList<MarketPriceHistory>?> GetMatchBettingOddsHistoryAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetMatchBettingOddsHistoryQuery(matchId), cancellationToken).ConfigureAwait(false);
@@ -100,5 +101,15 @@ public class MatchPlugin
   public async Task<TeamPerformanceResult?> GetClubRollingPerformanceAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetClubRollingPerformanceQuery(clubId), cancellationToken).ConfigureAwait(false);
+  }
+
+  [KernelFunction("GetUpcomingMatches")]
+  [Description("Returns a list with upcomming matches.")]
+  public async Task<IReadOnlyList<AvailableMatch>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default)
+  {
+    var matches = await _unitOfWork.Matches.GetUpcomingMatchesAsync(cancellationToken).ConfigureAwait(false);
+    return matches
+      .Select(m => new AvailableMatch(m.Id, m.HomeClub.Name, m.AwayClub.Name, m.MatchDate))
+      .ToList();
   }
 }
