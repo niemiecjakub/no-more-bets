@@ -6,7 +6,10 @@ namespace NoMoreBets.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public sealed class TrashController(Runner runner, IAgentPhaseRunner agentPhaseRunner) : ControllerBase
+public sealed class TrashController(
+  Runner runner,
+  IAgentPhaseRunner agentPhaseRunner,
+  IUnitOfWork unitOfWork) : ControllerBase
 {
   /// <summary>
   /// Sends a user message to the OpenAI assistant runner and returns the assistant reply text.
@@ -28,9 +31,17 @@ public sealed class TrashController(Runner runner, IAgentPhaseRunner agentPhaseR
   }
 
   [HttpPost("agent/run-research-phase")]
-  public async Task<ActionResult<IReadOnlyList<string>>> RunResearchPhase(CancellationToken cancellationToken = default)
+  public async Task<ActionResult<IReadOnlyList<string>>> RunResearchPhase(
+    [FromQuery] int matchId,
+    CancellationToken cancellationToken = default)
   {
-    var messages = await agentPhaseRunner.RunResearchPhaseAsync(cancellationToken).ConfigureAwait(false);
+    var match = await unitOfWork.Matches.GetMatchByIdAsync(matchId, cancellationToken).ConfigureAwait(false);
+    if (match is null)
+    {
+      return NotFound($"Match with id {matchId} was not found.");
+    }
+
+    var messages = await agentPhaseRunner.RunResearchPhaseAsync(match, cancellationToken).ConfigureAwait(false);
     return Ok(messages);
   }
 

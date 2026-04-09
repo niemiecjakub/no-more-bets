@@ -1,6 +1,7 @@
 using Microsoft.SemanticKernel;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Infrastructure.AI.Provider;
 
@@ -34,89 +35,88 @@ public sealed class Runner : IAgentPhaseRunner
 
     return messages;
   }
-  public Task<IReadOnlyList<string>> RunResearchPhaseAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<string>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default)
   {
     const string phaseName = "Research";
-    //var prompt = $"""
-    //             Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
-    //             Use MemoryPlugin to read already stored information.
-    //             Use MatchPlugin to dive into upcomming matches.
-    //             If you need to find something on the web, use SearchPlugin, you may look into anything you like.
-
-    //             Think about you findings, analyze them and store your insights in the MemoriesPlugin, so you can use them later in the betting phase or in the future.
-    //             You may create new memories or append to existing ones, just make sure to keep them updated and well organized.
-    //             """;
-
-
-
-    var prompt = $"""
-        Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
-        
-        You are now conducting research for the betting phase.
-        
-        - Explore upcoming matches.
-        - Build knowledge, strategies, and insights for future betting
-        - Reflect on your own thinking and refine your approach
-        - Do not focus on immediate betting decisions here
-        
-        ## Exploration
-        
-        You may:
-        - Start by calling MatchPlugin `GetUpcomingMatches` to build the research queue
-        - Use MatchPlugin to investigate matches, lineups, injuries, statistics, and trends
-        - Use SearchPlugin to gather external news or context
-        - Use MemoriesPlugin to read past knowledge, insights, and strategies and store new ones.
-        - Revisit hypotheses, challenge assumptions, and explore patterns
-
-        Memory Rules:
-        - Memories must improve future research and decisions
-        - Avoid storing raw stats, one-off trivialities, or irrelevant emotions
-        - Use `Append` to add new insights; `Replace` to evolve or correct prior knowledge
-        - Keep structure, clarity, and utility as priorities
-        
-        ---
-        
-        ## Thinking & Self-Reflection
-        
-        Before every action, ask:
-        - What am I trying to confirm or disprove?
-        - Will this insight improve my knowledge or strategy?
-        - Am I mistaking noise for a pattern?
-        
-        After research, reflect:
-        - Did I learn something meaningful?
-        - Did any assumptions prove wrong?
-        - How can this improve my approach next time?
-        
-        ---
-        
-        ## Depth vs Efficiency
-        
-        - Deep exploration is allowed when something looks interesting
-        - Avoid endless digging with diminishing returns
-        - Prioritize learning and evolution over immediate outcomes
-        
-        ---
-        
-        ## Behavior
-        
-        - Curious, analytical, and skeptical
-        - Focused on patterns, strategy, and market understanding
-        - Comfortable leaving questions unanswered if insight value is low
-        - Treat information as a cost and memory as an asset
-        """;
     Action<Kernel> configurePlugins = kernel =>
     {
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateMatchPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateSearchPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateMemoriesPlugin());
+      kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentResearchPlugin());
     };
 
-    return ExecuteBettingPhaseAsync(
-      phaseName,
+    var prompt = $"""
+          Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
+          
+          You are now conducting research for the betting phase for this match:
+          - Match ID: {match.Id}
+          - Fixture: {match.HomeClub.Name} (ID: {match.HomeClub.Id}) vs {match.AwayClub.Name} (ID: {match.AwayClub.Id})
+          - Kickoff (UTC): {match.MatchDate:yyyy-MM-dd HH:mm}
+          
+          Goal:
+          Create complete betting research for this specific match that can directly support a later betting decision.
+
+          You must use the available AgentResearchPlugin functions explicitly.
+
+          ## Required workflow (execute in order)
+
+          1) Read memory context first:
+          - Call `GetMemoryRecords`
+          - Call `Read` for relevant records before new analysis
+
+          2) Build core match intelligence:
+          - `GetMatchPreview`
+          - `GetLineups`
+          - `GetInjuries`
+          - `GetHead2HeadStats`
+          - `GetMatchBettingOddsHistory`
+          - `GetLeagueTable`
+
+          3) Build team-level context for both clubs (home and away):
+          - `GetClubLeagueStatistics`
+          - `GetClubRollingPerformance`
+          - `GetClubRecentGames`
+          - `GetClubDailySummary`
+
+          4) Build news and sentiment context:
+          - Call `SearchNews` for:
+            - home club latest news
+            - away club latest news
+            - fixture-specific news (clubs + league + injuries/suspensions keywords)
+          - Call `GetWebGrounding` to verify key claims and gather deeper tactical/context insights.
+          - Distinguish signal vs noise, confirm reliability, and identify likely market overreaction/underreaction.
+
+          5) Synthesize decision-oriented research output:
+          Your final research must include:
+          - match state and tactical picture
+          - lineup/injury impact and uncertainties
+          - form and team-strength profile
+          - head-to-head context (with caution about small sample bias)
+          - market/odds movement interpretation
+          - current news sentiment and key narratives
+          - risks, unknowns, and what could invalidate the view
+          - clear betting implications (not bet placement), including potential value angles and confidence drivers
+
+          6) Save learnings to memory:
+          - Persist reusable insights, patterns, and hypotheses using `Append`, `Replace`, or `Write`
+          - Keep memories concise, structured, and useful for future research and betting decisions
+          - Do not store raw noisy dumps; store distilled insights
+
+          7) Completion gate (mandatory):
+          - Create one complete final report text for this match
+          - Call `SaveMatchAnalysis` with this match id and the final report content
+          - Do not terminate until `SaveMatchAnalysis` succeeds
+
+          ## Quality constraints
+          - Be analytical, skeptical, and evidence-driven
+          - Cross-check important claims across multiple tool outputs
+          - If data is missing, state it explicitly and continue with best-effort reasoning
+          - Do not skip required steps
+          """;
+
+    return await ExecuteBettingPhaseAsync(
+      $"{phaseName}:{match.Id}",
       prompt,
       configurePlugins,
-      cancellationToken);
+      cancellationToken).ConfigureAwait(false);
   }
 
   public Task<IReadOnlyList<string>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
