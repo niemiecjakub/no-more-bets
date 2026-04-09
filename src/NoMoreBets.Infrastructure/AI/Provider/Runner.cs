@@ -1,5 +1,7 @@
+using MediatR;
 using Microsoft.SemanticKernel;
 using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 
@@ -9,16 +11,22 @@ public sealed class Runner : IAgentPhaseRunner
 {
   private readonly AgentBuilder _agentBuilder;
   private readonly ILogger<Runner> _logger;
+  private readonly IMediator _mediator;
   private readonly IPluginFactory _pluginFactory;
+  private readonly IUnitOfWork _unitOfWork;
 
   public Runner(
     AgentBuilder agentBuilder,
     IPluginFactory pluginFactory,
+    IUnitOfWork unitOfWork,
+    IMediator mediator,
     ILogger<Runner> logger)
   {
     _agentBuilder = agentBuilder;
     _logger = logger;
+    _mediator = mediator;
     _pluginFactory = pluginFactory;
+    _unitOfWork = unitOfWork;
   }
 
   public async Task<List<ChatMessageContent>> Chat(string userMessage, CancellationToken cancellationToken = default)
@@ -167,63 +175,67 @@ public sealed class Runner : IAgentPhaseRunner
       cancellationToken);
   }
 
-  public Task<IReadOnlyList<string>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<string>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
   {
     const string phaseName = "BettingExecution";
-    var prompt = """
+    var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+    var currentBalance = await _unitOfWork.Bankroll
+      .GetCurrentBalanceAsync(cancellationToken)
+      .ConfigureAwait(false);
+    var daysUntilPayday = await _mediator
+      .Send(new GetDaysUntilPaydayQuery(), cancellationToken)
+      .ConfigureAwait(false);
+
+    var prompt = $"""
+                 Today (UTC): {todayUtc}
+
+                 ## Authoritative bankroll context
+                 Use these values for stake sizing and risk. Do not contradict them.
+                 - Current bank account balance: {currentBalance}
+                 - Days until next payday: {daysUntilPayday}
+
                  You are running the betting phase.
-                 
+
                  Goal:
-                 Select and execute high-quality bets.
-                 
-                 Steps:
-                 
-                 1. Call GetMemoryRecords
-                 2. Read STRATEGY, BANKROLL_MANAGEMENT, KNOWLEDGE, REFLECTIONS
-                 3. Call GetCurrentBalance
-                 4. Call GetAvailableMatches
-                 5. For each match:
-                 
-                    * GetMatchAnalysis
-                    * GetCurrentOdds
-                    * Use MatchPlugin tools when they improve confidence (lineups, injuries, etc.)
-                 
-                 6. Evaluate:
-                 
-                    * Value edge
-                    * Strategy alignment
-                    * Confidence
-                 
+                 Select and execute high-quality bets using saved strategy, bankroll rules, knowledge, and reflections.
+
+                 You must use the available tools  explicitly.
+
+                 Steps (execute in order):
+                 1. Call `GetMemoryRecords` to see saved memory record names.
+                 2. Call `ReadMemory` for: STRATEGY, BANKROLL_MANAGEMENT, KNOWLEDGE, REFLECTIONS (read each that exists).
+                 3. Call `GetBetSlips` to list pending bet slips (newest first). Use this to avoid duplicate or redundant exposure on the same outcomes.
+                 4. Call `GetAvailableMatches` to list matches open for betting.
+
+                 5. For each match you seriously consider:
+                    - Call `GetMatchAnalysis` with the match id to load stored research (plain text).
+                    - Call `GetCurrentOdds` for that match id.
+                    - Optionally call `SearchNews` or `GetWebGrounding` if late-breaking context would change the decision.
+
+                 6. Evaluate each candidate
+
                  7. Decision:
-                 
-                    * If NO -> skip
-                    * If YES:
-                 
-                      * Determine stake
-                      * Call PlaceBetSlip
-                 
-                 8. Store insights in KNOWLEDGE or MEMORIES as appropriate
-                 
+                    - Call `PlaceBetSlip` when ready. You may place multiple slips, and each slip can contain multiple events/selections.
+
+                 8. Store distilled insights with `WriteMemory`, `AppendToMemory`, or `ReplaceInMemory` on KNOWLEDGE or other appropriate memory names — not raw dumps.
+
+                 9. In your final response, provide a concise summary of decisions made (matches evaluated, bets placed or skipped, and brief rationale).
+
                  Constraints:
-                 
-                 * No weak bets
-                 * Respect bankroll (stake must not exceed GetCurrentBalance)
-                 * Avoid duplicate or redundant positions on the same outcome when it is not justified
+
+                 * Stake must not exceed the current bank account balance stated above
+                 * Avoid duplicate or redundant positions on the same outcome when not justified
                  """;
     Action<Kernel> configurePlugins = kernel =>
     {
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateMatchPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateBettingPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateBankrollPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateMemoriesPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateSearchPlugin());
+      kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentBettingPlugin());
     };
 
-    return ExecuteBettingPhaseAsync(
+    return await ExecuteBettingPhaseAsync(
       phaseName,
       prompt,
       configurePlugins,
-      cancellationToken);
+      cancellationToken).ConfigureAwait(false);
   }
 
   private async Task<IReadOnlyList<string>> ExecuteBettingPhaseAsync(

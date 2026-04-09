@@ -6,6 +6,7 @@ namespace NoMoreBets.Domain.Matches;
 public class MatchAnalysis
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+  public const string ResearchCode = "Research";
 
   public int Id { get; set; }
   public int MatchId { get; set; }

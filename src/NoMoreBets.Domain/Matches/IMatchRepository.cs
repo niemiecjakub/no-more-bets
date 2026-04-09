@@ -19,4 +19,5 @@ public interface IMatchRepository
   public Task AddMatchPreview(MatchPreview matchPreview);
   public Task AddMatchAnalysisAsync(MatchAnalysis analysis, CancellationToken cancellationToken = default);
   public Task<MatchAnalysis?> GetLatestMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default);
+  public Task<MatchAnalysis?> GetLatestMatchAnalysisByCodeAsync(int matchId, string code, CancellationToken cancellationToken = default);
 }

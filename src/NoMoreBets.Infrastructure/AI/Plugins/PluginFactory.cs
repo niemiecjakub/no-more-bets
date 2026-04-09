@@ -16,6 +16,11 @@ public class PluginFactory : IPluginFactory
     return ActivatorUtilities.CreateInstance<BettingPlugin>(_sp);
   }
 
+  public object CreateAgentBettingPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<AgentBettingPlugin>(_sp);
+  }
+
   public object CreateSearchPlugin()
   {
     return ActivatorUtilities.CreateInstance<SearchPlugin>(_sp);

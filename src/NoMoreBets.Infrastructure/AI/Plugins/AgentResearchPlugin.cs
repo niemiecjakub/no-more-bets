@@ -98,22 +98,22 @@ public class AgentResearchPlugin
   public Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default) =>
     _memoriesPlugin.GetMemoryRecordsAsync(cancellationToken);
 
-  [KernelFunction("Read")]
+  [KernelFunction("ReadMemory")]
   [Description("Loads the full content of a saved memory record.")]
   public Task<string> ReadAsync(string name, CancellationToken cancellationToken = default) =>
     _memoriesPlugin.ReadAsync(name, cancellationToken);
 
-  [KernelFunction("Write")]
+  [KernelFunction("WriteMemory")]
   [Description("Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.")]
   public Task<string> WriteAsync(string name, string text, CancellationToken cancellationToken = default) =>
     _memoriesPlugin.WriteAsync(name, text, cancellationToken);
 
-  [KernelFunction("Append")]
+  [KernelFunction("AppendToMemory")]
   [Description("Adds text to the end of an existing memory record")]
   public Task<string> AppendAsync(string name, string text, CancellationToken cancellationToken = default) =>
     _memoriesPlugin.AppendAsync(name, text, cancellationToken);
 
-  [KernelFunction("Replace")]
+  [KernelFunction("ReplaceInMemory")]
   [Description("Finds an exact substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.")]
   public Task<string> ReplaceAsync(
     string name,
@@ -135,7 +135,7 @@ public class AgentResearchPlugin
     var analysis = new MatchAnalysis
     {
       MatchId = matchId,
-      Code = "Research",
+      Code = MatchAnalysis.ResearchCode,
       Content = content
     };
 

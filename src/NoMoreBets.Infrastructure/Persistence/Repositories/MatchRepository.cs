@@ -170,4 +170,12 @@ public class MatchRepository : IMatchRepository
       .OrderByDescending(a => a.Id)
       .FirstOrDefaultAsync(cancellationToken);
   }
+
+  public Task<MatchAnalysis?> GetLatestMatchAnalysisByCodeAsync(int matchId, string code, CancellationToken cancellationToken = default)
+  {
+    return _db.MatchAnalysis
+      .Where(a => a.MatchId == matchId && a.Code == code)
+      .OrderByDescending(a => a.Id)
+      .FirstOrDefaultAsync(cancellationToken);
+  }
 }
