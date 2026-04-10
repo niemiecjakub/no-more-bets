@@ -31,6 +31,13 @@ export async function fetchMatchPreview(matchId: number): Promise<string | null>
   return data;
 }
 
+export async function fetchMatchAgentResearch(matchId: number): Promise<string | null> {
+  const { data } = await axiosInstance.get<string | null>(
+    `/api/MatchInsights/matches/${matchId}/agent-research`
+  );
+  return data;
+}
+
 export async function fetchMatchRecentGames(matchId: number): Promise<ClubPair<RecentMatch[] | null>> {
   const { data } = await axiosInstance.get<ClubPair<RecentMatch[] | null>>(
     `/api/MatchInsights/matches/${matchId}/recent-games`

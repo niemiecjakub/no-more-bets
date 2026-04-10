@@ -15,7 +15,7 @@ public class MatchAnalysis
 
   public Match Match { get; set; } = null!;
 
-  public string GetAgentResearch()
+  public string? GetAgentResearch()
   {
     if (Code != ResearchCode || string.IsNullOrEmpty(Content))
     {

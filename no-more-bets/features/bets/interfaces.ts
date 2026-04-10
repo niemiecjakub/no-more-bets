@@ -34,3 +34,20 @@ export const BET_STATUS = {
   Lost: 3,
   CashedOut: 4,
 } as const;
+
+/** GET api/Database/bankroll — BankrollRecordDto */
+export interface BankrollRecord {
+  id: number;
+  name: string;
+  amount: number;
+  flow: "In" | "Out";
+  betId: number | null;
+  createdAt: string;
+}
+
+/** GET api/Database/bankroll — BankrollDashboardDto */
+export interface BankrollDashboard {
+  currentBalance: number;
+  daysUntilPayday: number;
+  records: BankrollRecord[];
+}

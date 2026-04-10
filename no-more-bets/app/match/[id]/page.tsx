@@ -24,6 +24,7 @@ import {
   type TeamMetrics,
 } from "@/features/matches/interfaces";
 import {
+  fetchMatchAgentResearch,
   fetchMatchBettingOddsHistory,
   fetchMatchHeadToHead,
   fetchMatchInjuries,
@@ -33,6 +34,36 @@ import {
   fetchMatchRecentGames,
   fetchMatchRollingPerformance,
 } from "@/features/matches/services/match-insights-api";
+
+interface MatchInsights {
+  lineups: MatchLineupResult | null;
+  injuries: MatchInjuriesResult | null;
+  preview: string | null;
+  agentResearch: string | null;
+  recentGames: ClubPair<RecentMatch[] | null>;
+  leagueStatistics: ClubPair<ClubLeagueStats | null>;
+  headToHead: HeadToHead | null;
+  bettingOddsHistory: MarketPriceHistory[] | null;
+  rollingPerformance: ClubPair<TeamPerformanceResult | null>;
+}
+
+const insightKeys = [
+  "lineups",
+  "injuries",
+  "preview",
+  "agentResearch",
+  "recentGames",
+  "leagueStatistics",
+  "headToHead",
+  "bettingOddsHistory",
+  "rollingPerformance",
+] as const satisfies readonly (keyof MatchInsights)[];
+
+type InsightKey = (typeof insightKeys)[number];
+
+function initialInsightLoading(): Record<InsightKey, boolean> {
+  return Object.fromEntries(insightKeys.map((k) => [k, true])) as Record<InsightKey, boolean>;
+}
 
 function LoadingSkeleton() {
   return (
@@ -70,9 +101,9 @@ export default function MatchPage() {
   } = useMatchStore();
 
   const data = isValidId ? matchAnalysisById[matchId] : undefined;
-  const [insights, setInsights] = useState<MatchInsights | null>(null);
-  const [isInsightsLoading, setIsInsightsLoading] = useState(false);
-  const [insightsError, setInsightsError] = useState<string | null>(null);
+  const [insights, setInsights] = useState<Partial<MatchInsights>>({});
+  const [insightLoading, setInsightLoading] = useState<Record<InsightKey, boolean>>(() => initialInsightLoading());
+  const [insightErrors, setInsightErrors] = useState<Partial<Record<InsightKey, string>>>({});
 
   useEffect(() => {
     if (!isValidId) return;
@@ -83,50 +114,44 @@ export default function MatchPage() {
     if (!isValidId) return;
     let isMounted = true;
 
-    const loadInsights = async () => {
-      setIsInsightsLoading(true);
-      setInsightsError(null);
-      try {
-        const [
-          lineups,
-          injuries,
-          preview,
-          recentGames,
-          leagueStatistics,
-          headToHead,
-          bettingOddsHistory,
-          rollingPerformance,
-        ] = await Promise.all([
-          fetchMatchLineups(matchId),
-          fetchMatchInjuries(matchId),
-          fetchMatchPreview(matchId),
-          fetchMatchRecentGames(matchId),
-          fetchMatchLeagueStatistics(matchId),
-          fetchMatchHeadToHead(matchId),
-          fetchMatchBettingOddsHistory(matchId),
-          fetchMatchRollingPerformance(matchId),
-        ]);
+    setInsights({});
+    setInsightErrors({});
+    setInsightLoading(initialInsightLoading());
 
-        if (!isMounted) return;
-        setInsights({
-          lineups,
-          injuries,
-          preview,
-          recentGames,
-          leagueStatistics,
-          headToHead,
-          bettingOddsHistory,
-          rollingPerformance,
+    const load = <K extends InsightKey>(key: K, fetcher: () => Promise<MatchInsights[K]>) => {
+      void fetcher()
+        .then((value) => {
+          if (!isMounted) return;
+          setInsights((prev) => ({ ...prev, [key]: value }));
+          setInsightErrors((prev) => {
+            if (!(key in prev)) return prev;
+            const next = { ...prev };
+            delete next[key];
+            return next;
+          });
+        })
+        .catch((err) => {
+          if (!isMounted) return;
+          setInsightErrors((prev) => ({
+            ...prev,
+            [key]: handleServiceError(err, "Failed to load this section."),
+          }));
+        })
+        .finally(() => {
+          if (!isMounted) return;
+          setInsightLoading((prev) => ({ ...prev, [key]: false }));
         });
-      } catch (err) {
-        if (!isMounted) return;
-        setInsightsError(handleServiceError(err, "Failed to load match sections."));
-      } finally {
-        if (isMounted) setIsInsightsLoading(false);
-      }
     };
 
-    loadInsights();
+    load("lineups", () => fetchMatchLineups(matchId));
+    load("injuries", () => fetchMatchInjuries(matchId));
+    load("preview", () => fetchMatchPreview(matchId));
+    load("agentResearch", () => fetchMatchAgentResearch(matchId));
+    load("recentGames", () => fetchMatchRecentGames(matchId));
+    load("leagueStatistics", () => fetchMatchLeagueStatistics(matchId));
+    load("headToHead", () => fetchMatchHeadToHead(matchId));
+    load("bettingOddsHistory", () => fetchMatchBettingOddsHistory(matchId));
+    load("rollingPerformance", () => fetchMatchRollingPerformance(matchId));
 
     return () => {
       isMounted = false;
@@ -195,16 +220,12 @@ export default function MatchPage() {
           <p className="mt-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDateFormatted}</p>
         </header>
 
-        {insightsError ? (
-          <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-            {insightsError}
-          </p>
-        ) : null}
-
         <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
             <Card title="Lineups" icon="📋">
-              {isInsightsLoading && !insights ? (
+              {insightErrors.lineups ? (
+                <InsightFieldError message={insightErrors.lineups} />
+              ) : insightLoading.lineups && insights.lineups === undefined ? (
                 <div className="px-4 py-4">
                   <MutedText>Loading lineups...</MutedText>
                 </div>
@@ -214,14 +235,16 @@ export default function MatchPage() {
                   awayClubName={data.awayClubName}
                   homeLogoSlug={homeLogoSlug}
                   awayLogoSlug={awayLogoSlug}
-                  home={<LineupList lineup={insights?.lineups?.home} />}
-                  away={<LineupList lineup={insights?.lineups?.away} />}
+                  home={<LineupList lineup={insights.lineups?.home} />}
+                  away={<LineupList lineup={insights.lineups?.away} />}
                 />
               )}
             </Card>
 
             <Card title="Injuries / Unavailable players" icon="🏥">
-              {isInsightsLoading && !insights ? (
+              {insightErrors.injuries ? (
+                <InsightFieldError message={insightErrors.injuries} />
+              ) : insightLoading.injuries && insights.injuries === undefined ? (
                 <div className="px-4 py-4">
                   <MutedText>Loading injuries...</MutedText>
                 </div>
@@ -231,14 +254,16 @@ export default function MatchPage() {
                   awayClubName={data.awayClubName}
                   homeLogoSlug={homeLogoSlug}
                   awayLogoSlug={awayLogoSlug}
-                  home={<InjuriesList injuries={insights?.injuries?.home} />}
-                  away={<InjuriesList injuries={insights?.injuries?.away} />}
+                  home={<InjuriesList injuries={insights.injuries?.home} />}
+                  away={<InjuriesList injuries={insights.injuries?.away} />}
                 />
               )}
             </Card>
 
             <Card title="Recent games per club" icon="🕒">
-              {isInsightsLoading && !insights ? (
+              {insightErrors.recentGames ? (
+                <InsightFieldError message={insightErrors.recentGames} />
+              ) : insightLoading.recentGames && insights.recentGames === undefined ? (
                 <div className="px-4 py-4">
                   <MutedText>Loading recent games...</MutedText>
                 </div>
@@ -248,14 +273,16 @@ export default function MatchPage() {
                   awayClubName={data.awayClubName}
                   homeLogoSlug={homeLogoSlug}
                   awayLogoSlug={awayLogoSlug}
-                  home={<RecentGamesList games={insights?.recentGames?.home} />}
-                  away={<RecentGamesList games={insights?.recentGames?.away} />}
+                  home={<RecentGamesList games={insights.recentGames?.home} />}
+                  away={<RecentGamesList games={insights.recentGames?.away} />}
                 />
               )}
             </Card>
 
             <Card title="Rolling performance" icon="📈">
-              {isInsightsLoading && !insights ? (
+              {insightErrors.rollingPerformance ? (
+                <InsightFieldError message={insightErrors.rollingPerformance} />
+              ) : insightLoading.rollingPerformance && insights.rollingPerformance === undefined ? (
                 <div className="px-4 py-4">
                   <MutedText>Loading rolling performance...</MutedText>
                 </div>
@@ -265,8 +292,8 @@ export default function MatchPage() {
                   awayClubName={data.awayClubName}
                   homeLogoSlug={homeLogoSlug}
                   awayLogoSlug={awayLogoSlug}
-                  home={<RollingPerformanceSection data={insights?.rollingPerformance?.home} />}
-                  away={<RollingPerformanceSection data={insights?.rollingPerformance?.away} />}
+                  home={<RollingPerformanceSection data={insights.rollingPerformance?.home} />}
+                  away={<RollingPerformanceSection data={insights.rollingPerformance?.away} />}
                 />
               )}
             </Card>
@@ -303,12 +330,30 @@ export default function MatchPage() {
           <div className="space-y-6">
             <Card title="Match preview" icon="📰">
               <div className="px-4 py-4">
-                <PreviewSection preview={insights?.preview} isLoading={isInsightsLoading && !insights} />
+                <PreviewSection
+                  preview={insights.preview}
+                  isLoading={insightLoading.preview && insights.preview === undefined}
+                  error={insightErrors.preview}
+                />
+              </div>
+            </Card>
+
+            <Card title="Agent Research" icon="🔬">
+              <div className="px-4 py-4">
+                <PreviewSection
+                  preview={insights.agentResearch}
+                  isLoading={insightLoading.agentResearch && insights.agentResearch === undefined}
+                  error={insightErrors.agentResearch}
+                  loadingMessage="Loading agent research..."
+                  emptyMessage="No agent research available."
+                />
               </div>
             </Card>
 
             <Card title="League statistics" icon="🏆">
-              {isInsightsLoading && !insights ? (
+              {insightErrors.leagueStatistics ? (
+                <InsightFieldError message={insightErrors.leagueStatistics} />
+              ) : insightLoading.leagueStatistics && insights.leagueStatistics === undefined ? (
                 <div className="px-4 py-4">
                   <MutedText>Loading league statistics...</MutedText>
                 </div>
@@ -318,40 +363,34 @@ export default function MatchPage() {
                   awayClubName={data.awayClubName}
                   homeLogoSlug={homeLogoSlug}
                   awayLogoSlug={awayLogoSlug}
-                  home={<LeagueStatsSection stats={insights?.leagueStatistics?.home} />}
-                  away={<LeagueStatsSection stats={insights?.leagueStatistics?.away} />}
+                  home={<LeagueStatsSection stats={insights.leagueStatistics?.home} />}
+                  away={<LeagueStatsSection stats={insights.leagueStatistics?.away} />}
                 />
               )}
             </Card>
 
             <Card title="Head-to-head stats" icon="⚔️">
               <HeadToHeadSection
-                data={insights?.headToHead}
-                isLoading={isInsightsLoading && !insights}
+                data={insights.headToHead}
+                isLoading={insightLoading.headToHead && insights.headToHead === undefined}
+                error={insightErrors.headToHead}
                 homeLogoSlug={homeLogoSlug}
                 awayLogoSlug={awayLogoSlug}
               />
             </Card>
 
             <Card title="Betting odds movement / history" icon="💹">
-              <BettingOddsSection data={insights?.bettingOddsHistory} isLoading={isInsightsLoading && !insights} />
+              <BettingOddsSection
+                data={insights.bettingOddsHistory}
+                isLoading={insightLoading.bettingOddsHistory && insights.bettingOddsHistory === undefined}
+                error={insightErrors.bettingOddsHistory}
+              />
             </Card>
           </div>
         </section>
       </main>
     </div>
   );
-}
-
-interface MatchInsights {
-  lineups: MatchLineupResult | null;
-  injuries: MatchInjuriesResult | null;
-  preview: string | null;
-  recentGames: ClubPair<RecentMatch[] | null>;
-  leagueStatistics: ClubPair<ClubLeagueStats | null>;
-  headToHead: HeadToHead | null;
-  bettingOddsHistory: MarketPriceHistory[] | null;
-  rollingPerformance: ClubPair<TeamPerformanceResult | null>;
 }
 
 interface CardProps {
@@ -381,6 +420,14 @@ function Card({ title, icon, children }: CardProps) {
 
 function MutedText({ children }: { children: React.ReactNode }) {
   return <p className="text-sm text-zinc-500 dark:text-zinc-400">{children}</p>;
+}
+
+function InsightFieldError({ message }: { message: string }) {
+  return (
+    <div className="px-4 py-4">
+      <p className="text-sm text-red-800 dark:text-red-200">{message}</p>
+    </div>
+  );
 }
 
 interface TeamColumnsProps {
@@ -514,15 +561,20 @@ function LeagueStatsSection({ stats }: { stats?: ClubLeagueStats | null }) {
 function HeadToHeadSection({
   data,
   isLoading,
+  error,
   homeLogoSlug,
   awayLogoSlug,
 }: {
   data?: HeadToHead | null;
   isLoading: boolean;
+  error?: string;
   homeLogoSlug: string;
   awayLogoSlug: string;
 }) {
-  if (isLoading && !data) {
+  if (error) {
+    return <InsightFieldError message={error} />;
+  }
+  if (isLoading && data === undefined) {
     return (
       <div className="px-4 py-4">
         <MutedText>Loading head-to-head...</MutedText>
@@ -580,8 +632,19 @@ function HeadToHeadMetricsList({ team }: { team: TeamMetrics }) {
   );
 }
 
-function BettingOddsSection({ data, isLoading }: { data?: MarketPriceHistory[] | null; isLoading: boolean }) {
-  if (isLoading && !data) {
+function BettingOddsSection({
+  data,
+  isLoading,
+  error,
+}: {
+  data?: MarketPriceHistory[] | null;
+  isLoading: boolean;
+  error?: string;
+}) {
+  if (error) {
+    return <InsightFieldError message={error} />;
+  }
+  if (isLoading && data === undefined) {
     return (
       <div className="px-4 py-4">
         <MutedText>Loading odds history...</MutedText>
@@ -645,8 +708,21 @@ function RollingPerformanceSection({ data }: { data?: TeamPerformanceResult | nu
   );
 }
 
-function PreviewSection({ preview, isLoading }: { preview?: string | null; isLoading: boolean }) {
-  if (isLoading && preview == null) return <MutedText>Loading preview...</MutedText>;
-  if (!preview) return <MutedText>No preview available.</MutedText>;
+function PreviewSection({
+  preview,
+  isLoading,
+  error,
+  loadingMessage = "Loading preview...",
+  emptyMessage = "No preview available.",
+}: {
+  preview?: string | null;
+  isLoading: boolean;
+  error?: string;
+  loadingMessage?: string;
+  emptyMessage?: string;
+}) {
+  if (error) return <p className="text-sm text-red-800 dark:text-red-200">{error}</p>;
+  if (isLoading) return <MutedText>{loadingMessage}</MutedText>;
+  if (preview == null || preview === "") return <MutedText>{emptyMessage}</MutedText>;
   return <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">{preview}</p>;
 }

@@ -27,6 +27,16 @@ public class BankrollRepository : IBankrollRepository
     return totalIn - totalOut;
   }
 
+  public async Task<IReadOnlyList<Bankroll>> GetAllOrderedByCreatedAtDescAsync(
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.Bankroll
+      .AsNoTracking()
+      .OrderByDescending(b => b.CreatedAt)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task AddAsync(Bankroll entity, CancellationToken cancellationToken = default)
   {
     await _db.Bankroll.AddAsync(entity, cancellationToken).ConfigureAwait(false);

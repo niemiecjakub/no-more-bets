@@ -1,5 +1,7 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Application.Bankroll.GetBankrollDashboard;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
@@ -13,8 +15,19 @@ namespace NoMoreBets.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class DatabaseController(AppDbContext db) : ControllerBase
+public class DatabaseController(AppDbContext db, IMediator mediator) : ControllerBase
 {
+  /// <summary>
+  /// Current bankroll balance, days until payday (UTC month-end), and ledger entries newest first.
+  /// </summary>
+  [HttpGet("bankroll")]
+  public async Task<ActionResult<BankrollDashboardDto>> GetBankrollDashboard(
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator.Send(new GetBankrollDashboardQuery(), cancellationToken);
+    return Ok(result);
+  }
+
   /// <summary>
   /// Gets leagues from the database.
   /// </summary>
@@ -26,6 +39,29 @@ public class DatabaseController(AppDbContext db) : ControllerBase
     var list = await db.League
       .OrderBy(l => l.Name)
       .Select(l => new LeagueDto(l.Id, l.Name, l.Slug))
+      .ToListAsync(cancellationToken);
+    return Ok(list);
+  }
+
+  /// <summary>
+  /// Gets all saved memory records from the database, ordered by name.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of memories with full content.</returns>
+  [HttpGet("memories")]
+  public async Task<ActionResult<IReadOnlyList<MemoryListItemDto>>> GetMemories(
+    CancellationToken cancellationToken = default)
+  {
+    var list = await db.Memory
+      .AsNoTracking()
+      .OrderBy(m => m.Name)
+      .Select(m => new MemoryListItemDto(
+        m.Id,
+        m.Name,
+        m.Description,
+        m.Content,
+        m.CreatedAt,
+        m.UpdatedAt))
       .ToListAsync(cancellationToken);
     return Ok(list);
   }
@@ -558,6 +594,14 @@ public class DatabaseController(AppDbContext db) : ControllerBase
         analysis.MatchProjection,
         analysis.Prediction);
 }
+
+public record MemoryListItemDto(
+  int Id,
+  string Name,
+  string? Description,
+  string Content,
+  DateTime CreatedAt,
+  DateTime UpdatedAt);
 
 public record LeagueDto(int Id, string Name, string Slug);
 
