@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Controllers;
@@ -31,7 +32,7 @@ public sealed class TrashController(
   }
 
   [HttpPost("agent/run-research-phase")]
-  public async Task<ActionResult<IReadOnlyList<string>>> RunResearchPhase(
+  public async Task<ActionResult<AgentResponse>> RunResearchPhase(
     [FromQuery] int matchId,
     CancellationToken cancellationToken = default)
   {
@@ -42,20 +43,47 @@ public sealed class TrashController(
     }
 
     var messages = await agentPhaseRunner.RunResearchPhaseAsync(match, cancellationToken).ConfigureAwait(false);
-    return Ok(messages);
+
+    var response = new AgentResponse
+    {
+      Reasoning = messages.OfType<ReasoningMessage>().ToList(),
+      Messages = messages.OfType<Message>().ToList()
+    };
+
+    return Ok(response);
   }
 
   [HttpPost("agent/run-reflection-phase")]
-  public async Task<ActionResult<IReadOnlyList<string>>> RunReflectionPhase(CancellationToken cancellationToken = default)
+  public async Task<ActionResult<AgentResponse>> RunReflectionPhase(CancellationToken cancellationToken = default)
   {
     var messages = await agentPhaseRunner.RunReflectionPhaseAsync(cancellationToken).ConfigureAwait(false);
-    return Ok(messages);
+
+    var response = new AgentResponse
+    {
+      Reasoning = messages.OfType<ReasoningMessage>().ToList(),
+      Messages = messages.OfType<Message>().ToList()
+    };
+
+    return Ok(response);
   }
 
   [HttpPost("agent/run-betting-execution-phase")]
-  public async Task<ActionResult<IReadOnlyList<string>>> RunBettingExecutionPhase(CancellationToken cancellationToken = default)
+  public async Task<ActionResult<AgentResponse>> RunBettingExecutionPhase(CancellationToken cancellationToken = default)
   {
     var messages = await agentPhaseRunner.RunBettingExecutionPhaseAsync(cancellationToken).ConfigureAwait(false);
-    return Ok(messages);
+
+    var response = new AgentResponse
+    {
+      Reasoning = messages.OfType<ReasoningMessage>().ToList(),
+      Messages = messages.OfType<Message>().ToList()
+    };
+
+    return Ok(response);
+  }
+
+  public record AgentResponse
+  {
+    public List<ReasoningMessage> Reasoning { get; init; } = new();
+    public List<Message> Messages { get; init; } = new();
   }
 }

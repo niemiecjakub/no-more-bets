@@ -131,9 +131,9 @@ WHERE NOT EXISTS (
 );
 
 INSERT INTO "Memory" ("Name", "Description", "Content", "CreatedAt", "UpdatedAt") VALUES
-    ('STRATEGY', 'Contains the core betting strategy and decision-making rules.', '', timezone('utc', now()), timezone('utc', now())),
-    ('BANKROLL_MANAGEMENT', 'Contains rules and limits for managing capital.', '', timezone('utc', now()), timezone('utc', now())),
-    ('KNOWLEDGE', 'Stores general facts, patterns, and insights about matches and betting.', '', timezone('utc', now()), timezone('utc', now())),
+    ('STRATEGY', 'The core betting strategy and decision-making rules.', '', timezone('utc', now()), timezone('utc', now())),
+    ('BANKROLL_MANAGEMENT', 'Rules and limits for managing capital.', '', timezone('utc', now()), timezone('utc', now())),
+    ('GENERAL_KNOWLEDGE', 'General facts, patterns, and insights.', '', timezone('utc', now()), timezone('utc', now())),
     ('REFLECTIONS', 'Stores lessons and observations from past bets and outcomes.', '', timezone('utc', now()), timezone('utc', now())),
-    ('MEMORIES', 'Stores miscellaneous or temporary information.', '', timezone('utc', now()), timezone('utc', now()))
+    ('THOUGHTS', 'Your thoughts.', '', timezone('utc', now()), timezone('utc', now())),
 ON CONFLICT ("Name") DO NOTHING;

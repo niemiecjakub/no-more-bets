@@ -32,6 +32,7 @@ public class MemoriesPlugin
   [KernelFunction("Read")]
   [Description("Loads the full content of a saved memory record.")]
   public async Task<string> ReadAsync(
+    [Description("Name of the memory record to read.")]
     string name,
     CancellationToken cancellationToken = default)
   {
@@ -42,12 +43,13 @@ public class MemoriesPlugin
       throw new KeyNotFoundException($"Memory '{normalizedName}' does not exist.");
     }
 
-    return memory.Content;
+    return string.IsNullOrEmpty(memory.Content) ? "*This memory is currently empty*" : memory.Content;
   }
 
   [KernelFunction("Write")]
   [Description("Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.")]
   public async Task<string> WriteAsync(
+    [Description("Name of the memory record to update.")]
     string name,
     [Description("Complete new body to persist (overwrites everything previously stored).")]
     string text,
@@ -66,13 +68,15 @@ public class MemoriesPlugin
     }
 
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    return "Strategy updated successfully";
+    return "*Memory updated successfully*";
   }
 
   [KernelFunction("Append")]
   [Description("Adds text to the end of an existing memory record")]
   public async Task<string> AppendAsync(
+        [Description("Name of the memory record to update.")]
     string name,
+        [Description("Text to add to the end of the memory record.")]
     string text,
     CancellationToken cancellationToken = default)
   {
@@ -85,12 +89,13 @@ public class MemoriesPlugin
 
     memory.AppendContent(text);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    return "Text appended successfully";
+    return "*Text appended successfully*";
   }
 
   [KernelFunction("Replace")]
   [Description("Finds an exact substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.")]
   public async Task<string> ReplaceAsync(
+    [Description("Name of the memory record to update.")]
     string name,
     [Description("Literal text to find; copy from Read output so spacing and casing match.")]
     string oldText,
@@ -109,6 +114,6 @@ public class MemoriesPlugin
 
     memory.ReplaceSubstring(oldText, newText, replaceAll);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-    return "Replacement applied successfully";
+    return "*Replacement applied successfully*";
   }
 }

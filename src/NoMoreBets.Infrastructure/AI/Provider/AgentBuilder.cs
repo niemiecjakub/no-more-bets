@@ -35,7 +35,7 @@ public sealed class AgentBuilder
   {
     var responsesClient = CreateResponsesClient();
     var thread = CreateThread(responsesClient);
-    var options = CreateInvokeOptions();
+    var options = CreateInvokeOptions(enableReasoningEffort: true);
     var agent = CreateAgent(responsesClient);
     return new(agent, thread, options);
   }
@@ -54,7 +54,7 @@ public sealed class AgentBuilder
       : new OpenAIResponseAgentThread(responsesClient, threadId);
   }
 
-  private static OpenAIResponseAgentInvokeOptions CreateInvokeOptions()
+  private static OpenAIResponseAgentInvokeOptions CreateInvokeOptions(bool enableReasoningEffort = false)
   {
     return new OpenAIResponseAgentInvokeOptions()
     {
@@ -63,6 +63,13 @@ public sealed class AgentBuilder
         TruncationMode = ResponseTruncationMode.Auto,
         ToolChoice = ResponseToolChoice.CreateAutoChoice(),
         ParallelToolCallsEnabled = false,
+        ReasoningOptions = enableReasoningEffort
+          ? new ResponseReasoningOptions()
+          {
+            ReasoningEffortLevel = ResponseReasoningEffortLevel.Medium,
+            ReasoningSummaryVerbosity = ResponseReasoningSummaryVerbosity.Auto
+          }
+          : null,
       },
     };
   }
@@ -72,7 +79,7 @@ public sealed class AgentBuilder
     return new OpenAIResponseAgent(responsesClient, _openAi.ModelId)
     {
       Instructions = _contextBuilder.Instructions,
-      StoreEnabled = true
+      StoreEnabled = true,
     };
   }
 }

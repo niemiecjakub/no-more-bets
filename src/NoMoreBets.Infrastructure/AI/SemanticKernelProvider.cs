@@ -11,6 +11,13 @@ public static class SemanticKernelProvider
   {
     services.AddSingleton<ThreadProvider>();
     services.AddScoped<IPluginFactory, PluginFactory>();
+    services.AddScoped<MatchPlugin>();
+    services.AddScoped<BettingPlugin>();
+    services.AddScoped<AgentBettingPlugin>();
+    services.AddScoped<SearchPlugin>();
+    services.AddScoped<MemoriesPlugin>();
+    services.AddScoped<AgentResearchPlugin>();
+    services.AddScoped<BankrollPlugin>();
     services.AddScoped<IMatchPrediction, AIGateway>();
     services.AddScoped<ContextBuilder>();
     services.AddScoped<AgentBuilder>();

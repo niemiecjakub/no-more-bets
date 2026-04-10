@@ -1,9 +1,11 @@
+using System.Globalization;
 using MediatR;
 using Microsoft.SemanticKernel;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Application.Common.Dto;
 
 namespace NoMoreBets.Infrastructure.AI.Provider;
 
@@ -43,12 +45,14 @@ public sealed class Runner : IAgentPhaseRunner
 
     return messages;
   }
-  public async Task<IReadOnlyList<string>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<BaseMessage>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default)
   {
     const string phaseName = "Research";
-    Action<Kernel> configurePlugins = kernel =>
+    Action<Kernel> configureKernel = kernel =>
     {
       kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentResearchPlugin());
+      kernel.Data.Add("matchId", match.Id);
+      kernel.Data.Add("phase", "Research");
     };
 
     var prompt = $"""
@@ -61,35 +65,34 @@ public sealed class Runner : IAgentPhaseRunner
           
           Goal:
           Create complete betting research for this specific match that can directly support a later betting decision.
-
           You must use the available AgentResearchPlugin functions explicitly.
 
           ## Required workflow (execute in order)
 
           1) Read memory context first:
-          - Call `GetMemoryRecords`
-          - Call `Read` for relevant records before new analysis
+          - Call `GetMemoryRecordsAsync`
+          - Call `ReadMemoryAsync` for relevant records before new analysis
 
           2) Build core match intelligence:
-          - `GetMatchPreview`
-          - `GetLineups`
-          - `GetInjuries`
-          - `GetHead2HeadStats`
-          - `GetMatchBettingOddsHistory`
-          - `GetLeagueTable`
+          - `GetMatchPreviewAsync`
+          - `GetLineupsAsync`
+          - `GetInjuriesAsync`
+          - `GetHead2HeadStatsAsync`
+          - `GetMatchBettingOddsHistoryAsync`
+          - `GetLeagueTableAsync`
 
           3) Build team-level context for both clubs (home and away):
-          - `GetClubLeagueStatistics`
-          - `GetClubRollingPerformance`
-          - `GetClubRecentGames`
-          - `GetClubDailySummary`
+          - `GetClubStatistics`
+          - `GetClubRollingPerformanceAsync`
+          - `GetClubRecentGamesAsync`
+          - `GetClubDailySummaryAsync`
 
           4) Build news and sentiment context:
-          - Call `SearchNews` for:
+          - Call `SearchNewsAsync` for:
             - home club latest news
             - away club latest news
             - fixture-specific news (clubs + league + injuries/suspensions keywords)
-          - Call `GetWebGrounding` to verify key claims and gather deeper tactical/context insights.
+          - Call `GetWebGroundingAsync` to verify key claims and gather deeper tactical/context insights.
           - Distinguish signal vs noise, confirm reliability, and identify likely market overreaction/underreaction.
 
           5) Synthesize decision-oriented research output:
@@ -104,60 +107,66 @@ public sealed class Runner : IAgentPhaseRunner
           - clear betting implications (not bet placement), including potential value angles and confidence drivers
 
           6) Save learnings to memory:
-          - Persist reusable insights, patterns, and hypotheses using `Append`, `Replace`, or `Write`
+          - Persist reusable insights, patterns, and hypotheses using `AppendMemoryAsync`, `ReplaceMemoryAsync`, or `WriteMemoryAsync`
           - Keep memories concise, structured, and useful for future research and betting decisions
           - Do not store raw noisy dumps; store distilled insights
+          - If needed create new memories with `WriteMemoryAsync`
 
           7) Completion gate (mandatory):
           - Create one complete final report text for this match
-          - Call `SaveMatchAnalysis` with this match id and the final report content
-          - Do not terminate until `SaveMatchAnalysis` succeeds
+          - Call `SaveMatchAnalysisAsync` with this match id and the final report content
+          - Do not terminate until `SaveMatchAnalysisAsync` succeeds
+
+          8) Finish with short summary of key insights and betting implications.
 
           ## Quality constraints
           - Be analytical, skeptical, and evidence-driven
           - Cross-check important claims across multiple tool outputs
           - If data is missing, state it explicitly and continue with best-effort reasoning
           - Do not skip required steps
+
+          ### Guardrails
+          - In response and reasoning do not mention the internal process, tool names etc. Focus on delivering the research output as if for a human analyst, not on describing your own process.
           """;
 
     return await ExecuteBettingPhaseAsync(
       $"{phaseName}:{match.Id}",
       prompt,
-      configurePlugins,
+      configureKernel,
       cancellationToken).ConfigureAwait(false);
   }
 
-  public Task<IReadOnlyList<string>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
+  public Task<IReadOnlyList<BaseMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
     const string phaseName = "Reflection";
     var prompt = """
                  You are running the reflection phase.
-                 
+
                  Goal:
                  Improve future decisions.
-                 
+
                  Steps:
-                 
+
                  1. Call GetMemoryRecords
                  2. Read STRATEGY and REFLECTIONS
                  3. Call GetBetSlips with status Won, then with status Lost (or once with no filter if you prefer, then group mentally)
                  4. For each settled bet:
-                 
+
                     * Compare expected vs actual
                     * Evaluate decision quality
-                 
+
                  5. Identify:
-                 
+
                     * Mistakes
                     * Biases
                     * Patterns
-                 
+
                  6. Summarize findings
                  7. Append or update REFLECTIONS with durable lessons
                  8. Promote repeated patterns to KNOWLEDGE when justified
-                 
+
                  Constraints:
-                 
+
                  * Do not overreact to single results
                  * Focus on long-term performance and process quality
                  """;
@@ -175,10 +184,10 @@ public sealed class Runner : IAgentPhaseRunner
       cancellationToken);
   }
 
-  public async Task<IReadOnlyList<string>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<BaseMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
   {
-    const string phaseName = "BettingExecution";
-    var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+    const string phaseName = "Betting";
+
     var currentBalance = await _unitOfWork.Bankroll
       .GetCurrentBalanceAsync(cancellationToken)
       .ConfigureAwait(false);
@@ -186,49 +195,72 @@ public sealed class Runner : IAgentPhaseRunner
       .Send(new GetDaysUntilPaydayQuery(), cancellationToken)
       .ConfigureAwait(false);
 
+    var balanceText = currentBalance.ToString("F2", CultureInfo.InvariantCulture);
+
     var prompt = $"""
-                 Today (UTC): {todayUtc}
+          Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
+          Current account balance: {balanceText}
+          Days until payday: {daysUntilPayday}
 
-                 ## Authoritative bankroll context
-                 Use these values for stake sizing and risk. Do not contradict them.
-                 - Current bank account balance: {currentBalance}
-                 - Days until next payday: {daysUntilPayday}
+          You are executing the betting phase for the portfolio: review every match that is open for betting, align with stored strategy and bankroll rules, and place bets only when the edge justifies it.
+          You may place zero bet slips (pass entirely), exactly one bet slip, or more than one bet slip in this run, as strategy and bankroll allow.
+          Each call to `PlaceBetSlip` is one separate bet (one slip) with its own stake. That slip is either a single (one selection, one event market) or a parlay (multiple selections combined on the same slip, across one or more matches). The `betSelections` JSON array must contain at least one selection per slip: one element means a single bet; multiple elements mean a parlay on that slip.
+          You must use the available plugin functions explicitly.
 
-                 You are running the betting phase.
+          Goal:
+          Select and execute only high-conviction, strategy-aligned bets. When edge, confidence, or alignment is weak, pass or place fewer slips rather than forcing marginal bets.
 
-                 Goal:
-                 Select and execute high-quality bets using saved strategy, bankroll rules, knowledge, and reflections.
+          ## Memory and research at any time
+          You are not limited to the workflow steps below for memory or search. Whenever it helps your judgment, you may read or write any memory using `GetMemoryRecordsAsync`, `ReadMemoryAsync`, `WriteMemoryAsync`, `AppendMemoryAsync`, and `ReplaceMemoryAsync`. You may also call `SearchNewsAsync` and `GetWebGroundingAsync` (or any other search or grounding tools available to you) for whatever information you need, with queries you choose—not only for late-breaking match news.
 
-                 You must use the available tools  explicitly.
+          ## Required workflow (execute in order)
 
-                 Steps (execute in order):
-                 1. Call `GetMemoryRecords` to see saved memory record names.
-                 2. Call `ReadMemory` for: STRATEGY, BANKROLL_MANAGEMENT, KNOWLEDGE, REFLECTIONS (read each that exists).
-                 3. Call `GetBetSlips` to list pending bet slips (newest first). Use this to avoid duplicate or redundant exposure on the same outcomes.
-                 4. Call `GetAvailableMatches` to list matches open for betting.
+          1) Read memory context first:
+          - Call `GetMemoryRecordsAsync`
+          - Call `ReadMemoryAsync` to read relevant memories.
 
-                 5. For each match you seriously consider:
-                    - Call `GetMatchAnalysis` with the match id to load stored research (plain text).
-                    - Call `GetCurrentOdds` for that match id.
-                    - Optionally call `SearchNews` or `GetWebGrounding` if late-breaking context would change the decision.
+          2) Exposure:
+          - Call `GetBetSlipsAsync` to see pending slips and avoid duplicate or unjustified redundant exposure on the same outcomes
 
-                 6. Evaluate each candidate
+          3) Enumerate opportunities:
+          - Call `GetAvailableMatchesAsync`
 
-                 7. Decision:
-                    - Call `PlaceBetSlip` when ready. You may place multiple slips, and each slip can contain multiple events/selections.
+          4) For each available match, build a decision picture:
+          - Call `GetMatchAnalysisAsync` for the match id
+          - Call `GetCurrentOddsAsync` for the match id
+          - If late-breaking information could materially change the thesis versus the stored analysis, use `SearchNewsAsync` and/or `GetWebGroundingAsync` with focused queries.
 
-                 8. Store distilled insights with `WriteMemory`, `AppendToMemory`, or `ReplaceInMemory` on KNOWLEDGE or other appropriate memory names — not raw dumps.
+          5) Evaluate each candidate selection:
+          - Value vs current prices (implied probability vs your view)
+          - Alignment with STRATEGY, BANKROLL_MANAGEMENT, REFLECTIONS and GENERAL_KNOWLEDGE
+          - Confidence and what would invalidate the view
+          - Stake feasibility: stake must be > 0 and must not exceed `GetCurrentBalance`; respect BANKROLL_MANAGEMENT (unit sizing, max stake, concentration)
+          - Overlap with pending slips from `GetBetSlipsAsync`: do not add redundant positions on the same outcome unless clearly justified
 
-                 9. In your final response, provide a concise summary of decisions made (matches evaluated, bets placed or skipped, and brief rationale).
+          6) Decision:
+          - If nothing qualifies: place no slips; summarize the pass in analyst terms (no tool dump)
+          - If one or more opportunities qualify: place one slip per distinct bet you want (zero to many slips in total). For each slip, choose stake and build `betSelections`: one item for a single, several items for a parlay on that slip
+          - Call `PlaceBetSlip` once per slip with valid JSON as described on the function. Never call `PlaceBetSlip` with an empty `betSelections` array
+          - If you place multiple slips, call `GetCurrentBalance` before each further `PlaceBetSlip` so stakes stay within the updated balance after prior stakes
 
-                 Constraints:
+          7) Persist learnings:
+          - Update durable insights with `AppendMemoryAsync`, `ReplaceMemoryAsync`, or `WriteMemoryAsync` as appropriate.
+          - You may create new memories with `WriteMemoryAsync` if needed.
+          - Store distilled takeaways, not raw tool output
 
-                 * Stake must not exceed the current bank account balance stated above
-                 * Avoid duplicate or redundant positions on the same outcome when not justified
-                 """;
-    Action<Kernel> configurePlugins = kernel =>
+          8) Finish with a short summary for a human: how many slips you placed (if any), singles vs parlays, key rationale, and main risks.
+
+          ## Quality constraints
+          - Do not skip memory, balance, or match/odds steps for matches you seriously consider
+
+          ### Guardrails
+          - In your final narrative to the user, do not mention internal process, tool names, or plugin mechanics.
+          """;
+    Action<Kernel> configurePlugins = kernel => 
     {
       kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentBettingPlugin());
+      kernel.Plugins.AddFromObject(_pluginFactory.CreateBankrollPlugin());
+      kernel.Data.Add("phase", "Betting");
     };
 
     return await ExecuteBettingPhaseAsync(
@@ -238,22 +270,30 @@ public sealed class Runner : IAgentPhaseRunner
       cancellationToken).ConfigureAwait(false);
   }
 
-  private async Task<IReadOnlyList<string>> ExecuteBettingPhaseAsync(
+  private async Task<IReadOnlyList<BaseMessage>> ExecuteBettingPhaseAsync(
     string phaseName,
     string userPrompt,
-    Action<Kernel> configurePlugins,
+    Action<Kernel> configureKernel,
     CancellationToken cancellationToken = default)
   {
     var config = _agentBuilder.BuildForScheduledJob();
-    configurePlugins(config.Agent.Kernel);
-
-    var messages = new List<string>();
+    configureKernel(config.Agent.Kernel);
+    var messages = new List<BaseMessage>();
     _logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
 
     await foreach (var message in config.Agent.InvokeAsync(userPrompt, config.Thread, config.Options, cancellationToken)
                      .ConfigureAwait(false))
     {
-      messages.Add(message.Message.Content ?? string.Empty);
+#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+      foreach (var reasoning in message.Message.Items.OfType<ReasoningContent>())
+      {
+        messages.Add(new ReasoningMessage(reasoning.Text));
+      }
+#pragma warning restore SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+      if (!string.IsNullOrEmpty(message.Message.Content))
+      {
+        messages.Add(new Message(message.Message.Content));
+      }
     }
 
     _logger.LogInformation(

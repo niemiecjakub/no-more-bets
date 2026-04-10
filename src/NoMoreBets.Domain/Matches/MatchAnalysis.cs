@@ -15,8 +15,21 @@ public class MatchAnalysis
 
   public Match Match { get; set; } = null!;
 
-  public StructuredMatchAnalysis? GetAnalysis() => string.IsNullOrEmpty(Content)
-    ? null
-    : JsonSerializer.Deserialize<StructuredMatchAnalysis>(Content, JsonOptions);
+  public StructuredMatchAnalysis? GetAnalysis()
+  {
+    if (string.IsNullOrEmpty(Content))
+    {
+      return null;
+    }
+
+    try
+    {
+      return JsonSerializer.Deserialize<StructuredMatchAnalysis>(Content, JsonOptions);
+    }
+    catch (JsonException)
+    {
+      return null;
+    }
+  }
 
 }

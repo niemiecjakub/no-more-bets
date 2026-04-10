@@ -84,7 +84,7 @@ public class BettingPlugin
   }
 
   [KernelFunction("PlaceBetSlip")]
-  [Description("Places a bet slip with one or more selections across one or more matches. Call this once you have finished analyzing all available matches and have selected the best value bets.")]
+  [Description("Places one bet slip per call. One selection is a single bet; multiple selections combine as a parlay on that slip. Call once per slip; you may call multiple times for multiple separate slips.")]
   public async Task PlaceBetSlip(
     [Description("Stake in currency units. Required; must be greater than zero and must not exceed GetCurrentBalance (call GetCurrentBalance first).")]
     decimal stakeAmount,
