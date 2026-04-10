@@ -154,6 +154,4 @@ public class AgentResearchPlugin
     _ = payload.Text;
     return JsonSerializer.Serialize(payload);
   }
-
-  private sealed record ResearchText([property: JsonPropertyName("text")] string Text);
 }

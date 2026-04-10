@@ -10,7 +10,7 @@ public sealed class ResearchCronService(
   IUnitOfWork unitOfWork,
   ILogger<ResearchCronService> logger)
 {
-  [AutomaticRetry(Attempts = 3)]
+  [AutomaticRetry(Attempts = 1)]
   public async Task RunAsync()
   {
     logger.LogInformation("Starting scheduled research agent phase");
@@ -24,7 +24,7 @@ public sealed class ResearchCronService(
 
       if (i < matches.Count - 1)
       {
-        await Task.Delay(TimeSpan.FromMinutes(1), CancellationToken.None).ConfigureAwait(false);
+        await Task.Delay(TimeSpan.FromMinutes(2), CancellationToken.None).ConfigureAwait(false);
       }
     }
 

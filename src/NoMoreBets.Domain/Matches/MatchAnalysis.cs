@@ -15,6 +15,23 @@ public class MatchAnalysis
 
   public Match Match { get; set; } = null!;
 
+  public string GetAgentResearch()
+  {
+    if (Code != ResearchCode || string.IsNullOrEmpty(Content))
+    {
+      return null;
+    }
+
+    try
+    {
+      return JsonSerializer.Deserialize<ResearchText>(Content, JsonOptions)?.Text ?? string.Empty;
+    }
+    catch (JsonException)
+    {
+      return string.Empty;
+    }
+  }
+
   public StructuredMatchAnalysis? GetAnalysis()
   {
     if (string.IsNullOrEmpty(Content))
@@ -31,5 +48,6 @@ public class MatchAnalysis
       return null;
     }
   }
-
 }
+
+public sealed record ResearchText(string Text);

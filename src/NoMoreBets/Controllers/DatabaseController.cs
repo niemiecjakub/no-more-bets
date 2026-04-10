@@ -519,6 +519,7 @@ public class DatabaseController(AppDbContext db) : ControllerBase
 
     var analysisEntities = await db.MatchAnalysis
       .Where(a => a.MatchId == matchId)
+      .Where(a => a.Code != MatchAnalysis.ResearchCode)
       .OrderBy(a => a.Id)
       .ToListAsync(cancellationToken);
 
