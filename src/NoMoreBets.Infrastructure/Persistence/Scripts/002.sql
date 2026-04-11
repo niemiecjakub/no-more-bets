@@ -134,5 +134,6 @@ INSERT INTO "Memory" ("Name", "Description", "Content", "CreatedAt", "UpdatedAt"
     ('BANKROLL_MANAGEMENT', 'Rules and limits for managing capital.', '', timezone('utc', now()), timezone('utc', now())),
     ('GENERAL_KNOWLEDGE', 'General facts, patterns, and insights.', '', timezone('utc', now()), timezone('utc', now())),
     ('REFLECTIONS', 'Stores lessons and observations from past bets and outcomes.', '', timezone('utc', now()), timezone('utc', now())),
-    ('THOUGHTS', 'Your thoughts.', '', timezone('utc', now()), timezone('utc', now()))
+    ('THOUGHTS', 'Your thoughts.', '', timezone('utc', now()), timezone('utc', now())),
+    ('LOG', 'Log of your operations.', '', timezone('utc', now()), timezone('utc', now()))
 ON CONFLICT ("Name") DO NOTHING;
