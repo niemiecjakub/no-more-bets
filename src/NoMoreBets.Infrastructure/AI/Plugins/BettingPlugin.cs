@@ -11,6 +11,7 @@ using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
+using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
@@ -23,11 +24,13 @@ public class BettingPlugin
 
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
+  private readonly IAgentSessionContext _agentSessionContext;
 
-  public BettingPlugin(IUnitOfWork unitOfWork, IMediator mediator)
+  public BettingPlugin(IUnitOfWork unitOfWork, IMediator mediator, IAgentSessionContext agentSessionContext)
   {
     _unitOfWork = unitOfWork;
     _mediator = mediator;
+    _agentSessionContext = agentSessionContext;
   }
 
   [KernelFunction("GetAvailableMatches")]
@@ -125,6 +128,7 @@ public class BettingPlugin
     var totalOdds = selectionOdds.Aggregate(1m, (acc, o) => acc * o);
     var betSlip = new BetSlip
     {
+      AgentSessionId = _agentSessionContext.SessionId,
       StakeAmount = stakeAmount,
       TotalOdds = totalOdds,
       PotentialPayout = stakeAmount * totalOdds,

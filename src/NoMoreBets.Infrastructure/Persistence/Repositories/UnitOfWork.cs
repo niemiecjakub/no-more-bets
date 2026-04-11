@@ -1,4 +1,5 @@
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
@@ -18,7 +19,8 @@ public class UnitOfWork : IUnitOfWork
     IMatchRepository matchRepository,
     IClubRepository clubRepository,
     IMemoryRepository memoryRepository,
-    IBankrollRepository bankrollRepository)
+    IBankrollRepository bankrollRepository,
+    IAgentSessionRepository agentSessionRepository)
   {
     _db = db;
     Betting = bettingRepository;
@@ -27,6 +29,7 @@ public class UnitOfWork : IUnitOfWork
     Leagues = leagueRepository;
     Memories = memoryRepository;
     Bankroll = bankrollRepository;
+    AgentSessions = agentSessionRepository;
   }
 
   public IBettingRepository Betting { get; }
@@ -36,6 +39,7 @@ public class UnitOfWork : IUnitOfWork
   public ILeagueRepository Leagues { get; }
   public IMemoryRepository Memories { get; }
   public IBankrollRepository Bankroll { get; }
+  public IAgentSessionRepository AgentSessions { get; }
 
   public async Task SaveChangesAsync(CancellationToken cancellationToken)
   {

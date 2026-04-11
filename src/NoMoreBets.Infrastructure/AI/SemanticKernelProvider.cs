@@ -21,6 +21,7 @@ public static class SemanticKernelProvider
     services.AddScoped<IMatchPrediction, AIGateway>();
     services.AddScoped<ContextBuilder>();
     services.AddScoped<AgentBuilder>();
+    services.AddScoped<IAgentSessionContext, AgentSessionContext>();
     services.AddScoped<Runner>();
     services.AddScoped<IAgentPhaseRunner>(sp => sp.GetRequiredService<Runner>());
 

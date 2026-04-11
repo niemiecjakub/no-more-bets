@@ -5,6 +5,7 @@ using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Infrastructure.AI.Plugins;
+using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 
@@ -13,6 +14,7 @@ public class PluginFactoryTests
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly ISearchService _searchService = Substitute.For<ISearchService>();
+  private readonly IAgentSessionContext _agentSessionContext = Substitute.For<IAgentSessionContext>();
 
   private PluginFactory CreateSut()
   {
@@ -20,6 +22,7 @@ public class PluginFactoryTests
       .AddSingleton(_unitOfWork)
       .AddSingleton(_mediator)
       .AddSingleton(_searchService)
+      .AddSingleton(_agentSessionContext)
       .BuildServiceProvider();
     return new PluginFactory(sp);
   }

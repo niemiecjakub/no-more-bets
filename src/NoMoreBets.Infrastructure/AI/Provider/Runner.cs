@@ -4,8 +4,9 @@ using Microsoft.SemanticKernel;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Domain.Matches;
 using NoMoreBets.Application.Common.Dto;
+using NoMoreBets.Domain.AgentSessions;
+using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Infrastructure.AI.Provider;
 
@@ -15,12 +16,14 @@ public sealed class Runner : IAgentPhaseRunner
   private readonly ILogger<Runner> _logger;
   private readonly IMediator _mediator;
   private readonly IPluginFactory _pluginFactory;
+  private readonly IAgentSessionContext _agentSessionContext;
   private readonly IUnitOfWork _unitOfWork;
 
   public Runner(
     AgentBuilder agentBuilder,
     IPluginFactory pluginFactory,
     IUnitOfWork unitOfWork,
+    IAgentSessionContext agentSessionContext,
     IMediator mediator,
     ILogger<Runner> logger)
   {
@@ -28,6 +31,7 @@ public sealed class Runner : IAgentPhaseRunner
     _logger = logger;
     _mediator = mediator;
     _pluginFactory = pluginFactory;
+    _agentSessionContext = agentSessionContext;
     _unitOfWork = unitOfWork;
   }
 
@@ -47,7 +51,6 @@ public sealed class Runner : IAgentPhaseRunner
   }
   public async Task<IReadOnlyList<IMessage>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default)
   {
-    const string phaseName = "Research";
     Action<Kernel> configureKernel = kernel =>
     {
       kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentResearchPlugin());
@@ -130,7 +133,7 @@ public sealed class Runner : IAgentPhaseRunner
           """;
 
     return await ExecuteBettingPhaseAsync(
-      $"{phaseName}:{match.Id}",
+      AgentSessionPhase.Research,
       prompt,
       configureKernel,
       cancellationToken).ConfigureAwait(false);
@@ -138,7 +141,6 @@ public sealed class Runner : IAgentPhaseRunner
 
   public Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
-    const string phaseName = "Reflection";
     var prompt = """
                  You are running the reflection phase.
 
@@ -178,7 +180,7 @@ public sealed class Runner : IAgentPhaseRunner
     };
 
     return ExecuteBettingPhaseAsync(
-      phaseName,
+      AgentSessionPhase.Reflection,
       prompt,
       configurePlugins,
       cancellationToken);
@@ -186,7 +188,6 @@ public sealed class Runner : IAgentPhaseRunner
 
   public async Task<IReadOnlyList<IMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
   {
-    const string phaseName = "Betting";
 
     var currentBalance = await _unitOfWork.Bankroll
       .GetCurrentBalanceAsync(cancellationToken)
@@ -264,14 +265,14 @@ public sealed class Runner : IAgentPhaseRunner
     };
 
     return await ExecuteBettingPhaseAsync(
-      phaseName,
+      AgentSessionPhase.Betting,
       prompt,
       configurePlugins,
       cancellationToken).ConfigureAwait(false);
   }
 
   private async Task<IReadOnlyList<IMessage>> ExecuteBettingPhaseAsync(
-    string phaseName,
+    AgentSessionPhase phase,
     string userPrompt,
     Action<Kernel> configureKernel,
     CancellationToken cancellationToken = default)
@@ -279,32 +280,58 @@ public sealed class Runner : IAgentPhaseRunner
     var config = _agentBuilder.BuildForScheduledJob();
     configureKernel(config.Agent.Kernel);
     var messages = new List<IMessage>();
+    var phaseName = phase.ToString();
     _logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
 
-    await foreach (var message in config.Agent.InvokeAsync(userPrompt, config.Thread, config.Options, cancellationToken)
-                     .ConfigureAwait(false))
-    {
-#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-      foreach (var item in message.Message.Items)
-      {
-        if (item is ReasoningContent reasoning)
-        {
-          messages.Add(new ReasoningMessage(reasoning.Text));
-        }
+    var startedAt = DateTime.UtcNow;
+    var sessionId = await _unitOfWork.AgentSessions
+      .CreateSessionAsync(phase, startedAt, cancellationToken)
+      .ConfigureAwait(false);
+    _agentSessionContext.SessionId = sessionId;
 
-        if (item is FunctionCallContent functionCall)
+    try
+    {
+      await foreach (var message in config.Agent.InvokeAsync(userPrompt, config.Thread, config.Options, cancellationToken)
+                       .ConfigureAwait(false))
+      {
+#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+        foreach (var item in message.Message.Items)
         {
-          var functionName = functionCall.FunctionName;
-          var arguments = functionCall.Arguments?.Select(a => new FunctionArgument(a.Key.ToString(), a.Value?.ToString())).ToList();
-          messages.Add(new FunctionMessage(functionName, arguments));
+          if (item is ReasoningContent reasoning)
+          {
+            messages.Add(new ReasoningMessage(reasoning.Text));
+          }
+
+          if (item is FunctionCallContent functionCall)
+          {
+            var functionName = functionCall.FunctionName;
+            var arguments = functionCall.Arguments?.Select(a => new FunctionArgument(a.Key.ToString(), a.Value?.ToString())).ToList();
+            messages.Add(new FunctionMessage(functionName, arguments));
+          }
         }
-      }
 
 #pragma warning restore SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-      if (!string.IsNullOrEmpty(message.Message.Content))
-      {
-        messages.Add(new Message(message.Message.Content));
+        if (!string.IsNullOrEmpty(message.Message.Content))
+        {
+          messages.Add(new Message(message.Message.Content));
+        }
       }
+    }
+    finally
+    {
+      try
+      {
+        var rows = AgentSessionTranscriptMapper.ToEntities(messages);
+        await _unitOfWork.AgentSessions
+          .AddMessagesAsync(sessionId, rows, cancellationToken)
+          .ConfigureAwait(false);
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to persist agent session {SessionId} transcript", sessionId);
+      }
+
+      _agentSessionContext.SessionId = null;
     }
 
     _logger.LogInformation(

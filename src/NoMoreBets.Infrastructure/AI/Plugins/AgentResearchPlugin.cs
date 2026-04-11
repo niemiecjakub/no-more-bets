@@ -8,6 +8,7 @@ using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
+using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
@@ -17,17 +18,20 @@ public class AgentResearchPlugin
   private readonly SearchPlugin _searchPlugin;
   private readonly MemoriesPlugin _memoriesPlugin;
   private readonly IUnitOfWork _unitOfWork;
+  private readonly IAgentSessionContext _agentSessionContext;
 
   public AgentResearchPlugin(
     MatchPlugin matchPlugin,
     SearchPlugin searchPlugin,
     MemoriesPlugin memoriesPlugin,
-    IUnitOfWork unitOfWork)
+    IUnitOfWork unitOfWork,
+    IAgentSessionContext agentSessionContext)
   {
     _matchPlugin = matchPlugin;
     _searchPlugin = searchPlugin;
     _memoriesPlugin = memoriesPlugin;
     _unitOfWork = unitOfWork;
+    _agentSessionContext = agentSessionContext;
   }
 
   [KernelFunction]
@@ -139,6 +143,7 @@ public class AgentResearchPlugin
     var analysis = new MatchAnalysis
     {
       MatchId = matchId,
+      AgentSessionId = _agentSessionContext.SessionId,
       Code = MatchAnalysis.ResearchCode,
       Content = normalizedContent
     };

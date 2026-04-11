@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Memories;
@@ -38,6 +39,8 @@ public class AppDbContext : DbContext
   public DbSet<BetSelection> BetSelection { get; set; }
   public DbSet<Memory> Memory { get; set; }
   public DbSet<Bankroll> Bankroll { get; set; }
+  public DbSet<AgentSession> AgentSession { get; set; }
+  public DbSet<AgentSessionMessage> AgentSessionMessage { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -261,10 +264,16 @@ public class AppDbContext : DbContext
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
       entity.Property(e => e.MatchId).IsRequired();
+      entity.Property(e => e.AgentSessionId).IsRequired(false);
       entity.Property(e => e.Code).IsRequired().HasMaxLength(255);
       entity.Property(e => e.Content).IsRequired().HasColumnType("jsonb");
       entity.HasIndex(e => e.MatchId);
+      entity.HasIndex(e => e.AgentSessionId);
       entity.HasOne(e => e.Match).WithMany(m => m.MatchAnalyses).HasForeignKey(e => e.MatchId).OnDelete(DeleteBehavior.Cascade);
+      entity.HasOne(e => e.AgentSession)
+        .WithMany(s => s.MatchAnalyses)
+        .HasForeignKey(e => e.AgentSessionId)
+        .OnDelete(DeleteBehavior.SetNull);
     });
 
     modelBuilder.Entity<ClubDailySummary>(entity =>
@@ -298,16 +307,22 @@ public class AppDbContext : DbContext
     {
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.AgentSessionId).IsRequired(false);
       entity.Property(e => e.StakeAmount).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.TotalOdds).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.PotentialPayout).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.StatusId).IsRequired();
       entity.Property(e => e.CreatedAt).IsRequired();
       entity.HasIndex(e => e.StatusId);
+      entity.HasIndex(e => e.AgentSessionId);
       entity.HasOne(e => e.BetStatusEntity)
         .WithMany()
         .HasForeignKey(e => e.StatusId)
         .OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.AgentSession)
+        .WithMany(s => s.BetSlips)
+        .HasForeignKey(e => e.AgentSessionId)
+        .OnDelete(DeleteBehavior.SetNull);
     });
 
     modelBuilder.Entity<BetSelection>(entity =>
@@ -364,6 +379,30 @@ public class AppDbContext : DbContext
       entity.Property(e => e.CreatedAt).IsRequired();
       entity.HasIndex(e => e.BetId);
       entity.HasOne(e => e.BetSlip).WithMany(s => s.Bankrolls).HasForeignKey(e => e.BetId).OnDelete(DeleteBehavior.Restrict);
+    });
+
+    modelBuilder.Entity<AgentSession>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.Phase).IsRequired().HasConversion<int>();
+      entity.Property(e => e.StartedAt).IsRequired();
+      entity.HasIndex(e => new { e.Phase, e.StartedAt });
+    });
+
+    modelBuilder.Entity<AgentSessionMessage>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.SessionId).IsRequired();
+      entity.Property(e => e.Ordinal).IsRequired();
+      entity.Property(e => e.Kind).IsRequired().HasConversion<int>();
+      entity.Property(e => e.Text).IsRequired();
+      entity.HasIndex(e => e.SessionId);
+      entity.HasOne(e => e.Session)
+        .WithMany(s => s.Messages)
+        .HasForeignKey(e => e.SessionId)
+        .OnDelete(DeleteBehavior.Cascade);
     });
   }
 }

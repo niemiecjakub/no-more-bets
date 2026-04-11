@@ -1,3 +1,4 @@
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
@@ -14,5 +15,6 @@ public interface IUnitOfWork
   ILeagueRepository Leagues { get; }
   IMemoryRepository Memories { get; }
   IBankrollRepository Bankroll { get; }
+  IAgentSessionRepository AgentSessions { get; }
   Task SaveChangesAsync(CancellationToken cancellationToken);
 }
