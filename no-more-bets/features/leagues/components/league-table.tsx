@@ -1,8 +1,41 @@
+"use client";
+
 import { SlugIcon } from "@/components/slug-icon";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import type { LeagueTableDto } from "../interfaces";
 
 interface LeagueTableProps {
   data: LeagueTableDto;
+}
+
+function StatHeader({ label, title }: { label: string; title: string }) {
+  return (
+    <th className="px-3 py-2 text-center font-medium text-foreground">
+      <Tooltip>
+        <TooltipTrigger
+          render={(props) => (
+            <span
+              {...props}
+              className={cn(
+                "inline-flex cursor-default rounded px-1.5 py-0.5 font-medium underline decoration-muted-foreground decoration-dotted underline-offset-[5px] outline-none transition-colors hover:bg-muted hover:decoration-transparent focus-visible:ring-2 focus-visible:ring-ring/50",
+                props.className,
+              )}
+            >
+              {label}
+            </span>
+          )}
+        />
+        <TooltipContent>
+          <p>{title}</p>
+        </TooltipContent>
+      </Tooltip>
+    </th>
+  );
 }
 
 export function LeagueTable({ data }: LeagueTableProps) {
@@ -21,16 +54,16 @@ export function LeagueTable({ data }: LeagueTableProps) {
           <tr className="border-b border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900">
             <th className="px-3 py-2 text-left font-medium text-foreground">#</th>
             <th className="px-3 py-2 text-left font-medium text-foreground">Team</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">P</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">W</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">D</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">L</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">GF</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">GA</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">GD</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">Pts</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">xG</th>
-            <th className="px-3 py-2 text-center font-medium text-foreground">xPts</th>
+            <StatHeader label="P" title="Matches played" />
+            <StatHeader label="W" title="Wins" />
+            <StatHeader label="D" title="Draws" />
+            <StatHeader label="L" title="Losses" />
+            <StatHeader label="GF" title="Goals for" />
+            <StatHeader label="GA" title="Goals against" />
+            <StatHeader label="GD" title="Goal difference" />
+            <StatHeader label="Pts" title="Points" />
+            <StatHeader label="xG" title="Expected goals" />
+            <StatHeader label="xPts" title="Expected points" />
           </tr>
         </thead>
         <tbody>
