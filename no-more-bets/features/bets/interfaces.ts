@@ -11,6 +11,7 @@ export interface BetSlipListItem {
   statusId: number;
   statusName: string;
   selections: BetSelectionItem[];
+  agentSessionId: number | null;
 }
 
 /**

@@ -28,6 +28,10 @@ function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
     optionalInt(item.homeGoals) ?? optionalInt(r.homeGoals) ?? optionalInt(r.HomeGoals);
   const awayGoals =
     optionalInt(item.awayGoals) ?? optionalInt(r.awayGoals) ?? optionalInt(r.AwayGoals);
+  const researchAgentSessionId =
+    optionalInt(item.researchAgentSessionId) ??
+    optionalInt(r.researchAgentSessionId) ??
+    optionalInt(r.ResearchAgentSessionId);
   return {
     ...item,
     homeClubSlug: homeSlug,
@@ -35,6 +39,7 @@ function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
     matchStatusId,
     homeGoals,
     awayGoals,
+    researchAgentSessionId: researchAgentSessionId ?? null,
   };
 }
 

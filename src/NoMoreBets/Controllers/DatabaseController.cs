@@ -146,7 +146,8 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
             sel.OddsAtPlacement,
             sel.StatusId,
             sel.BetStatusEntity.Name))
-          .ToList()))
+          .ToList(),
+        s.AgentSessionId))
       .ToList();
 
     return Ok(result);
@@ -553,6 +554,13 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
     if (match == null)
       return NotFound();
 
+    var researchAgentSessionId = await db.MatchAnalysis
+      .AsNoTracking()
+      .Where(a => a.MatchId == matchId && a.Code == MatchAnalysis.ResearchCode)
+      .OrderByDescending(a => a.Id)
+      .Select(a => a.AgentSessionId)
+      .FirstOrDefaultAsync(cancellationToken);
+
     var analysisEntities = await db.MatchAnalysis
       .Where(a => a.MatchId == matchId)
       .Where(a => a.Code != MatchAnalysis.ResearchCode)
@@ -577,8 +585,37 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
       match.HomeGoals,
       match.AwayGoals,
       match.MatchDate,
-      analyses);
+      analyses,
+      researchAgentSessionId);
     return Ok(page);
+  }
+
+  /// <summary>
+  /// Gets ordered transcript messages for an agent session.
+  /// </summary>
+  /// <param name="sessionId">Agent session ID.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>Messages ordered by ordinal, or 404 if the session does not exist.</returns>
+  [HttpGet("agent-sessions/{sessionId:int}/messages")]
+  public async Task<ActionResult<IReadOnlyList<AgentSessionMessageDto>>> GetAgentSessionMessages(
+    int sessionId,
+    CancellationToken cancellationToken = default)
+  {
+    var exists = await db.AgentSession
+      .AsNoTracking()
+      .AnyAsync(s => s.Id == sessionId, cancellationToken);
+
+    if (!exists)
+      return NotFound();
+
+    var messages = await db.AgentSessionMessage
+      .AsNoTracking()
+      .Where(m => m.SessionId == sessionId)
+      .OrderBy(m => m.Ordinal)
+      .Select(m => new AgentSessionMessageDto(m.Id, m.SessionId, m.Ordinal, (int)m.Kind, m.Text))
+      .ToListAsync(cancellationToken);
+
+    return Ok(messages);
   }
 
   private static StructuredMatchAnalysisDto? MapStructured(StructuredMatchAnalysis? analysis) =>
@@ -708,7 +745,8 @@ public record MatchAnalysisPageDto(
   int? HomeGoals,
   int? AwayGoals,
   DateTime MatchDate,
-  IReadOnlyList<MatchAnalysisItemDto> Analyses);
+  IReadOnlyList<MatchAnalysisItemDto> Analyses,
+  int? ResearchAgentSessionId);
 
 public record BetSelectionItemDto(
   int MatchId,
@@ -728,4 +766,7 @@ public record BetSlipListItemDto(
   decimal PotentialPayout,
   int StatusId,
   string StatusName,
-  IReadOnlyList<BetSelectionItemDto> Selections);
+  IReadOnlyList<BetSelectionItemDto> Selections,
+  int? AgentSessionId);
+
+public record AgentSessionMessageDto(int Id, int SessionId, int Ordinal, int Kind, string Text);

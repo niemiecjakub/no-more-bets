@@ -23,6 +23,7 @@ import {
   type TeamPerformanceResult,
   type TeamMetrics,
 } from "@/features/matches/interfaces";
+import { LazyAgentSessionTranscript } from "@/features/bets/components/lazy-agent-session-transcript";
 import {
   fetchMatchAgentResearch,
   fetchMatchBettingOddsHistory,
@@ -339,15 +340,14 @@ export default function MatchPage() {
             </Card>
 
             <Card title="Agent Research" icon="🔬">
-              <div className="px-4 py-4">
-                <PreviewSection
-                  preview={insights.agentResearch}
-                  isLoading={insightLoading.agentResearch && insights.agentResearch === undefined}
-                  error={insightErrors.agentResearch}
-                  loadingMessage="Loading agent research..."
-                  emptyMessage="No agent research available."
-                />
-              </div>
+              <AgentResearchSection
+                summaryPreview={insights.agentResearch}
+                summaryLoading={
+                  insightLoading.agentResearch && insights.agentResearch === undefined
+                }
+                summaryError={insightErrors.agentResearch}
+                researchAgentSessionId={data.researchAgentSessionId}
+              />
             </Card>
 
             <Card title="League statistics" icon="🏆">
@@ -725,4 +725,54 @@ function PreviewSection({
   if (isLoading) return <MutedText>{loadingMessage}</MutedText>;
   if (preview == null || preview === "") return <MutedText>{emptyMessage}</MutedText>;
   return <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">{preview}</p>;
+}
+
+function AgentResearchSection({
+  summaryPreview,
+  summaryLoading,
+  summaryError,
+  researchAgentSessionId,
+}: {
+  summaryPreview?: string | null;
+  summaryLoading: boolean;
+  summaryError?: string;
+  researchAgentSessionId: number | null;
+}) {
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+
+  return (
+    <div className="px-4 py-4">
+      <PreviewSection
+        preview={summaryPreview}
+        isLoading={summaryLoading}
+        error={summaryError}
+        loadingMessage="Loading agent research..."
+        emptyMessage="No agent research available."
+      />
+      {researchAgentSessionId != null ? (
+        <details
+          className="group mt-4 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800"
+          onToggle={(e) => {
+            const el = e.currentTarget;
+            if (el.open) setTranscriptOpen(true);
+          }}
+        >
+          <summary className="cursor-pointer list-none bg-zinc-50 px-3 py-2 text-sm font-medium text-foreground hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-900">
+            <span className="inline-flex w-full items-center justify-between gap-2">
+              <span>View session transcript</span>
+              <span className="text-xs text-zinc-500 transition-transform group-open:rotate-180 dark:text-zinc-400">
+                ▼
+              </span>
+            </span>
+          </summary>
+          <div className="border-t border-zinc-200 dark:border-zinc-800">
+            <LazyAgentSessionTranscript
+              sessionId={researchAgentSessionId}
+              active={transcriptOpen}
+            />
+          </div>
+        </details>
+      ) : null}
+    </div>
+  );
 }

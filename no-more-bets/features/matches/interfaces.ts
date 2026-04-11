@@ -58,6 +58,7 @@ export interface MatchAnalysisPageDto {
   awayGoals: number | null;
   matchDate: string;
   analyses: MatchAnalysisItemDto[];
+  researchAgentSessionId: number | null;
 }
 
 export interface Player {
