@@ -102,4 +102,17 @@ public class BettingRepository : IBettingRepository
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
   }
+
+  public async Task<IReadOnlyList<BetSelection>> GetPendingSelectionsWithBothScoresAsync(
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.BetSelection
+      .Where(s => s.StatusId == (int)BetStatus.Pending)
+      .Where(s => s.Match.HomeGoals != null && s.Match.AwayGoals != null)
+      .Include(s => s.Match)
+      .Include(s => s.BetSlip)
+      .ThenInclude(b => b.Selections)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
 }

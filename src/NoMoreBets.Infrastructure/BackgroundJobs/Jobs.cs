@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Bankroll.ApplyPayday;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Betting.GetBetEvents;
+using NoMoreBets.Application.Betting.SettlePendingBetSelections;
 using NoMoreBets.Application.Betting.UpdateMatches;
 using NoMoreBets.Application.Clubs.UpdateDailySummary;
 using NoMoreBets.Application.Common;
@@ -427,7 +428,13 @@ public class JobService(
     }
 
     if (updatedCount > 0)
+    {
       await db.SaveChangesAsync();
+      await mediator.Send(new SettlePendingBetSelectionsCommand(), CancellationToken.None);
+      logger.LogInformation(
+        "Job {JobName} ran pending bet settlement after score updates",
+        nameof(FillMissingFinishedMatchScoresFromSoccerData));
+    }
 
     logger.LogInformation(
       "Job {JobName} updated scores for {UpdatedCount} matches",

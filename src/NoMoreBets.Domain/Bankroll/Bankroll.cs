@@ -10,6 +10,7 @@ public class Bankroll
 
   private const string SalaryName = "Salary";
   private const decimal SalaryAmount = 8000m;
+  private const string BetWinName = "Bet win";
 
   private Bankroll()
   {
@@ -28,6 +29,9 @@ public class Bankroll
   public BankrollFlow Direction => BankrollFlowExtensions.FromStorageCode(Flow);
 
   public static Bankroll CreateSalary() => Create(SalaryName, SalaryAmount, BankrollFlow.In);
+
+  public static Bankroll CreateBetWin(decimal potentialPayout, int betSlipId) =>
+    Create(BetWinName, potentialPayout, BankrollFlow.In, betSlipId);
 
   public static Bankroll Create(string name, decimal amount, BankrollFlow flow, int? betId = null)
   {

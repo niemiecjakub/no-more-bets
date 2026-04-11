@@ -26,4 +26,28 @@ public class BetSlip
     get => (BetStatus)StatusId;
     set => StatusId = (int)value;
   }
+
+  /// <summary>
+  /// Parlay rollup: any leg <see cref="BetStatus.Lost"/> loses the slip; all <see cref="BetStatus.Won"/> wins; otherwise pending.
+  /// </summary>
+  public BetStatus ComputeStatusFromSelections()
+  {
+    var list = Selections as IReadOnlyCollection<BetSelection> ?? Selections.ToList();
+    if (list.Count == 0)
+    {
+      return BetStatus.Pending;
+    }
+
+    if (list.Any(s => s.BetStatus == BetStatus.Lost))
+    {
+      return BetStatus.Lost;
+    }
+
+    if (list.All(s => s.BetStatus == BetStatus.Won))
+    {
+      return BetStatus.Won;
+    }
+
+    return BetStatus.Pending;
+  }
 }
