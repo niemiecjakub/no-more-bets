@@ -1,5 +1,23 @@
 import axiosInstance from "../../../lib/axios";
-import type { BetSlipListItem } from "../interfaces";
+import type { BetSelectionItem, BetSlipListItem } from "../interfaces";
+
+function normalizeSelection(raw: unknown): BetSelectionItem {
+  const r = raw as Record<string, unknown>;
+  const item = raw as BetSelectionItem;
+  const homeClubSlug = item.homeClubSlug ?? r.homeClubSlug ?? r.HomeClubSlug;
+  const awayClubSlug = item.awayClubSlug ?? r.awayClubSlug ?? r.AwayClubSlug;
+  return {
+    ...item,
+    homeClubSlug:
+      typeof homeClubSlug === "string" && homeClubSlug.trim() !== ""
+        ? homeClubSlug
+        : null,
+    awayClubSlug:
+      typeof awayClubSlug === "string" && awayClubSlug.trim() !== ""
+        ? awayClubSlug
+        : null,
+  };
+}
 
 function normalizeBetSlip(raw: unknown): BetSlipListItem {
   const r = raw as Record<string, unknown>;
@@ -10,7 +28,11 @@ function normalizeBetSlip(raw: unknown): BetSlipListItem {
     typeof agentSessionIdRaw === "number" && Number.isFinite(agentSessionIdRaw)
       ? agentSessionIdRaw
       : null;
-  return { ...item, agentSessionId };
+  const selectionsRaw = r.selections ?? r.Selections;
+  const selections = Array.isArray(selectionsRaw)
+    ? selectionsRaw.map(normalizeSelection)
+    : (item.selections ?? []);
+  return { ...item, agentSessionId, selections };
 }
 
 /**

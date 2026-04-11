@@ -21,6 +21,8 @@ export interface BetSelectionItem {
   matchId: number;
   homeClubName: string;
   awayClubName: string;
+  homeClubSlug?: string | null;
+  awayClubSlug?: string | null;
   eventTypeName: string;
   eventOptionName: string;
   oddsAtPlacement: number;

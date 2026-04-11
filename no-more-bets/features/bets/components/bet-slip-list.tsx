@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { BetSelectionItem, BetSlipListItem } from "../interfaces";
 import { BET_STATUS } from "../interfaces";
+import { SlugIcon } from "@/components/slug-icon";
+import { formatCurrency } from "@/utils/format-currency";
+import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
 import { formatMatchDate } from "../../../utils/format-date";
 import { LazyAgentSessionTranscript } from "./lazy-agent-session-transcript";
 
@@ -31,28 +34,42 @@ function getStatusBadgeClass(statusId: number): string {
   }
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pl-PL", {
-    style: "currency",
-    currency: "PLN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
 function SelectionRow({ selection }: { selection: BetSelectionItem }) {
+  const homeLogoSlug = clubLogoSlugSegment(
+    selection.homeClubSlug,
+    selection.homeClubName
+  );
+  const awayLogoSlug = clubLogoSlugSegment(
+    selection.awayClubSlug,
+    selection.awayClubName
+  );
+
   return (
     <li className="border-t border-zinc-100 py-2 first:border-t-0 first:pt-0 last:pb-0 dark:border-zinc-800/80">
       <Link
         href={`/match/${selection.matchId}`}
-        className="-mx-1 block rounded-md px-1 py-0.5 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
+        className="-mx-1 grid grid-cols-1 items-start gap-x-4 gap-y-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-zinc-50 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center dark:hover:bg-zinc-900/50"
       >
-        <div className="text-sm font-medium text-foreground">
-          {selection.homeClubName}
-          <span className="mx-1.5 text-zinc-500 dark:text-zinc-400">vs</span>
-          {selection.awayClubName}
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-foreground">
+            <span className="min-w-0 truncate">{selection.homeClubName}</span>
+            <SlugIcon
+              kind="club"
+              slug={homeLogoSlug}
+              alt={selection.homeClubName}
+              className="h-5 w-5"
+            />
+            <span className="shrink-0 text-zinc-500 dark:text-zinc-400">vs</span>
+            <SlugIcon
+              kind="club"
+              slug={awayLogoSlug}
+              alt={selection.awayClubName}
+              className="h-5 w-5"
+            />
+            <span className="min-w-0 truncate">{selection.awayClubName}</span>
+          </div>
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-zinc-600 dark:text-zinc-400">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-zinc-600 dark:text-zinc-400">
           <span>{selection.eventTypeName}</span>
           <span className="font-medium text-foreground">{selection.eventOptionName}</span>
           <span className="tabular-nums">@{selection.oddsAtPlacement.toFixed(2)}</span>
@@ -62,22 +79,40 @@ function SelectionRow({ selection }: { selection: BetSelectionItem }) {
   );
 }
 
-function BetSlipCard({ slip }: { slip: BetSlipListItem }) {
+function BetSlipCard({
+  slip,
+  stackInSession,
+}: {
+  slip: BetSlipListItem;
+  stackInSession?: { index: number; total: number };
+}) {
+  const stackClass =
+    stackInSession != null
+      ? [
+          stackInSession.index > 0 && "-mt-px relative z-[1]",
+          "rounded-none",
+        ]
+          .filter(Boolean)
+          .join(" ")
+      : "rounded-lg";
+
   return (
-    <li className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
+    <li
+      className={`overflow-hidden border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950 ${stackClass}`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800/80">
         <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getStatusBadgeClass(slip.statusId)}`}
+          >
+            {slip.statusName}
+          </span>
           <time
             dateTime={slip.createdAt}
             className="tabular-nums text-sm text-zinc-600 dark:text-zinc-400"
           >
             {formatMatchDate(slip.createdAt)}
           </time>
-          <span
-            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getStatusBadgeClass(slip.statusId)}`}
-          >
-            {slip.statusName}
-          </span>
         </div>
       </div>
       <div className="grid grid-cols-1 gap-3 border-b border-zinc-100 px-4 py-3 text-sm sm:grid-cols-3 dark:border-zinc-800/80">
@@ -185,14 +220,18 @@ export function BetSlipList({ betSlips }: BetSlipListProps) {
                 agentSessionId={group.agentSessionId}
                 slipCount={group.slips.length}
               />
-              <ul className="space-y-4 p-4">
-                {group.slips.map((slip) => (
-                  <BetSlipCard key={slip.id} slip={slip} />
+              <ul>
+                {group.slips.map((slip, index) => (
+                  <BetSlipCard
+                    key={slip.id}
+                    slip={slip}
+                    stackInSession={{ index, total: group.slips.length }}
+                  />
                 ))}
               </ul>
             </div>
           ) : (
-            <ul className="space-y-4">
+            <ul>
               {group.slips.map((slip) => (
                 <BetSlipCard key={slip.id} slip={slip} />
               ))}

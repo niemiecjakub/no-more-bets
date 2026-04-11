@@ -1,14 +1,6 @@
 import type { BankrollDashboard, BankrollRecord } from "../interfaces";
+import { formatCurrency } from "@/utils/format-currency";
 import { formatMatchDate } from "@/utils/format-date";
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pl-PL", {
-    style: "currency",
-    currency: "PLN",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
 
 function paydayLabel(days: number): string {
   if (days === 0) return "Payday today";
