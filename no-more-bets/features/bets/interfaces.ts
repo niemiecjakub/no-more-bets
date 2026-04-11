@@ -27,12 +27,11 @@ export interface BetSelectionItem {
   statusName: string;
 }
 
-/** Status IDs matching backend BetStatus enum (Pending=1, Won=2, Lost=3, CashedOut=4). */
+/** Status IDs matching backend BetStatus enum (Pending=1, Won=2, Lost=3). */
 export const BET_STATUS = {
   Pending: 1,
   Won: 2,
   Lost: 3,
-  CashedOut: 4,
 } as const;
 
 /** GET api/Database/bankroll — BankrollRecordDto */
