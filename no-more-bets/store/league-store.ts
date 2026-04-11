@@ -14,6 +14,8 @@ interface LeagueStore {
   leagueTableById: Record<number, LeagueTableDto>;
   isLoading: boolean;
   error: string | null;
+  isTableLoading: boolean;
+  tableError: string | null;
   setLeagues: () => Promise<void>;
   setLeagueTable: (leagueId: number) => Promise<void>;
 }
@@ -23,6 +25,8 @@ export const useLeagueStore = create<LeagueStore>((set) => ({
   leagueTableById: {},
   isLoading: false,
   error: null,
+  isTableLoading: false,
+  tableError: null,
 
   setLeagues: async () => {
     set({ isLoading: true, error: null });
@@ -39,7 +43,7 @@ export const useLeagueStore = create<LeagueStore>((set) => ({
   },
 
   setLeagueTable: async (leagueId: number) => {
-    set({ isLoading: true, error: null });
+    set({ isTableLoading: true, tableError: null });
     try {
       const data = await fetchLeagueTable(leagueId);
       set((state) => ({
@@ -47,14 +51,14 @@ export const useLeagueStore = create<LeagueStore>((set) => ({
           ...state.leagueTableById,
           [leagueId]: data,
         },
-        error: null,
+        tableError: null,
       }));
     } catch (err) {
       set({
-        error: handleServiceError(err, "Failed to load league table."),
+        tableError: handleServiceError(err, "Failed to load league table."),
       });
     } finally {
-      set({ isLoading: false });
+      set({ isTableLoading: false });
     }
   },
 }));

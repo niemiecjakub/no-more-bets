@@ -1,12 +1,17 @@
-import Link from "next/link";
 import { SlugIcon } from "@/components/slug-icon";
 import type { LeagueListItem } from "../interfaces";
 
 interface LeagueListProps {
   leagues: LeagueListItem[];
+  selectedLeagueId: number | null;
+  onSelectLeague: (id: number) => void;
 }
 
-export function LeagueList({ leagues }: LeagueListProps) {
+export function LeagueList({
+  leagues,
+  selectedLeagueId,
+  onSelectLeague,
+}: LeagueListProps) {
   if (leagues.length === 0) {
     return (
       <p className="py-8 text-center text-zinc-500 dark:text-zinc-400">
@@ -17,20 +22,29 @@ export function LeagueList({ leagues }: LeagueListProps) {
 
   return (
     <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
-      {leagues.map((league) => (
-        <li
-          key={league.id}
-          className="bg-white text-foreground transition-colors hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900"
-        >
-          <Link
-            href={`/league/${league.id}`}
-            className="flex items-center gap-2 px-4 py-3 font-medium"
+      {leagues.map((league) => {
+        const selected = selectedLeagueId === league.id;
+        return (
+          <li
+            key={league.id}
+            className={`text-foreground transition-colors ${
+              selected
+                ? "bg-zinc-100 dark:bg-zinc-900"
+                : "bg-white hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+            }`}
           >
-            <SlugIcon kind="league" slug={league.slug} alt={league.name} />
-            <span className="truncate">{league.name}</span>
-          </Link>
-        </li>
-      ))}
+            <button
+              type="button"
+              onClick={() => onSelectLeague(league.id)}
+              aria-pressed={selected}
+              className="flex w-full items-center gap-2 px-4 py-3 text-left font-medium"
+            >
+              <SlugIcon kind="league" slug={league.slug} alt={league.name} />
+              <span className="truncate">{league.name}</span>
+            </button>
+          </li>
+        );
+      })}
     </ul>
   );
 }
