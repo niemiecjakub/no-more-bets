@@ -36,6 +36,11 @@ public class PluginFactory : IPluginFactory
     return ActivatorUtilities.CreateInstance<AgentResearchPlugin>(_sp);
   }
 
+  public object CreateAgentReflectionPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<AgentReflectionPlugin>(_sp);
+  }
+
   public object CreateBankrollPlugin()
   {
     return ActivatorUtilities.CreateInstance<BankrollPlugin>(_sp);

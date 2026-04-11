@@ -21,12 +21,14 @@ public class SearchPlugin
   public async Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
     [Description("The specific news topic or keywords to search for.")]
     string query,
+    [Description("Optional time window: pd (last 24 hours), pw (last 7 days), pm (last 31 days), py (last year). Omit or null for no freshness filter.")]
+    string? freshness = null,
     CancellationToken cancellationToken = default)
   {
     var src = await _searchService.SearchNewsAsync(query, new SearchNewsOptions()
     {
       Count = 5,
-      Freshness = "pd",
+      Freshness = freshness,
       Country = "GB",
       ExtraSnippets = true
     }, cancellationToken).ConfigureAwait(false);
@@ -44,11 +46,14 @@ public class SearchPlugin
   public async Task<IReadOnlyList<SearchLlmContextItemDto>> GetWebGroundingAsync(
     [Description("The detailed search query or question to gather context for.")]
     string query,
+    [Description("Optional time window: pd (last 24 hours), pw (last 7 days), pm (last 31 days), py (last year). Omit or null for no freshness filter.")]
+    string? freshness = null,
     CancellationToken cancellationToken = default)
   {
     var src = await _searchService.SearchLlmContextAsync(query, new SearchLlmContextOptions()
     {
       Count = 5,
+      Freshness = freshness,
     }, cancellationToken).ConfigureAwait(false);
     return src.Items.Select(item => new SearchLlmContextItemDto(
       Snippets: item.Snippets,

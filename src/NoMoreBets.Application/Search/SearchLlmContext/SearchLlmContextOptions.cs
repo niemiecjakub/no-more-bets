@@ -39,6 +39,16 @@ public sealed class SearchLlmContextOptions
   [Range(1, 100)]
   public int MaximumNumberOfSnippetsPerUrl { get; init; } = 50;
 
+  /// <summary>
+  /// Optional time range for results (Bing-style freshness codes). Omit for no filter.
+  /// <list type="bullet">
+  /// <item><term>pd</term> — Last 24 hours: get breaking news and latest updates</item>
+  /// <item><term>pw</term> — Last 7 days: track weekly news trends</item>
+  /// <item><term>pm</term> — Last 31 days: monitor monthly developments</item>
+  /// <item><term>py</term> — Last year: search annual news coverage</item>
+  /// </list>
+  /// </summary>
+  [RegularExpression("^(pd|pw|pm|py)?$", ErrorMessage = "Freshness must be 'pd' (last 24 hours), 'pw' (last 7 days), 'pm' (last 31 days), 'py' (last year), or empty to omit.")]
   public string? Freshness { get; init; }
 
   /// <summary>When set, enables local/metadata filtering. Nullable.</summary>

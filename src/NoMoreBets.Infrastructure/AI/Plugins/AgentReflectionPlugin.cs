@@ -9,69 +9,30 @@ using NoMoreBets.Infrastructure.AI.Plugins.Models;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
-public class AgentBettingPlugin
+public class AgentReflectionPlugin
 {
   private readonly BettingPlugin _bettingPlugin;
-  private readonly IUnitOfWork _unitOfWork;
+  private readonly BankrollPlugin _bankrollPlugin;
   private readonly MemoriesPlugin _memoriesPlugin;
   private readonly SearchPlugin _searchPlugin;
+  private readonly IUnitOfWork _unitOfWork;
 
-  public AgentBettingPlugin(
+  public AgentReflectionPlugin(
     BettingPlugin bettingPlugin,
-    IUnitOfWork unitOfWork,
+    BankrollPlugin bankrollPlugin,
     MemoriesPlugin memoriesPlugin,
-    SearchPlugin searchPlugin)
+    SearchPlugin searchPlugin,
+    IUnitOfWork unitOfWork)
   {
     _bettingPlugin = bettingPlugin;
-    _unitOfWork = unitOfWork;
+    _bankrollPlugin = bankrollPlugin;
     _memoriesPlugin = memoriesPlugin;
     _searchPlugin = searchPlugin;
+    _unitOfWork = unitOfWork;
   }
 
   [KernelFunction]
-  [Description("Retrieves matches for which bets can currently be placed.")]
-  public Task<IReadOnlyList<AvailableMatch>> GetAvailableMatchesAsync(CancellationToken cancellationToken = default) =>
-    _bettingPlugin.GetAvailableMatchesAsync(cancellationToken);
-
-  [KernelFunction]
-  [Description("Returns the current betting odds for the given match.")]
-  public Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(int matchId, CancellationToken cancellationToken = default) =>
-    _bettingPlugin.GetCurrentOddsAsync(matchId, cancellationToken);
-
-  [KernelFunction]
-  [Description("Returns the latest research analysis content for the given match as plain text.")]
-  public async Task<string?> GetMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
-  {
-    var analysis = await _unitOfWork.Matches
-      .GetLatestMatchAnalysisByCodeAsync(matchId, MatchAnalysis.ResearchCode, cancellationToken)
-      .ConfigureAwait(false);
-    return analysis?.Content;
-  }
-
-  [KernelFunction]
-  [Description("Places one bet slip per call. One selection is a single bet; multiple selections combine as a parlay on that slip. Call once per slip; you may call multiple times for multiple separate slips. Stake must not exceed current balance.")]
-  public Task PlaceBetSlip( 
-    decimal stakeAmount,
-    [Description("JSON object with property betSelections: an array of selection objects. Each object must have: matchId (int, from GetAvailableMatchesAsync), eventType (string enum name), eventOption (string BettingEventOption enum name). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
-    string betSelectionsJson,
-    CancellationToken cancellationToken = default) =>
-    _bettingPlugin.PlaceBetSlip(stakeAmount, betSelectionsJson, cancellationToken);
-
-  [KernelFunction]
-  [Description("Returns pending bet slips, newest first.")]
-  public Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(CancellationToken cancellationToken = default) =>
-    _bettingPlugin.GetBetSlipsAsync(BetStatus.Pending, cancellationToken);
-
-  [KernelFunction]
-  [Description("Returns settled bet slips (Won, Lost) created within the last N days")]
-  public Task<IReadOnlyList<BetSlipSummary>> GetNonPendingBetSlipsFromLastDaysAsync(
-    [Description("Number of days to look back from now; must be greater than zero.")]
-    int lastDays,
-    CancellationToken cancellationToken = default) =>
-    _bettingPlugin.GetNonPendingBetSlipsFromLastDaysAsync(lastDays, cancellationToken);
-
-  [KernelFunction]
-  [Description("Lists all saved memories.")]
+  [Description("Lists all saved memory records.")]
   public Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default) =>
     _memoriesPlugin.GetMemoryRecordsAsync(cancellationToken);
 
@@ -101,6 +62,24 @@ public class AgentBettingPlugin
     _memoriesPlugin.ReplaceAsync(name, oldText, newText, replaceAll, cancellationToken);
 
   [KernelFunction]
+  [Description("Returns settled bet slips (Won, Lost) created within the last N days, newest first.")]
+  public Task<IReadOnlyList<BetSlipSummary>> GetNonPendingBetSlipsFromLastDaysAsync(
+    [Description("Number of days to look back from now; must be greater than zero (e.g. 14 or 30).")]
+    int lastDays,
+    CancellationToken cancellationToken = default) =>
+    _bettingPlugin.GetNonPendingBetSlipsFromLastDaysAsync(lastDays, cancellationToken);
+
+  [KernelFunction]
+  [Description("Returns the latest stored research analysis text for the match (same source used before betting). Use to compare pre-match thesis to how the bet resolved.")]
+  public async Task<string?> GetMatchResearchTextAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    var analysis = await _unitOfWork.Matches
+      .GetLatestMatchAnalysisByCodeAsync(matchId, MatchAnalysis.ResearchCode, cancellationToken)
+      .ConfigureAwait(false);
+    return analysis?.Content;
+  }
+
+  [KernelFunction]
   [Description("Search for recent news articles and current events.")]
   public Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
     string query,
@@ -110,7 +89,7 @@ public class AgentBettingPlugin
     _searchPlugin.SearchNewsAsync(query, freshness, cancellationToken);
 
   [KernelFunction]
-  [Description("Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.")]
+  [Description("Retrieves high-quality, grounded information chunks from the web. Best for fact-checking or verifying what happened in a match when reflecting on a settled slip.")]
   public Task<IReadOnlyList<SearchLlmContextItemDto>> GetWebGroundingAsync(
     string query,
     [Description("Optional time window: pd, pw, pm, py. Omit or null for no freshness filter (default).")]

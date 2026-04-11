@@ -311,7 +311,11 @@ public class AppDbContext : DbContext
       entity.Property(e => e.StakeAmount).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.TotalOdds).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.PotentialPayout).IsRequired().HasPrecision(18, 4);
-      entity.Property(e => e.StatusId).IsRequired();
+      entity.Property(e => e.StatusId)
+        .IsRequired()
+        .HasField("_statusId")
+        .UsePropertyAccessMode(PropertyAccessMode.FieldDuringConstruction);
+      entity.Property(e => e.UpdatedAt).IsRequired(false);
       entity.Property(e => e.CreatedAt).IsRequired();
       entity.HasIndex(e => e.StatusId);
       entity.HasIndex(e => e.AgentSessionId);
@@ -335,6 +339,7 @@ public class AppDbContext : DbContext
       entity.Property(e => e.EventOptionId).IsRequired();
       entity.Property(e => e.OddsAtPlacement).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.StatusId).IsRequired();
+      entity.Property(e => e.UpdatedAt).IsRequired(false);
       entity.HasIndex(e => e.BetSlipId);
       entity.HasIndex(e => e.MatchId);
       entity.HasIndex(e => e.EventOptionId);

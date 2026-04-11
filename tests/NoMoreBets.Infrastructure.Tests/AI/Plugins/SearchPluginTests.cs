@@ -51,7 +51,7 @@ public class SearchPluginTests
       .Returns(dto);
 
     // Act
-    var result = await _sut.SearchNewsAsync("topic", CancellationToken.None);
+    var result = await _sut.SearchNewsAsync("topic", cancellationToken: CancellationToken.None);
 
     // Assert
     result.Should().HaveCount(2);
@@ -61,7 +61,7 @@ public class SearchPluginTests
     result[0].Snippets.Should().Equal("x");
     await _searchService.Received(1).SearchNewsAsync(
       "topic",
-      Arg.Is<SearchNewsOptions>(o => o.Count == 5 && o.Freshness == "pd" && o.Country == "GB" && o.ExtraSnippets),
+      Arg.Is<SearchNewsOptions>(o => o.Count == 5 && o.Freshness == null && o.Country == "GB" && o.ExtraSnippets),
       Arg.Any<CancellationToken>());
   }
 
@@ -86,7 +86,7 @@ public class SearchPluginTests
       .Returns(dto);
 
     // Act
-    var result = await _sut.GetWebGroundingAsync("why", CancellationToken.None);
+    var result = await _sut.GetWebGroundingAsync("why", cancellationToken: CancellationToken.None);
 
     // Assert
     result.Should().ContainSingle();
@@ -95,5 +95,9 @@ public class SearchPluginTests
     item.Hostname.Should().Be("h.test");
     item.Age.Should().Be("1d");
     item.Snippets.Should().Equal("s1");
+    await _searchService.Received(1).SearchLlmContextAsync(
+      "why",
+      Arg.Is<SearchLlmContextOptions>(o => o.Count == 5 && o.Freshness == null),
+      Arg.Any<CancellationToken>());
   }
 }

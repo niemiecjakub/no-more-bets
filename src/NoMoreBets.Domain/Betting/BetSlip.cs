@@ -7,13 +7,33 @@ namespace NoMoreBets.Domain.Betting;
 
 public class BetSlip
 {
+  private int _statusId;
+
   public int Id { get; set; }
   public int? AgentSessionId { get; set; }
   public decimal StakeAmount { get; set; }
   public decimal TotalOdds { get; set; }
   public decimal PotentialPayout { get; set; }
-  public int StatusId { get; set; }
+
+  public int StatusId
+  {
+    get => _statusId;
+    set
+    {
+      if (_statusId == value)
+      {
+        return;
+      }
+
+      _statusId = value;
+      UpdatedAt = DateTime.UtcNow;
+    }
+  }
+
   public DateTime CreatedAt { get; set; }
+  public DateTime? UpdatedAt { get; set; }
+
+  public void TouchUpdatedAt() => UpdatedAt = DateTime.UtcNow;
 
   public AgentSession? AgentSession { get; set; }
   public BetStatusEntity BetStatusEntity { get; set; } = null!;

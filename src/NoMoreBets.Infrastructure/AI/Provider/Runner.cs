@@ -139,51 +139,61 @@ public sealed class Runner : IAgentPhaseRunner
       cancellationToken).ConfigureAwait(false);
   }
 
-  public Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
-    var prompt = """
-                 You are running the reflection phase.
+    var prompt = $"""
+          Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
 
-                 Goal:
-                 Improve future decisions.
+          You are running the reflection phase for the portfolio: learn from recent settled outcomes, then persist durable process lessons to memory.
+          You must use the available AgentReflectionPlugin functions explicitly.
 
-                 Steps:
+          Goal:
+          Improve future decision quality (calibration, discipline, edge definition) without chasing short-term noise. Treat single outcomes as weak evidence unless the failure mode is clearly process-related.
 
-                 1. Call GetMemoryRecords
-                 2. Read STRATEGY and REFLECTIONS
-                 3. Call GetBetSlips with status Won, then with status Lost (or once with no filter if you prefer, then group mentally)
-                 4. For each settled bet:
+          ## Required workflow (execute in order)
 
-                    * Compare expected vs actual
-                    * Evaluate decision quality
+          1) Pull settled history for analysis:
+          - Call `GetNonPendingBetSlipsFromLastDaysAsync`. If it is empty you may terminate the phase.
 
-                 5. Identify:
+          2) Read memory context:
+          - Call `GetMemoryRecordsAsync`
+          - Call `ReadMemoryAsync` for at least: STRATEGY, REFLECTIONS, GENERAL_KNOWLEDGE and other memories you need.
 
-                    * Mistakes
-                    * Biases
-                    * Patterns
+          3) For each settled slip (and each selection as needed):
+          - Compare implied edge at placement (odds, stake, structure) versus outcome and strategy rules
+          - For distinct match IDs involved, call `GetMatchResearchTextAsync` when available to contrast the pre-match thesis with what happened
+          - Whenever it helps judgment, you may call `SearchNewsAsync` and/or `GetWebGroundingAsync` with focused queries—not only to verify a disputed fact, but also to clarify context, resolve ambiguities, or dive deeper on tactics, squad news, or match narratives that bear on why the slip won or lost
 
-                 6. Summarize findings
-                 7. Append or update REFLECTIONS with durable lessons
-                 8. Promote repeated patterns to KNOWLEDGE when justified
+          4) Synthesize:
+          - Process mistakes vs bad luck (variance); recurring biases
+          - What would you change in decision rules going forward (specific, testable)
 
-                 Constraints:
+          5) Persist lessons:
+          - Update any memories or add new as appropriate
+          - Keep entries concise and actionable; avoid dumping raw tool output into memory
 
-                 * Do not overreact to single results
-                 * Focus on long-term performance and process quality
-                 """;
-    Action<Kernel> configurePlugins = kernel =>
+          6) Finish with a short summary for a human: main lessons and what you would watch in the next betting cycle.
+
+          ## Quality constraints
+          - Weight sample size: do not overfit one-off results
+          - Cross-check conclusions against STRATEGY and BANKROLL_MANAGEMENT
+          - If data is missing (no slips, no research text), state it and still improve written reflections where justified
+
+          ### Guardrails
+          - In your final narrative to the user, do not mention internal process, tool names, or plugin mechanics.
+          """;
+
+    Action<Kernel> configureKernel = kernel =>
     {
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateBettingPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateMemoriesPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateSearchPlugin());
+      kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentReflectionPlugin());
+      kernel.Data.Add("phase", "Reflection");
     };
 
-    return ExecuteBettingPhaseAsync(
+    return await ExecuteBettingPhaseAsync(
       AgentSessionPhase.Reflection,
       prompt,
-      configurePlugins,
-      cancellationToken);
+      configureKernel,
+      cancellationToken).ConfigureAwait(false);
   }
 
   public async Task<IReadOnlyList<IMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)

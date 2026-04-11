@@ -300,6 +300,7 @@ CREATE TABLE "BetSlip" (
 	"PotentialPayout" numeric(18, 4) NOT NULL,
 	"StatusId" int4 NOT NULL,
 	"CreatedAt" timestamp NOT NULL,
+	"UpdatedAt" timestamp NULL,
 	CONSTRAINT "BetSlip_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT fk_betslip_status FOREIGN KEY ("StatusId") REFERENCES "BetStatus"("Id") ON DELETE RESTRICT,
 	CONSTRAINT fk_betslip_agentsession FOREIGN KEY ("AgentSessionId") REFERENCES "AgentSession"("Id") ON DELETE SET NULL
@@ -327,6 +328,7 @@ CREATE TABLE "BetSelection" (
 	"EventOptionId" int4 NOT NULL,
 	"OddsAtPlacement" numeric(18, 4) NOT NULL,
 	"StatusId" int4 NOT NULL,
+	"UpdatedAt" timestamp NULL,
 	CONSTRAINT "BetSelection_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT fk_betselection_betslip FOREIGN KEY ("BetSlipId") REFERENCES "BetSlip"("Id") ON DELETE CASCADE,
 	CONSTRAINT fk_betselection_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE RESTRICT,

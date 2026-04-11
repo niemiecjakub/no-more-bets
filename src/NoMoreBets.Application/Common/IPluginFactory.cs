@@ -8,5 +8,6 @@ public interface IPluginFactory
   object CreateSearchPlugin();
   object CreateMemoriesPlugin();
   object CreateAgentResearchPlugin();
+  object CreateAgentReflectionPlugin();
   object CreateBankrollPlugin();
 }

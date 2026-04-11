@@ -14,7 +14,23 @@ public class BetSelection
   public int EventTypeId { get; set; }
   public int EventOptionId { get; set; }
   public decimal OddsAtPlacement { get; set; }
-  public int StatusId { get; set; }
+
+  public int StatusId { get; private set; }
+
+  public DateTime? UpdatedAt { get; set; }
+
+  public void SetStatus(BetStatus status)
+  {
+    var id = (int)status;
+    if (StatusId == id)
+    {
+      return;
+    }
+
+    StatusId = id;
+    UpdatedAt = DateTime.UtcNow;
+    BetSlip?.TouchUpdatedAt();
+  }
 
   public BetSlip BetSlip { get; set; } = null!;
   public Match Match { get; set; } = null!;
@@ -26,7 +42,7 @@ public class BetSelection
   public BetStatus BetStatus
   {
     get => (BetStatus)StatusId;
-    set => StatusId = (int)value;
+    set => SetStatus(value);
   }
 
   [NotMapped]

@@ -148,7 +148,7 @@ public class BettingPlugin
         EventTypeId = (int)record.EventType,
         EventOptionId = (int)record.EventOption,
         OddsAtPlacement = selectionOdds[i],
-        StatusId = (int)BetStatus.Pending
+        BetStatus = BetStatus.Pending
       });
     }
 

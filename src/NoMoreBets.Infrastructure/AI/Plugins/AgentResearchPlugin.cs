@@ -91,13 +91,21 @@ public class AgentResearchPlugin
 
   [KernelFunction]
   [Description("Search for recent news articles and current events.")]
-  public Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(string query, CancellationToken cancellationToken = default) =>
-    _searchPlugin.SearchNewsAsync(query, cancellationToken);
+  public Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
+    string query,
+    [Description("Optional time window: pd (last 24 hours), pw (last 7 days), pm (last 31 days), py (last year). Omit or null for no freshness filter.")]
+    string? freshness = null,
+    CancellationToken cancellationToken = default) =>
+    _searchPlugin.SearchNewsAsync(query, freshness, cancellationToken);
 
   [KernelFunction]
   [Description("Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.")]
-  public Task<IReadOnlyList<SearchLlmContextItemDto>> GetWebGroundingAsync(string query, CancellationToken cancellationToken = default) =>
-    _searchPlugin.GetWebGroundingAsync(query, cancellationToken);
+  public Task<IReadOnlyList<SearchLlmContextItemDto>> GetWebGroundingAsync(
+    string query,
+    [Description("Optional time window: pd, pw, pm, py. Omit or null for no freshness filter (default).")]
+    string? freshness = null,
+    CancellationToken cancellationToken = default) =>
+    _searchPlugin.GetWebGroundingAsync(query, freshness, cancellationToken);
 
   [KernelFunction]
   [Description("Lists all saved memory records.")]
