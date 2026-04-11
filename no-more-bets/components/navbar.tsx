@@ -16,7 +16,7 @@ export function Navbar() {
 
   return (
     <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex gap-1 overflow-x-auto py-3">
           {tabs.map(({ href, label }) => {
             const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);

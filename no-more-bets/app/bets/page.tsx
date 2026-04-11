@@ -76,7 +76,7 @@ export default function BetsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="grid gap-8 lg:grid-cols-[1fr_18rem] lg:items-start">
           <div>
             <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">

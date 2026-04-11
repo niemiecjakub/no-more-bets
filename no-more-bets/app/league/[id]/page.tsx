@@ -52,7 +52,7 @@ export default function LeaguePage() {
   if (isLoading && !leagueTable) {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-        <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <div className="mb-1 h-8 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
           <div className="mb-6 h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
           <LeagueTableFallback />
@@ -64,7 +64,7 @@ export default function LeaguePage() {
   if (error) {
     return (
       <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-        <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
           <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
             {error}
           </p>
@@ -87,7 +87,7 @@ export default function LeaguePage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 flex items-center gap-3 text-2xl font-semibold tracking-tight text-foreground">
           <SlugIcon
             kind="league"
