@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SlugIcon } from "@/components/slug-icon";
-import { StructuredMatchAnalysisView } from "../../../features/matches/components/structured-match-analysis-view";
 import { useMatchStore } from "@/store/match-store";
 import { clubLogoSlugSegment } from "../../../utils/club-logo-slug";
 import { formatMatchDate } from "../../../utils/format-date";
@@ -31,7 +30,6 @@ import {
   fetchMatchInjuries,
   fetchMatchLeagueStatistics,
   fetchMatchLineups,
-  fetchMatchPreview,
   fetchMatchRecentGames,
   fetchMatchRollingPerformance,
 } from "@/features/matches/services/match-insights-api";
@@ -39,7 +37,6 @@ import {
 interface MatchInsights {
   lineups: MatchLineupResult | null;
   injuries: MatchInjuriesResult | null;
-  preview: string | null;
   agentResearch: string | null;
   recentGames: ClubPair<RecentMatch[] | null>;
   leagueStatistics: ClubPair<ClubLeagueStats | null>;
@@ -51,7 +48,6 @@ interface MatchInsights {
 const insightKeys = [
   "lineups",
   "injuries",
-  "preview",
   "agentResearch",
   "recentGames",
   "leagueStatistics",
@@ -146,7 +142,6 @@ export default function MatchPage() {
 
     load("lineups", () => fetchMatchLineups(matchId));
     load("injuries", () => fetchMatchInjuries(matchId));
-    load("preview", () => fetchMatchPreview(matchId));
     load("agentResearch", () => fetchMatchAgentResearch(matchId));
     load("recentGames", () => fetchMatchRecentGames(matchId));
     load("leagueStatistics", () => fetchMatchLeagueStatistics(matchId));
@@ -220,6 +215,17 @@ export default function MatchPage() {
           </h1>
           <p className="mt-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDateFormatted}</p>
         </header>
+
+        <Card title="Agent Research" icon="🔬" className="mb-6">
+          <AgentResearchSection
+            summaryPreview={insights.agentResearch}
+            summaryLoading={
+              insightLoading.agentResearch && insights.agentResearch === undefined
+            }
+            summaryError={insightErrors.agentResearch}
+            researchAgentSessionId={data.researchAgentSessionId}
+          />
+        </Card>
 
         <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
@@ -298,58 +304,9 @@ export default function MatchPage() {
                 />
               )}
             </Card>
-
-            <Card title="Match analysis" icon="🧠">
-              {data.analyses.length === 0 ? (
-                <div className="px-4 py-4">
-                  <MutedText>Analysis not available yet.</MutedText>
-                </div>
-              ) : (
-                <ul className="flex flex-col gap-6 px-4 py-4">
-                  {data.analyses.map((analysis) => (
-                    <li
-                      key={analysis.id}
-                      className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
-                    >
-                      <h3 className="border-b border-zinc-200 px-4 py-3 text-base font-semibold text-foreground dark:border-zinc-800">
-                        {analysis.code}
-                      </h3>
-                      <div className="px-4 pb-4 pt-2">
-                        {analysis.structured ? (
-                          <StructuredMatchAnalysisView analysis={analysis.structured} />
-                        ) : (
-                          <MutedText>Analysis not available.</MutedText>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
           </div>
 
           <div className="space-y-6">
-            <Card title="Match preview" icon="📰">
-              <div className="px-4 py-4">
-                <PreviewSection
-                  preview={insights.preview}
-                  isLoading={insightLoading.preview && insights.preview === undefined}
-                  error={insightErrors.preview}
-                />
-              </div>
-            </Card>
-
-            <Card title="Agent Research" icon="🔬">
-              <AgentResearchSection
-                summaryPreview={insights.agentResearch}
-                summaryLoading={
-                  insightLoading.agentResearch && insights.agentResearch === undefined
-                }
-                summaryError={insightErrors.agentResearch}
-                researchAgentSessionId={data.researchAgentSessionId}
-              />
-            </Card>
-
             <Card title="League statistics" icon="🏆">
               {insightErrors.leagueStatistics ? (
                 <InsightFieldError message={insightErrors.leagueStatistics} />
@@ -397,11 +354,14 @@ interface CardProps {
   title: string;
   icon: string;
   children: React.ReactNode;
+  className?: string;
 }
 
-function Card({ title, icon, children }: CardProps) {
+function Card({ title, icon, children, className }: CardProps) {
   return (
-    <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+    <section
+      className={`overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950${className ? ` ${className}` : ""}`}
+    >
       <details open className="group">
         <summary className="flex cursor-pointer list-none items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
           <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
@@ -759,7 +719,7 @@ function AgentResearchSection({
         >
           <summary className="cursor-pointer list-none bg-zinc-50 px-3 py-2 text-sm font-medium text-foreground hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-900">
             <span className="inline-flex w-full items-center justify-between gap-2">
-              <span>View session transcript</span>
+              <span>Internal process</span>
               <span className="text-xs text-zinc-500 transition-transform group-open:rotate-180 dark:text-zinc-400">
                 ▼
               </span>

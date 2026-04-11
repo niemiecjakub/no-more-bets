@@ -57,13 +57,13 @@ export function LazyAgentSessionTranscript({
   if (!active) return null;
   if (loading && messages === null) {
     return (
-      <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">
         Loading transcript...
       </p>
     );
   }
   if (error) {
-    return <p className="px-4 py-3 text-sm text-red-800 dark:text-red-200">{error}</p>;
+    return <p className="px-3 py-3 text-sm text-red-800 dark:text-red-200">{error}</p>;
   }
   if (messages) {
     return <AgentSessionTranscript messages={messages} />;
