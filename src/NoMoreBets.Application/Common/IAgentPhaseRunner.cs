@@ -5,7 +5,7 @@ namespace NoMoreBets.Application.Common;
 
 public interface IAgentPhaseRunner
 {
-  Task<IReadOnlyList<BaseMessage>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default);
-  Task<IReadOnlyList<BaseMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default);
-  Task<IReadOnlyList<BaseMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<IMessage>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<IMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default);
 }

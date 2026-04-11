@@ -32,7 +32,7 @@ public sealed class TrashController(
   }
 
   [HttpPost("agent/run-research-phase")]
-  public async Task<ActionResult<AgentResponse>> RunResearchPhase(
+  public async Task<ActionResult<IReadOnlyList<IMessage>>> RunResearchPhase(
     [FromQuery] int matchId,
     CancellationToken cancellationToken = default)
   {
@@ -43,47 +43,20 @@ public sealed class TrashController(
     }
 
     var messages = await agentPhaseRunner.RunResearchPhaseAsync(match, cancellationToken).ConfigureAwait(false);
-
-    var response = new AgentResponse
-    {
-      Reasoning = messages.OfType<ReasoningMessage>().ToList(),
-      Messages = messages.OfType<Message>().ToList()
-    };
-
-    return Ok(response);
+    return Ok(messages);
   }
 
   [HttpPost("agent/run-reflection-phase")]
-  public async Task<ActionResult<AgentResponse>> RunReflectionPhase(CancellationToken cancellationToken = default)
+  public async Task<ActionResult<IReadOnlyList<IMessage>>> RunReflectionPhase(CancellationToken cancellationToken = default)
   {
     var messages = await agentPhaseRunner.RunReflectionPhaseAsync(cancellationToken).ConfigureAwait(false);
-
-    var response = new AgentResponse
-    {
-      Reasoning = messages.OfType<ReasoningMessage>().ToList(),
-      Messages = messages.OfType<Message>().ToList()
-    };
-
-    return Ok(response);
+    return Ok(messages);
   }
 
   [HttpPost("agent/run-betting-execution-phase")]
-  public async Task<ActionResult<AgentResponse>> RunBettingExecutionPhase(CancellationToken cancellationToken = default)
+  public async Task<ActionResult<IReadOnlyList<IMessage>>> RunBettingExecutionPhase(CancellationToken cancellationToken = default)
   {
     var messages = await agentPhaseRunner.RunBettingExecutionPhaseAsync(cancellationToken).ConfigureAwait(false);
-
-    var response = new AgentResponse
-    {
-      Reasoning = messages.OfType<ReasoningMessage>().ToList(),
-      Messages = messages.OfType<Message>().ToList()
-    };
-
-    return Ok(response);
-  }
-
-  public record AgentResponse
-  {
-    public List<ReasoningMessage> Reasoning { get; init; } = new();
-    public List<Message> Messages { get; init; } = new();
+    return Ok(messages);
   }
 }

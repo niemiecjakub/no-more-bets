@@ -1,18 +1,7 @@
 ﻿namespace NoMoreBets.Application.Common.Dto;
-public abstract class BaseMessage
-{
-  public string Text { get; }
-  public BaseMessage(string text)
-  {
-    Text = text;
-  }
-}
-public class Message : BaseMessage
-{
-  public Message(string text) : base(text) { }
-}
-public class ReasoningMessage : BaseMessage
-{
-  public ReasoningMessage(string text) : base(text) { }
-}
+public interface IMessage { }
+public record Message(string Text) : IMessage;
+public record ReasoningMessage(string Text) : IMessage;
+public record FunctionMessage(string Name, List<FunctionArgument>? Arguments) : IMessage;
+public record FunctionArgument(string Name, string? Value);
 

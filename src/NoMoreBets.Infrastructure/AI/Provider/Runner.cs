@@ -45,7 +45,7 @@ public sealed class Runner : IAgentPhaseRunner
 
     return messages;
   }
-  public async Task<IReadOnlyList<BaseMessage>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<IMessage>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default)
   {
     const string phaseName = "Research";
     Action<Kernel> configureKernel = kernel =>
@@ -136,7 +136,7 @@ public sealed class Runner : IAgentPhaseRunner
       cancellationToken).ConfigureAwait(false);
   }
 
-  public Task<IReadOnlyList<BaseMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
+  public Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
     const string phaseName = "Reflection";
     var prompt = """
@@ -184,7 +184,7 @@ public sealed class Runner : IAgentPhaseRunner
       cancellationToken);
   }
 
-  public async Task<IReadOnlyList<BaseMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<IMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
   {
     const string phaseName = "Betting";
 
@@ -256,7 +256,7 @@ public sealed class Runner : IAgentPhaseRunner
           ### Guardrails
           - In your final narrative to the user, do not mention internal process, tool names, or plugin mechanics.
           """;
-    Action<Kernel> configurePlugins = kernel => 
+    Action<Kernel> configurePlugins = kernel =>
     {
       kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentBettingPlugin());
       kernel.Plugins.AddFromObject(_pluginFactory.CreateBankrollPlugin());
@@ -270,7 +270,7 @@ public sealed class Runner : IAgentPhaseRunner
       cancellationToken).ConfigureAwait(false);
   }
 
-  private async Task<IReadOnlyList<BaseMessage>> ExecuteBettingPhaseAsync(
+  private async Task<IReadOnlyList<IMessage>> ExecuteBettingPhaseAsync(
     string phaseName,
     string userPrompt,
     Action<Kernel> configureKernel,
@@ -278,17 +278,28 @@ public sealed class Runner : IAgentPhaseRunner
   {
     var config = _agentBuilder.BuildForScheduledJob();
     configureKernel(config.Agent.Kernel);
-    var messages = new List<BaseMessage>();
+    var messages = new List<IMessage>();
     _logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
 
     await foreach (var message in config.Agent.InvokeAsync(userPrompt, config.Thread, config.Options, cancellationToken)
                      .ConfigureAwait(false))
     {
 #pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-      foreach (var reasoning in message.Message.Items.OfType<ReasoningContent>())
+      foreach (var item in message.Message.Items)
       {
-        messages.Add(new ReasoningMessage(reasoning.Text));
+        if (item is ReasoningContent reasoning)
+        {
+          messages.Add(new ReasoningMessage(reasoning.Text));
+        }
+
+        if (item is FunctionCallContent functionCall)
+        {
+          var functionName = functionCall.FunctionName;
+          var arguments = functionCall.Arguments?.Select(a => new FunctionArgument(a.Key.ToString(), a.Value?.ToString())).ToList();
+          messages.Add(new FunctionMessage(functionName, arguments));
+        }
       }
+
 #pragma warning restore SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
       if (!string.IsNullOrEmpty(message.Message.Content))
       {
