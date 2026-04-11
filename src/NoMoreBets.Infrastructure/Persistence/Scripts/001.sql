@@ -262,16 +262,28 @@ CREATE TABLE "MatchDetails" (
 CREATE INDEX idx_matchdetails_match ON public."MatchDetails" USING btree ("MatchId");
 CREATE UNIQUE INDEX uq_matchdetails_fotmoburl ON public."MatchDetails" ("FotmobUrl") WHERE "FotmobUrl" IS NOT NULL;
 
+-- AgentSessionPhase: 1=Research, 2=Betting, 3=Reflection (matches NoMoreBets.Domain.AgentSessions.AgentSessionPhase)
+CREATE TABLE "AgentSession" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"Phase" int4 NOT NULL,
+	"StartedAt" timestamp NOT NULL,
+	CONSTRAINT "AgentSession_pkey" PRIMARY KEY ("Id")
+);
+CREATE INDEX "IX_AgentSession_Phase_StartedAt" ON public."AgentSession" USING btree ("Phase", "StartedAt");
+
 CREATE TABLE "MatchAnalysis" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"MatchId" int4 NOT NULL,
+	"AgentSessionId" int4 NULL,
 	"Code" varchar(255) NOT NULL,
 	"Content" jsonb NOT NULL,
 	CONSTRAINT "MatchAnalysis_pkey" PRIMARY KEY ("Id"),
-	CONSTRAINT fk_matchanalysis_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE CASCADE
+	CONSTRAINT fk_matchanalysis_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE CASCADE,
+	CONSTRAINT fk_matchanalysis_agentsession FOREIGN KEY ("AgentSessionId") REFERENCES "AgentSession"("Id") ON DELETE SET NULL
 );
 
 CREATE INDEX idx_matchanalysis_match ON public."MatchAnalysis" USING btree ("MatchId");
+CREATE INDEX "IX_MatchAnalysis_AgentSessionId" ON public."MatchAnalysis" USING btree ("AgentSessionId");
 
 
 CREATE TABLE "BetStatus" (
@@ -282,15 +294,30 @@ CREATE TABLE "BetStatus" (
 
 CREATE TABLE "BetSlip" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"AgentSessionId" int4 NULL,
 	"StakeAmount" numeric(18, 4) NOT NULL,
 	"TotalOdds" numeric(18, 4) NOT NULL,
 	"PotentialPayout" numeric(18, 4) NOT NULL,
 	"StatusId" int4 NOT NULL,
 	"CreatedAt" timestamp NOT NULL,
 	CONSTRAINT "BetSlip_pkey" PRIMARY KEY ("Id"),
-	CONSTRAINT fk_betslip_status FOREIGN KEY ("StatusId") REFERENCES "BetStatus"("Id") ON DELETE RESTRICT
+	CONSTRAINT fk_betslip_status FOREIGN KEY ("StatusId") REFERENCES "BetStatus"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_betslip_agentsession FOREIGN KEY ("AgentSessionId") REFERENCES "AgentSession"("Id") ON DELETE SET NULL
 );
 CREATE INDEX idx_betslip_statusid ON public."BetSlip" USING btree ("StatusId");
+CREATE INDEX "IX_BetSlip_AgentSessionId" ON public."BetSlip" USING btree ("AgentSessionId");
+
+-- AgentSessionMessageKind: 1=Message, 2=Reasoning, 3=FunctionCall (matches NoMoreBets.Domain.AgentSessions.AgentSessionMessageKind)
+CREATE TABLE "AgentSessionMessage" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"SessionId" int4 NOT NULL,
+	"Ordinal" int4 NOT NULL,
+	"Kind" int4 NOT NULL,
+	"Text" text NOT NULL,
+	CONSTRAINT "AgentSessionMessage_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT fk_agentsessionmessage_session FOREIGN KEY ("SessionId") REFERENCES "AgentSession"("Id") ON DELETE CASCADE
+);
+CREATE INDEX "IX_AgentSessionMessage_SessionId" ON public."AgentSessionMessage" USING btree ("SessionId");
 
 CREATE TABLE "BetSelection" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
