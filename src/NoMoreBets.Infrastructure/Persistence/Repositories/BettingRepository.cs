@@ -84,4 +84,22 @@ public class BettingRepository : IBettingRepository
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
   }
+
+  public async Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsCreatedInLastDaysAsync(int lastDays, CancellationToken cancellationToken = default)
+  {
+    var sinceUtc = DateTime.UtcNow.AddDays(-lastDays);
+    return await _db.BetSlip
+      .Where(s => s.StatusId != (int)BetStatus.Pending && s.CreatedAt >= sinceUtc)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.EventTypeEntity)
+      .OrderByDescending(s => s.CreatedAt)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
 }

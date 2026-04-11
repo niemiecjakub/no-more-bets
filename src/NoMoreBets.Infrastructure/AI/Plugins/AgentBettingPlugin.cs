@@ -62,6 +62,13 @@ public class AgentBettingPlugin
   public Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(CancellationToken cancellationToken = default) =>
     _bettingPlugin.GetBetSlipsAsync(BetStatus.Pending, cancellationToken);
 
+  [KernelFunction]
+  [Description("Returns settled bet slips (Won, Lost) created within the last N days")]
+  public Task<IReadOnlyList<BetSlipSummary>> GetNonPendingBetSlipsFromLastDaysAsync(
+    [Description("Number of days to look back from now; must be greater than zero.")]
+    int lastDays,
+    CancellationToken cancellationToken = default) =>
+    _bettingPlugin.GetNonPendingBetSlipsFromLastDaysAsync(lastDays, cancellationToken);
 
   [KernelFunction]
   [Description("Lists all saved memories.")]

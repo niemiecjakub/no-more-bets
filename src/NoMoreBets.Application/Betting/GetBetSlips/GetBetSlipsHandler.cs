@@ -18,28 +18,6 @@ public sealed class GetBetSlipsHandler(IUnitOfWork unitOfWork)
       .GetBetSlipsAsync(request.Status, cancellationToken)
       .ConfigureAwait(false);
 
-    return slips
-      .Select(s => new BetSlipSummary(
-        s.Id,
-        s.CreatedAt,
-        s.StakeAmount,
-        s.TotalOdds,
-        s.PotentialPayout,
-        s.BetStatus,
-        s.Selections
-          .OrderBy(sel => sel.Id)
-          .Select(sel => new BetSelectionSummary(
-            sel.MatchId,
-            sel.Match.HomeClub.Name,
-            sel.Match.AwayClub.Name,
-            BettingEventTypeDisplay.GetDisplayName(sel.BetEventType),
-            BettingEventOptionDisplay.GetDisplayName(
-              sel.BetEventOption,
-              sel.Match.HomeClub.Name,
-              sel.Match.AwayClub.Name),
-            sel.OddsAtPlacement,
-            sel.BetStatus))
-          .ToList()))
-      .ToList();
+    return BetSlipSummaryMapper.ToSummaries(slips);
   }
 }
