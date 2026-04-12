@@ -92,6 +92,18 @@ public class XApiClientTests
   }
 
   [Fact]
+  public async Task CreateXPostAsync_WhenTextExceeds280Characters_ThrowsArgumentException()
+  {
+    var client = CreateClient(_ => new HttpResponseMessage(HttpStatusCode.Created));
+    var longText = new string('a', CreateXPostRequest.MaxTweetTextLength + 1);
+
+    var act = () => client.CreateXPostAsync(new CreateXPostRequest { Text = longText });
+
+    (await act.Should().ThrowAsync<ArgumentException>())
+      .Which.ParamName.Should().Be("request");
+  }
+
+  [Fact]
   public async Task CreateXPostAsync_WhenOAuthCredentialsMissing_ThrowsInvalidOperationException()
   {
     var emptyOAuth = new XApiOptions();

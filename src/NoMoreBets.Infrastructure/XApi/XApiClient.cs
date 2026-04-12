@@ -29,12 +29,17 @@ public sealed class XApiClient : IXApiService
   public async Task<CreateXPostResult> CreateXPostAsync(CreateXPostRequest request, CancellationToken cancellationToken = default)
   {
     ArgumentNullException.ThrowIfNull(request);
-    if (string.IsNullOrWhiteSpace(request.Text))
+    var text = request.Text.Trim();
+    if (text.Length == 0)
       throw new ArgumentException("Post text is required.", nameof(request));
+    if (text.Length > CreateXPostRequest.MaxTweetTextLength)
+      throw new ArgumentException(
+        $"Post text must be at most {CreateXPostRequest.MaxTweetTextLength} characters.",
+        nameof(request));
 
     _options.Value.EnsureOAuthConfigured();
 
-    var payload = new TweetCreatePayload { Text = request.Text.Trim() };
+    var payload = new TweetCreatePayload { Text = text };
 
     using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/2/tweets");
     httpRequest.Content = JsonContent.Create(payload, options: JsonOptions, mediaType: new MediaTypeHeaderValue("application/json"));
