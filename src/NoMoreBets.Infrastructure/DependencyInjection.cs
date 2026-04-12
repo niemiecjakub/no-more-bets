@@ -95,6 +95,7 @@ public static class DependencyInjection
     services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>
       ResilienceHttpHandler.CreatePipeline(sp.GetService<ILogger<ResilienceHttpHandler>>()));
     services.AddTransient<ResilienceHttpHandler>();
+    services.AddTransient<XApiOAuth1MessageHandler>();
     services.AddHttpClient<SoccerDataClient>()
       .AddHttpMessageHandler<ResilienceHttpHandler>()
       .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
@@ -133,15 +134,13 @@ public static class DependencyInjection
       AutomaticDecompression = DecompressionMethods.All
     });
 
-    services.AddHttpClient<IXApiService, XApiClient>((serviceProvider, client) =>
+    services.AddHttpClient<IXApiService, XApiClient>((_, client) =>
     {
-      var xApiOptions = serviceProvider.GetRequiredService<IOptions<XApiOptions>>().Value;
       client.BaseAddress = new Uri("https://api.x.com");
       client.DefaultRequestHeaders.Accept.Clear();
       client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-      if (!string.IsNullOrWhiteSpace(xApiOptions.BearerToken))
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", xApiOptions.BearerToken.Trim());
     })
+    .AddHttpMessageHandler<XApiOAuth1MessageHandler>()
     .AddHttpMessageHandler<ResilienceHttpHandler>()
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
     {

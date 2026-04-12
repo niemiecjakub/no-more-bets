@@ -13,17 +13,24 @@ namespace NoMoreBets.Infrastructure.Tests.Http;
 
 public class XApiClientTests
 {
+  private static XApiOptions TestOAuthOptions => new()
+  {
+    ConsumerKey = "ck",
+    ConsumerSecret = "cs",
+    AccessToken = "at",
+    AccessTokenSecret = "ats"
+  };
+
   private static XApiClient CreateClient(
     Func<HttpRequestMessage, HttpResponseMessage> responder,
-    string bearerToken = "test-bearer-token")
+    XApiOptions? oauthOptions = null)
   {
-    var handler = new MockHandler(responder);
-    var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.x.com") };
+    oauthOptions ??= TestOAuthOptions;
+    var mock = new MockHandler(responder);
+    var oauth = new XApiOAuth1MessageHandler(Options.Create(oauthOptions)) { InnerHandler = mock };
+    var httpClient = new HttpClient(oauth) { BaseAddress = new Uri("https://api.x.com") };
     httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-    if (!string.IsNullOrWhiteSpace(bearerToken))
-      httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken.Trim());
-    var options = Options.Create(new XApiOptions { BearerToken = bearerToken });
-    return new XApiClient(httpClient, options);
+    return new XApiClient(httpClient, Options.Create(oauthOptions));
   }
 
   [Fact]
@@ -51,9 +58,14 @@ public class XApiClientTests
     captured!.Method.Should().Be(HttpMethod.Post);
     captured.RequestUri.Should().NotBeNull();
     captured.RequestUri!.ToString().Should().EndWith("/2/tweets");
-    captured.Headers.Authorization.Should().NotBeNull();
-    captured.Headers.Authorization!.Scheme.Should().Be("Bearer");
-    captured.Headers.Authorization.Parameter.Should().Be("test-bearer-token");
+
+    captured.Headers.TryGetValues("Authorization", out var authValues).Should().BeTrue();
+    var auth = string.Join("", authValues!);
+    auth.Should().StartWith("OAuth ");
+    auth.Should().Contain("oauth_consumer_key=\"ck\"");
+    auth.Should().Contain("oauth_token=\"at\"");
+    auth.Should().Contain("oauth_signature_method=\"HMAC-SHA1\"");
+    auth.Should().Contain("oauth_signature=\"");
 
     requestBody.Should().NotBeNull();
     using var doc = JsonDocument.Parse(requestBody!);
@@ -80,16 +92,18 @@ public class XApiClientTests
   }
 
   [Fact]
-  public async Task CreateXPostAsync_WhenBearerMissing_ThrowsInvalidOperationException()
+  public async Task CreateXPostAsync_WhenOAuthCredentialsMissing_ThrowsInvalidOperationException()
   {
-    var handler = new MockHandler(_ => new HttpResponseMessage(HttpStatusCode.OK));
-    var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.x.com") };
-    var options = Options.Create(new XApiOptions { BearerToken = "" });
-    var client = new XApiClient(httpClient, options);
+    var emptyOAuth = new XApiOptions();
+    var httpClient = new HttpClient(new MockHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)))
+    {
+      BaseAddress = new Uri("https://api.x.com")
+    };
+    var client = new XApiClient(httpClient, Options.Create(emptyOAuth));
 
     var act = () => client.CreateXPostAsync(new CreateXPostRequest { Text = "hi" });
 
-    await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*BearerToken*");
+    await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*OAuth 1.0a*");
   }
 
   private sealed class MockHandler : HttpMessageHandler

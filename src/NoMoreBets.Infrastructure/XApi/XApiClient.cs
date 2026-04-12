@@ -32,9 +32,7 @@ public sealed class XApiClient : IXApiService
     if (string.IsNullOrWhiteSpace(request.Text))
       throw new ArgumentException("Post text is required.", nameof(request));
 
-    var token = _options.Value.BearerToken;
-    if (string.IsNullOrWhiteSpace(token))
-      throw new InvalidOperationException("XApi:BearerToken is not configured.");
+    _options.Value.EnsureOAuthConfigured();
 
     var payload = new TweetCreatePayload { Text = request.Text.Trim() };
 
