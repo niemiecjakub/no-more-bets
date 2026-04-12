@@ -593,6 +593,39 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
   }
 
   /// <summary>
+  /// Gets all agent sessions from the database, newest first, with message counts.
+  /// </summary>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <returns>List of agent sessions.</returns>
+  [HttpGet("agent-sessions")]
+  public async Task<ActionResult<IReadOnlyList<AgentSessionListItemDto>>> GetAgentSessions(
+    CancellationToken cancellationToken = default)
+  {
+    var rows = await db.AgentSession
+      .AsNoTracking()
+      .OrderByDescending(s => s.StartedAt)
+      .Select(s => new
+      {
+        s.Id,
+        s.Phase,
+        s.StartedAt,
+        MessageCount = s.Messages.Count,
+      })
+      .ToListAsync(cancellationToken);
+
+    var list = rows
+      .Select(r => new AgentSessionListItemDto(
+        r.Id,
+        (int)r.Phase,
+        r.Phase.ToString(),
+        r.StartedAt,
+        r.MessageCount))
+      .ToList();
+
+    return Ok(list);
+  }
+
+  /// <summary>
   /// Gets ordered transcript messages for an agent session.
   /// </summary>
   /// <param name="sessionId">Agent session ID.</param>
@@ -772,5 +805,12 @@ public record BetSlipListItemDto(
   string StatusName,
   IReadOnlyList<BetSelectionItemDto> Selections,
   int? AgentSessionId);
+
+public record AgentSessionListItemDto(
+  int Id,
+  int PhaseId,
+  string PhaseName,
+  DateTime StartedAt,
+  int MessageCount);
 
 public record AgentSessionMessageDto(int Id, int SessionId, int Ordinal, int Kind, string Text);

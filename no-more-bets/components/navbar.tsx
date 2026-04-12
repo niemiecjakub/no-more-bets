@@ -8,6 +8,7 @@ const tabs = [
   { href: "/bets", label: "Bets" },
   { href: "/leagues", label: "Leagues" },
   { href: "/memories", label: "Memories" },
+  { href: "/sessions", label: "Sessions" },
 ] as const;
 
 export function Navbar() {
