@@ -8,6 +8,7 @@ using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
+using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
@@ -28,10 +29,10 @@ using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 using NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
 using NoMoreBets.Infrastructure.Search;
+using NoMoreBets.Infrastructure.XApi;
 using Polly;
 using System.Net;
 using System.Net.Http.Headers;
-using static System.Net.WebRequestMethods;
 
 namespace NoMoreBets.Infrastructure;
 
@@ -60,6 +61,7 @@ public static class DependencyInjection
     services.Configure<SoccerDataOptions>(configuration.GetSection(SoccerDataOptions.SectionName));
     services.Configure<ProxyOptions>(configuration.GetSection(ProxyOptions.SectionName));
     services.Configure<BraveSearchOptions>(configuration.GetSection(BraveSearchOptions.SectionName));
+    services.Configure<XApiOptions>(configuration.GetSection(XApiOptions.SectionName));
     services.Configure<OpenAIOptions>(configuration.GetSection(OpenAIOptions.SectionName));
 
     services.AddOptions<SoccerDataOptions>()
@@ -124,6 +126,21 @@ public static class DependencyInjection
       client.DefaultRequestHeaders.Accept.Clear();
       client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
       client.DefaultRequestHeaders.TryAddWithoutValidation("X-Subscription-Token", options.ApiKey);
+    })
+    .AddHttpMessageHandler<ResilienceHttpHandler>()
+    .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
+    {
+      AutomaticDecompression = DecompressionMethods.All
+    });
+
+    services.AddHttpClient<IXApiService, XApiClient>((serviceProvider, client) =>
+    {
+      var xApiOptions = serviceProvider.GetRequiredService<IOptions<XApiOptions>>().Value;
+      client.BaseAddress = new Uri("https://api.x.com");
+      client.DefaultRequestHeaders.Accept.Clear();
+      client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+      if (!string.IsNullOrWhiteSpace(xApiOptions.BearerToken))
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", xApiOptions.BearerToken.Trim());
     })
     .AddHttpMessageHandler<ResilienceHttpHandler>()
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
