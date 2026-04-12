@@ -62,14 +62,10 @@ public class AgentReflectionPlugin
     _memoriesPlugin.ReplaceAsync(name, oldText, newText, replaceAll, cancellationToken);
 
   [KernelFunction]
-  [Description(
-    "Returns bet slips in the reflection scope. Call first so you know which slips to analyze.")]
-  public Task<IReadOnlyList<BetSlipSummary>> GetReflectionScopeBetSlipsAsync(
-    CancellationToken cancellationToken = default)
-  {
-    var utcToday = DateOnly.FromDateTime(DateTime.UtcNow);
-    return _bettingPlugin.GetBetSlipsWithFinishedMatchOnUtcDateAsync(utcToday, cancellationToken);
-  }
+  [Description("Returns settled bet slips that still need reflection. Call this first to determine which slips to analyze.")]
+  public Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAwaitingReflectionAsync(
+    CancellationToken cancellationToken = default) =>
+    _bettingPlugin.GetBetSlipsAwaitingReflectionAsync(cancellationToken);
 
   [KernelFunction]
   [Description("Returns the latest stored research analysis text for the match (same source used before betting). Use to compare pre-match thesis to how the bet resolved.")]

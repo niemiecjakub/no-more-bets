@@ -121,14 +121,11 @@ public class BettingRepository : IBettingRepository
       .ConfigureAwait(false);
   }
 
-  public async Task<IReadOnlyList<BetSlip>> GetBetSlipsWithFinishedMatchOnUtcDateAsync(
-    DateOnly utcDate,
+  public async Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsAwaitingReflectionAsync(
     CancellationToken cancellationToken = default)
   {
     return await _db.BetSlip
-      .Where(s => s.Selections.Any(sel =>
-        sel.Match.MatchStatusId == (int)MatchStatus.Finished
-        && DateOnly.FromDateTime(sel.Match.MatchDate) == utcDate))
+      .Where(s => s.StatusId != (int)BetStatus.Pending && s.AgentSessionReflectedId == null)
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
           .ThenInclude(m => m!.HomeClub)
@@ -139,6 +136,28 @@ public class BettingRepository : IBettingRepository
         .ThenInclude(sel => sel.EventTypeEntity)
       .OrderByDescending(s => s.UpdatedAt ?? s.CreatedAt)
       .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+  public async Task MarkBetSlipsAgentSessionReflectedAsync(
+    int agentSessionId,
+    IReadOnlyList<int> betSlipIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (betSlipIds.Count == 0)
+    {
+      return;
+    }
+
+    var distinctIds = betSlipIds.Distinct().ToList();
+    var utcNow = DateTime.UtcNow;
+    await _db.BetSlip
+      .Where(s => distinctIds.Contains(s.Id))
+      .ExecuteUpdateAsync(
+        s => s
+          .SetProperty(b => b.AgentSessionReflectedId, agentSessionId)
+          .SetProperty(b => b.UpdatedAt, utcNow),
+        cancellationToken)
       .ConfigureAwait(false);
   }
 

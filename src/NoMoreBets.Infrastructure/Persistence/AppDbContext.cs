@@ -41,7 +41,6 @@ public class AppDbContext : DbContext
   public DbSet<Bankroll> Bankroll { get; set; }
   public DbSet<AgentSession> AgentSession { get; set; }
   public DbSet<AgentSessionMessage> AgentSessionMessage { get; set; }
-  public DbSet<AgentSessionReflectionBetSlip> AgentSessionReflectionBetSlip { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -309,6 +308,7 @@ public class AppDbContext : DbContext
       entity.HasKey(e => e.Id);
       entity.Property(e => e.Id).UseIdentityAlwaysColumn();
       entity.Property(e => e.AgentSessionId).IsRequired(false);
+      entity.Property(e => e.AgentSessionReflectedId).IsRequired(false);
       entity.Property(e => e.StakeAmount).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.TotalOdds).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.PotentialPayout).IsRequired().HasPrecision(18, 4);
@@ -320,6 +320,7 @@ public class AppDbContext : DbContext
       entity.Property(e => e.CreatedAt).IsRequired();
       entity.HasIndex(e => e.StatusId);
       entity.HasIndex(e => e.AgentSessionId);
+      entity.HasIndex(e => e.AgentSessionReflectedId);
       entity.HasOne(e => e.BetStatusEntity)
         .WithMany()
         .HasForeignKey(e => e.StatusId)
@@ -327,6 +328,10 @@ public class AppDbContext : DbContext
       entity.HasOne(e => e.AgentSession)
         .WithMany(s => s.BetSlips)
         .HasForeignKey(e => e.AgentSessionId)
+        .OnDelete(DeleteBehavior.SetNull);
+      entity.HasOne(e => e.AgentSessionReflected)
+        .WithMany()
+        .HasForeignKey(e => e.AgentSessionReflectedId)
         .OnDelete(DeleteBehavior.SetNull);
     });
 
@@ -408,20 +413,6 @@ public class AppDbContext : DbContext
       entity.HasOne(e => e.Session)
         .WithMany(s => s.Messages)
         .HasForeignKey(e => e.SessionId)
-        .OnDelete(DeleteBehavior.Cascade);
-    });
-
-    modelBuilder.Entity<AgentSessionReflectionBetSlip>(entity =>
-    {
-      entity.HasKey(e => new { e.AgentSessionId, e.BetSlipId });
-      entity.HasIndex(e => e.BetSlipId);
-      entity.HasOne(e => e.AgentSession)
-        .WithMany(s => s.ReflectionScopeBetSlips)
-        .HasForeignKey(e => e.AgentSessionId)
-        .OnDelete(DeleteBehavior.Cascade);
-      entity.HasOne(e => e.BetSlip)
-        .WithMany(s => s.ReflectionAgentSessions)
-        .HasForeignKey(e => e.BetSlipId)
         .OnDelete(DeleteBehavior.Cascade);
     });
   }

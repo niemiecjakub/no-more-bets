@@ -11,6 +11,7 @@ public class BetSlip
 
   public int Id { get; set; }
   public int? AgentSessionId { get; set; }
+  public int? AgentSessionReflectedId { get; set; }
   public decimal StakeAmount { get; set; }
   public decimal TotalOdds { get; set; }
   public decimal PotentialPayout { get; set; }
@@ -36,8 +37,7 @@ public class BetSlip
   public void TouchUpdatedAt() => UpdatedAt = DateTime.UtcNow;
 
   public AgentSession? AgentSession { get; set; }
-  public ICollection<AgentSessionReflectionBetSlip> ReflectionAgentSessions { get; set; } =
-    new List<AgentSessionReflectionBetSlip>();
+  public AgentSession? AgentSessionReflected { get; set; }
   public BetStatusEntity BetStatusEntity { get; set; } = null!;
   public ICollection<BetSelection> Selections { get; set; } = new List<BetSelection>();
   public ICollection<Bankroll> Bankrolls { get; set; } = new List<Bankroll>();

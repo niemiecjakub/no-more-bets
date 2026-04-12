@@ -6,6 +6,7 @@ using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Domain.AgentSessions;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Infrastructure.AI.Provider;
@@ -142,15 +143,11 @@ public sealed class Runner : IAgentPhaseRunner
 
   public async Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
-    var utcToday = DateOnly.FromDateTime(DateTime.UtcNow);
-    var slips = await _unitOfWork.Betting
-      .GetBetSlipsWithFinishedMatchOnUtcDateAsync(utcToday, cancellationToken)
-      .ConfigureAwait(false);
+    var slips = await LoadBetSlipsAwaitingReflectionAsync(cancellationToken).ConfigureAwait(false);
     if (slips.Count == 0)
     {
       _logger.LogInformation(
-        "Skipping reflection agent phase: no bet slips with a finished match played on UTC date {UtcDate:yyyy-MM-dd}.",
-        utcToday);
+        "Skipping reflection agent phase: no settled bet slips awaiting reflection (non-pending with no reflection session).");
       return Array.Empty<IMessage>();
     }
 
@@ -168,8 +165,8 @@ public sealed class Runner : IAgentPhaseRunner
 
           ## Required workflow (execute in order)
 
-          1) List bet slips in the reflection scope (current UTC day):
-          - Call `GetReflectionScopeBetSlipsAsync`.
+          1) Get bet slips awaiting reflection:
+          - Call `GetBetSlipsAwaitingReflectionAsync`.
 
           2) Read memory context:
           - Call `GetMemoryRecordsAsync`
@@ -214,13 +211,16 @@ public sealed class Runner : IAgentPhaseRunner
 
     if (reflectionBetSlipIds.Count > 0)
     {
-      await _unitOfWork.AgentSessions
-        .AddReflectionScopeBetSlipsAsync(result.SessionId, reflectionBetSlipIds, cancellationToken)
+      await _unitOfWork.Betting
+        .MarkBetSlipsAgentSessionReflectedAsync(result.SessionId, reflectionBetSlipIds, cancellationToken)
         .ConfigureAwait(false);
     }
 
     return result.Messages;
   }
+
+  private Task<IReadOnlyList<BetSlip>> LoadBetSlipsAwaitingReflectionAsync(CancellationToken cancellationToken) =>
+    _unitOfWork.Betting.GetNonPendingBetSlipsAwaitingReflectionAsync(cancellationToken);
 
   public async Task<IReadOnlyList<IMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
   {
