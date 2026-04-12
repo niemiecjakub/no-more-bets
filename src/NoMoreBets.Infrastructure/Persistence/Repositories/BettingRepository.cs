@@ -121,6 +121,27 @@ public class BettingRepository : IBettingRepository
       .ConfigureAwait(false);
   }
 
+  public async Task<IReadOnlyList<BetSlip>> GetBetSlipsWithFinishedMatchOnUtcDateAsync(
+    DateOnly utcDate,
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.BetSlip
+      .Where(s => s.Selections.Any(sel =>
+        sel.Match.MatchStatusId == (int)MatchStatus.Finished
+        && DateOnly.FromDateTime(sel.Match.MatchDate) == utcDate))
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.EventTypeEntity)
+      .OrderByDescending(s => s.UpdatedAt ?? s.CreatedAt)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task<IReadOnlyList<BetSelection>> GetPendingSelectionsWithBothScoresAsync(
     CancellationToken cancellationToken = default)
   {

@@ -192,5 +192,16 @@ public class BettingPlugin
     return BetSlipSummaryMapper.ToSummaries(slips);
   }
 
+  public async Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsWithFinishedMatchOnUtcDateAsync(
+    DateOnly utcDate,
+    CancellationToken cancellationToken = default)
+  {
+    var slips = await _unitOfWork.Betting
+      .GetBetSlipsWithFinishedMatchOnUtcDateAsync(utcDate, cancellationToken)
+      .ConfigureAwait(false);
+
+    return BetSlipSummaryMapper.ToSummaries(slips);
+  }
+
   private sealed record PlaceBetSlipArgs(List<BetSelectionRecord>? BetSelections);
 }

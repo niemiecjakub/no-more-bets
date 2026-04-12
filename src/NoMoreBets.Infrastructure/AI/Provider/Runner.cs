@@ -141,15 +141,15 @@ public sealed class Runner : IAgentPhaseRunner
 
   public async Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
-    const int reflectionSlipLookbackDays = 1;
+    var utcToday = DateOnly.FromDateTime(DateTime.UtcNow);
     var slips = await _unitOfWork.Betting
-      .GetNonPendingBetSlipsUpdatedInLastDaysAsync(reflectionSlipLookbackDays, cancellationToken)
+      .GetBetSlipsWithFinishedMatchOnUtcDateAsync(utcToday, cancellationToken)
       .ConfigureAwait(false);
     if (slips.Count == 0)
     {
       _logger.LogInformation(
-        "Skipping reflection agent phase: no non-pending slips with status updated in the last {Days} day(s).",
-        reflectionSlipLookbackDays);
+        "Skipping reflection agent phase: no bet slips with a finished match played on UTC date {UtcDate:yyyy-MM-dd}.",
+        utcToday);
       return Array.Empty<IMessage>();
     }
 
@@ -165,8 +165,8 @@ public sealed class Runner : IAgentPhaseRunner
 
           ## Required workflow (execute in order)
 
-          1) Pull settled history for analysis:
-          - Call `GetNonPendingBetSlipsUpdatedInLastDaysAsync`.
+          1) List bet slips in the reflection scope (current UTC day):
+          - Call `GetReflectionScopeBetSlipsAsync`.
 
           2) Read memory context:
           - Call `GetMemoryRecordsAsync`

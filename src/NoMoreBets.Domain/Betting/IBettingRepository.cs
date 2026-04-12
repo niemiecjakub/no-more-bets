@@ -12,5 +12,6 @@ public interface IBettingRepository
   Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsCreatedInLastDaysAsync(int lastDays, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsUpdatedInLastDaysAsync(int lastDays, CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<BetSlip>> GetBetSlipsWithFinishedMatchOnUtcDateAsync(DateOnly utcDate, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSelection>> GetPendingSelectionsWithBothScoresAsync(CancellationToken cancellationToken = default);
 }
