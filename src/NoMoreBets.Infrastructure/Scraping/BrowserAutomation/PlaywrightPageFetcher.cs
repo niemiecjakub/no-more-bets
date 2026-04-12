@@ -8,16 +8,11 @@ namespace NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 /// Fetches page HTML using Playwright with WaitUntilState.Load (avoids timeout on sites that never reach networkidle).
 /// Throws <see cref="PermanentScraperException"/> for HTTP 403, 404, 410.
 /// Supports both simple fetch and interactive fetch (clicks before capture) for consent/modals.
-/// Uses a shared persistent browser and context pool (max 3). Blocks image, media, font, stylesheet. Navigation timeout capped at 20s.
+/// Uses a shared persistent browser and context pool (max 3). By default blocks image, media, font, stylesheet. Navigation timeout capped at 35s.
 /// </summary>
 public class PlaywrightPageFetcher
 {
-  private const int MaxNavigationTimeoutMs = 20_000;
-
-  private static readonly HashSet<string> BlockedResourceTypes = new(StringComparer.OrdinalIgnoreCase)
-  {
-    "image", "media", "font", "stylesheet"
-  };
+  private const int MaxNavigationTimeoutMs = 35_000;
 
   private readonly ILogger<PlaywrightPageFetcher> _logger;
   private readonly PlaywrightBrowserService _browserService;
@@ -52,22 +47,38 @@ public class PlaywrightPageFetcher
     IgnoreHTTPSErrors = true,
     UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
                "AppleWebKit/537.36 (KHTML, like Gecko) " +
-               "Chrome/117.0.0.0 Safari/537.36",
+               "Chrome/131.0.0.0 Safari/537.36",
     ViewportSize = new ViewportSize { Width = 1366, Height = 768 },
     Locale = "pl-PL",
     TimezoneId = "Europe/Warsaw",
     ScreenSize = new ScreenSize { Width = 1366, Height = 768 }
   };
 
-  private static async Task BlockUnwantedResourcesAsync(IPage page)
+  private static readonly HashSet<string> AlwaysBlockedResourceTypes = new(StringComparer.OrdinalIgnoreCase)
+  {
+    "image", "media", "font"
+  };
+
+  /// <param name="blockStylesheets">When false, stylesheets are allowed (some CSR sites need CSS before the table mounts).</param>
+  private static async Task ApplyResourceBlockingAsync(IPage page, bool blockStylesheets)
   {
     await page.RouteAsync("**/*", async route =>
     {
       var resourceType = route.Request.ResourceType;
-      if (BlockedResourceTypes.Contains(resourceType))
+      if (AlwaysBlockedResourceTypes.Contains(resourceType))
+      {
         await route.AbortAsync().ConfigureAwait(false);
-      else
-        await route.ContinueAsync().ConfigureAwait(false);
+        return;
+      }
+
+      if (blockStylesheets &&
+          string.Equals(resourceType, "stylesheet", StringComparison.OrdinalIgnoreCase))
+      {
+        await route.AbortAsync().ConfigureAwait(false);
+        return;
+      }
+
+      await route.ContinueAsync().ConfigureAwait(false);
     }).ConfigureAwait(false);
   }
 
@@ -88,7 +99,7 @@ public class PlaywrightPageFetcher
       try
       {
         var page = await context.NewPageAsync().ConfigureAwait(false);
-        await BlockUnwantedResourcesAsync(page).ConfigureAwait(false);
+        await ApplyResourceBlockingAsync(page, blockStylesheets: true).ConfigureAwait(false);
 
         try
         {
@@ -130,11 +141,21 @@ public class PlaywrightPageFetcher
   }
 
   /// <summary>Navigates to the URL, runs interaction steps, then returns the HTML content.</summary>
+  /// <param name="url">URL to load.</param>
+  /// <param name="steps">Interactions to run after load (e.g. consent clicks).</param>
+  /// <param name="timeout">Navigation and wait timeout budget.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <param name="waitForSelectorBeforeContent">If set (and no function wait), waits for this selector to be attached before reading DOM.</param>
+  /// <param name="waitForFunctionBeforeContent">If set, waits for this browser function to return true (preferred for fragile class names). Example: <c>() =&gt; document.querySelectorAll("div").length &gt; 0</c>.</param>
+  /// <param name="blockStylesheets">When false, allow stylesheets during this session (FotMob table CSR).</param>
   public virtual async Task<string> GetHtmlAfterInteractionsAsync(
     string url,
     IReadOnlyList<InteractionStep> steps,
     TimeSpan? timeout = null,
-    CancellationToken cancellationToken = default)
+    CancellationToken cancellationToken = default,
+    string? waitForSelectorBeforeContent = null,
+    string? waitForFunctionBeforeContent = null,
+    bool blockStylesheets = true)
   {
     var timeoutMs = timeout.HasValue
       ? (int)timeout.Value.TotalMilliseconds
@@ -147,7 +168,7 @@ public class PlaywrightPageFetcher
       try
       {
         var page = await context.NewPageAsync().ConfigureAwait(false);
-        await BlockUnwantedResourcesAsync(page).ConfigureAwait(false);
+        await ApplyResourceBlockingAsync(page, blockStylesheets).ConfigureAwait(false);
 
         try
         {
@@ -203,6 +224,38 @@ public class PlaywrightPageFetcher
               {
                 _logger.LogDebug(ex, "Interaction step failed for selector {Selector}", step.Selector);
               }
+            }
+          }
+
+          var waitMs = Math.Max(5000, Math.Min(cappedTimeoutMs, 32_000));
+          if (!string.IsNullOrWhiteSpace(waitForFunctionBeforeContent))
+          {
+            try
+            {
+              await page.WaitForFunctionAsync(waitForFunctionBeforeContent.Trim(), new PageWaitForFunctionOptions
+              {
+                Timeout = waitMs,
+                PollingInterval = 250
+              }).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+              _logger.LogWarning(ex, "WaitForFunction failed on {Url}", url);
+            }
+          }
+          else if (!string.IsNullOrWhiteSpace(waitForSelectorBeforeContent))
+          {
+            try
+            {
+              await page.WaitForSelectorAsync(waitForSelectorBeforeContent.Trim(), new PageWaitForSelectorOptions
+              {
+                Timeout = waitMs,
+                State = WaitForSelectorState.Attached
+              }).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+              _logger.LogWarning(ex, "WaitForSelector failed for {Selector} on {Url}", waitForSelectorBeforeContent, url);
             }
           }
 

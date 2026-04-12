@@ -191,7 +191,13 @@ public class BetclicScraperTests
     var pageFetcher = PlaywrightPageFetcherMockHelper.CreateMock();
     pageFetcher
         .GetHtmlAfterInteractionsAsync(
-            gameUrl, Arg.Any<IReadOnlyList<InteractionStep>>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
+            gameUrl,
+            Arg.Any<IReadOnlyList<InteractionStep>>(),
+            Arg.Any<TimeSpan?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<bool>())
         .Returns(Task.FromResult(html!));
     var sut = CreateScraper(pageFetcher);
 
@@ -202,6 +208,12 @@ public class BetclicScraperTests
     result.Should().NotBeEmpty();
     await pageFetcher.Received(1)
         .GetHtmlAfterInteractionsAsync(
-            gameUrl, Arg.Any<IReadOnlyList<InteractionStep>>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+            gameUrl,
+            Arg.Any<IReadOnlyList<InteractionStep>>(),
+            Arg.Any<TimeSpan?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<bool>());
   }
 }

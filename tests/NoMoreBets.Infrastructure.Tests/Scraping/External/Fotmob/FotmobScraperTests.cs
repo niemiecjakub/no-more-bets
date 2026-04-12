@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NoMoreBets.Application.Common.Dto.Leagues;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 using NoMoreBets.Infrastructure.Scraping;
@@ -100,6 +101,44 @@ public class FotmobScraperTests
 
         // Assert
         result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ParseLeagueTableClubsAsync_WithTailwindTeamformCell_ParsesLastFiveForm()
+    {
+        // Arrange: 2025+ FotMob form column — <a><div class="... bg-teamform-win|draw|lose ...">
+        var html = """
+            <html><body>
+            <article class="TableContainer">
+            <div class="css-TableRowCSS row">
+              <div><div class="TablePositionCell">1</div></div>
+              <div class="TableTeamCell"><a class="TeamLink" href="/teams/9825/overview/arsenal"><img class="TeamIcon" src="https://images.fotmob.com/image_resources/logo/teamlogo/9825_xsmall.png"/><span class="TeamName">Arsenal</span><span class="TeamShortname">ARS</span></a></div>
+              <div>10</div><div>6</div><div>2</div><div>2</div><div>20 - 8</div><div>+12</div><div>20</div>
+              <div class="css-4l2wjv-TableCell e1usskhq10"><div class="flex w-full flex-row items-start justify-end gap-3">
+                <a href="/pl/matches/tottenham-hotspur-vs-arsenal/1"><div class="border-teamform-win bg-teamform-win">Z</div></a>
+                <a href="/pl/matches/chelsea-vs-arsenal/1"><div class="border-teamform-win bg-teamform-win">Z</div></a>
+                <a href="/pl/matches/arsenal-vs-brighton-hove-albion/1"><div class="border-teamform-draw bg-teamform-draw">R</div></a>
+                <a href="/pl/matches/everton-vs-arsenal/1"><div class="border-teamform-lose bg-teamform-lose">P</div></a>
+                <a href="/pl/matches/afc-bournemouth-vs-arsenal/1"><div class="border-teamform-win bg-teamform-win">Z</div></a>
+              </div></div>
+              <div><a class="NextOpponentCSS" href="/matches/foo-vs-bar/1"><img class="TeamIcon" src="https://images.fotmob.com/image_resources/logo/teamlogo/2_xsmall.png"/></a></div>
+            </div>
+            </article>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseLeagueTableClubsAsync(html);
+
+        // Assert
+        result.Should().ContainSingle();
+        result[0].Form.Should().Equal(
+            MatchResult.Win,
+            MatchResult.Win,
+            MatchResult.Draw,
+            MatchResult.Loss,
+            MatchResult.Win);
     }
 
     [Fact]
@@ -351,6 +390,61 @@ public class FotmobScraperTests
         // Assert
         result.RecentGames.Should().BeEmpty();
         result.DailySummary.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task ParseClubOverviewAsync_WithGridColsFiveContainer_ReturnsFiveGamesInOrder()
+    {
+        // Arrange: current FotMob team page — grid-cols-5 row of match anchors (no TeamFormMatchLink)
+        var html = """
+            <html><body>
+            <div class="grid min-h-0 w-full grid-cols-5 items-center justify-items-center">
+              <a class="flex w-[42px]" href="/pl/matches/manchester-city-vs-newcastle-united/2waqez#5186380">
+                <div class="css-wps5r-FixtureStatusWrapper e1h40flh4"><div color="var(--TeamForm-red)" class="ResultBox"><span class="css-1y3tisq-ScoreSpan e1h40flh1">1 - 3</span></div></div>
+                <img src="https://images.fotmob.com/image_resources/logo/teamlogo/8456_xsmall.png" class="Image TeamIcon" alt="" width="32" height="32">
+              </a>
+              <a class="flex w-[42px]" href="/pl/matches/barcelona-vs-newcastle-united/2yahjm#5205733">
+                <div class="FixtureStatusWrapper"><div color="var(--TeamForm-grey)" class="ResultBox"><span class="ScoreSpan">1 - 1</span></div></div>
+                <img src="https://images.fotmob.com/image_resources/logo/teamlogo/8634_xsmall.png" class="TeamIcon" alt="">
+              </a>
+              <a class="flex w-[42px]" href="/pl/matches/chelsea-vs-newcastle-united/2wabz1#4813668">
+                <div class="FixtureStatusWrapper"><div color="var(--TeamForm-green)" class="ResultBox"><span class="ScoreSpan">0 - 1</span></div></div>
+                <img src="https://images.fotmob.com/image_resources/logo/teamlogo/8455_xsmall.png" class="TeamIcon" alt="">
+              </a>
+              <a class="flex w-[42px]" href="/pl/matches/barcelona-vs-newcastle-united/2yahjm#5205734">
+                <div class="FixtureStatusWrapper"><div color="var(--TeamForm-red)" class="ResultBox"><span class="ScoreSpan">7 - 2</span></div></div>
+                <img src="https://images.fotmob.com/image_resources/logo/teamlogo/8634_xsmall.png" class="TeamIcon" alt="">
+              </a>
+              <a class="flex w-[42px]" href="/pl/matches/sunderland-vs-newcastle-united/2wh5lv#4813682">
+                <div class="FixtureStatusWrapper"><div color="var(--TeamForm-red)" class="ResultBox"><span class="ScoreSpan">1 - 2</span></div></div>
+                <img src="https://images.fotmob.com/image_resources/logo/teamlogo/8472_xsmall.png" class="TeamIcon" alt="">
+              </a>
+            </div>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseClubOverviewAsync(html);
+
+        // Assert
+        result.RecentGames.Should().HaveCount(5);
+        result.RecentGames[0].OpponentId.Should().Be(8456);
+        result.RecentGames[0].Score.Should().Be("1 - 3");
+        result.RecentGames[0].Result.Should().Be(MatchResult.Loss);
+        result.RecentGames[0].GameUrl.Should().Be("https://www.fotmob.com/pl/matches/manchester-city-vs-newcastle-united/2waqez#5186380");
+
+        result.RecentGames[1].Result.Should().Be(MatchResult.Draw);
+        result.RecentGames[1].OpponentId.Should().Be(8634);
+
+        result.RecentGames[2].Result.Should().Be(MatchResult.Win);
+        result.RecentGames[2].OpponentId.Should().Be(8455);
+
+        result.RecentGames[3].Result.Should().Be(MatchResult.Loss);
+        result.RecentGames[3].OpponentId.Should().Be(8634);
+
+        result.RecentGames[4].Result.Should().Be(MatchResult.Loss);
+        result.RecentGames[4].OpponentId.Should().Be(8472);
     }
 
     [Fact]
@@ -751,7 +845,14 @@ public class FotmobScraperTests
             return; // Fixtures not available
         var fetcher = PlaywrightPageFetcherMockHelper.CreateMock();
         fetcher
-            .GetHtmlAfterInteractionsAsync(Arg.Any<string>(), Arg.Any<IReadOnlyList<InteractionStep>>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
+            .GetHtmlAfterInteractionsAsync(
+                Arg.Any<string>(),
+                Arg.Any<IReadOnlyList<InteractionStep>>(),
+                Arg.Any<TimeSpan?>(),
+                Arg.Any<CancellationToken>(),
+                Arg.Any<string?>(),
+                Arg.Any<string?>(),
+                Arg.Any<bool>())
             .Returns(Task.FromResult(minimalHtml), Task.FromResult(playerStatsHtml));
         var sut = CreateScraper(fetcher);
 

@@ -31,6 +31,35 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
       new InteractionStep("button.fc-cta-consent", InteractionAction.Click, 600)
   ];
 
+  private static readonly TimeSpan FotmobInteractiveTimeout = TimeSpan.FromSeconds(30);
+
+  /// <summary>True when several standings rows exist (class names vary between FotMob builds).</summary>
+  private const string FotmobLeagueTableReadyFunction = """
+() => {
+  const n = (sel) => document.querySelectorAll(sel).length;
+  return n("div[class*='TableRowCSS']") >= 5
+    || n("div[class*='TablePositionCell']") >= 5
+    || n("div[class*='TableTeamCell']") >= 5
+    || n("tr[class*='TableRowCSS']") >= 5
+    || n("table tbody tr") >= 5
+    || n("a[href*='/teams/'][href*='/overview/']") >= 15;
+}
+""";
+
+  /// <summary>Team page: recent form grid (CSR) or legacy match links.</summary>
+  private const string FotmobClubOverviewReadyFunction = """
+() => {
+  for (const g of document.querySelectorAll("div[class*='grid-cols-5']")) {
+    let c = 0;
+    for (const a of g.querySelectorAll(":scope > a[href*='/matches/']")) {
+      if (a.querySelector("div[class*='FixtureStatusWrapper']")) c++;
+    }
+    if (c >= 3) return true;
+  }
+  return document.querySelectorAll("a[class*='TeamFormMatchLink']").length >= 1;
+}
+""";
+
   private readonly ILogger<FotmobScraper> _logger;
   private readonly IFotmobConstants _fotmobConstants;
 
@@ -49,7 +78,14 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   public async Task<IReadOnlyList<TableEntry>> GetLeagueTableAsync(CancellationToken cancellationToken = default)
   {
     var url = $"{BaseUrl}/leagues/{_fotmobConstants.PremierLeague.Id}/table/{_fotmobConstants.PremierLeague.Slug}";
-    var html = await GetHtmlAfterInteractionsAsync(url, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
+    var html = await GetHtmlAfterInteractionsAsync(
+        url,
+        FotmobConsentSteps,
+        FotmobInteractiveTimeout,
+        cancellationToken,
+        waitForSelectorBeforeContent: null,
+        waitForFunctionBeforeContent: FotmobLeagueTableReadyFunction,
+        blockStylesheets: false).ConfigureAwait(false);
     return await ParseLeagueTableClubsAsync(html).ConfigureAwait(false);
   }
 
@@ -57,7 +93,14 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   public async Task<IReadOnlyList<XgStats>> GetXgStatsAsync(CancellationToken cancellationToken = default)
   {
     var url = BuildXgUrl();
-    var html = await GetHtmlAfterInteractionsAsync(url, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
+    var html = await GetHtmlAfterInteractionsAsync(
+        url,
+        FotmobConsentSteps,
+        FotmobInteractiveTimeout,
+        cancellationToken,
+        waitForSelectorBeforeContent: null,
+        waitForFunctionBeforeContent: FotmobLeagueTableReadyFunction,
+        blockStylesheets: false).ConfigureAwait(false);
     return await ParseXgStatsAsync(html).ConfigureAwait(false);
   }
 
@@ -65,7 +108,14 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   public async Task<ClubOverview> GetClubOverviewAsync(int teamId, CancellationToken cancellationToken = default)
   {
     var url = BuildTeamOverviewUrl(teamId);
-    var html = await GetHtmlAfterInteractionsAsync(url, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
+    var html = await GetHtmlAfterInteractionsAsync(
+        url,
+        FotmobConsentSteps,
+        FotmobInteractiveTimeout,
+        cancellationToken,
+        waitForSelectorBeforeContent: null,
+        waitForFunctionBeforeContent: FotmobClubOverviewReadyFunction,
+        blockStylesheets: false).ConfigureAwait(false);
     return await ParseClubOverviewAsync(html).ConfigureAwait(false);
   }
 
@@ -422,12 +472,12 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
 
   private IReadOnlyList<ClubRecentGame> ParseRecentGamesFromDocument(IDocument doc)
   {
-    var links = doc.QuerySelectorAll("a[class*='TeamFormMatchLink']").ToArray();
-    var takeCount = Math.Min(5, links.Length);
-    var startIndex = links.Length - takeCount;
+    var links = FindRecentGameAnchorElements(doc);
+    var takeCount = Math.Min(5, links.Count);
+    var startIndex = links.Count - takeCount;
     var results = new List<ClubRecentGame>();
 
-    for (var i = startIndex; i < links.Length; i++)
+    for (var i = startIndex; i < links.Count; i++)
     {
       try
       {
@@ -442,6 +492,38 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     }
 
     return results;
+  }
+
+  /// <summary>Prefers <c>div.grid-cols-5</c> direct <c>a[href*='/matches/']</c> with form UI; falls back to legacy <c>TeamFormMatchLink</c>.</summary>
+  private static IReadOnlyList<IElement> FindRecentGameAnchorElements(IDocument doc)
+  {
+    IReadOnlyList<IElement> best = Array.Empty<IElement>();
+    var bestCount = 0;
+
+    foreach (var container in doc.QuerySelectorAll("div[class*='grid-cols-5']"))
+    {
+      var anchors = container.Children
+          .Where(c => c.TagName.Equals("A", StringComparison.OrdinalIgnoreCase))
+          .Where(a =>
+          {
+            var href = a.GetAttribute("href") ?? "";
+            if (!href.Contains("/matches/", StringComparison.OrdinalIgnoreCase))
+              return false;
+            return a.QuerySelector("div[class*='FixtureStatusWrapper']") is not null;
+          })
+          .ToArray();
+
+      if (anchors.Length > bestCount)
+      {
+        bestCount = anchors.Length;
+        best = anchors;
+      }
+    }
+
+    if (best.Count > 0)
+      return best;
+
+    return doc.QuerySelectorAll("a[class*='TeamFormMatchLink']").ToArray();
   }
 
   private static string ParseDailySummaryFromDocument(IDocument doc)
@@ -474,11 +556,17 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
 
-    var tableContainer = doc.QuerySelector("article.TableContainer");
-    if (tableContainer is null)
-      throw new InvalidOperationException("Table container not found in the page.");
+    var tableContainer = FindFotmobTableRoot(doc);
+    var rows = tableContainer is not null
+      ? tableContainer.QuerySelectorAll("div[class*='TableRowCSS']")
+      : doc.QuerySelectorAll("div[class*='TableRowCSS']");
+    if (rows.Length == 0)
+    {
+      if (tableContainer is null)
+        throw new InvalidOperationException("Table container not found in the page.");
+      return [];
+    }
 
-    var rows = tableContainer.QuerySelectorAll("div[class*='TableRowCSS']");
     var clubs = new List<TableEntry>();
 
     foreach (var row in rows)
@@ -503,11 +591,18 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
 
-    var tableContainer = doc.QuerySelector("article.TableContainer");
-    if (tableContainer is null)
-      throw new InvalidOperationException("Table container not found in the page.");
+    var tableContainer = FindFotmobTableRoot(doc);
+    var rowSelector = "div[class*='TableRowCSS'], tr[class*='TableRowCSS']";
+    var rows = tableContainer is not null
+      ? tableContainer.QuerySelectorAll(rowSelector)
+      : doc.QuerySelectorAll(rowSelector);
+    if (rows.Length == 0)
+    {
+      if (tableContainer is null)
+        throw new InvalidOperationException("Table container not found in the page.");
+      return [];
+    }
 
-    var rows = tableContainer.QuerySelectorAll("div[class*='TableRowCSS'], tr[class*='TableRowCSS']");
     var list = new List<XgStats>();
 
     foreach (var row in rows)
@@ -580,6 +675,10 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   {
     return $"{BaseUrl}/teams/{fotmobClubId}";
   }
+
+  private static IElement? FindFotmobTableRoot(IDocument doc) =>
+    doc.QuerySelector("article.TableContainer")
+    ?? doc.QuerySelector("[class*='TableContainer']");
 
   private TableEntry? ParseLeagueTableRow(IElement row)
   {
@@ -655,23 +754,21 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     };
   }
 
+  /// <summary>FotMob form column: each match is <c>a</c> → <c>div</c> with <c>bg-teamform-win|draw|lose</c> (and border-* twins).</summary>
   private static IReadOnlyList<MatchResult> ParseForm(IElement formCell)
   {
-    var formSection = formCell.QuerySelector("section[class*='SingleTeamForm']");
-    if (formSection is null)
-      return Array.Empty<MatchResult>();
-
     var results = new List<MatchResult>();
-    foreach (var item in formSection.QuerySelectorAll("a[class*='ResultBox']"))
+    foreach (var div in formCell.QuerySelectorAll("a div[class*='teamform-']"))
     {
-      var cls = item.ClassName ?? "";
-      if (cls.Contains("team-form__win", StringComparison.Ordinal))
-        results.Add(MatchResult.Win);
-      else if (cls.Contains("team-form__draw", StringComparison.Ordinal))
+      var cls = div.ClassName ?? "";
+      if (cls.Contains("teamform-draw", StringComparison.OrdinalIgnoreCase))
         results.Add(MatchResult.Draw);
-      else if (cls.Contains("team-form__loss", StringComparison.Ordinal))
+      else if (cls.Contains("teamform-lose", StringComparison.OrdinalIgnoreCase))
         results.Add(MatchResult.Loss);
+      else if (cls.Contains("teamform-win", StringComparison.OrdinalIgnoreCase))
+        results.Add(MatchResult.Win);
     }
+
     return results;
   }
 

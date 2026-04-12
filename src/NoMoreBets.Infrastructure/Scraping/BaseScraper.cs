@@ -84,11 +84,21 @@ public abstract class BaseScraper
       string url,
       IReadOnlyList<InteractionStep> steps,
       TimeSpan? timeout = null,
-      CancellationToken cancellationToken = default)
+      CancellationToken cancellationToken = default,
+      string? waitForSelectorBeforeContent = null,
+      string? waitForFunctionBeforeContent = null,
+      bool blockStylesheets = true)
   {
     var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(_options.TimeoutSeconds);
     return await _interactiveFetchPipeline.ExecuteAsync(async ct =>
-      await _pageFetcher.GetHtmlAfterInteractionsAsync(url, steps, effectiveTimeout, ct).ConfigureAwait(false),
+      await _pageFetcher.GetHtmlAfterInteractionsAsync(
+          url,
+          steps,
+          effectiveTimeout,
+          ct,
+          waitForSelectorBeforeContent,
+          waitForFunctionBeforeContent,
+          blockStylesheets).ConfigureAwait(false),
       cancellationToken).ConfigureAwait(false);
   }
 
