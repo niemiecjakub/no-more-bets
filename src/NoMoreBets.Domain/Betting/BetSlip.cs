@@ -36,6 +36,8 @@ public class BetSlip
   public void TouchUpdatedAt() => UpdatedAt = DateTime.UtcNow;
 
   public AgentSession? AgentSession { get; set; }
+  public ICollection<AgentSessionReflectionBetSlip> ReflectionAgentSessions { get; set; } =
+    new List<AgentSessionReflectionBetSlip>();
   public BetStatusEntity BetStatusEntity { get; set; } = null!;
   public ICollection<BetSelection> Selections { get; set; } = new List<BetSelection>();
   public ICollection<Bankroll> Bankrolls { get; set; } = new List<Bankroll>();

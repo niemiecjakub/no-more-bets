@@ -38,4 +38,40 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
     await db.AgentSessionMessage.AddRangeAsync(messages, cancellationToken).ConfigureAwait(false);
     await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
   }
+
+  public async Task AddReflectionScopeBetSlipsAsync(
+    int sessionId,
+    IReadOnlyList<int> betSlipIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (betSlipIds.Count == 0)
+    {
+      return;
+    }
+
+    var distinctIds = betSlipIds.Distinct().ToList();
+    var existing = await db.AgentSessionReflectionBetSlip
+      .Where(x => x.AgentSessionId == sessionId && distinctIds.Contains(x.BetSlipId))
+      .Select(x => x.BetSlipId)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var existingSet = existing.ToHashSet();
+    var rows = distinctIds
+      .Where(id => !existingSet.Contains(id))
+      .Select(betSlipId => new AgentSessionReflectionBetSlip
+      {
+        AgentSessionId = sessionId,
+        BetSlipId = betSlipId
+      })
+      .ToList();
+
+    if (rows.Count == 0)
+    {
+      return;
+    }
+
+    await db.AgentSessionReflectionBetSlip.AddRangeAsync(rows, cancellationToken).ConfigureAwait(false);
+    await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+  }
 }

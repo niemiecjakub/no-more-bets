@@ -41,6 +41,7 @@ public class AppDbContext : DbContext
   public DbSet<Bankroll> Bankroll { get; set; }
   public DbSet<AgentSession> AgentSession { get; set; }
   public DbSet<AgentSessionMessage> AgentSessionMessage { get; set; }
+  public DbSet<AgentSessionReflectionBetSlip> AgentSessionReflectionBetSlip { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -407,6 +408,20 @@ public class AppDbContext : DbContext
       entity.HasOne(e => e.Session)
         .WithMany(s => s.Messages)
         .HasForeignKey(e => e.SessionId)
+        .OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<AgentSessionReflectionBetSlip>(entity =>
+    {
+      entity.HasKey(e => new { e.AgentSessionId, e.BetSlipId });
+      entity.HasIndex(e => e.BetSlipId);
+      entity.HasOne(e => e.AgentSession)
+        .WithMany(s => s.ReflectionScopeBetSlips)
+        .HasForeignKey(e => e.AgentSessionId)
+        .OnDelete(DeleteBehavior.Cascade);
+      entity.HasOne(e => e.BetSlip)
+        .WithMany(s => s.ReflectionAgentSessions)
+        .HasForeignKey(e => e.BetSlipId)
         .OnDelete(DeleteBehavior.Cascade);
     });
   }

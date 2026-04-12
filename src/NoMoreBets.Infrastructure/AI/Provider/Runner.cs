@@ -132,11 +132,12 @@ public sealed class Runner : IAgentPhaseRunner
           - In response and reasoning do not mention the internal process, tool names etc. Focus on delivering the research output as if for a human analyst, not on describing your own process.
           """;
 
-    return await ExecuteBettingPhaseAsync(
+    var result = await ExecuteBettingPhaseAsync(
       AgentSessionPhase.Research,
       prompt,
       configureKernel,
       cancellationToken).ConfigureAwait(false);
+    return result.Messages;
   }
 
   public async Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
@@ -152,6 +153,8 @@ public sealed class Runner : IAgentPhaseRunner
         utcToday);
       return Array.Empty<IMessage>();
     }
+
+    var reflectionBetSlipIds = slips.Select(s => s.Id).ToList();
 
     var prompt = $"""
           Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
@@ -203,11 +206,20 @@ public sealed class Runner : IAgentPhaseRunner
       kernel.Data.Add("phase", "Reflection");
     };
 
-    return await ExecuteBettingPhaseAsync(
+    var result = await ExecuteBettingPhaseAsync(
       AgentSessionPhase.Reflection,
       prompt,
       configureKernel,
       cancellationToken).ConfigureAwait(false);
+
+    if (reflectionBetSlipIds.Count > 0)
+    {
+      await _unitOfWork.AgentSessions
+        .AddReflectionScopeBetSlipsAsync(result.SessionId, reflectionBetSlipIds, cancellationToken)
+        .ConfigureAwait(false);
+    }
+
+    return result.Messages;
   }
 
   public async Task<IReadOnlyList<IMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
@@ -287,15 +299,16 @@ public sealed class Runner : IAgentPhaseRunner
       kernel.Plugins.AddFromObject(_pluginFactory.CreateBankrollPlugin());
       kernel.Data.Add("phase", "Betting");
     };
-
-    return await ExecuteBettingPhaseAsync(
+ 
+    var result = await ExecuteBettingPhaseAsync(
       AgentSessionPhase.Betting,
       prompt,
       configurePlugins,
       cancellationToken).ConfigureAwait(false);
+    return result.Messages;
   }
 
-  private async Task<IReadOnlyList<IMessage>> ExecuteBettingPhaseAsync(
+  private async Task<AgentPhaseRunResult> ExecuteBettingPhaseAsync(
     AgentSessionPhase phase,
     string userPrompt,
     Action<Kernel> configureKernel,
@@ -363,6 +376,8 @@ public sealed class Runner : IAgentPhaseRunner
       phaseName,
       messages.Count);
 
-    return messages;
+    return new AgentPhaseRunResult(messages, sessionId);
   }
 }
+
+internal sealed record AgentPhaseRunResult(IReadOnlyList<IMessage> Messages, int SessionId);

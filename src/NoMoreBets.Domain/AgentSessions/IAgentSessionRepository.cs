@@ -8,4 +8,9 @@ public interface IAgentSessionRepository
     int sessionId,
     IReadOnlyList<AgentSessionMessage> messages,
     CancellationToken cancellationToken = default);
+
+  Task AddReflectionScopeBetSlipsAsync(
+    int sessionId,
+    IReadOnlyList<int> betSlipIds,
+    CancellationToken cancellationToken = default);
 }

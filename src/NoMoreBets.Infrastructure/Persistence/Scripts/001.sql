@@ -308,6 +308,16 @@ CREATE TABLE "BetSlip" (
 CREATE INDEX idx_betslip_statusid ON public."BetSlip" USING btree ("StatusId");
 CREATE INDEX "IX_BetSlip_AgentSessionId" ON public."BetSlip" USING btree ("AgentSessionId");
 
+-- Reflection scope: which bet slips were in scope for a given reflection AgentSession (distinct from BetSlip.AgentSessionId = placement session)
+CREATE TABLE "AgentSessionReflectionBetSlip" (
+	"AgentSessionId" int4 NOT NULL,
+	"BetSlipId" int4 NOT NULL,
+	CONSTRAINT "AgentSessionReflectionBetSlip_pkey" PRIMARY KEY ("AgentSessionId", "BetSlipId"),
+	CONSTRAINT fk_asrefl_agentsession FOREIGN KEY ("AgentSessionId") REFERENCES "AgentSession"("Id") ON DELETE CASCADE,
+	CONSTRAINT fk_asrefl_betslip FOREIGN KEY ("BetSlipId") REFERENCES "BetSlip"("Id") ON DELETE CASCADE
+);
+CREATE INDEX "IX_AgentSessionReflectionBetSlip_BetSlipId" ON public."AgentSessionReflectionBetSlip" USING btree ("BetSlipId");
+
 -- AgentSessionMessageKind: 1=Message, 2=Reasoning, 3=FunctionCall (matches NoMoreBets.Domain.AgentSessions.AgentSessionMessageKind)
 CREATE TABLE "AgentSessionMessage" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
