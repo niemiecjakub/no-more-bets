@@ -3,7 +3,7 @@ using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Application.Betting.GetBetSlips;
 
-internal static class BetSlipSummaryMapper
+public static class BetSlipSummaryMapper
 {
   public static IReadOnlyList<BetSlipSummary> ToSummaries(IEnumerable<BetSlip> slips) =>
     slips.Select(ToSummary).ToList();

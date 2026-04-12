@@ -141,6 +141,18 @@ public sealed class Runner : IAgentPhaseRunner
 
   public async Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
+    const int reflectionSlipLookbackDays = 1;
+    var slips = await _unitOfWork.Betting
+      .GetNonPendingBetSlipsUpdatedInLastDaysAsync(reflectionSlipLookbackDays, cancellationToken)
+      .ConfigureAwait(false);
+    if (slips.Count == 0)
+    {
+      _logger.LogInformation(
+        "Skipping reflection agent phase: no non-pending slips with status updated in the last {Days} day(s).",
+        reflectionSlipLookbackDays);
+      return Array.Empty<IMessage>();
+    }
+
     var prompt = $"""
           Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
 
@@ -149,11 +161,12 @@ public sealed class Runner : IAgentPhaseRunner
 
           Goal:
           Improve future decision quality (calibration, discipline, edge definition) without chasing short-term noise. Treat single outcomes as weak evidence unless the failure mode is clearly process-related.
+          Think explicitly about improvements for upcoming work: what should change in **future research** (how matches are framed, which evidence is gathered, how confident the write-up should be) and in **future betting** (when to bet or pass, sizing, overlap with pending slips, use of odds and bankroll rules). Turn the durable parts of that thinking into memory so the next phases can act on it.
 
           ## Required workflow (execute in order)
 
           1) Pull settled history for analysis:
-          - Call `GetNonPendingBetSlipsFromLastDaysAsync`. If it is empty you may terminate the phase.
+          - Call `GetNonPendingBetSlipsUpdatedInLastDaysAsync`.
 
           2) Read memory context:
           - Call `GetMemoryRecordsAsync`
@@ -167,12 +180,13 @@ public sealed class Runner : IAgentPhaseRunner
           4) Synthesize:
           - Process mistakes vs bad luck (variance); recurring biases
           - What would you change in decision rules going forward (specific, testable)
+          - Concrete improvements for the next **research** cycle and the next **betting** cycle (even if some items are tentative, label uncertainty)
 
           5) Persist lessons:
           - Update any memories or add new as appropriate
           - Keep entries concise and actionable; avoid dumping raw tool output into memory
 
-          6) Finish with a short summary for a human: main lessons and what you would watch in the next betting cycle.
+          6) Finish with a short summary for a human: main lessons, what you would watch in the next betting cycle.
 
           ## Quality constraints
           - Weight sample size: do not overfit one-off results

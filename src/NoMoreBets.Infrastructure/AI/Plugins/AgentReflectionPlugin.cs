@@ -62,12 +62,10 @@ public class AgentReflectionPlugin
     _memoriesPlugin.ReplaceAsync(name, oldText, newText, replaceAll, cancellationToken);
 
   [KernelFunction]
-  [Description("Returns settled bet slips (Won, Lost) created within the last N days, newest first.")]
-  public Task<IReadOnlyList<BetSlipSummary>> GetNonPendingBetSlipsFromLastDaysAsync(
-    [Description("Number of days to look back from now; must be greater than zero (e.g. 14 or 30).")]
-    int lastDays,
+  [Description("Recently settled (won or lost) bet slips for post-mortem analysis")]
+  public Task<IReadOnlyList<BetSlipSummary>> GetNonPendingBetSlipsUpdatedInLastDaysAsync(
     CancellationToken cancellationToken = default) =>
-    _bettingPlugin.GetNonPendingBetSlipsFromLastDaysAsync(lastDays, cancellationToken);
+    _bettingPlugin.GetNonPendingBetSlipsUpdatedInLastDaysAsync(1, cancellationToken);
 
   [KernelFunction]
   [Description("Returns the latest stored research analysis text for the match (same source used before betting). Use to compare pre-match thesis to how the bet resolved.")]

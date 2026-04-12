@@ -164,7 +164,7 @@ public class BettingPlugin
     _mediator.Send(new GetBetSlipsQuery(status), cancellationToken);
 
   [KernelFunction]
-  [Description("Returns settled bet slips (Won, Lost) created within the last N days")]
+  [Description("Returns settled bet slips (Won, Lost) created within the last N days, newest first.")]
   public async Task<IReadOnlyList<BetSlipSummary>> GetNonPendingBetSlipsFromLastDaysAsync(
     [Description("Number of days to look back from now; must be greater than zero.")]
     int lastDays,
@@ -176,6 +176,20 @@ public class BettingPlugin
     return await _mediator
       .Send(new GetNonPendingBetSlipsRecentQuery(lastDays), cancellationToken)
       .ConfigureAwait(false);
+  }
+
+  public async Task<IReadOnlyList<BetSlipSummary>> GetNonPendingBetSlipsUpdatedInLastDaysAsync(
+    int lastDays,
+    CancellationToken cancellationToken = default)
+  {
+    if (lastDays <= 0)
+      throw new ArgumentException("lastDays must be greater than zero.", nameof(lastDays));
+
+    var slips = await _unitOfWork.Betting
+      .GetNonPendingBetSlipsUpdatedInLastDaysAsync(lastDays, cancellationToken)
+      .ConfigureAwait(false);
+
+    return BetSlipSummaryMapper.ToSummaries(slips);
   }
 
   private sealed record PlaceBetSlipArgs(List<BetSelectionRecord>? BetSelections);
