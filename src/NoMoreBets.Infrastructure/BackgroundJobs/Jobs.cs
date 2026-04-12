@@ -385,7 +385,7 @@ public class JobService(
       upcommingGames.Count);
   }
 
-  [AutomaticRetry(Attempts = 1)]
+  [AutomaticRetry(Attempts = 3)]
   public async Task FillMissingFinishedMatchScoresFromSoccerData()
   {
     logger.LogInformation(
