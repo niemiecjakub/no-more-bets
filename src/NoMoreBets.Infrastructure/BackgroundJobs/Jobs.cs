@@ -221,8 +221,7 @@ public class JobService(
 
     if (shouldUpdate)
     {
-      var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 1500));
-      BackgroundJob.Schedule<JobService>(js => js.RefreshHead2HeadData(homeClubSoccerdataId, awayClubSoccerdataId), delay);
+      await mediator.Send(new UpdateHeadToHeadCommand(homeClubSoccerdataId, awayClubSoccerdataId));
       logger.LogInformation(
         "Job {JobName} enqueued head-to-head refresh for clubs {HomeClubSoccerdataId} vs {AwayClubSoccerdataId}",
         nameof(RefreshHead2HeadStatistics),
@@ -237,12 +236,6 @@ public class JobService(
         homeClubSoccerdataId,
         awayClubSoccerdataId);
     }
-  }
-
-  [AutomaticRetry(Attempts = 3)]
-  public async Task RefreshHead2HeadData(int homeClubSoccerdataId, int awayClubSoccerdataId)
-  {
-    await mediator.Send(new UpdateHeadToHeadCommand(homeClubSoccerdataId, awayClubSoccerdataId));
   }
 
   [AutomaticRetry(Attempts = 3)]
