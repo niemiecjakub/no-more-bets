@@ -79,7 +79,7 @@ public class JobService(
       nameof(ScheduleRefreshHead2HeadForUpcomingMatches));
 
     var upcoming = await db.Match
-      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming && m.SoccerdataId != null)
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
       .Select(m => new
       {
         m.HomeClubId,
