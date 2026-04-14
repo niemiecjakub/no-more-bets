@@ -296,7 +296,6 @@ public sealed class Runner : IAgentPhaseRunner
     Action<Kernel> configurePlugins = kernel =>
     {
       kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentBettingPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateBankrollPlugin());
       kernel.Data.Add("phase", "Betting");
     };
  

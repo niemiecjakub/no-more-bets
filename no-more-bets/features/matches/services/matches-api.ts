@@ -56,7 +56,48 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
     (typeof r.awayClubSlug === "string" ? r.awayClubSlug : undefined) ??
     (typeof r.AwayClubSlug === "string" ? r.AwayClubSlug : undefined) ??
     "";
-  return { ...item, homeClubSlug: homeSlug, awayClubSlug: awaySlug };
+  const hasAnalysis =
+    (typeof item.hasAnalysis === "boolean" ? item.hasAnalysis : undefined) ??
+    (typeof r.hasAnalysis === "boolean" ? r.hasAnalysis : undefined) ??
+    (typeof r.HasAnalysis === "boolean" ? r.HasAnalysis : undefined) ??
+    false;
+  const hasResearch =
+    (typeof item.hasResearch === "boolean" ? item.hasResearch : undefined) ??
+    (typeof r.hasResearch === "boolean" ? r.hasResearch : undefined) ??
+    (typeof r.HasResearch === "boolean" ? r.HasResearch : undefined) ??
+    false;
+  const hasPreview =
+    (typeof item.hasPreview === "boolean" ? item.hasPreview : undefined) ??
+    (typeof r.hasPreview === "boolean" ? r.hasPreview : undefined) ??
+    (typeof r.HasPreview === "boolean" ? r.HasPreview : undefined) ??
+    false;
+  const hasLineup =
+    (typeof item.hasLineup === "boolean" ? item.hasLineup : undefined) ??
+    (typeof r.hasLineup === "boolean" ? r.hasLineup : undefined) ??
+    (typeof r.HasLineup === "boolean" ? r.HasLineup : undefined) ??
+    false;
+  const hasOdds =
+    (typeof item.hasOdds === "boolean" ? item.hasOdds : undefined) ??
+    (typeof r.hasOdds === "boolean" ? r.hasOdds : undefined) ??
+    (typeof r.HasOdds === "boolean" ? r.HasOdds : undefined) ??
+    false;
+  const hasHeadToHead =
+    (typeof item.hasHeadToHead === "boolean" ? item.hasHeadToHead : undefined) ??
+    (typeof r.hasHeadToHead === "boolean" ? r.hasHeadToHead : undefined) ??
+    (typeof r.HasHeadToHead === "boolean" ? r.HasHeadToHead : undefined) ??
+    false;
+
+  return {
+    ...item,
+    homeClubSlug: homeSlug,
+    awayClubSlug: awaySlug,
+    hasAnalysis,
+    hasResearch,
+    hasPreview,
+    hasLineup,
+    hasOdds,
+    hasHeadToHead,
+  };
 }
 
 /**

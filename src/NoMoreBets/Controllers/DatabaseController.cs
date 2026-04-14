@@ -175,12 +175,46 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
       .ToListAsync(cancellationToken);
 
     var completeSet = completeMatchIds.ToHashSet();
+    var matchIdsWithPreview = await db.MatchPreview
+      .Select(mp => mp.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasPreviewSet = matchIdsWithPreview.ToHashSet();
+
+    var matchIdsWithLineup = await db.Lineup
+      .Select(l => l.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasLineupSet = matchIdsWithLineup.ToHashSet();
+
+    var matchIdsWithOdds = await db.BettingOddsSnapshot
+      .Select(b => b.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasOddsSet = matchIdsWithOdds.ToHashSet();
+
+    var matchIdsWithHeadToHead = await db.Match
+      .Where(m => db.Head2Head.Any(h =>
+        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
+        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
+      .Select(m => m.Id)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasHeadToHeadSet = matchIdsWithHeadToHead.ToHashSet();
 
     var matchIdsWithAnalysis = await db.MatchAnalysis
+      .Where(a => a.Code != MatchAnalysis.ResearchCode)
       .Select(a => a.MatchId)
       .Distinct()
       .ToListAsync(cancellationToken);
     var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
+
+    var matchIdsWithResearch = await db.MatchAnalysis
+      .Where(a => a.Code == MatchAnalysis.ResearchCode)
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasResearchSet = matchIdsWithResearch.ToHashSet();
 
     var list = await db.Match
       .Include(m => m.HomeClub)
@@ -205,7 +239,12 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
         m.AwayGoals,
         m.BetclicUrl,
         completeSet.Contains(m.Id),
-        hasAnalysisSet.Contains(m.Id)))
+        hasAnalysisSet.Contains(m.Id),
+        hasResearchSet.Contains(m.Id),
+        hasPreviewSet.Contains(m.Id),
+        hasLineupSet.Contains(m.Id),
+        hasOddsSet.Contains(m.Id),
+        hasHeadToHeadSet.Contains(m.Id)))
       .ToList();
 
     return Ok(result);
@@ -246,12 +285,46 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
       .Select(m => m.Id)
       .ToListAsync(cancellationToken);
     var completeSet = completeMatchIds.ToHashSet();
+    var matchIdsWithPreview = await db.MatchPreview
+      .Select(mp => mp.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasPreviewSet = matchIdsWithPreview.ToHashSet();
+
+    var matchIdsWithLineup = await db.Lineup
+      .Select(l => l.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasLineupSet = matchIdsWithLineup.ToHashSet();
+
+    var matchIdsWithOdds = await db.BettingOddsSnapshot
+      .Select(b => b.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasOddsSet = matchIdsWithOdds.ToHashSet();
+
+    var matchIdsWithHeadToHead = await db.Match
+      .Where(m => db.Head2Head.Any(h =>
+        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
+        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
+      .Select(m => m.Id)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasHeadToHeadSet = matchIdsWithHeadToHead.ToHashSet();
 
     var matchIdsWithAnalysis = await db.MatchAnalysis
+      .Where(a => a.Code != MatchAnalysis.ResearchCode)
       .Select(a => a.MatchId)
       .Distinct()
       .ToListAsync(cancellationToken);
     var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
+
+    var matchIdsWithResearch = await db.MatchAnalysis
+      .Where(a => a.Code == MatchAnalysis.ResearchCode)
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasResearchSet = matchIdsWithResearch.ToHashSet();
 
     var result = list
       .Select(m => new MatchDto(
@@ -269,7 +342,12 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
         m.AwayGoals,
         m.BetclicUrl,
         completeSet.Contains(m.Id),
-        hasAnalysisSet.Contains(m.Id)))
+        hasAnalysisSet.Contains(m.Id),
+        hasResearchSet.Contains(m.Id),
+        hasPreviewSet.Contains(m.Id),
+        hasLineupSet.Contains(m.Id),
+        hasOddsSet.Contains(m.Id),
+        hasHeadToHeadSet.Contains(m.Id)))
       .ToList();
 
     return Ok(result);
@@ -285,10 +363,18 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
     CancellationToken cancellationToken = default)
   {
     var matchIdsWithAnalysis = await db.MatchAnalysis
+      .Where(a => a.Code != MatchAnalysis.ResearchCode)
       .Select(a => a.MatchId)
       .Distinct()
       .ToListAsync(cancellationToken);
     var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
+
+    var matchIdsWithResearch = await db.MatchAnalysis
+      .Where(a => a.Code == MatchAnalysis.ResearchCode)
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasResearchSet = matchIdsWithResearch.ToHashSet();
 
     var list = await db.Match
       .Include(m => m.HomeClub)
@@ -320,7 +406,12 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
         m.AwayGoals,
         m.BetclicUrl,
         true,
-        hasAnalysisSet.Contains(m.Id)))
+        hasAnalysisSet.Contains(m.Id),
+        hasResearchSet.Contains(m.Id),
+        true,
+        true,
+        true,
+        true))
       .ToList();
     return Ok(result);
   }
@@ -354,10 +445,44 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
       .ToListAsync(cancellationToken);
 
     var matchIdsWithAnalysis = await db.MatchAnalysis
+      .Where(a => a.Code != MatchAnalysis.ResearchCode)
       .Select(a => a.MatchId)
       .Distinct()
       .ToListAsync(cancellationToken);
     var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
+    var matchIdsWithPreview = await db.MatchPreview
+      .Select(mp => mp.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasPreviewSet = matchIdsWithPreview.ToHashSet();
+
+    var matchIdsWithLineup = await db.Lineup
+      .Select(l => l.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasLineupSet = matchIdsWithLineup.ToHashSet();
+
+    var matchIdsWithOdds = await db.BettingOddsSnapshot
+      .Select(b => b.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasOddsSet = matchIdsWithOdds.ToHashSet();
+
+    var matchIdsWithHeadToHead = await db.Match
+      .Where(m => db.Head2Head.Any(h =>
+        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
+        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
+      .Select(m => m.Id)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasHeadToHeadSet = matchIdsWithHeadToHead.ToHashSet();
+
+    var matchIdsWithResearch = await db.MatchAnalysis
+      .Where(a => a.Code == MatchAnalysis.ResearchCode)
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasResearchSet = matchIdsWithResearch.ToHashSet();
 
     var result = matches
       .GroupBy(m => m.BetclicUrl!)
@@ -379,7 +504,12 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
           m.AwayGoals,
           m.BetclicUrl,
           false,
-          hasAnalysisSet.Contains(m.Id))).ToList()))
+          hasAnalysisSet.Contains(m.Id),
+          hasResearchSet.Contains(m.Id),
+          hasPreviewSet.Contains(m.Id),
+          hasLineupSet.Contains(m.Id),
+          hasOddsSet.Contains(m.Id),
+          hasHeadToHeadSet.Contains(m.Id))).ToList()))
       .ToList();
 
     return Ok(result);
@@ -702,7 +832,12 @@ public record MatchDto(
   int? AwayGoals,
   string? BetclicUrl,
   bool IsReadyToPredict = false,
-  bool HasAnalysis = false);
+  bool HasAnalysis = false,
+  bool HasResearch = false,
+  bool HasPreview = false,
+  bool HasLineup = false,
+  bool HasOdds = false,
+  bool HasHeadToHead = false);
 
 public record LeagueTableDto(
   long SnapshotId,

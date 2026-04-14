@@ -68,19 +68,57 @@ public class JobService(
   }
 
   /// <summary>
-  /// Daily job: for all upcoming matches with SoccerdataId, enqueue RefreshHead2HeadStatistics;
-  /// for those without a MatchPreview record, enqueue GetUpcommingSoccerdataMatchePreview.
+  /// Daily job: for upcoming matches with a match SoccerdataId, load home/away club Soccerdata ids
+  /// and schedule <see cref="RefreshHead2HeadStatistics"/> per match with a random delay (0–1500s).
   /// </summary>
-  [AutomaticRetry(Attempts = 3)]
-  public async Task RefreshUpcomingMatchPreviewsAndHead2Head()
+  [AutomaticRetry(Attempts = 1)]
+  public async Task ScheduleRefreshHead2HeadForUpcomingMatches()
   {
     logger.LogInformation(
-      "Starting job {JobName} to schedule preview and head-to-head jobs for upcoming matches",
-      nameof(RefreshUpcomingMatchPreviewsAndHead2Head));
+      "Starting job {JobName} to schedule head-to-head jobs for upcoming matches",
+      nameof(ScheduleRefreshHead2HeadForUpcomingMatches));
+
+    var upcoming = await db.Match
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming && m.SoccerdataId != null)
+      .Select(m => new
+      {
+        m.HomeClubId,
+        m.AwayClubId,
+        HomeClubSoccerdataId = m.HomeClub.SoccerdataId,
+        AwayClubSoccerdataId = m.AwayClub.SoccerdataId
+      })
+      .ToListAsync();
+
+    var scheduled = 0;
+    foreach (var match in upcoming)
+    {
+      var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 1500));
+      BackgroundJob.Schedule<JobService>(js =>
+        js.RefreshHead2HeadStatistics(match.HomeClubId, match.AwayClubId), delay);
+      scheduled++;
+    }
+
+    logger.LogInformation(
+      "Job {JobName} scheduled {ScheduledCount} head-to-head jobs for {MatchCount} upcoming matches (each row includes home/away club Soccerdata ids from DB)",
+      nameof(ScheduleRefreshHead2HeadForUpcomingMatches),
+      scheduled,
+      upcoming.Count);
+  }
+
+  /// <summary>
+  /// Daily job: for upcoming matches with SoccerdataId and no <see cref="MatchPreview"/> row,
+  /// enqueue <see cref="GetUpcommingSoccerdataMatchePreview"/> with a random delay.
+  /// </summary>
+  [AutomaticRetry(Attempts = 1)]
+  public async Task ScheduleMissingPreviewJobsForUpcomingMatches()
+  {
+    logger.LogInformation(
+      "Starting job {JobName} to schedule preview jobs for upcoming matches without a preview",
+      nameof(ScheduleMissingPreviewJobsForUpcomingMatches));
 
     var upcomingWithSoccerdataId = await db.Match
       .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming && m.SoccerdataId != null)
-      .Select(m => new { m.Id, m.HomeClubId, m.AwayClubId, m.SoccerdataId })
+      .Select(m => new { m.Id, m.SoccerdataId })
       .ToListAsync();
 
     var upcomingMatchIds = upcomingWithSoccerdataId.Select(m => m.Id).ToList();
@@ -89,14 +127,9 @@ public class JobService(
       .Select(mp => mp.MatchId)
       .ToListAsync()).ToHashSet();
 
-    var enqueuedH2H = 0;
     var enqueuedPreview = 0;
-
     foreach (var match in upcomingWithSoccerdataId)
     {
-      BackgroundJob.Enqueue(() => RefreshHead2HeadStatistics(match.HomeClubId, match.AwayClubId));
-      enqueuedH2H++;
-
       if (!matchIdsWithPreview.Contains(match.Id))
       {
         var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 1500));
@@ -106,9 +139,8 @@ public class JobService(
     }
 
     logger.LogInformation(
-      "Job {JobName} enqueued {H2HCount} head-to-head jobs and {PreviewCount} preview jobs for {MatchCount} upcoming matches",
-      nameof(RefreshUpcomingMatchPreviewsAndHead2Head),
-      enqueuedH2H,
+      "Job {JobName} enqueued {PreviewCount} preview jobs for {MatchCount} upcoming matches",
+      nameof(ScheduleMissingPreviewJobsForUpcomingMatches),
       enqueuedPreview,
       upcomingWithSoccerdataId.Count);
   }
