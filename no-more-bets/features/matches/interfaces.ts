@@ -18,6 +18,11 @@ export interface MatchListItem {
   betclicUrl: string | null;
   isReadyToPredict: boolean;
   hasAnalysis: boolean;
+  hasResearch: boolean;
+  hasPreview: boolean;
+  hasLineup: boolean;
+  hasOdds: boolean;
+  hasHeadToHead: boolean;
 }
 
 /** MatchStatusId from backend enum: Upcomming = 1, Finished = 2 */

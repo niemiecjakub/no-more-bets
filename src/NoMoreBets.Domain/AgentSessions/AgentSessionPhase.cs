@@ -4,5 +4,6 @@ public enum AgentSessionPhase
 {
   Research = 1,
   Betting = 2,
-  Reflection = 3
+  Reflection = 3,
+  InternetResearch = 4
 }

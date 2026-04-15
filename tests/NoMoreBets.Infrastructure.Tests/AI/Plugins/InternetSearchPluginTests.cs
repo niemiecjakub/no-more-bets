@@ -9,14 +9,14 @@ using AppNewsArticle = NoMoreBets.Application.Search.SearchNews.SearchNewsArticl
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 
-public class SearchPluginTests
+public class InternetSearchPluginTests
 {
   private readonly ISearchService _searchService = Substitute.For<ISearchService>();
-  private readonly SearchPlugin _sut;
+  private readonly InternetSearchPlugin _sut;
 
-  public SearchPluginTests()
+  public InternetSearchPluginTests()
   {
-    _sut = new SearchPlugin(_searchService);
+    _sut = new InternetSearchPlugin(_searchService);
   }
 
   [Fact]

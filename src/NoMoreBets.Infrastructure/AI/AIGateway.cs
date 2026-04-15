@@ -24,8 +24,8 @@ public sealed class AIGateway(IPluginFactory pluginFactory, IOptions<OpenAIOptio
     Kernel kernel = CreateKernel();
     kernel.Plugins.AddFromObject(pluginFactory.CreateMatchPlugin());
 
-    var searchPlugin = pluginFactory.CreateSearchPlugin();
-    kernel.Plugins.AddFromObject(searchPlugin);
+    var internetSearchPlugin = pluginFactory.CreateInternetSearchPlugin();
+    kernel.Plugins.AddFromObject(internetSearchPlugin);
 
     var executionSettings = new OpenAIPromptExecutionSettings
     {
@@ -65,7 +65,7 @@ public sealed class AIGateway(IPluginFactory pluginFactory, IOptions<OpenAIOptio
     • GetClubRollingPerformance (Player/Team ratings and formations) — use clubId.
 
     ## STEP 2: CONTEXTUAL INTELLIGENCE (External Search)
-    Once you have the stats, use the `SearchPlugin` to fill the gaps. **Do not skip this step.**
+    Once you have the stats, use the `InternetSearchPlugin` to fill the gaps. **Do not skip this step.**
     • **Volatility Assessment (`SearchNews`)**: Identify "Black Swan" events from the last 24 hours. Hunt for manager press conference quotes, late-breaking illness/sickness in the squad, travel delays, or dressing room unrest that could invalidate the internal stats.
     • **Structural Friction Analysis (`GetWebGrounding`)**: Retrieve expert tactical deep-dives for this specific matchup. Focus on identifying how one team's systemic tendencies (e.g., high defensive line) specifically collide with the opponent's individual threats (e.g., pace in transition).
 

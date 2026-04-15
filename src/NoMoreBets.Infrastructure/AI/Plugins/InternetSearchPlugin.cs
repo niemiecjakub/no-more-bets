@@ -7,11 +7,11 @@ using SearchNewsOptions = NoMoreBets.Application.Search.SearchNews.SearchNewsOpt
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
-public class SearchPlugin
+public class InternetSearchPlugin
 {
   private readonly ISearchService _searchService;
 
-  public SearchPlugin(ISearchService searchService)
+  public InternetSearchPlugin(ISearchService searchService)
   {
     _searchService = searchService;
   }
@@ -56,9 +56,9 @@ public class SearchPlugin
       Freshness = freshness,
     }, cancellationToken).ConfigureAwait(false);
     return src.Items.Select(item => new SearchLlmContextItemDto(
-      Snippets: item.Snippets,
-      Title: item.Title,
-      Hostname: item.Hostname,
+        Snippets: item.Snippets,
+        Title: item.Title,
+        Hostname: item.Hostname,
       Age: item.Age)).ToList();
   }
 }

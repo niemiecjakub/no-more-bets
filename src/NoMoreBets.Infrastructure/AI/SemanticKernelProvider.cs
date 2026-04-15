@@ -14,7 +14,7 @@ public static class SemanticKernelProvider
     services.AddScoped<MatchPlugin>();
     services.AddScoped<BettingPlugin>();
     services.AddScoped<AgentBettingPlugin>();
-    services.AddScoped<SearchPlugin>();
+    services.AddScoped<InternetSearchPlugin>();
     services.AddScoped<MemoriesPlugin>();
     services.AddScoped<AgentResearchPlugin>();
     services.AddScoped<BankrollPlugin>();

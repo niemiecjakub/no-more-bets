@@ -4,11 +4,11 @@ using System.Text.Json.Serialization;
 using MediatR;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.GetBetSlips;
+using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
 using NoMoreBets.Infrastructure.AI.Provider;
@@ -37,7 +37,9 @@ public class BettingPlugin
   [Description("Retrieves matches for which bets can currently be placed.")]
   public async Task<IReadOnlyList<AvailableMatch>> GetAvailableMatchesAsync(CancellationToken cancellationToken = default)
   {
-    var matches = await _unitOfWork.Betting.GetMatchesAvailableForBettingAsync(cancellationToken).ConfigureAwait(false);
+    var matches = await _mediator
+      .Send(new GetMatchesAvailableForBettingQuery(), cancellationToken)
+      .ConfigureAwait(false);
     return matches
       .Select(m => new AvailableMatch(m.Id, m.HomeClub.Name, m.AwayClub.Name, m.MatchDate))
       .ToList();
@@ -158,10 +160,12 @@ public class BettingPlugin
 
   [KernelFunction("GetBetSlips")]
   [Description("Returns bet slips, newest first. Optional status: Pending, Won, Lost — omit the argument to return slips in every status.")]
-  public Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(
+  public async Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(
     [Description("Filter by slip status, or omit for all statuses.")] BetStatus? status = null,
-    CancellationToken cancellationToken = default) =>
-    _mediator.Send(new GetBetSlipsQuery(status), cancellationToken);
+    CancellationToken cancellationToken = default)
+  {
+    return await _mediator.Send(new GetBetSlipsQuery(status), cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Returns settled bet slips (Won, Lost) created within the last N days, newest first.")]

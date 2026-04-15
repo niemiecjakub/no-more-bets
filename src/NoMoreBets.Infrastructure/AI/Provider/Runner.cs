@@ -40,7 +40,7 @@ public sealed class Runner : IAgentPhaseRunner
   {
     var config = _agentBuilder.Build();
     config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateMemoriesPlugin());
-    config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateSearchPlugin());
+    config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateInternetSearchPlugin());
 
     var messages = new List<ChatMessageContent>();
     await foreach (var message in config.Agent.InvokeAsync(userMessage, config.Thread, config.Options, cancellationToken))
@@ -138,6 +138,56 @@ public sealed class Runner : IAgentPhaseRunner
       prompt,
       configureKernel,
       cancellationToken).ConfigureAwait(false);
+    return result.Messages;
+  }
+
+  public async Task<IReadOnlyList<IMessage>> RunUpcomingMatchesInternetResearchAsync(CancellationToken cancellationToken = default)
+  {
+    Action<Kernel> configureKernel = kernel =>
+    {
+      kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentInternetResearchPlugin());
+      kernel.Data.Add("phase", "InternetResearch");
+    };
+
+    var prompt = $"""
+          Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
+          
+          You are conducting research for upcoming Premier League matches.
+          Focus on actionable pre-match intelligence.
+
+          You must use the available plugin functions explicitly.
+
+          Goal:
+          Produce one general research brief for upcoming fixtures that helps later match-level analysis and betting decisions.
+
+          ## Required workflow
+
+          1) Enumerate upcoming fixtures:
+          - Call `GetAvailableMatchesAsync` and identify key upcoming matches to monitor
+
+          2) Read memory context:
+          - Call `GetMemoryRecordsAsync`
+          - Call `ReadMemoryAsync` for relevant records
+
+          3) Gather internet context:
+          - Call `SearchNewsAsync` and `GetWebGroundingAsync` as needed to gather match/club information, news, league updates, and related context
+          - Prioritize recent, reliable sources and label uncertainty
+
+          4) Persist useful knowledge:
+          - Save distilled, reusable insights to memory with `AppendMemoryAsync`, `ReplaceMemoryAsync`, or `WriteMemoryAsync`
+          - Avoid raw copy-paste dumps
+
+          ## Guardrails
+          - Be evidence-driven and explicit about missing data
+          - Do not mention internal tool names or process in final narrative
+          """;
+
+    var result = await ExecuteBettingPhaseAsync(
+      AgentSessionPhase.InternetResearch,
+      prompt,
+      configureKernel,
+      cancellationToken).ConfigureAwait(false);
+
     return result.Messages;
   }
 
@@ -296,7 +346,6 @@ public sealed class Runner : IAgentPhaseRunner
     Action<Kernel> configurePlugins = kernel =>
     {
       kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentBettingPlugin());
-      kernel.Plugins.AddFromObject(_pluginFactory.CreateBankrollPlugin());
       kernel.Data.Add("phase", "Betting");
     };
  

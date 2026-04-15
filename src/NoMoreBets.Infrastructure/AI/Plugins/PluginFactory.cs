@@ -6,10 +6,15 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 public class PluginFactory : IPluginFactory
 {
   private readonly IServiceProvider _sp;
-  public PluginFactory(IServiceProvider sp) => _sp = sp;
+  public PluginFactory(IServiceProvider sp)
+  {
+    _sp = sp;
+  }
 
-  public object CreateMatchPlugin() =>
-    ActivatorUtilities.CreateInstance<MatchPlugin>(_sp);
+  public object CreateMatchPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<MatchPlugin>(_sp);
+  }
 
   public object CreateBettingPlugin()
   {
@@ -21,14 +26,19 @@ public class PluginFactory : IPluginFactory
     return ActivatorUtilities.CreateInstance<AgentBettingPlugin>(_sp);
   }
 
-  public object CreateSearchPlugin()
+  public object CreateInternetSearchPlugin()
   {
-    return ActivatorUtilities.CreateInstance<SearchPlugin>(_sp);
+    return ActivatorUtilities.CreateInstance<InternetSearchPlugin>(_sp);
   }
 
   public object CreateMemoriesPlugin()
   {
     return ActivatorUtilities.CreateInstance<MemoriesPlugin>(_sp);
+  }
+
+  public object CreateAgentInternetResearchPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<AgentInternetResearchPlugin>(_sp);
   }
 
   public object CreateAgentResearchPlugin()

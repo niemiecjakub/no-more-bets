@@ -113,7 +113,13 @@ export function MatchList({ matches }: MatchListProps) {
                 </time>
               );
               const showChips =
-                match.hasAnalysis || match.isReadyToPredict;
+                match.hasAnalysis || match.hasResearch || match.isReadyToPredict;
+              const readinessChips = [
+                { key: "preview", label: "Preview", isReady: match.hasPreview },
+                { key: "lineup", label: "Lineup", isReady: match.hasLineup },
+                { key: "odds", label: "Odds", isReady: match.hasOdds },
+                { key: "h2h", label: "H2H", isReady: match.hasHeadToHead },
+              ];
               return (
                 <li key={match.id} className="bg-white dark:bg-zinc-950">
                   <Link
@@ -148,17 +154,34 @@ export function MatchList({ matches }: MatchListProps) {
                     {showChips ? (
                       <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5">
                         {match.hasAnalysis ? (
-                          <span className="inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 ring-1 ring-inset ring-violet-600/20 dark:bg-violet-900/40 dark:text-violet-400 dark:ring-violet-500/30">
+                          <span className="inline-flex items-center rounded-md bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800 ring-1 ring-inset ring-sky-600/20 dark:bg-sky-900/40 dark:text-sky-400 dark:ring-sky-500/30">
                             Analysis
                           </span>
                         ) : null}
-                        {match.isReadyToPredict && !match.hasAnalysis ? (
+                        {match.hasResearch ? (
+                          <span className="inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 ring-1 ring-inset ring-violet-600/20 dark:bg-violet-900/40 dark:text-violet-400 dark:ring-violet-500/30">
+                            Research
+                          </span>
+                        ) : null}
+                        {match.isReadyToPredict ? (
                           <span className="inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30">
                             Ready to predict
                           </span>
                         ) : null}
                       </div>
                     ) : null}
+                    <div className="flex flex-wrap items-center justify-center gap-1.5 pt-0.5">
+                      {readinessChips.map((chip) => (
+                        <span
+                          key={chip.key}
+                          className={chip.isReady
+                            ? "inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30"
+                            : "inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-400/30 dark:bg-zinc-900/60 dark:text-zinc-300 dark:ring-zinc-600/40"}
+                        >
+                          {chip.label}
+                        </span>
+                      ))}
+                    </div>
                   </Link>
                 </li>
               );

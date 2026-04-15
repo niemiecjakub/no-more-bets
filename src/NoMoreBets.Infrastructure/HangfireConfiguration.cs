@@ -39,11 +39,17 @@ public static class HangfireConfiguration
       jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId),
       "0 1 * * *");
 
-    // Runs once per day at 02:00 – refresh previews and head-to-head for upcoming matches
+    // Runs once per day at 02:00 – schedule head-to-head refresh jobs for upcoming matches
     RecurringJob.AddOrUpdate<JobService>(
-      "refresh-upcoming-match-previews-and-head2head",
-      jobService => jobService.RefreshUpcomingMatchPreviewsAndHead2Head(),
+      "refresh-head2head-upcoming-matches",
+      jobService => jobService.ScheduleRefreshHead2HeadForUpcomingMatches(),
       "0 2 * * *");
+
+    // Runs once per day at 02:01 – schedule preview fetch jobs for upcoming matches missing a preview
+    RecurringJob.AddOrUpdate<JobService>(
+      "get-missing-match-previews",
+      jobService => jobService.ScheduleMissingPreviewJobsForUpcomingMatches(),
+      "1 2 * * *");
 
     // Runs once per day at 03:00 UTC — applies salary when today is payday (last day of month)
     RecurringJob.AddOrUpdate<JobService>(
@@ -81,6 +87,12 @@ public static class HangfireConfiguration
         jobService => jobService.ScheduleBettingOddsJob(),
         "0 11 * * *");
 
+    // Runs once per day at 10:00 — portfolio internet research for upcoming fixtures (before per-match research)
+    RecurringJob.AddOrUpdate<UpcomingMatchesInternetResearchCronService>(
+        "betting-agent-upcoming-internet-research",
+        s => s.RunAsync(),
+        "0 10 * * *");
+
     // Runs once per day at 12:00
     RecurringJob.AddOrUpdate<ResearchCronService>(
         "betting-agent-research",
@@ -92,12 +104,6 @@ public static class HangfireConfiguration
         "betting-agent-execution",
         s => s.RunAsync(),
         "0 13 * * *");
-
-    // // Runs once per day at 18:00
-    // RecurringJob.AddOrUpdate<JobService>(
-    //     "generate-match-predictions",
-    //     jobService => jobService.GenerateMissingMatchPredictions(),
-    //     "0 18 * * *");
 
     // Runs once per day at 23:00
     RecurringJob.AddOrUpdate<JobService>(

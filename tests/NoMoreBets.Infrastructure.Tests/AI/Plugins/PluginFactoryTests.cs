@@ -51,16 +51,16 @@ public class PluginFactoryTests
   }
 
   [Fact]
-  public void CreateSearchPlugin_ReturnsInstance()
+  public void CreateInternetSearchPlugin_ReturnsInstance()
   {
     // Arrange
     var sut = CreateSut();
 
     // Act
-    var plugin = sut.CreateSearchPlugin();
+    var plugin = sut.CreateInternetSearchPlugin();
 
     // Assert
-    plugin.Should().BeOfType<SearchPlugin>();
+    plugin.Should().BeOfType<InternetSearchPlugin>();
   }
 
   [Fact]

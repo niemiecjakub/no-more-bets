@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MediatR;
 using NSubstitute;
+using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
@@ -46,7 +47,8 @@ public class BettingPluginTests
         AwayClub = new ClubEntity { Name = "A" }
       }
     };
-    _betting.GetMatchesAvailableForBettingAsync(Arg.Any<CancellationToken>())
+    _mediator
+      .Send(Arg.Any<GetMatchesAvailableForBettingQuery>(), Arg.Any<CancellationToken>())
       .Returns(matches);
 
     // Act
