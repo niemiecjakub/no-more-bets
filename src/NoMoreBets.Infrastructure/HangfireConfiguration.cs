@@ -87,6 +87,12 @@ public static class HangfireConfiguration
         jobService => jobService.ScheduleBettingOddsJob(),
         "0 11 * * *");
 
+    // Runs once per day at 10:00 — portfolio internet research for upcoming fixtures (before per-match research)
+    RecurringJob.AddOrUpdate<UpcomingMatchesInternetResearchCronService>(
+        "betting-agent-upcoming-internet-research",
+        s => s.RunAsync(),
+        "0 10 * * *");
+
     // Runs once per day at 12:00
     RecurringJob.AddOrUpdate<ResearchCronService>(
         "betting-agent-research",

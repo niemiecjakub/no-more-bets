@@ -86,6 +86,7 @@ public static class DependencyInjection
     //Jobs
     services.AddScoped<JobService>();
     services.AddScoped<ResearchCronService>();
+    services.AddScoped<UpcomingMatchesInternetResearchCronService>();
     services.AddScoped<BettingCronService>();
     services.AddScoped<ReflectionCronService>();
 

@@ -36,6 +36,11 @@ public class PluginFactory : IPluginFactory
     return ActivatorUtilities.CreateInstance<MemoriesPlugin>(_sp);
   }
 
+  public object CreateAgentInternetResearchPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<AgentInternetResearchPlugin>(_sp);
+  }
+
   public object CreateAgentResearchPlugin()
   {
     return ActivatorUtilities.CreateInstance<AgentResearchPlugin>(_sp);
