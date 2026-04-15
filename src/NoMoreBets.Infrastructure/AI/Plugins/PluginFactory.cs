@@ -6,10 +6,15 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 public class PluginFactory : IPluginFactory
 {
   private readonly IServiceProvider _sp;
-  public PluginFactory(IServiceProvider sp) => _sp = sp;
+  public PluginFactory(IServiceProvider sp)
+  {
+    _sp = sp;
+  }
 
-  public object CreateMatchPlugin() =>
-    ActivatorUtilities.CreateInstance<MatchPlugin>(_sp);
+  public object CreateMatchPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<MatchPlugin>(_sp);
+  }
 
   public object CreateBettingPlugin()
   {

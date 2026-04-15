@@ -160,10 +160,12 @@ public class BettingPlugin
 
   [KernelFunction("GetBetSlips")]
   [Description("Returns bet slips, newest first. Optional status: Pending, Won, Lost — omit the argument to return slips in every status.")]
-  public Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(
+  public async Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(
     [Description("Filter by slip status, or omit for all statuses.")] BetStatus? status = null,
-    CancellationToken cancellationToken = default) =>
-    _mediator.Send(new GetBetSlipsQuery(status), cancellationToken);
+    CancellationToken cancellationToken = default)
+  {
+    return await _mediator.Send(new GetBetSlipsQuery(status), cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Returns settled bet slips (Won, Lost) created within the last N days, newest first.")]

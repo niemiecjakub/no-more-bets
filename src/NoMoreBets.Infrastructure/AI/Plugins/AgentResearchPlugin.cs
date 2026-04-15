@@ -36,106 +36,142 @@ public class AgentResearchPlugin
 
   [KernelFunction]
   [Description("Retrieves the starting lineups for both the home and away teams for the match.")]
-  public Task<NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult?> GetLineupsAsync(int matchId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetLineupsAsync(matchId, cancellationToken);
+  public async Task<NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult?> GetLineupsAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetLineupsAsync(matchId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Gets a list of injured or unavailable players for both teams involved in the match.")]
-  public Task<NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult?> GetInjuriesAsync(int matchId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetInjuriesAsync(matchId, cancellationToken);
+  public async Task<NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult?> GetInjuriesAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetInjuriesAsync(matchId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Retrieves a textual preview of the match.")]
-  public Task<string?> GetMatchPreviewAsync(int matchId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetMatchPreviewAsync(matchId, cancellationToken);
+  public async Task<string?> GetMatchPreviewAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetMatchPreviewAsync(matchId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Provides historical head-to-head statistics between the two clubs for the match.")]
-  public Task<NoMoreBets.Application.Matches.GetHeadToHeadStats.H2H?> GetHead2HeadStatsAsync(int matchId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetHead2HeadStatsAsync(matchId, cancellationToken);
+  public async Task<NoMoreBets.Application.Matches.GetHeadToHeadStats.H2H?> GetHead2HeadStatsAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetHead2HeadStatsAsync(matchId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Gets the daily summary for a club.")]
-  public Task<string?> GetClubDailySummaryAsync(int clubId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetClubDailySummaryAsync(clubId, cancellationToken);
+  public async Task<string?> GetClubDailySummaryAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetClubDailySummaryAsync(clubId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Retrieves the last 5 match results for a specific club.")]
-  public Task<IReadOnlyList<NoMoreBets.Application.Clubs.GetClubRecentGames.RecentMatch>?> GetClubRecentGamesAsync(int clubId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetClubRecentGamesAsync(clubId, cancellationToken);
+  public async Task<IReadOnlyList<NoMoreBets.Application.Clubs.GetClubRecentGames.RecentMatch>?> GetClubRecentGamesAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetClubRecentGamesAsync(clubId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Retrieves league table standing and advanced metrics (xG, xGA, xPts) for a club.")]
-  public Task<ClubLeagueStats?> GetClubStatistics(int clubId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetClubStatistics(clubId, cancellationToken);
+  public async Task<ClubLeagueStats?> GetClubStatistics(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetClubStatistics(clubId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Returns the full league table for the league of the match.")]
-  public Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsync(int matchId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetLeagueTableAsync(matchId, cancellationToken);
+  public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetLeagueTableAsync(matchId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Provides the movement of betting odds for this match, showing how prices have changed over time across different event types.")]
-  public Task<IReadOnlyList<NoMoreBets.Application.Betting.GetMatchBettingOddsHistory.MarketPriceHistory>?> GetMatchBettingOddsHistoryAsync(int matchId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetMatchBettingOddsHistoryAsync(matchId, cancellationToken);
+  public async Task<IReadOnlyList<NoMoreBets.Application.Betting.GetMatchBettingOddsHistory.MarketPriceHistory>?> GetMatchBettingOddsHistoryAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetMatchBettingOddsHistoryAsync(matchId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Gets performance data for a club from its latest 5 finished games.")]
-  public Task<NoMoreBets.Application.Clubs.GetClubRollingPerformance.TeamPerformanceResult?> GetClubRollingPerformanceAsync(int clubId, CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetClubRollingPerformanceAsync(clubId, cancellationToken);
+  public async Task<NoMoreBets.Application.Clubs.GetClubRollingPerformance.TeamPerformanceResult?> GetClubRollingPerformanceAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetClubRollingPerformanceAsync(clubId, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Returns a list with upcomming matches.")]
-  public Task<IReadOnlyList<AvailableMatch>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default) =>
-    _matchPlugin.GetUpcomingMatchesAsync(cancellationToken);
+  public async Task<IReadOnlyList<AvailableMatch>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default)
+  {
+    return await _matchPlugin.GetUpcomingMatchesAsync(cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Search for recent news articles and current events.")]
-  public Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
+  public async Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
     string query,
     [Description("Optional time window: pd (last 24 hours), pw (last 7 days), pm (last 31 days), py (last year). Omit or null for no freshness filter.")]
     string? freshness = null,
-    CancellationToken cancellationToken = default) =>
-    _searchPlugin.SearchNewsAsync(query, freshness, cancellationToken);
+    CancellationToken cancellationToken = default)
+  {
+    return await _searchPlugin.SearchNewsAsync(query, freshness, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.")]
-  public Task<IReadOnlyList<SearchLlmContextItemDto>> GetWebGroundingAsync(
+  public async Task<IReadOnlyList<SearchLlmContextItemDto>> GetWebGroundingAsync(
     string query,
     [Description("Optional time window: pd, pw, pm, py. Omit or null for no freshness filter (default).")]
     string? freshness = null,
-    CancellationToken cancellationToken = default) =>
-    _searchPlugin.GetWebGroundingAsync(query, freshness, cancellationToken);
+    CancellationToken cancellationToken = default)
+  {
+    return await _searchPlugin.GetWebGroundingAsync(query, freshness, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Lists all saved memory records.")]
-  public Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default) =>
-    _memoriesPlugin.GetMemoryRecordsAsync(cancellationToken);
+  public async Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default)
+  {
+    return await _memoriesPlugin.GetMemoryRecordsAsync(cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Loads the full content of a saved memory record.")]
-  public Task<string> ReadMemoryAsync(string name, CancellationToken cancellationToken = default) =>
-    _memoriesPlugin.ReadAsync(name, cancellationToken);
+  public async Task<string> ReadMemoryAsync(string name, CancellationToken cancellationToken = default)
+  {
+    return await _memoriesPlugin.ReadAsync(name, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer AppendMemoryAsync or ReplaceMemoryAsync for small changes so you do not drop existing text.")]
-  public Task<string> WriteMemoryAsync(string name, string text, CancellationToken cancellationToken = default) =>
-    _memoriesPlugin.WriteAsync(name, text, cancellationToken);
+  public async Task<string> WriteMemoryAsync(string name, string text, CancellationToken cancellationToken = default)
+  {
+    return await _memoriesPlugin.WriteAsync(name, text, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Adds text to the end of an existing memory record")]
-  public Task<string> AppendMemoryAsync(string name, string text, CancellationToken cancellationToken = default) =>
-    _memoriesPlugin.AppendAsync(name, text, cancellationToken);
+  public async Task<string> AppendMemoryAsync(string name, string text, CancellationToken cancellationToken = default)
+  {
+    return await _memoriesPlugin.AppendAsync(name, text, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Finds an exact substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.")]
-  public Task<string> ReplaceMemoryAsync(
+  public async Task<string> ReplaceMemoryAsync(
     string name,
     string oldText,
     string? newText,
     bool replaceAll = false,
-    CancellationToken cancellationToken = default) =>
-    _memoriesPlugin.ReplaceAsync(name, oldText, newText, replaceAll, cancellationToken);
+    CancellationToken cancellationToken = default)
+  {
+    return await _memoriesPlugin.ReplaceAsync(name, oldText, newText, replaceAll, cancellationToken).ConfigureAwait(false);
+  }
 
   [KernelFunction]
   [Description("Stores research text.")]
