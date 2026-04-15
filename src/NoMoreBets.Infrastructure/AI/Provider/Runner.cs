@@ -146,7 +146,7 @@ public sealed class Runner : IAgentPhaseRunner
     Action<Kernel> configureKernel = kernel =>
     {
       kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentInternetResearchPlugin());
-      kernel.Data.Add("phase", "Research");
+      kernel.Data.Add("phase", "InternetResearch");
     };
 
     var prompt = $"""
@@ -183,7 +183,7 @@ public sealed class Runner : IAgentPhaseRunner
           """;
 
     var result = await ExecuteBettingPhaseAsync(
-      AgentSessionPhase.Research,
+      AgentSessionPhase.InternetResearch,
       prompt,
       configureKernel,
       cancellationToken).ConfigureAwait(false);
