@@ -18,6 +18,7 @@ public static class SemanticKernelProvider
     services.AddScoped<MemoriesPlugin>();
     services.AddScoped<AgentResearchPlugin>();
     services.AddScoped<BankrollPlugin>();
+    services.AddScoped<SocialMediaPlugin>();
     services.AddScoped<IMatchPrediction, AIGateway>();
     services.AddScoped<ContextBuilder>();
     services.AddScoped<AgentBuilder>();

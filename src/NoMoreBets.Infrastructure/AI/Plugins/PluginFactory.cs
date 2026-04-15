@@ -55,4 +55,9 @@ public class PluginFactory : IPluginFactory
   {
     return ActivatorUtilities.CreateInstance<BankrollPlugin>(_sp);
   }
+
+  public object CreateSocialMediaPlugin()
+  {
+    return ActivatorUtilities.CreateInstance<SocialMediaPlugin>(_sp);
+  }
 }

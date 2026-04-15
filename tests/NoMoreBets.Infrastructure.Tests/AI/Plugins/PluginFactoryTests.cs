@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
+using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Infrastructure.AI.Plugins;
 using NoMoreBets.Infrastructure.AI.Provider;
 
@@ -14,6 +15,7 @@ public class PluginFactoryTests
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly ISearchService _searchService = Substitute.For<ISearchService>();
+  private readonly IXApiService _xApiService = Substitute.For<IXApiService>();
   private readonly IAgentSessionContext _agentSessionContext = Substitute.For<IAgentSessionContext>();
 
   private PluginFactory CreateSut()
@@ -22,6 +24,7 @@ public class PluginFactoryTests
       .AddSingleton(_unitOfWork)
       .AddSingleton(_mediator)
       .AddSingleton(_searchService)
+      .AddSingleton(_xApiService)
       .AddSingleton(_agentSessionContext)
       .BuildServiceProvider();
     return new PluginFactory(sp);
@@ -87,5 +90,15 @@ public class PluginFactoryTests
 
     // Assert
     plugin.Should().BeOfType<BankrollPlugin>();
+  }
+
+  [Fact]
+  public void CreateSocialMediaPlugin_ReturnsInstance()
+  {
+    var sut = CreateSut();
+
+    var plugin = sut.CreateSocialMediaPlugin();
+
+    plugin.Should().BeOfType<SocialMediaPlugin>();
   }
 }

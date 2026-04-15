@@ -11,4 +11,5 @@ public interface IPluginFactory
   object CreateAgentResearchPlugin();
   object CreateAgentReflectionPlugin();
   object CreateBankrollPlugin();
+  object CreateSocialMediaPlugin();
 }
