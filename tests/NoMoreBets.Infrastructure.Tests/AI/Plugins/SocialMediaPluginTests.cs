@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.SemanticKernel;
 using NSubstitute;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.SocialMedia.CreateXPost;
@@ -30,5 +31,19 @@ public class SocialMediaPluginTests
     await _xApiService.Received(1).CreateXPostAsync(
       Arg.Is<CreateXPostRequest>(r => r.Text == "  hello  "),
       Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public void KernelRegistersCreateXPostFunction()
+  {
+    var kernel = new Kernel();
+    kernel.Plugins.AddFromObject(_sut);
+
+    var functionNames = kernel.Plugins
+      .SelectMany(p => p)
+      .Select(f => f.Name)
+      .ToArray();
+
+    functionNames.Should().ContainSingle().Which.Should().Be("CreateXPost");
   }
 }

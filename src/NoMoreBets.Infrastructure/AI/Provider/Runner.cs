@@ -2,12 +2,13 @@ using System.Globalization;
 using MediatR;
 using Microsoft.SemanticKernel;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Domain.AgentSessions;
-using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Infrastructure.XApi;
 
 namespace NoMoreBets.Infrastructure.AI.Provider;
 
@@ -19,6 +20,7 @@ public sealed class Runner : IAgentPhaseRunner
   private readonly IPluginFactory _pluginFactory;
   private readonly IAgentSessionContext _agentSessionContext;
   private readonly IUnitOfWork _unitOfWork;
+  private readonly IOptions<XApiOptions> _xApiOptions;
 
   public Runner(
     AgentBuilder agentBuilder,
@@ -26,6 +28,7 @@ public sealed class Runner : IAgentPhaseRunner
     IUnitOfWork unitOfWork,
     IAgentSessionContext agentSessionContext,
     IMediator mediator,
+    IOptions<XApiOptions> xApiOptions,
     ILogger<Runner> logger)
   {
     _agentBuilder = agentBuilder;
@@ -34,6 +37,7 @@ public sealed class Runner : IAgentPhaseRunner
     _pluginFactory = pluginFactory;
     _agentSessionContext = agentSessionContext;
     _unitOfWork = unitOfWork;
+    _xApiOptions = xApiOptions;
   }
 
   public async Task<List<ChatMessageContent>> Chat(string userMessage, CancellationToken cancellationToken = default)
@@ -133,7 +137,7 @@ public sealed class Runner : IAgentPhaseRunner
           - In response and reasoning do not mention the internal process, tool names etc. Focus on delivering the research output as if for a human analyst, not on describing your own process.
           """;
 
-    var result = await ExecuteBettingPhaseAsync(
+    var result = await ExecuteAgentPhase(
       AgentSessionPhase.Research,
       prompt,
       configureKernel,
@@ -182,7 +186,7 @@ public sealed class Runner : IAgentPhaseRunner
           - Do not mention internal tool names or process in final narrative
           """;
 
-    var result = await ExecuteBettingPhaseAsync(
+    var result = await ExecuteAgentPhase(
       AgentSessionPhase.InternetResearch,
       prompt,
       configureKernel,
@@ -193,7 +197,9 @@ public sealed class Runner : IAgentPhaseRunner
 
   public async Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
-    var slips = await LoadBetSlipsAwaitingReflectionAsync(cancellationToken).ConfigureAwait(false);
+    var slips = await _unitOfWork.Betting
+      .GetNonPendingBetSlipsAwaitingReflectionAsync(cancellationToken)
+      .ConfigureAwait(false);
     if (slips.Count == 0)
     {
       _logger.LogInformation(
@@ -253,7 +259,7 @@ public sealed class Runner : IAgentPhaseRunner
       kernel.Data.Add("phase", "Reflection");
     };
 
-    var result = await ExecuteBettingPhaseAsync(
+    var result = await ExecuteAgentPhase(
       AgentSessionPhase.Reflection,
       prompt,
       configureKernel,
@@ -268,9 +274,6 @@ public sealed class Runner : IAgentPhaseRunner
 
     return result.Messages;
   }
-
-  private Task<IReadOnlyList<BetSlip>> LoadBetSlipsAwaitingReflectionAsync(CancellationToken cancellationToken) =>
-    _unitOfWork.Betting.GetNonPendingBetSlipsAwaitingReflectionAsync(cancellationToken);
 
   public async Task<IReadOnlyList<IMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
   {
@@ -349,7 +352,7 @@ public sealed class Runner : IAgentPhaseRunner
       kernel.Data.Add("phase", "Betting");
     };
  
-    var result = await ExecuteBettingPhaseAsync(
+    var result = await ExecuteAgentPhase(
       AgentSessionPhase.Betting,
       prompt,
       configurePlugins,
@@ -357,7 +360,7 @@ public sealed class Runner : IAgentPhaseRunner
     return result.Messages;
   }
 
-  private async Task<AgentPhaseRunResult> ExecuteBettingPhaseAsync(
+  private async Task<AgentPhaseRunResult> ExecuteAgentPhase(
     AgentSessionPhase phase,
     string userPrompt,
     Action<Kernel> configureKernel,
@@ -365,7 +368,9 @@ public sealed class Runner : IAgentPhaseRunner
   {
     var config = _agentBuilder.BuildForScheduledJob();
     configureKernel(config.Agent.Kernel);
-    var messages = new List<IMessage>();
+
+    var xOAuthConfigured = _xApiOptions.Value.IsOAuthConfigured;
+
     var phaseName = phase.ToString();
     _logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
 
@@ -375,32 +380,29 @@ public sealed class Runner : IAgentPhaseRunner
       .ConfigureAwait(false);
     _agentSessionContext.SessionId = sessionId;
 
+    var messages = new List<IMessage>();
     try
     {
-      await foreach (var message in config.Agent.InvokeAsync(userPrompt, config.Thread, config.Options, cancellationToken)
-                       .ConfigureAwait(false))
+      var phaseMessages = await CollectInvocationMessagesAsync(config, userPrompt, cancellationToken).ConfigureAwait(false);
+      messages.AddRange(phaseMessages);
+
+      if (xOAuthConfigured)
       {
-#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-        foreach (var item in message.Message.Items)
-        {
-          if (item is ReasoningContent reasoning)
-          {
-            messages.Add(new ReasoningMessage(reasoning.Text));
-          }
+        config.Agent.Kernel.Plugins.Clear();
+        config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateMemoriesPlugin());
+        config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateInternetSearchPlugin());
+        config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateSocialMediaPlugin());
+        var followUpPrompt = $"""
+          The {phaseName} agent phase has finished successfully.
 
-          if (item is FunctionCallContent functionCall)
-          {
-            var functionName = functionCall.FunctionName;
-            var arguments = functionCall.Arguments?.Select(a => new FunctionArgument(a.Key.ToString(), a.Value?.ToString())).ToList();
-            messages.Add(new FunctionMessage(functionName, arguments));
-          }
-        }
-
-#pragma warning restore SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-        if (!string.IsNullOrEmpty(message.Message.Content))
-        {
-          messages.Add(new Message(message.Message.Content));
-        }
+          If you want to publish a post on X, call `CreateXPost` with the post body.
+          Remember to keep your personality and style 
+          """;
+        var followUpMessages = await CollectInvocationMessagesAsync(
+          config,
+          followUpPrompt,
+          cancellationToken).ConfigureAwait(false);
+        messages.AddRange(followUpMessages);
       }
     }
     finally
@@ -426,6 +428,41 @@ public sealed class Runner : IAgentPhaseRunner
       messages.Count);
 
     return new AgentPhaseRunResult(messages, sessionId);
+  }
+
+  private static async Task<List<IMessage>> CollectInvocationMessagesAsync(
+    AgentConfig config,
+    string prompt,
+    CancellationToken cancellationToken)
+  {
+    var messages = new List<IMessage>();
+    await foreach (var message in config.Agent.InvokeAsync(prompt, config.Thread, config.Options, cancellationToken)
+                     .ConfigureAwait(false))
+    {
+#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+      foreach (var item in message.Message.Items)
+      {
+        if (item is ReasoningContent reasoning)
+        {
+          messages.Add(new ReasoningMessage(reasoning.Text));
+        }
+
+        if (item is FunctionCallContent functionCall)
+        {
+          var functionName = functionCall.FunctionName;
+          var arguments = functionCall.Arguments?.Select(a => new FunctionArgument(a.Key.ToString(), a.Value?.ToString())).ToList();
+          messages.Add(new FunctionMessage(functionName, arguments));
+        }
+      }
+
+#pragma warning restore SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
+      if (!string.IsNullOrEmpty(message.Message.Content))
+      {
+        messages.Add(new Message(message.Message.Content));
+      }
+    }
+
+    return messages;
   }
 }
 
