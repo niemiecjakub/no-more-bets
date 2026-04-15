@@ -5,7 +5,7 @@ public interface IPluginFactory
   object CreateMatchPlugin();
   object CreateBettingPlugin();
   object CreateAgentBettingPlugin();
-  object CreateSearchPlugin();
+  object CreateInternetSearchPlugin();
   object CreateMemoriesPlugin();
   object CreateAgentInternetResearchPlugin();
   object CreateAgentResearchPlugin();

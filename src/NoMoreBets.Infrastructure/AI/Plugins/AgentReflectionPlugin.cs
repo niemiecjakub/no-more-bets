@@ -13,7 +13,7 @@ public class AgentReflectionPlugin : AgentPluginBase
   public AgentReflectionPlugin(
     BettingPlugin bettingPlugin,
     MemoriesPlugin memoriesPlugin,
-    SearchPlugin searchPlugin,
+    InternetSearchPlugin searchPlugin,
     IUnitOfWork unitOfWork)
     : base(memoriesPlugin, searchPlugin)
   {

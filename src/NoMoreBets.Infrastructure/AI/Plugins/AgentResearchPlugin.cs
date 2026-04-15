@@ -18,7 +18,7 @@ public class AgentResearchPlugin : AgentPluginBase
 
   public AgentResearchPlugin(
     MatchPlugin matchPlugin,
-    SearchPlugin searchPlugin,
+    InternetSearchPlugin searchPlugin,
     MemoriesPlugin memoriesPlugin,
     IUnitOfWork unitOfWork,
     IAgentSessionContext agentSessionContext)

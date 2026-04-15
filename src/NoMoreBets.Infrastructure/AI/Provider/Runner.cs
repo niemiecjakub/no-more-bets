@@ -40,7 +40,7 @@ public sealed class Runner : IAgentPhaseRunner
   {
     var config = _agentBuilder.Build();
     config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateMemoriesPlugin());
-    config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateSearchPlugin());
+    config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateInternetSearchPlugin());
 
     var messages = new List<ChatMessageContent>();
     await foreach (var message in config.Agent.InvokeAsync(userMessage, config.Thread, config.Options, cancellationToken))

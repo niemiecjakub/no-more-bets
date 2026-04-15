@@ -8,9 +8,9 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 public abstract class AgentPluginBase
 {
   private readonly MemoriesPlugin _memoriesPlugin;
-  private readonly SearchPlugin _searchPlugin;
+  private readonly InternetSearchPlugin _searchPlugin;
 
-  protected AgentPluginBase(MemoriesPlugin memoriesPlugin, SearchPlugin searchPlugin)
+  protected AgentPluginBase(MemoriesPlugin memoriesPlugin, InternetSearchPlugin searchPlugin)
   {
     _memoriesPlugin = memoriesPlugin;
     _searchPlugin = searchPlugin;

@@ -7,11 +7,11 @@ using SearchNewsOptions = NoMoreBets.Application.Search.SearchNews.SearchNewsOpt
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
-public class SearchPlugin
+public class InternetSearchPlugin
 {
   private readonly ISearchService _searchService;
 
-  public SearchPlugin(ISearchService searchService)
+  public InternetSearchPlugin(ISearchService searchService)
   {
     _searchService = searchService;
   }

@@ -17,7 +17,7 @@ public class AgentBettingPlugin : AgentPluginBase
     BettingPlugin bettingPlugin,
     IUnitOfWork unitOfWork,
     MemoriesPlugin memoriesPlugin,
-    SearchPlugin searchPlugin)
+    InternetSearchPlugin searchPlugin)
     : base(memoriesPlugin, searchPlugin)
   {
     _bettingPlugin = bettingPlugin;

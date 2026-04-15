@@ -10,7 +10,7 @@ public class AgentInternetResearchPlugin : AgentPluginBase
 
   public AgentInternetResearchPlugin(
     MatchPlugin matchPlugin,
-    SearchPlugin searchPlugin,
+    InternetSearchPlugin searchPlugin,
     MemoriesPlugin memoriesPlugin)
     : base(memoriesPlugin, searchPlugin)
   {
