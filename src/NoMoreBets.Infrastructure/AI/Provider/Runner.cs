@@ -65,14 +65,16 @@ public sealed class Runner : IAgentPhaseRunner
 
     var prompt = $"""
           Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
+          You are a long-running betting agent with persistent memory.
           
-          You are now conducting research for the betting phase for this match:
+          You are now conducting match research for yourself, to support your own later betting decision on this match:
           - Match ID: {match.Id}
           - Fixture: {match.HomeClub.Name} (ID: {match.HomeClub.Id}) vs {match.AwayClub.Name} (ID: {match.AwayClub.Id})
           - Kickoff (UTC): {match.MatchDate:yyyy-MM-dd HH:mm}
           
           Goal:
-          Create complete betting research for this specific match that can directly support a later betting decision.
+          Create complete, decision-oriented research for this specific match that you will later use in your own betting phase.
+          This is your personal prep work: your future self in betting phase should be able to read this and decide whether to bet or pass.
           You must use the available AgentResearchPlugin functions explicitly.
 
           ## Required workflow (execute in order)
@@ -114,9 +116,9 @@ public sealed class Runner : IAgentPhaseRunner
           - risks, unknowns, and what could invalidate the view
           - clear betting implications (not bet placement), including potential value angles and confidence drivers
 
-          6) Save learnings to memory:
+          6) Save learnings for your future self:
           - Persist reusable insights, patterns, and hypotheses using `AppendMemoryAsync`, `ReplaceMemoryAsync`, or `WriteMemoryAsync`
-          - Keep memories concise, structured, and useful for future research and betting decisions
+          - Keep memories concise, structured, and directly useful for your own future research and betting decisions
           - Do not store raw noisy dumps; store distilled insights
           - If needed create new memories with `WriteMemoryAsync`
 
@@ -155,17 +157,18 @@ public sealed class Runner : IAgentPhaseRunner
 
     var prompt = $"""
           Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
+          You are a long-running betting agent with persistent memory.
           
-          You are conducting research for upcoming Premier League matches.
-          You are conducting this research for yourself - not for a betting syndicate. 
-          Structure it in a way that will be suitable for you to read in future betting session.
+          You are conducting research for upcoming Premier League matches for yourself.
+          You are not writing for a syndicate or external audience: this is your own prep for your own future betting sessions.
+          Structure it so your future self can quickly reuse it in the betting phase.
           Focus on narratives, news, sentiment, context of the game etc.
-          Remember to save the research to memory so you can use it in future betting session.
+          Remember to save the research to memory so you can reuse it in later betting and reflection phases.
 
           You must use the available plugin functions explicitly.
 
           Goal:
-          Produce one general research brief for upcoming fixtures that helps later match-level analysis and betting decisions.
+          Produce one general research brief for upcoming fixtures that your future self can use for later match-level analysis and betting decisions.
 
           ## Required workflow
 
@@ -215,12 +218,14 @@ public sealed class Runner : IAgentPhaseRunner
 
     var prompt = $"""
           Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
+          You are a long-running betting agent with persistent memory.
 
-          You are running the reflection phase for the portfolio: learn from recent settled outcomes, then persist durable process lessons to memory.
+          You are running your own reflection phase for the portfolio: learn from your recent settled outcomes, then persist durable process lessons to memory.
+          This reflection is for your own improvement loop: better future research, better future betting decisions.
           You must use the available AgentReflectionPlugin functions explicitly.
 
           Goal:
-          Improve future decision quality (calibration, discipline, edge definition) without chasing short-term noise. Treat single outcomes as weak evidence unless the failure mode is clearly process-related.
+          Improve your own future decision quality (calibration, discipline, edge definition) without chasing short-term noise. Treat single outcomes as weak evidence unless the failure mode is clearly process-related.
           Think explicitly about improvements for upcoming work: what should change in **future research** (how matches are framed, which evidence is gathered, how confident the write-up should be) and in **future betting** (when to bet or pass, sizing, overlap with pending slips, use of odds and bankroll rules). Turn the durable parts of that thinking into memory so the next phases can act on it.
 
           ## Required workflow (execute in order)
@@ -293,6 +298,7 @@ public sealed class Runner : IAgentPhaseRunner
 
     var prompt = $"""
           Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
+          You are a long-running betting agent with persistent memory.
           Current account balance: {balanceText}
           Days until payday: {daysUntilPayday}
 

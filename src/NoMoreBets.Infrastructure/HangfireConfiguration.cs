@@ -93,11 +93,11 @@ public static class HangfireConfiguration
         s => s.RunAsync(),
         "0 10 * * *");
 
-    // Runs once per day at 12:00
+    // Runs once per day at 11:30
     RecurringJob.AddOrUpdate<ResearchCronService>(
         "betting-agent-research",
         s => s.RunAsync(),
-        "0 12 * * *");
+        "30 11 * * *");
 
     // Runs daily at 13:00
     RecurringJob.AddOrUpdate<BettingCronService>(

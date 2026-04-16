@@ -21,18 +21,14 @@ public sealed class ResearchCronService(
     for (var i = 0; i < matches.Count; i++)
     {
       var matchId = matches[i].Id;
-      BackgroundJob.Enqueue<ResearchCronService>(service => service.RunResearchPhaseForMatchAsync(matchId));
-
-      if (i < matches.Count - 1)
-      {
-        await Task.Delay(TimeSpan.FromMinutes(4), CancellationToken.None).ConfigureAwait(false);
-      }
+      var delay = TimeSpan.FromMinutes(i * 5);
+      BackgroundJob.Schedule<ResearchCronService>(service => service.RunResearchPhaseForMatchAsync(matchId), delay);
     }
 
     logger.LogInformation("Finished scheduled research agent phase");
   }
 
-  [AutomaticRetry(Attempts = 1)]
+  [AutomaticRetry(Attempts = 3)]
   public async Task RunResearchPhaseForMatchAsync(int matchId)
   {
     var match = await unitOfWork.Matches.GetMatchByIdAsync(matchId, CancellationToken.None).ConfigureAwait(false);
