@@ -35,9 +35,17 @@ public class AgentResearchPlugin : AgentPluginBase
 
   [KernelFunction]
   [Description("Retrieves the starting lineups for both the home and away teams for the match.")]
-  public async Task<NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult?> GetLineupsAsync(int matchId, CancellationToken cancellationToken = default)
+  public async Task<AgentMatchLineup?> GetLineupsAsync(int matchId, CancellationToken cancellationToken = default)
   {
-    return await _matchPlugin.GetLineupsAsync(matchId, cancellationToken).ConfigureAwait(false);
+    var lineup = await _matchPlugin.GetLineupsAsync(matchId, cancellationToken).ConfigureAwait(false);
+    if (lineup is null)
+    {
+      return null;
+    }
+
+    return new AgentMatchLineup(
+      new AgentTeamLineup(lineup.Home.Players.Select(p => new Player(p.Name, p.Position)).ToList()),
+      new AgentTeamLineup(lineup.Away.Players.Select(p => new Player(p.Name, p.Position)).ToList()));
   }
 
   [KernelFunction]

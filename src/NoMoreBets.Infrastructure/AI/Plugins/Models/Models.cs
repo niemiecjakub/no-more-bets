@@ -9,6 +9,10 @@ public record Player(string Name, string Position);
 
 public record MatchLineupResult(TeamLineupResult Home, TeamLineupResult Away);
 
+public record AgentTeamLineup(IReadOnlyList<Player> Players);
+
+public record AgentMatchLineup(AgentTeamLineup Home, AgentTeamLineup Away);
+
 public record TeamInjuriesResult(IReadOnlyList<InjuriedPlayer> Injuries);
 
 public record InjuriedPlayer(string Name, string Position, string InjuryStatus) : Player(Name, Position);

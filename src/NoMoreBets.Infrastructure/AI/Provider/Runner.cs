@@ -98,23 +98,11 @@ public sealed class Runner : IAgentPhaseRunner
           - `GetClubDailySummaryAsync`
 
           4) Build news and sentiment context:
-          - Call `SearchNewsAsync` for:
-            - home club latest news
-            - away club latest news
-            - fixture-specific news (clubs + league + injuries/suspensions keywords)
-          - Call `GetWebGroundingAsync` to verify key claims and gather deeper tactical/context insights.
-          - Distinguish signal vs noise, confirm reliability, and identify likely market overreaction/underreaction.
+          - If needed, call `SearchNewsAsync` to gather the latest news for both the home club and the away club.
+          - If additional validation or deeper tactical/context insight is required, you may call `GetWebGroundingAsync` to verify key claims.
+          - Focus on separating meaningful signals from noise, assessing source reliability, and spotting potential market overreactions or underreactions.
 
-          5) Synthesize decision-oriented research output:
-          Your final research must include:
-          - match state and tactical picture
-          - lineup/injury impact and uncertainties
-          - form and team-strength profile
-          - head-to-head context (with caution about small sample bias)
-          - market/odds movement interpretation
-          - current news sentiment and key narratives
-          - risks, unknowns, and what could invalidate the view
-          - clear betting implications (not bet placement), including potential value angles and confidence drivers
+          5) Synthesize decision-oriented research output stating clear betting implications, including potential value angles and confidence drivers
 
           6) Save learnings for your future self:
           - Persist reusable insights, patterns, and hypotheses using `AppendMemoryAsync`, `ReplaceMemoryAsync`, or `WriteMemoryAsync`
@@ -123,7 +111,7 @@ public sealed class Runner : IAgentPhaseRunner
           - If needed create new memories with `WriteMemoryAsync`
 
           7) Completion gate (mandatory):
-          - Create one complete final report text for this match
+          - Create one complete final report text for this match - it must be brief and scannable - try to keep it under 500 words.
           - Call `SaveMatchAnalysisAsync` with this match id and the final report content
           - Do not terminate until `SaveMatchAnalysisAsync` succeeds
 
@@ -131,7 +119,7 @@ public sealed class Runner : IAgentPhaseRunner
 
           ## Quality constraints
           - Be analytical, skeptical, and evidence-driven
-          - Cross-check important claims across multiple tool outputs
+          - Cross-check important claims
           - If data is missing, state it explicitly and continue with best-effort reasoning
           - Do not skip required steps
 
@@ -326,10 +314,9 @@ public sealed class Runner : IAgentPhaseRunner
           - Call `GetAvailableMatchesAsync`
 
           4) For each available match, build a decision picture:
-          - Call `GetMatchAnalysisAsync` for the match id
-          - Call `GetCurrentOddsAsync` for the match id
+          - call `GetMatchAnalysisAsync` for the match ID, and then call `GetCurrentOddsAsync` if you want to check current odds for this match.
           - If late-breaking information could materially change the thesis versus the stored analysis, use `SearchNewsAsync` and/or `GetWebGroundingAsync` with focused queries.
-
+ 
           5) Evaluate each candidate selection:
           - Value vs current prices (implied probability vs your view)
           - Alignment with STRATEGY, BANKROLL_MANAGEMENT, REFLECTIONS and GENERAL_KNOWLEDGE

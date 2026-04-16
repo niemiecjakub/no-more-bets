@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
@@ -13,12 +14,13 @@ public class GetMatchAgentResearchHandlerTests
 
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
+  private readonly ILogger<GetMatchAgentResearchHandler> _logger = Substitute.For<ILogger<GetMatchAgentResearchHandler>>();
   private readonly GetMatchAgentResearchHandler _sut;
 
   public GetMatchAgentResearchHandlerTests()
   {
     _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetMatchAgentResearchHandler(_unitOfWork);
+    _sut = new GetMatchAgentResearchHandler(_unitOfWork, _logger);
   }
 
   [Fact]
