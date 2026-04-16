@@ -86,7 +86,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
         waitForSelectorBeforeContent: null,
         waitForFunctionBeforeContent: FotmobLeagueTableReadyFunction,
         blockStylesheets: false).ConfigureAwait(false);
-    return await ParseLeagueTableClubsAsync(html).ConfigureAwait(false);
+    return await ParseLeagueTableClubsAsync(html, url).ConfigureAwait(false);
   }
 
   /// <inheritdoc />
@@ -101,7 +101,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
         waitForSelectorBeforeContent: null,
         waitForFunctionBeforeContent: FotmobLeagueTableReadyFunction,
         blockStylesheets: false).ConfigureAwait(false);
-    return await ParseXgStatsAsync(html).ConfigureAwait(false);
+    return await ParseXgStatsAsync(html, url).ConfigureAwait(false);
   }
 
   /// <inheritdoc />
@@ -124,12 +124,20 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   {
     var html = await GetHtmlAfterInteractionsAsync(gameUrl, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
     var details = await ParseMatchDetailsAsync(html).ConfigureAwait(false);
+    if (string.IsNullOrWhiteSpace(details.HomeTeam) || string.IsNullOrWhiteSpace(details.AwayTeam))
+    {
+      _logger.LogWarning(
+        "Fotmob match details parsed with missing core team names. Url: {GameUrl}, HomeTeam: {HomeTeam}, AwayTeam: {AwayTeam}",
+        gameUrl,
+        details.HomeTeam,
+        details.AwayTeam);
+    }
 
     IReadOnlyList<FotmobStatGroup>? statistics = null;
     IReadOnlyList<FotmobPlayerMatchStats>? players = null;
+    var statsUrl = gameUrl + ":tab=stats";
     try
     {
-      var statsUrl = gameUrl + ":tab=stats";
       var statsHtml = await GetHtmlAfterInteractionsAsync(statsUrl, FotmobConsentSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
       statistics = await ParseStatisticsFromDocumentAsync(statsHtml).ConfigureAwait(false);
       players = await ParsePlayersFromDocumentAsync(statsHtml).ConfigureAwait(false);
@@ -137,6 +145,13 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     catch (Exception ex)
     {
       _logger.LogWarning(ex, "Failed to fetch or parse match statistics; returning match details without statistics.");
+    }
+
+    if (statistics is { Count: 0 } && players is { Count: 0 })
+    {
+      _logger.LogWarning(
+        "Fotmob match statistics page parsed but yielded no statistics and no player rows. StatsUrl: {StatsUrl}",
+        statsUrl);
     }
 
     return new MatchDetailsDto
@@ -551,7 +566,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     return string.Join(" ", list);
   }
 
-  internal async Task<IReadOnlyList<TableEntry>> ParseLeagueTableClubsAsync(string html)
+  internal async Task<IReadOnlyList<TableEntry>> ParseLeagueTableClubsAsync(string html, string? sourceUrl = null)
   {
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
@@ -563,7 +578,12 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     if (rows.Length == 0)
     {
       if (tableContainer is null)
+      {
+        _logger.LogError(
+          "Fotmob league table container not found while parsing league table. SourceUrl: {SourceUrl}",
+          sourceUrl ?? "<unknown>");
         throw new InvalidOperationException("Table container not found in the page.");
+      }
       return [];
     }
 
@@ -586,7 +606,7 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     return clubs;
   }
 
-  internal async Task<IReadOnlyList<XgStats>> ParseXgStatsAsync(string html)
+  internal async Task<IReadOnlyList<XgStats>> ParseXgStatsAsync(string html, string? sourceUrl = null)
   {
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
@@ -599,7 +619,12 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     if (rows.Length == 0)
     {
       if (tableContainer is null)
+      {
+        _logger.LogError(
+          "Fotmob xG table container not found while parsing xG stats. SourceUrl: {SourceUrl}",
+          sourceUrl ?? "<unknown>");
         throw new InvalidOperationException("Table container not found in the page.");
+      }
       return [];
     }
 

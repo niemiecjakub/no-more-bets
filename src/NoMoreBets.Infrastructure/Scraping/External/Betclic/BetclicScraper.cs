@@ -51,9 +51,20 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
       if (attempt < _betclicOptions.EmptyResultRetryCount - 1)
       {
         var delay = JitterDelay(_betclicOptions.EmptyResultRetryDelayMinSeconds, _betclicOptions.EmptyResultRetryDelayMaxSeconds);
+        _logger.LogWarning(
+          "Betclic upcoming games returned no results on attempt {Attempt}/{MaxAttempts}; retrying after {DelaySeconds}s. Url: {Url}",
+          attempt + 1,
+          _betclicOptions.EmptyResultRetryCount,
+          Math.Round(delay, 2),
+          PremierLeagueUrl);
         await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken).ConfigureAwait(false);
       }
     }
+
+    _logger.LogWarning(
+      "Betclic upcoming games returned no results after {MaxAttempts} attempts. Url: {Url}",
+      _betclicOptions.EmptyResultRetryCount,
+      PremierLeagueUrl);
     return games;
   }
 
@@ -76,9 +87,20 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
       if (attempt < _betclicOptions.EmptyResultRetryCount - 1)
       {
         var delay = JitterDelay(_betclicOptions.MatchEventsRetryDelayMinSeconds, _betclicOptions.MatchEventsRetryDelayMaxSeconds);
+        _logger.LogWarning(
+          "Betclic match events returned no results on attempt {Attempt}/{MaxAttempts}; retrying after {DelaySeconds}s. Url: {Url}",
+          attempt + 1,
+          _betclicOptions.EmptyResultRetryCount,
+          Math.Round(delay, 2),
+          gameUrl);
         await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken).ConfigureAwait(false);
       }
     }
+
+    _logger.LogWarning(
+      "Betclic match events returned no results after {MaxAttempts} attempts. Url: {Url}",
+      _betclicOptions.EmptyResultRetryCount,
+      gameUrl);
     return events;
   }
 

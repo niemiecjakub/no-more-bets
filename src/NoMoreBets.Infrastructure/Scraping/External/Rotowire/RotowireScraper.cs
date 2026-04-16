@@ -36,7 +36,13 @@ public class RotowireScraper : BaseScraper, ILineupProvider
   public async Task<IReadOnlyList<GameLineup>> GetSoccerLineupsAsync(CancellationToken cancellationToken = default)
   {
     var html = await GetPageHtmlAsync(LineupsUrl, cancellationToken).ConfigureAwait(false);
-    return await ParseLineupsAsync(html).ConfigureAwait(false);
+    var games = await ParseLineupsAsync(html).ConfigureAwait(false);
+    if (games.Count == 0)
+    {
+      _logger.LogWarning("Rotowire lineup scrape completed with zero games. Url: {Url}", LineupsUrl);
+    }
+
+    return games;
   }
 
   internal async Task<IReadOnlyList<GameLineup>> ParseLineupsAsync(string html)
@@ -93,7 +99,13 @@ public class RotowireScraper : BaseScraper, ILineupProvider
     var awayTeamName = awayTeamElem?.TextContent.Trim();
 
     if (string.IsNullOrEmpty(homeCode) || string.IsNullOrEmpty(awayCode))
+    {
+      var sectionTime = section.QuerySelector("div.lineup__time")?.TextContent.Trim();
+      _logger.LogWarning(
+        "Skipping Rotowire game section due to missing team codes. TimeLabel: {TimeLabel}",
+        string.IsNullOrWhiteSpace(sectionTime) ? "<unknown>" : sectionTime);
       return null;
+    }
 
     var homeLineup = ParseTeamLineup(section, homeCode);
     var awayLineup = ParseTeamLineup(section, awayCode);
@@ -162,6 +174,9 @@ public class RotowireScraper : BaseScraper, ILineupProvider
 
     if (lineupList is null)
     {
+      _logger.LogWarning(
+        "Rotowire lineup list not found for team code {TeamCode}; returning empty lineup.",
+        teamCode);
       return new TeamLineup
       {
         LineupType = lineupType,

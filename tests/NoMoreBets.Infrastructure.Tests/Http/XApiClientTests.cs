@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.SocialMedia.CreateXPost;
@@ -30,7 +31,7 @@ public class XApiClientTests
     var oauth = new XApiOAuth1MessageHandler(Options.Create(oauthOptions)) { InnerHandler = mock };
     var httpClient = new HttpClient(oauth) { BaseAddress = new Uri("https://api.x.com") };
     httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-    return new XApiClient(httpClient, Options.Create(oauthOptions));
+    return new XApiClient(httpClient, Options.Create(oauthOptions), NullLogger<XApiClient>.Instance);
   }
 
   [Fact]
@@ -111,7 +112,7 @@ public class XApiClientTests
     {
       BaseAddress = new Uri("https://api.x.com")
     };
-    var client = new XApiClient(httpClient, Options.Create(emptyOAuth));
+    var client = new XApiClient(httpClient, Options.Create(emptyOAuth), NullLogger<XApiClient>.Instance);
 
     var act = () => client.CreateXPostAsync(new CreateXPostRequest { Text = "hi" });
 

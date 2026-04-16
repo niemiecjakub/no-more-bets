@@ -58,7 +58,6 @@ public sealed class BraveSearch : ISearchService
 
   private async Task<T> SendAsync<T>(string path, IDictionary<string, string?> queryParams, CancellationToken cancellationToken)
   {
-    // 1. Build the relative URI with query string
     var filtered = new Dictionary<string, string?>();
     foreach (var kv in queryParams)
     {
@@ -69,24 +68,34 @@ public sealed class BraveSearch : ISearchService
     var relativeUri = QueryHelpers.AddQueryString(path, filtered);
 
     using var response = await _httpClient.GetAsync(relativeUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-
-    try
+    if (!response.IsSuccessStatusCode)
     {
-      response.EnsureSuccessStatusCode();
-    }
-    catch (Exception ex)
-    {
-      throw new BraveSearchException($"Brave search request failed with status {(int)response.StatusCode}.", ex);
+      var responseBody = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+      _logger.LogError(
+        "Brave request failed for path {Path} with status code {StatusCode}. Query: {QuerySummary}. ResponseExcerpt: {ResponseExcerpt}",
+        path,
+        (int)response.StatusCode,
+        BuildQuerySummary(filtered),
+        TruncateForLogs(responseBody));
+      throw new BraveSearchException($"Brave search request failed with status {(int)response.StatusCode}.");
     }
 
     await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
     var result = await JsonSerializer.DeserializeAsync<T>(stream, JsonOptions, cancellationToken).ConfigureAwait(false);
     if (result is null)
+    {
+      _logger.LogWarning(
+        "Brave request succeeded for path {Path}, but response payload could not be deserialized to {ResponseType}. Query: {QuerySummary}",
+        path,
+        typeof(T).Name,
+        BuildQuerySummary(filtered));
       throw new BraveSearchException("Brave search response body was empty or invalid.");
+    }
+
     return result;
   }
 
-  private static SearchBasicResultDto MapSearchResults(BraveWebSearchResponse response)
+  private SearchBasicResultDto MapSearchResults(BraveWebSearchResponse response)
   {
     if (response.Web.Results is null || response.Web.Results.Count == 0)
       return new SearchBasicResultDto();
@@ -108,10 +117,17 @@ public sealed class BraveSearch : ISearchService
       });
     }
 
+    if (response.Web.Results.Count > 0 && items.Count == 0)
+    {
+      _logger.LogWarning(
+        "Brave web response contained {InputCount} items but all were filtered out due to missing URLs.",
+        response.Web.Results.Count);
+    }
+
     return new SearchBasicResultDto { Items = items };
   }
 
-  private static SearchNewsResultDto MapNewsResults(BraveNewsSearchResponse response)
+  private SearchNewsResultDto MapNewsResults(BraveNewsSearchResponse response)
   {
     if (response.Results is null || response.Results.Count == 0)
       return new SearchNewsResultDto();
@@ -141,10 +157,17 @@ public sealed class BraveSearch : ISearchService
       });
     }
 
+    if (response.Results.Count > 0 && items.Count == 0)
+    {
+      _logger.LogWarning(
+        "Brave news response contained {InputCount} items but all were filtered out due to missing URLs.",
+        response.Results.Count);
+    }
+
     return new SearchNewsResultDto { Items = items };
   }
 
-  private static SearchLlmContextResultDto MapLlmContextResults(BraveLlmContextResponse response)
+  private SearchLlmContextResultDto MapLlmContextResults(BraveLlmContextResponse response)
   {
     var generic = response.Grounding?.Generic;
     if (generic is null || generic.Count == 0)
@@ -182,7 +205,37 @@ public sealed class BraveSearch : ISearchService
       });
     }
 
+    if (generic.Count > 0 && items.Count == 0)
+    {
+      _logger.LogWarning(
+        "Brave LLM context response contained {InputCount} grounding items but none produced usable snippets.",
+        generic.Count);
+    }
+
     return new SearchLlmContextResultDto { Items = items };
+  }
+
+  private static string BuildQuerySummary(IReadOnlyDictionary<string, string?> queryParams)
+  {
+    queryParams.TryGetValue("q", out var q);
+    queryParams.TryGetValue("count", out var count);
+    queryParams.TryGetValue("offset", out var offset);
+
+    var trimmedQuery = string.IsNullOrWhiteSpace(q) ? "<empty>" : q.Trim();
+    if (trimmedQuery.Length > 120)
+      trimmedQuery = trimmedQuery[..120] + "...";
+
+    return $"q='{trimmedQuery}', count='{count ?? "<null>"}', offset='{offset ?? "<null>"}'";
+  }
+
+  private static string TruncateForLogs(string? input, int maxLength = 400)
+  {
+    if (string.IsNullOrWhiteSpace(input))
+      return "<empty>";
+
+    return input.Length <= maxLength
+      ? input
+      : input[..maxLength] + "...";
   }
 }
 

@@ -83,7 +83,13 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
 
     var preview = element.Value.Deserialize<MatchPreviewDto>(JsonOptions);
     if (preview is null)
+    {
+      _logger.LogWarning(
+        "SoccerData match-preview deserialization returned null. Endpoint: {Endpoint}, MatchId: {MatchId}",
+        endpoint,
+        soccerdataMatchId);
       throw new SoccerDataException($"Failed to deserialize match preview {soccerdataMatchId}");
+    }
     return preview;
   }
 
@@ -102,7 +108,14 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
 
     var headToHead = element.Value.Deserialize<HeadToHead>(JsonOptions);
     if (headToHead is null)
+    {
+      _logger.LogWarning(
+        "SoccerData head-to-head deserialization returned null. Endpoint: {Endpoint}, Team1Id: {Team1Id}, Team2Id: {Team2Id}",
+        endpoint,
+        team1Id,
+        team2Id);
       throw new SoccerDataException($"Failed to deserialize head-to-head {team1Id} vs {team2Id}");
+    }
     return headToHead;
   }
 
@@ -170,10 +183,21 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
       using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
       if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized or System.Net.HttpStatusCode.Forbidden)
+      {
+        _logger.LogWarning(
+          "SoccerData authentication failed for endpoint {Endpoint} with status {StatusCode}.",
+          endpoint,
+          (int)response.StatusCode);
         throw new SoccerDataAuthException($"Authentication failed ({(int)response.StatusCode}). Check your API key.");
+      }
 
       if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+      {
+        _logger.LogWarning(
+          "SoccerData endpoint returned 404. Endpoint: {Endpoint}",
+          endpoint);
         throw new SoccerDataNotFoundException($"Endpoint not found (404): {endpoint}");
+      }
 
       response.EnsureSuccessStatusCode();
 
@@ -195,6 +219,12 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
     }
     catch (Exception ex)
     {
+      _logger.LogError(
+        ex,
+        "SoccerData request failed for endpoint {Endpoint}. RequestUri: {RequestUri}, ExceptionType: {ExceptionType}",
+        endpoint,
+        requestUri,
+        ex.GetType().Name);
       throw new SoccerDataException($"Failed to fetch {requestUri.AbsoluteUri}", ex);
     }
   }

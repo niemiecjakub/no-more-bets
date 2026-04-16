@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.SocialMedia.CreateXPost;
@@ -13,6 +14,7 @@ public sealed class XApiClient : IXApiService
 {
   private readonly HttpClient _httpClient;
   private readonly IOptions<XApiOptions> _options;
+  private readonly ILogger<XApiClient> _logger;
   private static readonly JsonSerializerOptions JsonOptions = new()
   {
     PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -20,10 +22,11 @@ public sealed class XApiClient : IXApiService
     PropertyNameCaseInsensitive = true
   };
 
-  public XApiClient(HttpClient httpClient, IOptions<XApiOptions> options)
+  public XApiClient(HttpClient httpClient, IOptions<XApiOptions> options, ILogger<XApiClient> logger)
   {
     _httpClient = httpClient;
     _options = options;
+    _logger = logger;
   }
 
   public async Task<CreateXPostResult> CreateXPostAsync(CreateXPostRequest request, CancellationToken cancellationToken = default)
@@ -51,16 +54,27 @@ public sealed class XApiClient : IXApiService
     {
       var created = JsonSerializer.Deserialize<TweetCreateResponsePayload>(body, JsonOptions);
       if (created?.Data is null || string.IsNullOrEmpty(created.Data.Id))
+      {
+        _logger.LogWarning(
+          "X API returned Created for route {Route} but response tweet data was missing. BodyLength: {BodyLength}",
+          "/2/tweets",
+          body.Length);
         throw new XApiPostsException(502, "X API returned 201 but the response body was missing tweet data.");
+      }
 
       return new CreateXPostResult { Id = created.Data.Id, Text = created.Data.Text ?? "" };
     }
 
+    _logger.LogError(
+      "X API post creation failed for route {Route} with status code {StatusCode}. BodyLength: {BodyLength}",
+      "/2/tweets",
+      (int)response.StatusCode,
+      body.Length);
     var message = TryFormatErrorBody(body);
     throw new XApiPostsException((int)response.StatusCode, message);
   }
 
-  private static string TryFormatErrorBody(string body)
+  private string TryFormatErrorBody(string body)
   {
     if (string.IsNullOrWhiteSpace(body))
       return "X API request failed with an empty error body.";
@@ -79,7 +93,9 @@ public sealed class XApiClient : IXApiService
     }
     catch (JsonException)
     {
-      // fall through
+      _logger.LogWarning(
+        "X API error body could not be parsed as ProblemPayload. Falling back to raw body formatting. BodyLength: {BodyLength}",
+        body.Length);
     }
 
     return body.Length > 500 ? body[..500] + "…" : body;
