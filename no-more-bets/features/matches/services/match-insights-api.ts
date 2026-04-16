@@ -24,13 +24,6 @@ export async function fetchMatchInjuries(matchId: number): Promise<MatchInjuries
   return data;
 }
 
-export async function fetchMatchPreview(matchId: number): Promise<string | null> {
-  const { data } = await axiosInstance.get<string | null>(
-    `/api/MatchInsights/matches/${matchId}/preview`
-  );
-  return data;
-}
-
 export async function fetchMatchAgentResearch(matchId: number): Promise<string | null> {
   const { data } = await axiosInstance.get<string | null>(
     `/api/MatchInsights/matches/${matchId}/agent-research`

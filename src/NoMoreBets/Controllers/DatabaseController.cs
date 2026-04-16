@@ -2,7 +2,6 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Application.Bankroll.GetBankrollDashboard;
-using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
@@ -83,29 +82,6 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
   }
 
   /// <summary>
-  /// Gets the latest daily summary for the specified club.
-  /// </summary>
-  /// <param name="clubId">Club ID.</param>
-  /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>Latest daily summary or 404 if none exists.</returns>
-  [HttpGet("clubs/{clubId:int}/daily-summary")]
-  public async Task<ActionResult<ClubDailySummaryDto>> GetClubDailySummary(
-    int clubId,
-    CancellationToken cancellationToken = default)
-  {
-    var summary = await db.ClubDailySummary
-      .Where(s => s.ClubId == clubId)
-      .Include(s => s.Club)
-      .OrderByDescending(s => s.Date)
-      .FirstOrDefaultAsync(cancellationToken);
-
-    if (summary == null)
-      return NotFound();
-
-    return Ok(new ClubDailySummaryDto(summary.Id, summary.Club.Name, summary.Date, summary.Summary));
-  }
-
-  /// <summary>
   /// Gets all bet slips from the database, newest first.
   /// </summary>
   /// <param name="cancellationToken">Cancellation token.</param>
@@ -117,10 +93,10 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
       .Include(s => s.BetStatusEntity)
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
-          .ThenInclude(m => m!.HomeClub)
+          .ThenInclude(m => m.HomeClub)
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
-          .ThenInclude(m => m!.AwayClub)
+          .ThenInclude(m => m.AwayClub)
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.BetStatusEntity)
       .OrderByDescending(s => s.CreatedAt)
@@ -234,7 +210,7 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
         m.HomeClub.Slug,
         m.AwayClub.Slug,
         m.MatchStatusId,
-        m.MatchStatusEntity!.Name,
+        m.MatchStatusEntity.Name,
         m.HomeGoals,
         m.AwayGoals,
         m.BetclicUrl,
@@ -245,271 +221,6 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
         hasLineupSet.Contains(m.Id),
         hasOddsSet.Contains(m.Id),
         hasHeadToHeadSet.Contains(m.Id)))
-      .ToList();
-
-    return Ok(result);
-  }
-
-  /// <summary>
-  /// Gets upcoming matches from the database.
-  /// </summary>
-  /// <param name="leagueId">Optional league ID to filter by.</param>
-  /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>List of upcoming matches.</returns>
-  [HttpGet("upcoming-games")]
-  public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetUpcomingGames(
-    [FromQuery] int? leagueId,
-    CancellationToken cancellationToken = default)
-  {
-    var query = db.Match
-      .Include(m => m.HomeClub)
-      .Include(m => m.AwayClub)
-      .Include(m => m.MatchStatusEntity)
-      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming);
-
-    if (leagueId.HasValue)
-      query = query.Where(m => m.HomeClub.LeagueId == leagueId.Value);
-
-    var list = await query
-      .OrderBy(m => m.MatchDate)
-      .ToListAsync(cancellationToken);
-
-    var completeMatchIds = await db.Match
-      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
-      .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
-      .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
-      .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
-      .Where(m => db.Head2Head.Any(h =>
-        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
-        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
-      .Select(m => m.Id)
-      .ToListAsync(cancellationToken);
-    var completeSet = completeMatchIds.ToHashSet();
-    var matchIdsWithPreview = await db.MatchPreview
-      .Select(mp => mp.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasPreviewSet = matchIdsWithPreview.ToHashSet();
-
-    var matchIdsWithLineup = await db.Lineup
-      .Select(l => l.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasLineupSet = matchIdsWithLineup.ToHashSet();
-
-    var matchIdsWithOdds = await db.BettingOddsSnapshot
-      .Select(b => b.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasOddsSet = matchIdsWithOdds.ToHashSet();
-
-    var matchIdsWithHeadToHead = await db.Match
-      .Where(m => db.Head2Head.Any(h =>
-        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
-        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
-      .Select(m => m.Id)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasHeadToHeadSet = matchIdsWithHeadToHead.ToHashSet();
-
-    var matchIdsWithAnalysis = await db.MatchAnalysis
-      .Where(a => a.Code != MatchAnalysis.ResearchCode)
-      .Select(a => a.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
-
-    var matchIdsWithResearch = await db.MatchAnalysis
-      .Where(a => a.Code == MatchAnalysis.ResearchCode)
-      .Select(a => a.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasResearchSet = matchIdsWithResearch.ToHashSet();
-
-    var result = list
-      .Select(m => new MatchDto(
-        m.Id,
-        m.MatchDate,
-        m.HomeClubId,
-        m.AwayClubId,
-        m.HomeClub.Name,
-        m.AwayClub.Name,
-        m.HomeClub.Slug,
-        m.AwayClub.Slug,
-        m.MatchStatusId,
-        m.MatchStatusEntity!.Name,
-        m.HomeGoals,
-        m.AwayGoals,
-        m.BetclicUrl,
-        completeSet.Contains(m.Id),
-        hasAnalysisSet.Contains(m.Id),
-        hasResearchSet.Contains(m.Id),
-        hasPreviewSet.Contains(m.Id),
-        hasLineupSet.Contains(m.Id),
-        hasOddsSet.Contains(m.Id),
-        hasHeadToHeadSet.Contains(m.Id)))
-      .ToList();
-
-    return Ok(result);
-  }
-
-  /// <summary>
-  /// Gets matches that have complete data: MatchPreview, Head2Head, Lineup, and at least one BettingOddsSnapshot.
-  /// </summary>
-  /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>List of matches with home/away club names and status.</returns>
-  [HttpGet("matches/complete")]
-  public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetMatchesWithCompleteData(
-    CancellationToken cancellationToken = default)
-  {
-    var matchIdsWithAnalysis = await db.MatchAnalysis
-      .Where(a => a.Code != MatchAnalysis.ResearchCode)
-      .Select(a => a.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
-
-    var matchIdsWithResearch = await db.MatchAnalysis
-      .Where(a => a.Code == MatchAnalysis.ResearchCode)
-      .Select(a => a.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasResearchSet = matchIdsWithResearch.ToHashSet();
-
-    var list = await db.Match
-      .Include(m => m.HomeClub)
-      .Include(m => m.AwayClub)
-      .Include(m => m.MatchStatusEntity)
-      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
-      .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
-      .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
-      .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
-      .Where(m => db.Head2Head.Any(h =>
-        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
-        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
-      .OrderByDescending(m => m.MatchDate)
-      .ToListAsync(cancellationToken);
-
-    var result = list
-      .Select(m => new MatchDto(
-        m.Id,
-        m.MatchDate,
-        m.HomeClubId,
-        m.AwayClubId,
-        m.HomeClub.Name,
-        m.AwayClub.Name,
-        m.HomeClub.Slug,
-        m.AwayClub.Slug,
-        m.MatchStatusId,
-        m.MatchStatusEntity!.Name,
-        m.HomeGoals,
-        m.AwayGoals,
-        m.BetclicUrl,
-        true,
-        hasAnalysisSet.Contains(m.Id),
-        hasResearchSet.Contains(m.Id),
-        true,
-        true,
-        true,
-        true))
-      .ToList();
-    return Ok(result);
-  }
-
-  /// <summary>
-  /// Gets matches that share the same game URL (BetclicUrl). Returns only URLs that have more than one match.
-  /// </summary>
-  /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>List of game URL and the matches that use it.</returns>
-  [HttpGet("matches/duplicated-by-game-url")]
-  public async Task<ActionResult<IReadOnlyList<DuplicatedMatchesByGameUrlDto>>> GetDuplicatedMatchesByGameUrl(
-    CancellationToken cancellationToken = default)
-  {
-    var duplicatedUrls = await db.Match
-      .Where(m => m.BetclicUrl != null)
-      .GroupBy(m => m.BetclicUrl)
-      .Where(g => g.Count() > 1)
-      .Select(g => g.Key!)
-      .ToListAsync(cancellationToken);
-
-    if (duplicatedUrls.Count == 0)
-      return Ok((IReadOnlyList<DuplicatedMatchesByGameUrlDto>)Array.Empty<DuplicatedMatchesByGameUrlDto>());
-
-    var matches = await db.Match
-      .Where(m => m.BetclicUrl != null && duplicatedUrls.Contains(m.BetclicUrl))
-      .Include(m => m.HomeClub)
-      .Include(m => m.AwayClub)
-      .Include(m => m.MatchStatusEntity)
-      .OrderBy(m => m.BetclicUrl)
-      .ThenBy(m => m.MatchDate)
-      .ToListAsync(cancellationToken);
-
-    var matchIdsWithAnalysis = await db.MatchAnalysis
-      .Where(a => a.Code != MatchAnalysis.ResearchCode)
-      .Select(a => a.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
-    var matchIdsWithPreview = await db.MatchPreview
-      .Select(mp => mp.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasPreviewSet = matchIdsWithPreview.ToHashSet();
-
-    var matchIdsWithLineup = await db.Lineup
-      .Select(l => l.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasLineupSet = matchIdsWithLineup.ToHashSet();
-
-    var matchIdsWithOdds = await db.BettingOddsSnapshot
-      .Select(b => b.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasOddsSet = matchIdsWithOdds.ToHashSet();
-
-    var matchIdsWithHeadToHead = await db.Match
-      .Where(m => db.Head2Head.Any(h =>
-        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
-        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
-      .Select(m => m.Id)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasHeadToHeadSet = matchIdsWithHeadToHead.ToHashSet();
-
-    var matchIdsWithResearch = await db.MatchAnalysis
-      .Where(a => a.Code == MatchAnalysis.ResearchCode)
-      .Select(a => a.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasResearchSet = matchIdsWithResearch.ToHashSet();
-
-    var result = matches
-      .GroupBy(m => m.BetclicUrl!)
-      .OrderBy(g => g.Key)
-      .Select(g => new DuplicatedMatchesByGameUrlDto(
-        g.Key,
-        g.Select(m => new MatchDto(
-          m.Id,
-          m.MatchDate,
-          m.HomeClubId,
-          m.AwayClubId,
-          m.HomeClub.Name,
-          m.AwayClub.Name,
-          m.HomeClub.Slug,
-          m.AwayClub.Slug,
-          m.MatchStatusId,
-          m.MatchStatusEntity!.Name,
-          m.HomeGoals,
-          m.AwayGoals,
-          m.BetclicUrl,
-          false,
-          hasAnalysisSet.Contains(m.Id),
-          hasResearchSet.Contains(m.Id),
-          hasPreviewSet.Contains(m.Id),
-          hasLineupSet.Contains(m.Id),
-          hasOddsSet.Contains(m.Id),
-          hasHeadToHeadSet.Contains(m.Id))).ToList()))
       .ToList();
 
     return Ok(result);
@@ -568,103 +279,6 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
       snapshot.League.Name,
       snapshot.League.Slug,
       rows));
-  }
-
-  /// <summary>
-  /// Gets the lineup for the specified match.
-  /// </summary>
-  /// <param name="matchId">Match ID.</param>
-  /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>Match lineup or 404 if not found.</returns>
-  [HttpGet("matches/{matchId:int}/lineup")]
-  public async Task<ActionResult<MatchLineupDto>> GetMatchLineup(
-    int matchId,
-    CancellationToken cancellationToken = default)
-  {
-    var lineup = await db.Lineup
-      .Include(l => l.Match)
-      .ThenInclude(m => m!.HomeClub)
-      .Include(l => l.Match)
-      .ThenInclude(m => m!.AwayClub)
-      .FirstOrDefaultAsync(l => l.MatchId == matchId, cancellationToken);
-
-    if (lineup == null)
-      return NotFound();
-
-    var match = lineup.Match;
-    var dto = new MatchLineupDto(
-      lineup.MatchId,
-      match.HomeClub.Name,
-      match.AwayClub.Name,
-      lineup.UpdatedAt,
-      lineup.GetHomeTeamLineup(),
-      lineup.GetAwayTeamLineup());
-    return Ok(dto);
-  }
-
-  /// <summary>
-  /// Gets the betting odds history for a specific event type on a match, newest first.
-  /// </summary>
-  /// <param name="matchId">Match ID.</param>
-  /// <param name="eventTypeId">Betting event type ID (e.g. 5 = MatchResult, 1 = OverUnderGoals).</param>
-  /// <param name="cancellationToken">Cancellation token.</param>
-  /// <returns>Aggregated odds history with eventTypeId, eventTypeName, and history (title + options with odds time series).</returns>
-  [HttpGet("matches/{matchId:int}/betting-odds-history")]
-  public async Task<ActionResult<BettingOddsHistoryResponseDto>> GetMatchBettingOddsHistory(
-    int matchId,
-    [FromQuery] int eventTypeId,
-    CancellationToken cancellationToken = default)
-  {
-    var snapshots = await db.BettingOddsSnapshot
-      .Where(s => s.MatchId == matchId)
-      .Include(s => s.Rows)
-      .ThenInclude(r => r.EventTypeEntity)
-      .Include(s => s.Rows)
-      .ThenInclude(r => r.EventOptionEntity)
-      .OrderByDescending(s => s.SnapshotTime)
-      .ToListAsync(cancellationToken);
-
-    string? eventTypeName = null;
-    string? historyTitle = null;
-    var optionOrder = new List<string>();
-    var oddsByLabel = new Dictionary<string, List<OddsPointDto>>(StringComparer.Ordinal);
-
-    foreach (var snapshot in snapshots)
-    {
-      foreach (var row in snapshot.Rows.Where(r => r.EventTypeId == eventTypeId))
-      {
-        var outcomeName = row.EventOptionEntity?.Name;
-        if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
-          continue;
-
-        eventTypeName ??= row.EventTypeEntity.Name;
-        historyTitle ??= row.EventTypeEntity.Name;
-
-        if (!optionOrder.Contains(outcomeName))
-          optionOrder.Add(outcomeName);
-
-        if (!oddsByLabel.TryGetValue(outcomeName, out var list))
-        {
-          list = new List<OddsPointDto>();
-          oddsByLabel[outcomeName] = list;
-        }
-
-        list.Add(new OddsPointDto((double)row.Odds.Value, snapshot.SnapshotTime));
-      }
-    }
-
-    var historyOptions = optionOrder
-      .Select(label => new BettingOddsHistoryOptionDto(
-        label,
-        oddsByLabel.TryGetValue(label, out var odds) ? odds : (IReadOnlyList<OddsPointDto>)Array.Empty<OddsPointDto>()))
-      .ToList();
-
-    var response = new BettingOddsHistoryResponseDto(
-      eventTypeId,
-      eventTypeName ?? "",
-      new BettingOddsHistorySectionDto(historyTitle, historyOptions));
-
-    return Ok(response);
   }
 
   /// <summary>
@@ -815,8 +429,6 @@ public record ClubDto(
   string Slug,
   string LeagueSlug);
 
-public record ClubDailySummaryDto(int Id, string ClubName, DateOnly Date, string Summary);
-
 public record MatchDto(
   int Id,
   DateTime MatchDate,
@@ -867,27 +479,6 @@ public record LeagueTableRowDto(
   decimal XgaDiff,
   decimal Xpts,
   decimal XptsDiff);
-
-public record MatchLineupDto(
-  int MatchId,
-  string HomeClubName,
-  string AwayClubName,
-  DateTime UpdatedAt,
-  TeamLineup HomeTeam,
-  TeamLineup AwayTeam);
-
-public record OddsPointDto(double Value, DateTime Date);
-
-public record BettingOddsHistoryOptionDto(string Title, IReadOnlyList<OddsPointDto> Odds);
-
-public record BettingOddsHistorySectionDto(string? Title, IReadOnlyList<BettingOddsHistoryOptionDto> Options);
-
-public record BettingOddsHistoryResponseDto(
-  int EventTypeId,
-  string EventTypeName,
-  BettingOddsHistorySectionDto History);
-
-public record DuplicatedMatchesByGameUrlDto(string GameUrl, IReadOnlyList<MatchDto> Matches);
 
 public record StructuredMatchAnalysisDto(
   string? Context,
