@@ -319,8 +319,10 @@ public sealed class Runner : IAgentPhaseRunner
           3) Enumerate opportunities:
           - Call `GetAvailableMatchesAsync`
 
-          4) For each available match, build a decision picture:
-          - call `GetMatchAnalysisAsync` for the match ID, and then call `GetCurrentOddsAsync` if you want to check current odds for this match.
+          4) For each match you seriously consider (not every listed fixture), build a decision picture:
+          - Call `GetMatchAnalysisAsync` for that match ID.s
+          - Call `GetCurrentOddsAsync` only for matche. Do not fetch odds for matches you already rule out from analysis alone.
+          - If and only if you intend a Handicap or ExactScore selection, call `GetCurrentOddsAsync` again for that match with `includeExoticMarkets` true before placing the slip.
           - If late-breaking information could materially change the thesis versus the stored analysis, use `SearchNewsAsync` and/or `GetWebGroundingAsync` with focused queries.
  
           5) Evaluate each candidate selection:
@@ -344,7 +346,7 @@ public sealed class Runner : IAgentPhaseRunner
           8) Finish with a short summary for a human: how many slips you placed (if any), singles vs parlays, key rationale, and main risks.
 
           ## Quality constraints
-          - Do not skip memory, balance, or match/odds steps for matches you seriously consider
+          - Do not skip memory, balance, analysis, or compact odds for matches you seriously consider
 
           ### Guardrails
           - In your final narrative to the user, do not mention internal process, tool names, or plugin mechanics.

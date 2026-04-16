@@ -98,7 +98,7 @@ internal sealed class EventTypeOddsAccumulator
 }
 
 
-public record CurrentOddsMarket(int EventTypeId, string EventTypeName, string Title, IReadOnlyList<CurrentOddsOption> Options);
+public record CurrentOddsMarket(int EventTypeId, string EventTypeName, IReadOnlyList<CurrentOddsOption> Options);
 
 public record CurrentOddsOption(string Label, double Odds);
 

@@ -67,7 +67,7 @@ public class BettingPluginTests
       .Returns([]);
 
     // Act
-    var result = await _sut.GetCurrentOddsAsync(3, CancellationToken.None);
+    var result = await _sut.GetCurrentOddsAsync(3, cancellationToken: CancellationToken.None);
 
     // Assert
     result.Should().BeEmpty();
@@ -101,7 +101,7 @@ public class BettingPluginTests
       .Returns([snapshot]);
 
     // Act
-    var result = await _sut.GetCurrentOddsAsync(7, CancellationToken.None);
+    var result = await _sut.GetCurrentOddsAsync(7, cancellationToken: CancellationToken.None);
 
     // Assert
     result.Should().ContainSingle();
@@ -109,6 +109,89 @@ public class BettingPluginTests
     market.EventTypeId.Should().Be(5);
     market.Options.Should().ContainSingle()
       .Which.Should().Be(new CurrentOddsOption("Away", 2.1));
+  }
+
+  [Fact]
+  public async Task GetCurrentOddsAsync_GroupsMultipleOutcomesUnderSameEventType()
+  {
+    // Arrange
+    var snapshot = new BettingOddsSnapshot
+    {
+      Rows =
+      [
+        new BettingOddsSnapshotRow
+        {
+          EventTypeId = 5,
+          Odds = 1.5m,
+          EventTypeEntity = new BettingEventTypeEntity { Name = "MatchResult" },
+          EventOptionEntity = new BettingEventOptionEntity { Name = "MatchResult_Home" }
+        },
+        new BettingOddsSnapshotRow
+        {
+          EventTypeId = 5,
+          Odds = 4m,
+          EventTypeEntity = new BettingEventTypeEntity { Name = "MatchResult" },
+          EventOptionEntity = new BettingEventOptionEntity { Name = "MatchResult_Draw" }
+        },
+        new BettingOddsSnapshotRow
+        {
+          EventTypeId = 4,
+          Odds = 1.9m,
+          EventTypeEntity = new BettingEventTypeEntity { Name = "BothTeamsToScore" },
+          EventOptionEntity = new BettingEventOptionEntity { Name = "BothTeamsToScore_Yes" }
+        }
+      ]
+    };
+    _betting.GetBettingOddsSnapshotsForMatchAsync(99, Arg.Any<CancellationToken>())
+      .Returns([snapshot]);
+
+    // Act
+    var result = await _sut.GetCurrentOddsAsync(99, cancellationToken: CancellationToken.None);
+
+    // Assert
+    result.Should().HaveCount(2);
+    result.Should().BeInAscendingOrder(m => m.EventTypeId);
+    var matchResult = result.Should().ContainSingle(m => m.EventTypeId == 5).Subject;
+    matchResult.Options.Should().HaveCount(2)
+      .And.Contain(new CurrentOddsOption("MatchResult_Home", 1.5))
+      .And.Contain(new CurrentOddsOption("MatchResult_Draw", 4));
+  }
+
+  [Fact]
+  public async Task GetCurrentOddsAsync_WhenExoticMarketsExcluded_OmitsHandicap()
+  {
+    // Arrange
+    var snapshot = new BettingOddsSnapshot
+    {
+      Rows =
+      [
+        new BettingOddsSnapshotRow
+        {
+          EventTypeId = 11,
+          Odds = 2m,
+          EventTypeEntity = new BettingEventTypeEntity { Name = "Handicap" },
+          EventOptionEntity = new BettingEventOptionEntity { Name = "Handicap_Home_Plus_1" }
+        },
+        new BettingOddsSnapshotRow
+        {
+          EventTypeId = 5,
+          Odds = 3m,
+          EventTypeEntity = new BettingEventTypeEntity { Name = "MatchResult" },
+          EventOptionEntity = new BettingEventOptionEntity { Name = "MatchResult_Draw" }
+        }
+      ]
+    };
+    _betting.GetBettingOddsSnapshotsForMatchAsync(8, Arg.Any<CancellationToken>())
+      .Returns([snapshot]);
+
+    // Act
+    var compact = await _sut.GetCurrentOddsAsync(8, includeExoticMarkets: false, cancellationToken: CancellationToken.None);
+    var full = await _sut.GetCurrentOddsAsync(8, includeExoticMarkets: true, cancellationToken: CancellationToken.None);
+
+    // Assert
+    compact.Should().ContainSingle().Which.EventTypeId.Should().Be(5);
+    full.Should().HaveCount(2);
+    full.Select(m => m.EventTypeId).Should().BeEquivalentTo([5, 11]);
   }
 
   [Fact]

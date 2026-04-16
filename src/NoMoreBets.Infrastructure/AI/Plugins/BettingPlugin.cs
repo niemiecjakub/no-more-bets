@@ -50,8 +50,12 @@ public class BettingPlugin
   }
 
   [KernelFunction("GetCurrentOdds")]
-  [Description("Returns the current betting odds for the given match.")]
-  public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(int matchId, CancellationToken cancellationToken = default)
+  [Description("Returns current odds for the match. By default returns compact markets (1X2, BTTS, double chance, O/U goals). Set includeExoticMarkets true only when you need handicap or exact-score lines.")]
+  public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(
+    int matchId,
+    [Description("When false (default), omits Handicap and ExactScore markets to save tokens. Set true only if your intended slip uses those markets.")]
+    bool includeExoticMarkets = false,
+    CancellationToken cancellationToken = default)
   {
     var snapshots = await _unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(matchId, cancellationToken).ConfigureAwait(false);
 
@@ -62,14 +66,22 @@ public class BettingPlugin
     }
 
     var latest = snapshots[0];
-    var markets = new List<CurrentOddsMarket>(latest.Rows.Count);
-
+    var byEventType = new Dictionary<int, (string Name, List<CurrentOddsOption> Options)>();
 
     foreach (var row in latest.Rows)
     {
       if (row.EventTypeEntity is null)
       {
         _logger.LogWarning("Skipping odds row with missing event type entity for match {MatchId}. EventTypeId={EventTypeId}", matchId, row.EventTypeId);
+        continue;
+      }
+
+      if (!includeExoticMarkets && row.EventTypeId is not (
+        (int)BettingEventType.OverUnderGoals
+        or (int)BettingEventType.DoubleChance
+        or (int)BettingEventType.BothTeamsToScore
+        or (int)BettingEventType.MatchResult))
+      {
         continue;
       }
 
@@ -80,19 +92,19 @@ public class BettingPlugin
         continue;
       }
 
-      var options = new List<CurrentOddsOption>
+      if (!byEventType.TryGetValue(row.EventTypeId, out var bucket))
       {
-        new(outcomeName, (double)row.Odds.Value)
-      };
+        bucket = (row.EventTypeEntity.Name, new List<CurrentOddsOption>());
+        byEventType[row.EventTypeId] = bucket;
+      }
 
-      markets.Add(new CurrentOddsMarket(
-        row.EventTypeId,
-        row.EventTypeEntity.Name,
-        row.EventTypeEntity.Name,
-        options));
+      bucket.Options.Add(new CurrentOddsOption(outcomeName, (double)row.Odds.Value));
     }
 
-    return markets;
+    return byEventType
+      .OrderBy(kv => kv.Key)
+      .Select(kv => new CurrentOddsMarket(kv.Key, kv.Value.Name, kv.Value.Options))
+      .ToList();
   }
 
   [KernelFunction("GetMatchAnalysis")]

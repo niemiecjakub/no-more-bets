@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
 
@@ -37,10 +36,14 @@ public class AgentBettingPlugin : AgentPluginBase
   }
 
   [KernelFunction]
-  [Description("Returns the current betting odds for the given match.")]
-  public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(int matchId, CancellationToken cancellationToken = default)
+  [Description("Returns current odds for the match. Default is compact (1X2, BTTS, double chance, O/U). Pass includeExoticMarkets true only for handicap or exact-score bets.")]
+  public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(
+    int matchId,
+    [Description("Omit or false for compact odds (saves tokens). True includes Handicap and ExactScore.")]
+    bool includeExoticMarkets = false,
+    CancellationToken cancellationToken = default)
   {
-    return await _bettingPlugin.GetCurrentOddsAsync(matchId, cancellationToken).ConfigureAwait(false);
+    return await _bettingPlugin.GetCurrentOddsAsync(matchId, includeExoticMarkets, cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction]
