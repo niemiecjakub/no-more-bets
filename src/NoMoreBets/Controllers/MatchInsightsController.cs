@@ -10,6 +10,7 @@ using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
+using NoMoreBets.Application.Matches.RunMatchAgentResearch;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Infrastructure.Persistence;
 
@@ -50,6 +51,16 @@ public class MatchInsightsController(
 
     var result = await mediator.Send(new GetMatchAgentResearchQuery(matchId), cancellationToken).ConfigureAwait(false);
     return Ok(result);
+  }
+
+  [HttpPost("matches/{matchId:int}/agent-research/run")]
+  public async Task<ActionResult> RunAgentResearch(int matchId, CancellationToken cancellationToken = default)
+  {
+    if (!await MatchExists(matchId, cancellationToken).ConfigureAwait(false))
+      return NotFound();
+
+    await mediator.Send(new RunMatchAgentResearchCommand(matchId), cancellationToken).ConfigureAwait(false);
+    return Accepted();
   }
 
   [HttpGet("matches/{matchId:int}/recent-games")]
