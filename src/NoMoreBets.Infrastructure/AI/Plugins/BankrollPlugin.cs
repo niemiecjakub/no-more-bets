@@ -1,5 +1,7 @@
 using System.ComponentModel;
 using MediatR;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
@@ -10,11 +12,13 @@ public class BankrollPlugin
 {
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
+  private readonly ILogger<BankrollPlugin> _logger;
 
-  public BankrollPlugin(IUnitOfWork unitOfWork, IMediator mediator)
+  public BankrollPlugin(IUnitOfWork unitOfWork, IMediator mediator, ILogger<BankrollPlugin>? logger = null)
   {
     _unitOfWork = unitOfWork;
     _mediator = mediator;
+    _logger = logger ?? NullLogger<BankrollPlugin>.Instance;
   }
 
   [KernelFunction("GetCurrentBalance")]

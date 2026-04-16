@@ -1,9 +1,11 @@
 using System.ComponentModel;
+using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.GetBetSlips;
+using NoMoreBets.Application.Matches.GetMatchAgentResearch;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
@@ -11,17 +13,20 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 public class AgentBettingPlugin : AgentPluginBase
 {
   private readonly BettingPlugin _bettingPlugin;
-  private readonly IUnitOfWork _unitOfWork;
+  private readonly IMediator _mediator;
+  private readonly ILogger<AgentBettingPlugin> _logger;
 
   public AgentBettingPlugin(
     BettingPlugin bettingPlugin,
-    IUnitOfWork unitOfWork,
+    IMediator mediator,
     MemoriesPlugin memoriesPlugin,
-    InternetSearchPlugin searchPlugin)
+    InternetSearchPlugin searchPlugin,
+    ILogger<AgentBettingPlugin> logger)
     : base(memoriesPlugin, searchPlugin)
   {
     _bettingPlugin = bettingPlugin;
-    _unitOfWork = unitOfWork;
+    _mediator = mediator;
+    _logger = logger;
   }
 
   [KernelFunction]
@@ -42,10 +47,17 @@ public class AgentBettingPlugin : AgentPluginBase
   [Description("Returns the latest research analysis content for the given match as plain text.")]
   public async Task<string?> GetMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
   {
-    var analysis = await _unitOfWork.Matches
-      .GetLatestMatchAnalysisByCodeAsync(matchId, MatchAnalysis.ResearchCode, cancellationToken)
+    var analysis = await _mediator
+      .Send(new GetMatchAgentResearchQuery(matchId), cancellationToken)
       .ConfigureAwait(false);
-    return analysis?.Content;
+
+    if (analysis is null)
+    {
+      _logger.LogError("No research analysis found for match {MatchId}.", matchId);
+      return "Match analysis is not available.";
+    }
+
+    return analysis;
   }
 
   [KernelFunction]

@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Enums;
 
@@ -6,14 +7,17 @@ namespace NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 
 public record GetMatchBettingOddsHistoryQuery(int MatchId) : IRequest<IReadOnlyList<MarketPriceHistory>?>;
 
-public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetMatchBettingOddsHistoryQuery, IReadOnlyList<MarketPriceHistory>?>
+public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork, ILogger<GetMatchBettingOddsHistoryHandler>? logger = null) : IRequestHandler<GetMatchBettingOddsHistoryQuery, IReadOnlyList<MarketPriceHistory>?>
 {
   public async Task<IReadOnlyList<MarketPriceHistory>?> Handle(GetMatchBettingOddsHistoryQuery request, CancellationToken cancellationToken)
   {
     var snapshots = await unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
 
     if (snapshots.Count == 0)
+    {
+      logger?.LogWarning("No betting odds snapshots found for match {MatchId}.", request.MatchId);
       return null;
+    }
 
     var match = await unitOfWork.Matches.GetMatchByIdAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
     var homeName = match?.HomeClub?.Name;
@@ -25,6 +29,12 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
     {
       foreach (var row in snapshot.Rows)
       {
+        if (row.EventTypeEntity is null)
+        {
+          logger?.LogWarning("Skipping odds history row with missing event type entity. MatchId={MatchId}, EventTypeId={EventTypeId}", request.MatchId, row.EventTypeId);
+          continue;
+        }
+
         if (!byEventType.TryGetValue(row.EventTypeId, out var acc))
         {
           acc = new EventTypeOddsAccumulator { EventTypeName = row.EventTypeEntity.Name };
@@ -33,7 +43,10 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork) : 
 
         var outcomeName = row.EventOptionEntity?.Name;
         if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
+        {
+          logger?.LogWarning("Skipping odds history row with incomplete option data. MatchId={MatchId}, EventTypeId={EventTypeId}", request.MatchId, row.EventTypeId);
           continue;
+        }
 
         if (!acc.OptionOrder.Contains(outcomeName))
           acc.OptionOrder.Add(outcomeName);

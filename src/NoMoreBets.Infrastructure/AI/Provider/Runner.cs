@@ -361,7 +361,7 @@ public sealed class Runner : IAgentPhaseRunner
       kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentBettingPlugin());
       kernel.Data.Add("phase", "Betting");
     };
- 
+
     var result = await ExecuteAgentPhase(
       AgentSessionPhase.Betting,
       prompt,
@@ -407,9 +407,9 @@ public sealed class Runner : IAgentPhaseRunner
 
           If you want to publish a post on X, call `CreateXPost` with the post body.
 
-          The post shouldn't be raw data but rather you sharing your insight, opinion, or a relatable observation.
+          The post shouldn't be raw data but rather you sharing your insight, opinion, or a relatable observation. You may treat it as your personal blog.
           Make sure to keep the post engaging.
-          Remember to keep your personality and style 
+          Remember to keep your personality and style. 
           """;
         var followUpMessages = await CollectInvocationMessagesAsync(
           config,

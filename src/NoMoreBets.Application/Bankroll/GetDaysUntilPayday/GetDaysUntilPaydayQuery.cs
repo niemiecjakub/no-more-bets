@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 
 namespace NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 
@@ -7,7 +8,7 @@ public record GetDaysUntilPaydayQuery : IRequest<int>;
 /// <summary>
 /// Paydays are the last calendar day of each month (UTC). Returns 0 on that day; otherwise whole days until then.
 /// </summary>
-public sealed class GetDaysUntilPaydayHandler : IRequestHandler<GetDaysUntilPaydayQuery, int>
+public sealed class GetDaysUntilPaydayHandler(ILogger<GetDaysUntilPaydayHandler>? logger = null) : IRequestHandler<GetDaysUntilPaydayQuery, int>
 {
   public Task<int> Handle(GetDaysUntilPaydayQuery request, CancellationToken cancellationToken)
   {

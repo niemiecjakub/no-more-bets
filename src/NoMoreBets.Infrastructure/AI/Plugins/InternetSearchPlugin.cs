@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
@@ -10,10 +12,12 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 public class InternetSearchPlugin
 {
   private readonly ISearchService _searchService;
+  private readonly ILogger<InternetSearchPlugin> _logger;
 
-  public InternetSearchPlugin(ISearchService searchService)
+  public InternetSearchPlugin(ISearchService searchService, ILogger<InternetSearchPlugin>? logger = null)
   {
     _searchService = searchService;
+    _logger = logger ?? NullLogger<InternetSearchPlugin>.Instance;
   }
 
   [KernelFunction("SearchNews")]
@@ -25,20 +29,33 @@ public class InternetSearchPlugin
     string? freshness = null,
     CancellationToken cancellationToken = default)
   {
-    var src = await _searchService.SearchNewsAsync(query, new SearchNewsOptions()
+    try
     {
-      Count = 5,
-      Freshness = freshness,
-      Country = "GB",
-      ExtraSnippets = true
-    }, cancellationToken).ConfigureAwait(false);
-    return src.Items
-      .OrderByDescending(item => item.PublishedAt ?? DateTimeOffset.MinValue)
-      .Select(item => new SearchNewsArticleDto(
-        Title: item.Title,
-        Source: item.Source,
-        Snippets: item.ExtraSnippets.Count > 0 ? [item.Snippet, .. item.ExtraSnippets] : [item.Snippet],
-        Age: item.Age)).ToList();
+      var src = await _searchService.SearchNewsAsync(query, new SearchNewsOptions()
+      {
+        Count = 5,
+        Freshness = freshness,
+        Country = "GB",
+        ExtraSnippets = true
+      }, cancellationToken).ConfigureAwait(false);
+      if (src.Items.Count == 0)
+      {
+        _logger.LogWarning("SearchNews returned no items for query {Query} and freshness {Freshness}.", query, freshness);
+      }
+
+      return src.Items
+        .OrderByDescending(item => item.PublishedAt ?? DateTimeOffset.MinValue)
+        .Select(item => new SearchNewsArticleDto(
+          Title: item.Title,
+          Source: item.Source,
+          Snippets: item.ExtraSnippets.Count > 0 ? [item.Snippet, .. item.ExtraSnippets] : [item.Snippet],
+          Age: item.Age)).ToList();
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "SearchNews failed for query {Query}.", query);
+      throw;
+    }
   }
 
   [KernelFunction("GetWebGrounding")]
@@ -50,15 +67,28 @@ public class InternetSearchPlugin
     string? freshness = null,
     CancellationToken cancellationToken = default)
   {
-    var src = await _searchService.SearchLlmContextAsync(query, new SearchLlmContextOptions()
+    try
     {
-      Count = 5,
-      Freshness = freshness,
-    }, cancellationToken).ConfigureAwait(false);
-    return src.Items.Select(item => new SearchLlmContextItemDto(
-        Snippets: item.Snippets,
-        Title: item.Title,
-        Hostname: item.Hostname,
-      Age: item.Age)).ToList();
+      var src = await _searchService.SearchLlmContextAsync(query, new SearchLlmContextOptions()
+      {
+        Count = 5,
+        Freshness = freshness,
+      }, cancellationToken).ConfigureAwait(false);
+      if (src.Items.Count == 0)
+      {
+        _logger.LogWarning("GetWebGrounding returned no items for query {Query} and freshness {Freshness}.", query, freshness);
+      }
+
+      return src.Items.Select(item => new SearchLlmContextItemDto(
+          Snippets: item.Snippets,
+          Title: item.Title,
+          Hostname: item.Hostname,
+        Age: item.Age)).ToList();
+    }
+    catch (Exception ex)
+    {
+      _logger.LogError(ex, "GetWebGrounding failed for query {Query}.", query);
+      throw;
+    }
   }
 }

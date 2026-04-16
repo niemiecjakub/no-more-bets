@@ -1,4 +1,6 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 using NoMoreBets.Application.Clubs.GetClubDailySummary;
@@ -13,6 +15,7 @@ using NoMoreBets.Application.Matches.GetMatchLineups;
 using NoMoreBets.Application.Matches.GetMatchPreview;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Domain.Matches;
 using System.ComponentModel;
 using AvailableMatch = NoMoreBets.Infrastructure.AI.Plugins.Models.AvailableMatch;
 
@@ -22,11 +25,13 @@ public class MatchPlugin
 {
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
+  private readonly ILogger<MatchPlugin> _logger;
 
-  public MatchPlugin(IUnitOfWork unitOfWork, IMediator mediator)
+  public MatchPlugin(IUnitOfWork unitOfWork, IMediator mediator, ILogger<MatchPlugin>? logger = null)
   {
     _unitOfWork = unitOfWork;
     _mediator = mediator;
+    _logger = logger ?? NullLogger<MatchPlugin>.Instance;
   }
 
   [KernelFunction("GetLineups")]
@@ -83,8 +88,12 @@ public class MatchPlugin
   public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsync(int matchId, CancellationToken cancellationToken = default)
   {
     var match = await _unitOfWork.Matches.GetMatchByIdAsync(matchId, cancellationToken).ConfigureAwait(false);
+
     if (match?.Stage?.Season?.League is not { } league)
+    {
+      _logger.LogWarning("Cannot load league table because league context is missing for match {MatchId}.", matchId);
       return null;
+    }
 
     return await _mediator.Send(new GetLeagueTableQuery(league.Id), cancellationToken).ConfigureAwait(false);
   }
@@ -108,6 +117,7 @@ public class MatchPlugin
   public async Task<IReadOnlyList<AvailableMatch>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default)
   {
     var matches = await _unitOfWork.Matches.GetUpcomingMatchesAsync(cancellationToken).ConfigureAwait(false);
+
     return matches
       .Select(m => new AvailableMatch(m.Id, m.HomeClub.Name, m.AwayClub.Name, m.MatchDate))
       .ToList();

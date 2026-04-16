@@ -11,8 +11,12 @@ public sealed class GetMatchesAvailableForBettingHandler(IUnitOfWork unitOfWork)
 {
   public async Task<IReadOnlyList<Match>> Handle(
     GetMatchesAvailableForBettingQuery _,
-    CancellationToken cancellationToken) =>
-    await unitOfWork.Betting
+    CancellationToken cancellationToken)
+  {
+    var matches = await unitOfWork.Betting
       .GetMatchesAvailableForBettingAsync(cancellationToken)
       .ConfigureAwait(false);
+
+    return matches;
+  }
 }

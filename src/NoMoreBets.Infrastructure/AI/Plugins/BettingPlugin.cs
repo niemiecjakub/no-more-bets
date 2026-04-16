@@ -2,6 +2,8 @@ using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MediatR;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
@@ -25,12 +27,14 @@ public class BettingPlugin
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
   private readonly IAgentSessionContext _agentSessionContext;
+  private readonly ILogger<BettingPlugin> _logger;
 
-  public BettingPlugin(IUnitOfWork unitOfWork, IMediator mediator, IAgentSessionContext agentSessionContext)
+  public BettingPlugin(IUnitOfWork unitOfWork, IMediator mediator, IAgentSessionContext agentSessionContext, ILogger<BettingPlugin>? logger = null)
   {
     _unitOfWork = unitOfWork;
     _mediator = mediator;
     _agentSessionContext = agentSessionContext;
+    _logger = logger ?? NullLogger<BettingPlugin>.Instance;
   }
 
   [KernelFunction("GetAvailableMatches")]
@@ -50,8 +54,10 @@ public class BettingPlugin
   public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(int matchId, CancellationToken cancellationToken = default)
   {
     var snapshots = await _unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(matchId, cancellationToken).ConfigureAwait(false);
+
     if (snapshots.Count == 0)
     {
+      _logger.LogWarning("No current odds snapshots found for match {MatchId}.", matchId);
       return Array.Empty<CurrentOddsMarket>();
     }
 
@@ -61,9 +67,18 @@ public class BettingPlugin
 
     foreach (var row in latest.Rows)
     {
+      if (row.EventTypeEntity is null)
+      {
+        _logger.LogWarning("Skipping odds row with missing event type entity for match {MatchId}. EventTypeId={EventTypeId}", matchId, row.EventTypeId);
+        continue;
+      }
+
       var outcomeName = row.EventOptionEntity?.Name;
       if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
+      {
+        _logger.LogWarning("Skipping odds row with incomplete data for match {MatchId}. EventTypeId={EventTypeId}", matchId, row.EventTypeId);
         continue;
+      }
 
       var options = new List<CurrentOddsOption>
       {
@@ -98,7 +113,10 @@ public class BettingPlugin
     CancellationToken cancellationToken = default)
   {
     if (stakeAmount <= 0m)
+    {
+      _logger.LogWarning("Invalid stake amount {StakeAmount} while placing a bet slip.", stakeAmount);
       throw new ArgumentException("stakeAmount must be greater than zero.", nameof(stakeAmount));
+    }
 
     List<BetSelectionRecord>? betSelections;
     try
@@ -108,22 +126,37 @@ public class BettingPlugin
     }
     catch (JsonException ex)
     {
+      _logger.LogError(ex, "Invalid bet selections JSON received while placing bet slip.");
       throw new ArgumentException("Invalid betSelections JSON. Expected object with betSelections array of { matchId (int), eventType (enum name), eventOption (BettingEventOption enum name) }.", nameof(betSelectionsJson), ex);
     }
 
     if (betSelections is null || betSelections.Count == 0)
+    {
+      _logger.LogError("No bet selections provided while placing a bet slip.");
       throw new ArgumentException("At least one selection is required to place a bet slip.", nameof(betSelectionsJson));
+    }
 
     var balance = await _unitOfWork.Bankroll.GetCurrentBalanceAsync(cancellationToken).ConfigureAwait(false);
+
     if (stakeAmount > balance)
+    {
+      _logger.LogError("Stake amount {StakeAmount} exceeds current balance {Balance}.", stakeAmount, balance);
       throw new ArgumentException($"stakeAmount ({stakeAmount}) cannot exceed the current bankroll balance ({balance}).", nameof(stakeAmount));
+    }
 
     var selectionOdds = new List<decimal>(betSelections.Count);
     foreach (var record in betSelections)
     {
       var odds = await _unitOfWork.Betting.GetCurrentOddsForSelectionAsync(record.MatchId, record.EventType, record.EventOption, cancellationToken).ConfigureAwait(false);
       if (odds is null)
+      {
+        _logger.LogWarning(
+          "Current odds not found while placing bet slip. MatchId={MatchId}, EventType={EventType}, EventOption={EventOption}",
+          record.MatchId,
+          record.EventType,
+          record.EventOption);
         throw new InvalidOperationException($"Current odds not found for match {record.MatchId}, event {record.EventType}, option {record.EventOption}.");
+      }
       selectionOdds.Add(odds.Value);
     }
 
@@ -175,7 +208,10 @@ public class BettingPlugin
     CancellationToken cancellationToken = default)
   {
     if (lastDays <= 0)
+    {
+      _logger.LogWarning("Invalid lastDays value {LastDays} for recent non-pending bet slips query.", lastDays);
       throw new ArgumentException("lastDays must be greater than zero.", nameof(lastDays));
+    }
 
     return await _mediator
       .Send(new GetNonPendingBetSlipsRecentQuery(lastDays), cancellationToken)
@@ -187,7 +223,10 @@ public class BettingPlugin
     CancellationToken cancellationToken = default)
   {
     if (lastDays <= 0)
+    {
+      _logger.LogWarning("Invalid lastDays value {LastDays} for updated non-pending bet slips query.", lastDays);
       throw new ArgumentException("lastDays must be greater than zero.", nameof(lastDays));
+    }
 
     var slips = await _unitOfWork.Betting
       .GetNonPendingBetSlipsUpdatedInLastDaysAsync(lastDays, cancellationToken)

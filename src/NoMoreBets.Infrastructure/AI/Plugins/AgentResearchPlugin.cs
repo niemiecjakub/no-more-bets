@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
@@ -15,18 +16,21 @@ public class AgentResearchPlugin : AgentPluginBase
   private readonly MatchPlugin _matchPlugin;
   private readonly IUnitOfWork _unitOfWork;
   private readonly IAgentSessionContext _agentSessionContext;
+  private readonly ILogger<AgentResearchPlugin> _logger;
 
   public AgentResearchPlugin(
     MatchPlugin matchPlugin,
     InternetSearchPlugin searchPlugin,
     MemoriesPlugin memoriesPlugin,
     IUnitOfWork unitOfWork,
-    IAgentSessionContext agentSessionContext)
+    IAgentSessionContext agentSessionContext,
+    ILogger<AgentResearchPlugin> logger)
     : base(memoriesPlugin, searchPlugin)
   {
     _matchPlugin = matchPlugin;
     _unitOfWork = unitOfWork;
     _agentSessionContext = agentSessionContext;
+    _logger = logger;
   }
 
   [KernelFunction]
@@ -115,6 +119,11 @@ public class AgentResearchPlugin : AgentPluginBase
     string content,
     CancellationToken cancellationToken = default)
   {
+    if (string.IsNullOrWhiteSpace(content))
+    {
+      _logger.LogError("Saving empty research content for match {MatchId}.", matchId);
+    }
+
     var normalizedContent = SerializeResearchText(content);
 
     var analysis = new MatchAnalysis

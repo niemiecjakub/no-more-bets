@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Memories;
@@ -8,10 +10,12 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 public class MemoriesPlugin
 {
   private readonly IUnitOfWork _unitOfWork;
+  private readonly ILogger<MemoriesPlugin> _logger;
 
-  public MemoriesPlugin(IUnitOfWork unitOfWork)
+  public MemoriesPlugin(IUnitOfWork unitOfWork, ILogger<MemoriesPlugin>? logger = null)
   {
     _unitOfWork = unitOfWork;
+    _logger = logger ?? NullLogger<MemoriesPlugin>.Instance;
   }
 
   private static string NormalizeName(string filename)
@@ -40,6 +44,7 @@ public class MemoriesPlugin
     var memory = await _unitOfWork.Memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
     if (memory == null)
     {
+      _logger.LogWarning("Memory record {MemoryName} not found for read operation.", normalizedName);
       throw new KeyNotFoundException($"Memory '{normalizedName}' does not exist.");
     }
 
@@ -84,6 +89,7 @@ public class MemoriesPlugin
     var memory = await _unitOfWork.Memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
     if (memory == null)
     {
+      _logger.LogWarning("Memory record {MemoryName} not found for append operation.", normalizedName);
       throw new KeyNotFoundException($"Memory '{normalizedName}' does not exist.");
     }
 
@@ -109,6 +115,7 @@ public class MemoriesPlugin
     var memory = await _unitOfWork.Memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
     if (memory == null)
     {
+      _logger.LogWarning("Memory record {MemoryName} not found for replace operation.", normalizedName);
       throw new KeyNotFoundException($"Memory '{normalizedName}' does not exist.");
     }
 

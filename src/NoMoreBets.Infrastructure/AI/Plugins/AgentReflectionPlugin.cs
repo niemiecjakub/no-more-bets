@@ -1,24 +1,29 @@
 using System.ComponentModel;
+using MediatR;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.GetBetSlips;
+using NoMoreBets.Application.Matches.GetMatchAgentResearch;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Domain.Matches;
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
 public class AgentReflectionPlugin : AgentPluginBase
 {
   private readonly BettingPlugin _bettingPlugin;
-  private readonly IUnitOfWork _unitOfWork;
+  private readonly IMediator _mediator;
+  private readonly ILogger<AgentReflectionPlugin> _logger;
 
   public AgentReflectionPlugin(
     BettingPlugin bettingPlugin,
     MemoriesPlugin memoriesPlugin,
     InternetSearchPlugin searchPlugin,
-    IUnitOfWork unitOfWork)
+    IMediator mediator,
+    ILogger<AgentReflectionPlugin> logger)
     : base(memoriesPlugin, searchPlugin)
   {
     _bettingPlugin = bettingPlugin;
-    _unitOfWork = unitOfWork;
+    _mediator = mediator;
+    _logger = logger;
   }
 
   [KernelFunction]
@@ -33,9 +38,16 @@ public class AgentReflectionPlugin : AgentPluginBase
   [Description("Returns the latest stored research analysis text for the match (same source used before betting). Use to compare pre-match thesis to how the bet resolved.")]
   public async Task<string?> GetMatchResearchTextAsync(int matchId, CancellationToken cancellationToken = default)
   {
-    var analysis = await _unitOfWork.Matches
-      .GetLatestMatchAnalysisByCodeAsync(matchId, MatchAnalysis.ResearchCode, cancellationToken)
+    var analysis = await _mediator
+      .Send(new GetMatchAgentResearchQuery(matchId), cancellationToken)
       .ConfigureAwait(false);
-    return analysis?.Content;
+
+    if (analysis is null)
+    {
+      _logger.LogError("No reflection research text found for match {MatchId}.", matchId);
+      return "Match analysis is not available.";
+    }
+
+    return analysis;
   }
 }
