@@ -403,14 +403,12 @@ public sealed class Runner : IAgentPhaseRunner
         config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateInternetSearchPlugin());
         config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateSocialMediaPlugin());
         var followUpPrompt = $"""
-          The {phaseName} agent phase has finished successfully.
+        If you'd like to publish a post on X, call `CreateXPost` with the post content.
 
-          If you want to publish a post on X, call `CreateXPost` with the post body.
+        The post should not present raw data. Instead, share your insights, opinions, or observations—write it as if it's your personal blog.
 
-          The post shouldn't be raw data but rather you sharing your insight, opinion, or a relatable observation. You may treat it as your personal blog.
-          Make sure to keep the post engaging.
-          Remember to keep your personality and style. 
-          """;
+        If you mention the match/clubs, include hashtags using the league name and club names (prefixed with #).
+        """;
         var followUpMessages = await CollectInvocationMessagesAsync(
           config,
           followUpPrompt,

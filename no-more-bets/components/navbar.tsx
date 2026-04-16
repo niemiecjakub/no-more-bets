@@ -15,7 +15,7 @@ export function Navbar() {
   const pathname = usePathname();
 
   return (
-    <nav className="border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
+    <nav className="sticky top-0 z-50 border-b border-zinc-200 bg-white/90 backdrop-blur supports-backdrop-filter:bg-white/75 dark:border-zinc-800 dark:bg-zinc-950/90 dark:supports-backdrop-filter:bg-zinc-950/75">
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="flex items-center justify-between gap-3 py-3">
           <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto">
