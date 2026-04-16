@@ -72,9 +72,15 @@ public sealed class Runner : IAgentPhaseRunner
           - Fixture: {match.HomeClub.Name} (ID: {match.HomeClub.Id}) vs {match.AwayClub.Name} (ID: {match.AwayClub.Id})
           - Kickoff (UTC): {match.MatchDate:yyyy-MM-dd HH:mm}
           
+          Important context:
+          You are NOT reacting directly to live betting market movements or line shifts during this research phase.
+          Because of this, you should assume you do NOT have a timing-based market edge (no late line movement advantage, no sharp market reaction signals).
+          Your edge must come only from structural, statistical, tactical, or contextual analysis—not from market positioning or timing.
+          
           Goal:
           Create complete, decision-oriented research for this specific match that you will later use in your own betting phase.
-          This is your personal prep work: your future self in betting phase should be able to read this and decide whether to bet or pass.
+          This is your personal prep work: your future self in the betting phase should be able to read this and decide whether to bet or pass.
+          
           You must use the available AgentResearchPlugin functions explicitly.
 
           ## Required workflow (execute in order)
@@ -118,7 +124,7 @@ public sealed class Runner : IAgentPhaseRunner
           8) Finish with short summary of key insights and betting implications.
 
           ## Quality constraints
-          - Be analytical, skeptical, and evidence-driven
+          - Be analytical and evidence-driven
           - Cross-check important claims
           - If data is missing, state it explicitly and continue with best-effort reasoning
           - Do not skip required steps
@@ -290,13 +296,13 @@ public sealed class Runner : IAgentPhaseRunner
           Current account balance: {balanceText}
           Days until payday: {daysUntilPayday}
 
-          You are executing the betting phase for the portfolio: review every match that is open for betting, align with stored strategy and bankroll rules, and place bets only when the edge justifies it.
+          You are executing the betting phase for the portfolio: review every match that is open for betting, align with stored strategy and bankroll rules.
           You may place zero bet slips (pass entirely), exactly one bet slip, or more than one bet slip in this run, as strategy and bankroll allow.
           Each call to `PlaceBetSlip` is one separate bet (one slip) with its own stake. That slip is either a single (one selection, one event market) or a parlay (multiple selections combined on the same slip, across one or more matches). The `betSelections` JSON array must contain at least one selection per slip: one element means a single bet; multiple elements mean a parlay on that slip.
           You must use the available plugin functions explicitly.
 
           Goal:
-          Select and execute only high-conviction, strategy-aligned bets. When edge, confidence, or alignment is weak, pass or place fewer slips rather than forcing marginal bets.
+          Place value-based, strategy-aligned bets while maintaining sensible bankroll protection, but avoid overly strict filtering that prevents reasonable betting activity.
 
           ## Memory and research at any time
           You are not limited to the workflow steps below for memory or search. Whenever it helps your judgment, you may read or write any memory using `GetMemoryRecordsAsync`, `ReadMemoryAsync`, `WriteMemoryAsync`, `AppendMemoryAsync`, and `ReplaceMemoryAsync`. You may also call `SearchNewsAsync` and `GetWebGroundingAsync` (or any other search or grounding tools available to you) for whatever information you need, with queries you choose—not only for late-breaking match news.
