@@ -65,7 +65,7 @@ public class AgentResearchPlugin : AgentPluginBase
   }
 
   [KernelFunction]
-  [Description("Retrieves the last 5 match results for a specific club.")]
+  [Description("Retrieves the results from the last 5 league matches for a specific club.")]
   public async Task<IReadOnlyList<NoMoreBets.Application.Clubs.GetClubRecentGames.RecentMatch>?> GetClubRecentGamesAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetClubRecentGamesAsync(clubId, cancellationToken).ConfigureAwait(false);

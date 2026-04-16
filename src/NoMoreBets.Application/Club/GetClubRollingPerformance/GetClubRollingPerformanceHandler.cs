@@ -15,7 +15,12 @@ public sealed class GetClubRollingPerformanceHandler(IUnitOfWork unitOfWork) : I
 
     var matches = await unitOfWork.Matches.GetRecentMatchesForClubAsync(request.ClubId, 5, request.Date, cancellationToken).ConfigureAwait(false);
     if (matches.Count == 0)
-      return new TeamPerformanceResult(TopPlayers: Array.Empty<PlayerRecentRatings>(), RecentTeamRatings: Array.Empty<double>(), AvgTeamRating: 0, Formations: Array.Empty<string>());
+      return new TeamPerformanceResult(
+        TopPlayers: Array.Empty<PlayerRecentRatings>(),
+        RecentTeamRatings: Array.Empty<double>(),
+        AvgTeamRating: 0,
+        Formations: Array.Empty<string>(),
+        Matches: Array.Empty<TeamPerformanceMatchStats>());
 
     var matchesByDateAsc = matches.OrderBy(m => m.MatchDate).ToList();
     var playerToRatingsAndDates = new Dictionary<string, List<(double Rating, DateTime MatchDate)>>(StringComparer.Ordinal);
@@ -72,6 +77,11 @@ public sealed class GetClubRollingPerformanceHandler(IUnitOfWork unitOfWork) : I
       .OrderByDescending(p => p.AvgRating)
       .ToList();
 
-    return new TeamPerformanceResult(TopPlayers: topPlayers, RecentTeamRatings: recentTeamRatings, AvgTeamRating: avgTeamRating, Formations: formations);
+    return new TeamPerformanceResult(
+      TopPlayers: topPlayers,
+      RecentTeamRatings: recentTeamRatings,
+      AvgTeamRating: avgTeamRating,
+      Formations: formations,
+      Matches: Array.Empty<TeamPerformanceMatchStats>());
   }
 }

@@ -1,9 +1,25 @@
 import axiosInstance from "../../../lib/axios";
-import { MATCH_STATUS, type MatchAnalysisPageDto, type MatchListItem } from "../interfaces";
+import { MATCH_STATUS, type MatchAnalysisPageDto, type MatchDetailsSummary, type MatchListItem } from "../interfaces";
 
 function optionalInt(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   return null;
+}
+
+function optionalString(v: unknown): string | null {
+  if (typeof v === "string") return v;
+  return null;
+}
+
+function normalizeMatchDetails(raw: unknown): MatchDetailsSummary | null {
+  if (!raw || typeof raw !== "object") return null;
+  const details = raw as Record<string, unknown>;
+  return {
+    fotmobUrl: optionalString(details.fotmobUrl) ?? optionalString(details.FotmobUrl),
+    fotmobDetailsJson:
+      optionalString(details.fotmobDetailsJson) ?? optionalString(details.FotmobDetailsJson),
+    fotmobReview: optionalString(details.fotmobReview) ?? optionalString(details.FotmobReview),
+  };
 }
 
 function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
@@ -32,6 +48,10 @@ function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
     optionalInt(item.researchAgentSessionId) ??
     optionalInt(r.researchAgentSessionId) ??
     optionalInt(r.ResearchAgentSessionId);
+  const matchDetails =
+    normalizeMatchDetails(item.matchDetails) ??
+    normalizeMatchDetails(r.matchDetails) ??
+    normalizeMatchDetails(r.MatchDetails);
   return {
     ...item,
     homeClubSlug: homeSlug,
@@ -40,6 +60,7 @@ function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
     homeGoals,
     awayGoals,
     researchAgentSessionId: researchAgentSessionId ?? null,
+    matchDetails,
   };
 }
 

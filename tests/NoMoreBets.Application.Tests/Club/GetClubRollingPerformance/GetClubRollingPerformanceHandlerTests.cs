@@ -31,8 +31,22 @@ public class GetClubRollingPerformanceHandlerTests
     const int clubId = 5;
     _clubRepository.GetByIdAsync(clubId, Arg.Any<CancellationToken>()).Returns(new ClubEntity { Id = clubId, Name = "Club A" });
 
-    var older = new Match { Id = 100, HomeClubId = clubId, MatchDate = DateTime.UtcNow.AddDays(-4) };
-    var newer = new Match { Id = 101, HomeClubId = clubId, MatchDate = DateTime.UtcNow.AddDays(-1) };
+    var older = new Match
+    {
+      Id = 100,
+      HomeClubId = clubId,
+      AwayClubId = 9,
+      AwayClub = new ClubEntity { Id = 9, Name = "Opp Older" },
+      MatchDate = DateTime.UtcNow.AddDays(-4)
+    };
+    var newer = new Match
+    {
+      Id = 101,
+      HomeClubId = clubId,
+      AwayClubId = 10,
+      AwayClub = new ClubEntity { Id = 10, Name = "Opp Newer" },
+      MatchDate = DateTime.UtcNow.AddDays(-1)
+    };
     _matchRepository.GetRecentMatchesForClubAsync(clubId, 5, null, Arg.Any<CancellationToken>())
       .Returns(new List<Match> { newer, older });
 
@@ -52,6 +66,13 @@ public class GetClubRollingPerformanceHandlerTests
     result.TopPlayers[0].AvgRating.Should().Be(8.5);
     result.TopPlayers[1].Player.Should().Be("Low");
     result.TopPlayers[1].AvgRating.Should().Be(6.5);
+    result.Matches.Should().HaveCount(2);
+    result.Matches[0].MatchId.Should().Be(older.Id);
+    result.Matches[0].Opponent.Should().Be("Opp Older");
+    result.Matches[0].TeamRating.Should().Be(6.5);
+    result.Matches[0].PlayerRatings.Should().ContainSingle(p => p.Player == "High" && p.Rating == 8.0);
+    result.Matches[1].MatchId.Should().Be(newer.Id);
+    result.Matches[1].Opponent.Should().Be("Opp Newer");
   }
 
   [Fact]

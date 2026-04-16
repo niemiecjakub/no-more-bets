@@ -1,6 +1,8 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
+using NoMoreBets.Application.SocialMedia.CreateXPost;
 using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Controllers;
@@ -8,10 +10,20 @@ namespace NoMoreBets.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public sealed class TrashController(
+  IMediator mediator,
   Runner runner,
   IAgentPhaseRunner agentPhaseRunner,
   IUnitOfWork unitOfWork) : ControllerBase
 {
+  [HttpPost("x/post")]
+  public async Task<ActionResult<CreateXPostResult>> CreateXPost(
+    [FromBody] CreateXPostRequest request,
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator.Send(new CreateXPostCommand(request), cancellationToken).ConfigureAwait(false);
+    return Ok(result);
+  }
+
   /// <summary>
   /// Sends a user message to the OpenAI assistant runner and returns the assistant reply text.
   /// Request body: JSON string, e.g. <c>"Hello"</c>.

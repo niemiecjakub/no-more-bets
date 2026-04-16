@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -21,6 +22,7 @@ import {
   type TeamLineupResult,
   type TeamPerformanceResult,
   type TeamMetrics,
+  type MatchDetailsSummary,
 } from "@/features/matches/interfaces";
 import { LazyAgentSessionTranscript } from "@/features/bets/components/lazy-agent-session-transcript";
 import {
@@ -227,6 +229,12 @@ export default function MatchPage() {
           />
         </Card>
 
+        {data.matchDetails != null ? (
+          <Card title="Match details (Fotmob)" icon="🧾" className="mb-6">
+            <MatchDetailsSection details={data.matchDetails} />
+          </Card>
+        ) : null}
+
         <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
             <Card title="Lineups" icon="📋">
@@ -267,7 +275,7 @@ export default function MatchPage() {
               )}
             </Card>
 
-            <Card title="Recent games per club" icon="🕒">
+            <Card title="Recent league games per club" icon="🕒">
               {insightErrors.recentGames ? (
                 <InsightFieldError message={insightErrors.recentGames} />
               ) : insightLoading.recentGames && insights.recentGames === undefined ? (
@@ -461,28 +469,59 @@ function InjuriesList({ injuries }: { injuries?: TeamInjuriesResult }) {
 function RecentGamesList({ games }: { games?: RecentMatch[] | null }) {
   if (!games || games.length === 0) return <MutedText>No recent games available.</MutedText>;
   return (
-    <ul className="flex flex-col gap-2 text-sm">
+    <div className="space-y-2">
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        League games only.
+      </p>
+      <ul className="flex flex-col gap-2 text-sm">
       {games.map((game) => (
-        <li key={game.matchId} className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="flex min-w-0 items-center gap-2.5">
-            <SlugIcon
-              kind="club"
-              slug={clubLogoSlugSegment(null, game.opponent)}
-              alt={game.opponent}
-              className="h-7 w-7"
-            />
-            <div className="min-w-0">
-              <p className="truncate font-medium text-foreground">{game.opponent}</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{game.date}</p>
+        <li key={`${game.matchId}-${game.opponent}-${game.date}`}>
+          {game.matchId > 0 ? (
+            <Link
+              href={`/match/${game.matchId}`}
+              className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white p-2 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <SlugIcon
+                  kind="club"
+                  slug={clubLogoSlugSegment(null, game.opponent)}
+                  alt={game.opponent}
+                  className="h-7 w-7"
+                />
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">{game.opponent}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{game.date}</p>
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center justify-end gap-2">
+                <p className="font-semibold tabular-nums text-foreground">{game.score}</p>
+                <ResultBadge result={game.result} />
+              </div>
+            </Link>
+          ) : (
+            <div className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <SlugIcon
+                  kind="club"
+                  slug={clubLogoSlugSegment(null, game.opponent)}
+                  alt={game.opponent}
+                  className="h-7 w-7"
+                />
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">{game.opponent}</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">{game.date}</p>
+                </div>
+              </div>
+              <div className="flex shrink-0 items-center justify-end gap-2">
+                <p className="font-semibold tabular-nums text-foreground">{game.score}</p>
+                <ResultBadge result={game.result} />
+              </div>
             </div>
-          </div>
-          <div className="flex shrink-0 items-center justify-end gap-2">
-            <p className="font-semibold tabular-nums text-foreground">{game.score}</p>
-            <ResultBadge result={game.result} />
-          </div>
+          )}
         </li>
       ))}
-    </ul>
+      </ul>
+    </div>
   );
 }
 
@@ -664,6 +703,56 @@ function RollingPerformanceSection({ data }: { data?: TeamPerformanceResult | nu
           ))}
         </ul>
       )}
+      {data.matches && data.matches.length > 0 ? (
+        <div className="space-y-2 border-t border-zinc-200 pt-3 dark:border-zinc-800">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Match stats used in calculations
+          </p>
+          <ul className="flex flex-col gap-2">
+            {data.matches.map((match) => (
+              <li
+                key={`${match.matchId}-${match.date}-${match.opponent}`}
+                className="rounded-md border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  {match.matchId > 0 ? (
+                    <Link
+                      href={`/match/${match.matchId}`}
+                      className="font-medium text-foreground underline-offset-2 hover:underline"
+                    >
+                      vs {match.opponent}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-foreground">vs {match.opponent}</span>
+                  )}
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">{match.date}</span>
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+                  <span>Team rating: {match.teamRating != null ? match.teamRating.toFixed(2) : "N/A"}</span>
+                  <span>·</span>
+                  <span>Formation: {match.formation || "N/A"}</span>
+                </div>
+                <div className="mt-2">
+                  {match.playerRatings.length === 0 ? (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">No player ratings.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {match.playerRatings.slice(0, 8).map((player) => (
+                        <span
+                          key={`${match.matchId}-${player.player}`}
+                          className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs text-zinc-700 dark:bg-zinc-900 dark:text-zinc-300"
+                        >
+                          {player.player}: {player.rating.toFixed(2)}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -731,6 +820,62 @@ function AgentResearchSection({
               active={transcriptOpen}
             />
           </div>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
+function MatchDetailsSection({ details }: { details: MatchDetailsSummary }) {
+  const hasReview = details.fotmobReview != null && details.fotmobReview !== "";
+  const hasUrl = details.fotmobUrl != null && details.fotmobUrl !== "";
+  const hasPayload = details.fotmobDetailsJson != null && details.fotmobDetailsJson !== "";
+
+  if (!hasReview && !hasUrl && !hasPayload) {
+    return (
+      <div className="px-4 py-4">
+        <MutedText>No match details available.</MutedText>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 px-4 py-4">
+      {hasReview ? (
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Review
+          </p>
+          <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">
+            {details.fotmobReview}
+          </p>
+        </div>
+      ) : null}
+
+      {hasUrl ? (
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            Source
+          </p>
+          <a
+            href={details.fotmobUrl ?? "#"}
+            target="_blank"
+            rel="noreferrer"
+            className="text-sm text-blue-600 underline-offset-2 hover:underline dark:text-blue-400"
+          >
+            Open Fotmob match page
+          </a>
+        </div>
+      ) : null}
+
+      {hasPayload ? (
+        <details className="rounded-md border border-zinc-200 bg-zinc-50 p-2 dark:border-zinc-800 dark:bg-zinc-900/35">
+          <summary className="cursor-pointer text-sm font-medium text-foreground">
+            Raw match payload
+          </summary>
+          <pre className="mt-2 max-h-72 overflow-auto whitespace-pre-wrap wrap-break-word text-xs leading-5 text-zinc-700 dark:text-zinc-300">
+            {details.fotmobDetailsJson}
+          </pre>
         </details>
       ) : null}
     </div>

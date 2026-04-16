@@ -157,7 +157,10 @@ public sealed class Runner : IAgentPhaseRunner
           Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
           
           You are conducting research for upcoming Premier League matches.
-          Focus on actionable pre-match intelligence.
+          You are conducting this research for yourself - not for a betting syndicate. 
+          Structure it in a way that will be suitable for you to read in future betting session.
+          Focus on narratives, news, sentiment, context of the game etc.
+          Remember to save the research to memory so you can use it in future betting session.
 
           You must use the available plugin functions explicitly.
 
@@ -178,6 +181,7 @@ public sealed class Runner : IAgentPhaseRunner
           - Prioritize recent, reliable sources and label uncertainty
 
           4) Persist useful knowledge:
+
           - Save distilled, reusable insights to memory with `AppendMemoryAsync`, `ReplaceMemoryAsync`, or `WriteMemoryAsync`
           - Avoid raw copy-paste dumps
 
@@ -396,6 +400,9 @@ public sealed class Runner : IAgentPhaseRunner
           The {phaseName} agent phase has finished successfully.
 
           If you want to publish a post on X, call `CreateXPost` with the post body.
+
+          The post shouldn't be raw data but rather you sharing your insight, opinion, or a relatable observation.
+          Make sure to keep the post engaging.
           Remember to keep your personality and style 
           """;
         var followUpMessages = await CollectInvocationMessagesAsync(

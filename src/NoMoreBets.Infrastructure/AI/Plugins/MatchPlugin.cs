@@ -65,7 +65,7 @@ public class MatchPlugin
   }
 
   [KernelFunction("GetClubRecentGames")]
-  [Description("Retrieves the last 5 match results for a specific club.")]
+  [Description("Retrieves the results from the last 5 league matches for a specific club.")]
   public async Task<IReadOnlyList<RecentMatch>?> GetClubRecentGamesAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetClubRecentGamesQuery(clubId), cancellationToken).ConfigureAwait(false);

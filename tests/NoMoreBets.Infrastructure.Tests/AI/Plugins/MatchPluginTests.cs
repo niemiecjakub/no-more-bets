@@ -60,12 +60,12 @@ public class MatchPluginTests
   [Fact]
   public async Task GetClubRollingPerformanceAsync_WhenCalled_DispatchesGetClubRollingPerformanceQueryWithNullDate()
   {
-    var expected = new TeamPerformanceResult([], [], 0, []);
+    TeamPerformanceResult? expected = null;
     _mediator.Send(Arg.Any<GetClubRollingPerformanceQuery>(), Arg.Any<CancellationToken>()).Returns(expected);
 
     var result = await _sut.GetClubRollingPerformanceAsync(7);
 
-    result.Should().BeSameAs(expected);
+    result.Should().BeNull();
     await _mediator.Received(1).Send(
       Arg.Is<GetClubRollingPerformanceQuery>(q => q.ClubId == 7 && q.Date == null),
       Arg.Any<CancellationToken>());

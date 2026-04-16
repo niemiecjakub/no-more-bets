@@ -64,6 +64,13 @@ export interface MatchAnalysisPageDto {
   matchDate: string;
   analyses: MatchAnalysisItemDto[];
   researchAgentSessionId: number | null;
+  matchDetails?: MatchDetailsSummary | null;
+}
+
+export interface MatchDetailsSummary {
+  fotmobUrl: string | null;
+  fotmobDetailsJson: string | null;
+  fotmobReview: string | null;
 }
 
 export interface Player {
@@ -160,11 +167,26 @@ export interface PlayerRecentRatings {
   avgRating: number;
 }
 
+export interface PlayerMatchRating {
+  player: string;
+  rating: number;
+}
+
+export interface TeamPerformanceMatchStats {
+  matchId: number;
+  opponent: string;
+  date: string;
+  teamRating: number | null;
+  formation: string;
+  playerRatings: PlayerMatchRating[];
+}
+
 export interface TeamPerformanceResult {
   topPlayers: PlayerRecentRatings[];
   recentTeamRatings: number[];
   avgTeamRating: number;
   formations: string[];
+  matches: TeamPerformanceMatchStats[];
 }
 
 export interface ClubPair<T> {
