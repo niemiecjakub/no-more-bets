@@ -388,27 +388,20 @@ public sealed class Runner : IAgentPhaseRunner
     var messages = new List<IMessage>();
     try
     {
-      var phaseMessages = await CollectInvocationMessagesAsync(config, userPrompt, cancellationToken).ConfigureAwait(false);
+      var phaseMessages = await InvokeAndCollectPhaseTranscriptMessagesAsync(config, userPrompt, cancellationToken).ConfigureAwait(false);
       messages.AddRange(phaseMessages);
 
-      if (xOAuthConfigured)
+      if (xOAuthConfigured && phase == AgentSessionPhase.Betting)
       {
         config.Agent.Kernel.Plugins.Clear();
-        config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateMemoriesPlugin());
-        config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateInternetSearchPlugin());
         config.Agent.Kernel.Plugins.AddFromObject(_pluginFactory.CreateSocialMediaPlugin());
-        var followUpPrompt = $"""
-        If you'd like to publish a post on X, call `CreateXPost` with the post content.
-
-        The post should not present raw data. Instead, share your insights, opinions, or observations—write it as if it's your personal blog.
-
-        If you mention the match/clubs, include hashtags using the league name and club names (prefixed with #).
+        var followUpPrompt = """
+        If you placed any bets, publish a post on X - call CreateXPost with the post content.
+        The post should be a concise summary of the bets you have just placed. 
+        Keep the tone professional yet engaging. 
+        Always include hashtags for the league involved (e.g., #PremierLeague).
         """;
-        var followUpMessages = await CollectInvocationMessagesAsync(
-          config,
-          followUpPrompt,
-          cancellationToken).ConfigureAwait(false);
-        messages.AddRange(followUpMessages);
+        await InvokeAndCollectPhaseTranscriptMessagesAsync(config, followUpPrompt, cancellationToken).ConfigureAwait(false);
       }
     }
     finally
@@ -436,7 +429,7 @@ public sealed class Runner : IAgentPhaseRunner
     return new AgentPhaseRunResult(messages, sessionId);
   }
 
-  private static async Task<List<IMessage>> CollectInvocationMessagesAsync(
+  private static async Task<List<IMessage>> InvokeAndCollectPhaseTranscriptMessagesAsync(
     AgentConfig config,
     string prompt,
     CancellationToken cancellationToken)

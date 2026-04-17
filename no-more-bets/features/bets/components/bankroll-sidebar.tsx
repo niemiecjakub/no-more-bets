@@ -103,7 +103,7 @@ export function BankrollSidebar({ data, isLoading, error }: BankrollSidebarProps
         {data.records.length === 0 ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">No entries yet.</p>
         ) : (
-          <ul className="max-h-[min(24rem,50vh)] overflow-y-auto overscroll-contain -mx-1 px-1">
+          <ul className="-mx-1 px-1">
             {data.records.map((r) => (
               <BankrollRecordRow key={r.id} record={r} />
             ))}

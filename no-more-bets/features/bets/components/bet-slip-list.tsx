@@ -69,7 +69,7 @@ function SelectionRow({ selection }: { selection: BetSelectionItem }) {
             <span className="min-w-0 truncate">{selection.awayClubName}</span>
           </div>
         </div>
-        <div className="flex min-w-0 w-full flex-wrap items-center justify-end gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400 sm:flex-1">
+        <div className="flex min-w-0 w-full flex-wrap items-center justify-start gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400 sm:flex-1 sm:justify-end">
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
             <span>{selection.eventTypeName}</span>
             <span className="font-medium text-foreground">{selection.eventOptionName}</span>
@@ -122,7 +122,7 @@ function BetSlipCard({
           </time>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 border-b border-zinc-100 px-4 py-3 text-sm sm:grid-cols-3 dark:border-zinc-800/80">
+      <div className="grid grid-cols-3 gap-3 border-b border-zinc-100 px-4 py-3 text-sm dark:border-zinc-800/80">
         <div>
           <span className="text-zinc-500 dark:text-zinc-400">Stake</span>
           <p className="font-semibold tabular-nums text-foreground">
