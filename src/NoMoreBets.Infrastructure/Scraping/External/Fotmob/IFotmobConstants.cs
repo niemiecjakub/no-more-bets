@@ -4,6 +4,10 @@ namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 public interface IFotmobConstants
 {
   FotmobLeague PremierLeague { get; }
+  FotmobLeague Ekstraklasa { get; }
+  FotmobLeague Bundesliga { get; }
+  FotmobLeague LaLiga { get; }
+  FotmobLeague SerieA { get; }
   FotmobTeam? GetTeamById(int id);
   FotmobTeam? GetTeamByName(string name);
 }

@@ -8,4 +8,8 @@ public static class SoccerDataConstants
   public const string CurrentSeason = "2025-2026";
   public const int EnglandId = 8;
   public const int PremierLeagueId = 228;
+  public const int EkstraklasaId = 279;
+  public const int LaLigaId = 297;
+  public const int BundesligaId = 209;
+  public const int SerieAId = 215;
 }

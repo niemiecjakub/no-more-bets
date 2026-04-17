@@ -1,11 +1,15 @@
 namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
 /// <summary>
-/// FotMob league and team constants (Premier League). Registered as singleton.
+/// FotMob league and team constants. Registered as singleton.
 /// </summary>
 public class FotmobConstants : IFotmobConstants
 {
   public FotmobLeague PremierLeague { get; } = new(47, "Premier League", "premier-league");
+  public FotmobLeague Ekstraklasa { get; } = new(196, "Ekstraklasa", "ekstraklasa");
+  public FotmobLeague Bundesliga { get; } = new(54, "Bundesliga", "bundesliga");
+  public FotmobLeague LaLiga { get; } = new(87, "LaLiga", "laliga");
+  public FotmobLeague SerieA { get; } = new(55, "Serie A", "serie");
 
   public FotmobTeam Liverpool { get; } = new(8650, "Liverpool");
   public FotmobTeam AFCBournemouth { get; } = new(8678, "AFC Bournemouth");
