@@ -33,7 +33,7 @@ public class InternetSearchPlugin
     {
       var src = await _searchService.SearchNewsAsync(query, new SearchNewsOptions()
       {
-        Count = 5,
+        Count = 3,
         Freshness = freshness,
         Country = "GB",
         ExtraSnippets = true
@@ -60,7 +60,7 @@ public class InternetSearchPlugin
 
   [KernelFunction("GetWebGrounding")]
   [Description("Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.")]
-  public async Task<IReadOnlyList<SearchLlmContextItemDto>> GetWebGroundingAsync(
+  public async Task<SearchLlmContextItemDto> GetWebGroundingAsync(
     [Description("The detailed search query or question to gather context for.")]
     string query,
     [Description("Optional time window: pd (last 24 hours), pw (last 7 days), pm (last 31 days), py (last year). Omit or null for no freshness filter.")]
@@ -71,19 +71,21 @@ public class InternetSearchPlugin
     {
       var src = await _searchService.SearchLlmContextAsync(query, new SearchLlmContextOptions()
       {
-        Count = 5,
+        Count = 1,
         Freshness = freshness,
       }, cancellationToken).ConfigureAwait(false);
-      if (src.Items.Count == 0)
+      var firstItem = src.Items.FirstOrDefault();
+      if (firstItem is null)
       {
         _logger.LogWarning("GetWebGrounding returned no items for query {Query} and freshness {Freshness}.", query, freshness);
+        throw new InvalidOperationException("GetWebGrounding returned no items.");
       }
 
-      return src.Items.Select(item => new SearchLlmContextItemDto(
-          Snippets: item.Snippets,
-          Title: item.Title,
-          Hostname: item.Hostname,
-        Age: item.Age)).ToList();
+      return new SearchLlmContextItemDto(
+        Snippets: firstItem.Snippets,
+        Title: firstItem.Title,
+        Hostname: firstItem.Hostname,
+        Age: firstItem.Age);
     }
     catch (Exception ex)
     {

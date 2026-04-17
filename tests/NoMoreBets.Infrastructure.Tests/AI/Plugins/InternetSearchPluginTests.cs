@@ -66,7 +66,7 @@ public class InternetSearchPluginTests
   }
 
   [Fact]
-  public async Task GetWebGroundingAsync_MapsItems()
+  public async Task GetWebGroundingAsync_MapsItem()
   {
     // Arrange
     var dto = new SearchLlmContextResultDto
@@ -89,15 +89,13 @@ public class InternetSearchPluginTests
     var result = await _sut.GetWebGroundingAsync("why", cancellationToken: CancellationToken.None);
 
     // Assert
-    result.Should().ContainSingle();
-    var item = result[0];
-    item.Title.Should().Be("T");
-    item.Hostname.Should().Be("h.test");
-    item.Age.Should().Be("1d");
-    item.Snippets.Should().Equal("s1");
+    result.Title.Should().Be("T");
+    result.Hostname.Should().Be("h.test");
+    result.Age.Should().Be("1d");
+    result.Snippets.Should().Equal("s1");
     await _searchService.Received(1).SearchLlmContextAsync(
       "why",
-      Arg.Is<SearchLlmContextOptions>(o => o.Count == 5 && o.Freshness == null),
+      Arg.Is<SearchLlmContextOptions>(o => o.Count == 1 && o.Freshness == null),
       Arg.Any<CancellationToken>());
   }
 }

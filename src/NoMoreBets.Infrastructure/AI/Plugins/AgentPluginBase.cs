@@ -69,7 +69,7 @@ public abstract class AgentPluginBase
 
   [KernelFunction]
   [Description("Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context, summarizing a topic, or verifying what happened (e.g. when reflecting on a settled bet slip).")]
-  public async Task<IReadOnlyList<SearchLlmContextItemDto>> GetWebGroundingAsync(
+  public async Task<SearchLlmContextItemDto> GetWebGroundingAsync(
     string query,
     [Description("Optional time window: pd, pw, pm, py. Omit or null for no freshness filter (default).")]
     string? freshness = null,
