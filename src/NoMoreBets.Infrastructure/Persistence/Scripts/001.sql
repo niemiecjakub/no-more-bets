@@ -262,7 +262,7 @@ CREATE TABLE "MatchDetails" (
 CREATE INDEX idx_matchdetails_match ON public."MatchDetails" USING btree ("MatchId");
 CREATE UNIQUE INDEX uq_matchdetails_fotmoburl ON public."MatchDetails" ("FotmobUrl") WHERE "FotmobUrl" IS NOT NULL;
 
--- AgentSessionPhase: 1=Research, 2=Betting, 3=Reflection (matches NoMoreBets.Domain.AgentSessions.AgentSessionPhase)
+-- AgentSessionPhase: 1=Research, 2=Betting, 3=Reflection, 4=InternetResearch, 5=MemoryCleanup (matches NoMoreBets.Domain.AgentSessions.AgentSessionPhase)
 CREATE TABLE "AgentSession" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"Phase" int4 NOT NULL,
@@ -351,9 +351,10 @@ CREATE TABLE "Memory" (
 	"Content" text NOT NULL,
 	"CreatedAt" timestamp NOT NULL,
 	"UpdatedAt" timestamp NOT NULL,
+	"DeletedAt" timestamp NULL,
 	CONSTRAINT "Memory_pkey" PRIMARY KEY ("Id")
 );
-CREATE UNIQUE INDEX idx_memory_name ON public."Memory" USING btree ("Name");
+CREATE UNIQUE INDEX idx_memory_name ON public."Memory" USING btree ("Name") WHERE ("DeletedAt" IS NULL);
 
 CREATE TABLE "Bankroll" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,

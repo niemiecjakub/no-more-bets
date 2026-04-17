@@ -16,6 +16,7 @@ public class MemoryRepository : IMemoryRepository
   {
     return await _db.Memory
       .AsNoTracking()
+      .Where(m => m.DeletedAt == null)
       .OrderBy(m => m.Name)
       .Select(m => new MemoryRecordListItem(m.Name, m.Description, m.UpdatedAt))
       .ToListAsync(cancellationToken)
@@ -26,12 +27,26 @@ public class MemoryRepository : IMemoryRepository
   {
     return await _db.Memory
       .OrderBy(m => m.Id)
-      .FirstOrDefaultAsync(m => m.Name == name, cancellationToken)
+      .FirstOrDefaultAsync(m => m.Name == name && m.DeletedAt == null, cancellationToken)
       .ConfigureAwait(false);
   }
 
   public async Task AddAsync(Memory memory, CancellationToken cancellationToken = default)
   {
     await _db.Memory.AddAsync(memory, cancellationToken).ConfigureAwait(false);
+  }
+
+  public async Task<bool> SoftDeleteByNameAsync(string name, CancellationToken cancellationToken = default)
+  {
+    var entity = await _db.Memory
+      .FirstOrDefaultAsync(m => m.Name == name, cancellationToken)
+      .ConfigureAwait(false);
+    if (entity == null || entity.DeletedAt.HasValue)
+    {
+      return false;
+    }
+
+    entity.MarkDeleted();
+    return true;
   }
 }

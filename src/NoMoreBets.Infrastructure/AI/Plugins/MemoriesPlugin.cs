@@ -18,9 +18,8 @@ public class MemoriesPlugin
     _logger = logger ?? NullLogger<MemoriesPlugin>.Instance;
   }
 
-  private static string NormalizeName(string filename)
+  private static string NormalizeName(string name)
   {
-    var name = Path.GetFileName(filename);
     Memory.ValidateName(name);
     return name;
   }

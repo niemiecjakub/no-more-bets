@@ -91,6 +91,7 @@ public static class DependencyInjection
     services.AddScoped<UpcomingMatchesInternetResearchCronService>();
     services.AddScoped<BettingCronService>();
     services.AddScoped<ReflectionCronService>();
+    services.AddScoped<MemoryCleanupCronService>();
 
     //HTTP resilience & external clients
     services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>

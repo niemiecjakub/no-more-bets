@@ -5,4 +5,5 @@ public interface IMemoryRepository
   Task<IReadOnlyList<MemoryRecordListItem>> GetRecordsAsync(CancellationToken cancellationToken = default);
   Task<Memory?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
   Task AddAsync(Memory memory, CancellationToken cancellationToken = default);
+  Task<bool> SoftDeleteByNameAsync(string name, CancellationToken cancellationToken = default);
 }

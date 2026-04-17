@@ -14,6 +14,7 @@ public class Memory
   public string Content { get; private set; } = null!;
   public DateTime CreatedAt { get; private set; }
   public DateTime UpdatedAt { get; private set; }
+  public DateTime? DeletedAt { get; private set; }
 
   public static Memory Create(string name, string? content, string? description = null)
   {
@@ -25,8 +26,20 @@ public class Memory
       Content = content ?? string.Empty,
       Description = description,
       CreatedAt = now,
-      UpdatedAt = now
+      UpdatedAt = now,
+      DeletedAt = null
     };
+  }
+
+  public void MarkDeleted()
+  {
+    if (DeletedAt.HasValue)
+    {
+      return;
+    }
+
+    DeletedAt = DateTime.UtcNow;
+    Touch();
   }
 
   public static void ValidateName(string name)
@@ -44,18 +57,21 @@ public class Memory
 
   public void ReplaceContent(string? text)
   {
+    ThrowIfDeleted();
     Content = text ?? string.Empty;
     Touch();
   }
 
   public void AppendContent(string? text)
   {
+    ThrowIfDeleted();
     Content += text ?? string.Empty;
     Touch();
   }
 
   public void ReplaceSubstring(string oldText, string? newText, bool replaceAll)
   {
+    ThrowIfDeleted();
     if (string.IsNullOrEmpty(oldText))
     {
       throw new ArgumentException("oldText must not be null or empty.", nameof(oldText));
@@ -99,5 +115,13 @@ public class Memory
   private void Touch()
   {
     UpdatedAt = DateTime.UtcNow;
+  }
+
+  private void ThrowIfDeleted()
+  {
+    if (DeletedAt.HasValue)
+    {
+      throw new InvalidOperationException("Cannot modify a deleted memory record.");
+    }
   }
 }

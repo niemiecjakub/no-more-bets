@@ -375,7 +375,11 @@ public class AppDbContext : DbContext
       entity.Property(e => e.Content).IsRequired();
       entity.Property(e => e.CreatedAt).IsRequired();
       entity.Property(e => e.UpdatedAt).IsRequired();
-      entity.HasIndex(e => e.Name).IsUnique();
+      entity.Property(e => e.DeletedAt).IsRequired(false);
+      entity.HasIndex(e => e.Name)
+        .IsUnique()
+        .HasDatabaseName("idx_memory_name")
+        .HasFilter("\"DeletedAt\" IS NULL");
     });
 
     modelBuilder.Entity<Bankroll>(entity =>

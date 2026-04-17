@@ -63,6 +63,12 @@ public static class HangfireConfiguration
         jobService => jobService.GetLeagueTable(),
         "0 4 * * *");
 
+    // Runs once per day at 04:15 UTC — agent prunes stale fixture-specific memories
+    RecurringJob.AddOrUpdate<MemoryCleanupCronService>(
+        "betting-agent-memory-cleanup",
+        s => s.RunAsync(),
+        "15 4 * * *");
+
     // Runs once per day at 05:00
     RecurringJob.AddOrUpdate<JobService>(
         "get-upcoming-betclic-games",

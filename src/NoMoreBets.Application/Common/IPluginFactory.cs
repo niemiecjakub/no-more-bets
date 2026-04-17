@@ -10,6 +10,7 @@ public interface IPluginFactory
   object CreateAgentInternetResearchPlugin();
   object CreateAgentResearchPlugin();
   object CreateAgentReflectionPlugin();
+  object CreateAgentMemoryMaintenancePlugin();
   object CreateBankrollPlugin();
   object CreateSocialMediaPlugin();
 }

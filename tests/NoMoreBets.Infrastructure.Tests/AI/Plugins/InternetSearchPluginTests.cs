@@ -61,7 +61,7 @@ public class InternetSearchPluginTests
     result[0].Snippets.Should().Equal("x");
     await _searchService.Received(1).SearchNewsAsync(
       "topic",
-      Arg.Is<SearchNewsOptions>(o => o.Count == 5 && o.Freshness == null && o.Country == "GB" && o.ExtraSnippets),
+      Arg.Is<SearchNewsOptions>(o => o.Count == 3 && o.Freshness == null && o.Country == "GB" && o.ExtraSnippets),
       Arg.Any<CancellationToken>());
   }
 

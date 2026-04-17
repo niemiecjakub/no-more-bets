@@ -53,6 +53,7 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
   {
     var list = await db.Memory
       .AsNoTracking()
+      .Where(m => m.DeletedAt == null)
       .OrderBy(m => m.Name)
       .Select(m => new MemoryListItemDto(
         m.Id,

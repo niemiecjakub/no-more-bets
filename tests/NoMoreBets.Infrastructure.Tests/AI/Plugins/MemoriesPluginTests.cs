@@ -25,29 +25,29 @@ public class MemoriesPluginTests
     var t2 = new DateTime(2026, 1, 2, 12, 0, 0, DateTimeKind.Utc);
     IReadOnlyList<MemoryRecordListItem> fromRepo =
     [
-      new("a.md", "First", t1),
-      new("b.md", null, t2)
+      new("STRATEGY", "First", t1),
+      new("GENERAL_KNOWLEDGE", null, t2)
     ];
     _memories.GetRecordsAsync(Arg.Any<CancellationToken>()).Returns(fromRepo);
 
     var result = await _sut.GetMemoryRecordsAsync(CancellationToken.None);
 
     result.Should().HaveCount(2);
-    result[0].Should().Be(new MemoryRecordListItem("a.md", "First", t1));
-    result[1].Should().Be(new MemoryRecordListItem("b.md", null, t2));
+    result[0].Should().Be(new MemoryRecordListItem("STRATEGY", "First", t1));
+    result[1].Should().Be(new MemoryRecordListItem("GENERAL_KNOWLEDGE", null, t2));
   }
 
   [Fact]
   public async Task ReadAsync_WhenMissing_ThrowsKeyNotFoundException()
   {
     // Arrange
-    _memories.GetByNameAsync("NOTE.md", Arg.Any<CancellationToken>())
+    _memories.GetByNameAsync("REFLECTIONS", Arg.Any<CancellationToken>())
       .Returns((Memory?)null);
 
     // Act
-    var act = async () => await _sut.ReadAsync("NOTE.md", CancellationToken.None);
+    var act = async () => await _sut.ReadAsync("REFLECTIONS", CancellationToken.None);
 
     // Assert
-    await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("*NOTE.md*");
+    await act.Should().ThrowAsync<KeyNotFoundException>().WithMessage("*REFLECTIONS*");
   }
 }

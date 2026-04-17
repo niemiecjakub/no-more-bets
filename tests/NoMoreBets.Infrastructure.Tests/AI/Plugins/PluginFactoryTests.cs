@@ -26,6 +26,8 @@ public class PluginFactoryTests
       .AddSingleton(_searchService)
       .AddSingleton(_xApiService)
       .AddSingleton(_agentSessionContext)
+      .AddSingleton(sp => new MemoriesPlugin(sp.GetRequiredService<IUnitOfWork>()))
+      .AddSingleton(sp => new InternetSearchPlugin(sp.GetRequiredService<ISearchService>()))
       .BuildServiceProvider();
     return new PluginFactory(sp);
   }
@@ -100,5 +102,15 @@ public class PluginFactoryTests
     var plugin = sut.CreateSocialMediaPlugin();
 
     plugin.Should().BeOfType<SocialMediaPlugin>();
+  }
+
+  [Fact]
+  public void CreateAgentMemoryMaintenancePlugin_ReturnsInstance()
+  {
+    var sut = CreateSut();
+
+    var plugin = sut.CreateAgentMemoryMaintenancePlugin();
+
+    plugin.Should().BeOfType<AgentMemoryMaintenancePlugin>();
   }
 }

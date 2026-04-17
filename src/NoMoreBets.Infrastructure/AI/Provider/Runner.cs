@@ -196,6 +196,63 @@ public sealed class Runner : IAgentPhaseRunner
     return result.Messages;
   }
 
+  public async Task<IReadOnlyList<IMessage>> RunMemoryCleanupPhaseAsync(CancellationToken cancellationToken = default)
+  {
+    int daysCutoff = 2;
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var utcCutoff = DateTime.UtcNow.AddDays(-daysCutoff);
+
+    Action<Kernel> configureKernel = kernel =>
+    {
+      kernel.Plugins.AddFromObject(_pluginFactory.CreateAgentMemoryMaintenancePlugin());
+      kernel.Data.Add("phase", "MemoryCleanup");
+    };
+
+    var prompt = $"""
+          Today is {today} (UTC calendar date).
+          You are a long-running betting agent with persistent memory.
+
+          You are running a maintenance pass: review saved memories and remove or trim content that will no longer be useful.
+
+          Retention rule for match-specific material:
+          - Fixture or match-specific content whose **match date / kickoff (interpret as UTC unless clearly local)** was **more than {daysCutoff} days before today** is outside retention for ephemeral notes (e.g. lineups, injury snapshots, narrow “this fixture” narratives, stale pre-match hype, post-mortems that only mattered for that one game).
+          - Cutoff instant for comparisons: strictly before {utcCutoff:yyyy-MM-dd HH:mm} UTC.
+          - **Primary signal:** memory record names usually embed the fixture or date—scan `GetMemoryRecordsAsync` first, then `ReadMemoryAsync` when the name or role suggests match-specific content. Match IDs and club names in the body are secondary cues.
+
+          **Preserve** durable knowledge unless it is purely redundant with discarded fixture noise:
+          - STRATEGY, BANKROLL_MANAGEMENT, REFLECTIONS, GENERAL_KNOWLEDGE, and other cross-cutting process lessons should stay; only remove or shorten passages that are exclusively about old fixtures and no longer aid future research or betting.
+
+          You must use the available plugin functions explicitly for reads, edits, and deletes as needed.
+
+          ## Required workflow (execute in order)
+
+          1) Inventory:
+          - Call `GetMemoryRecordsAsync`.
+
+          2) For every memory record that might contain fixture-specific or time-bound content (infer from name and role):
+          - Call `ReadMemoryAsync`.
+
+          3) Cleanup:
+          - Prefer `ReplaceMemoryAsync` for surgical removals (verbatim `oldText` from the read output; `newText` empty removes the span).
+          - Use `WriteMemoryAsync` when replacing the entire body is clearer and safe (still keeps the same record name).
+          - You may **merge** several related memories into one: create or overwrite a target record with `WriteMemoryAsync` (distilled combined content), then trim or `DeleteMemoryAsync` the redundant source records when the merge is complete.
+          - Use `DeleteMemoryAsync` when the **entire named record is obsolete**—it permanently deletes that row; same naming rules as other memory tools. Do not use it for durable records listed above.
+
+          4) Finish with a short summary.
+
+          ## Guardrails
+          - Do not remove or wipe durable strategy, bankroll, or calibration lessons unless they are clearly obsolete duplicate fixture chatter; never `DeleteMemoryAsync` those wholesale by mistake.
+          """;
+
+    var result = await ExecuteAgentPhase(
+      AgentSessionPhase.MemoryCleanup,
+      prompt,
+      configureKernel,
+      cancellationToken).ConfigureAwait(false);
+
+    return result.Messages;
+  }
+
   public async Task<IReadOnlyList<IMessage>> RunReflectionPhaseAsync(CancellationToken cancellationToken = default)
   {
     var slips = await _unitOfWork.Betting
