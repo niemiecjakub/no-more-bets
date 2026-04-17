@@ -57,6 +57,8 @@ public class MemoriesPlugin
     string name,
     [Description("Complete new body to persist (overwrites everything previously stored).")]
     string text,
+    [Description("Short label or summary for the record. When updating an existing record, omit or pass null to leave the description unchanged; pass an empty string to clear it.")]
+    string? description = null,
     CancellationToken cancellationToken = default)
   {
     var normalizedName = NormalizeName(name);
@@ -65,10 +67,16 @@ public class MemoriesPlugin
     if (existing != null)
     {
       existing.ReplaceContent(text);
+      if (description is not null)
+      {
+        existing.SetDescription(description);
+      }
     }
     else
     {
-      await _unitOfWork.Memories.AddAsync(Memory.Create(normalizedName, text), cancellationToken).ConfigureAwait(false);
+      await _unitOfWork.Memories.AddAsync(
+        Memory.Create(normalizedName, text, description),
+        cancellationToken).ConfigureAwait(false);
     }
 
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

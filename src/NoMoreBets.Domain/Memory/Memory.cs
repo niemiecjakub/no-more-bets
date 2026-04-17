@@ -24,12 +24,15 @@ public class Memory
     {
       Name = name,
       Content = content ?? string.Empty,
-      Description = description,
+      Description = NormalizeDescription(description),
       CreatedAt = now,
       UpdatedAt = now,
       DeletedAt = null
     };
   }
+
+  private static string? NormalizeDescription(string? description) =>
+    string.IsNullOrEmpty(description) ? null : description;
 
   public void MarkDeleted()
   {
@@ -59,6 +62,13 @@ public class Memory
   {
     ThrowIfDeleted();
     Content = text ?? string.Empty;
+    Touch();
+  }
+
+  public void SetDescription(string? description)
+  {
+    ThrowIfDeleted();
+    Description = NormalizeDescription(description);
     Touch();
   }
 

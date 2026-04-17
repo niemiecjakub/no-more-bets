@@ -32,9 +32,14 @@ public abstract class AgentPluginBase
 
   [KernelFunction]
   [Description("Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer AppendMemoryAsync or ReplaceMemoryAsync for small changes so you do not drop existing text.")]
-  public async Task<string> WriteMemoryAsync(string name, string text, CancellationToken cancellationToken = default)
+  public async Task<string> WriteMemoryAsync(
+    string name,
+    string text,
+    [Description("Optional short label for the record. When updating, null leaves description unchanged; empty string clears it.")]
+    string? description = null,
+    CancellationToken cancellationToken = default)
   {
-    return await _memoriesPlugin.WriteAsync(name, text, cancellationToken).ConfigureAwait(false);
+    return await _memoriesPlugin.WriteAsync(name, text, description, cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction]
