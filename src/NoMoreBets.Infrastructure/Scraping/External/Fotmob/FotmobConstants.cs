@@ -150,7 +150,11 @@ public class FotmobConstants : IFotmobConstants
       [Bundesliga.Slug] = Bundesliga,
       [LaLiga.Slug] = LaLiga,
       [SerieA.Slug] = SerieA,
-      [Ligue1.Slug] = Ligue1
+      [Ligue1.Slug] = Ligue1,
+
+      // League.Slug in DB (002 seed) where it differs from FotMob path slugs.
+      ["serie-a"] = SerieA,
+      ["ligue-1"] = Ligue1
     };
 
     _allTeams =

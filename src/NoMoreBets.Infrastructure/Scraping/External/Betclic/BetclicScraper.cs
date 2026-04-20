@@ -10,7 +10,7 @@ using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 namespace NoMoreBets.Infrastructure.Scraping.External.Betclic;
 
 /// <summary>
-/// Betclic scraper for fetching Premier League upcoming games and match bookmaker events from betclic.pl.
+/// Betclic scraper for fetching upcoming games (per configured league slug) and match bookmaker events from betclic.pl.
 /// </summary>
 public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEventsProvider
 {

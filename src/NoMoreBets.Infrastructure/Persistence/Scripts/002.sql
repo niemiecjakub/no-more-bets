@@ -96,12 +96,24 @@ INSERT INTO "League" ("Id", "Name", "Slug", "SoccerdataId") OVERRIDING SYSTEM VA
   (6, 'Ligue 1', 'ligue-1', 235)
 ON CONFLICT ("SoccerdataId") DO NOTHING;
 
+-- One season per league (same competition year). Stage.SoccerdataId must match SoccerData `stage_id` for that league/season
+-- (see GET /matches/?league_id=<League.SoccerdataId>&season=2025-2026 → first `stage[].stage_id`). PL below matches repo fixture (13908).
 INSERT INTO "Season" ("Id", "LeagueId", "Year") OVERRIDING SYSTEM VALUE VALUES
-  (1, 1, '2025-2026')
+  (1, 1, '2025-2026'),
+  (2, 2, '2025-2026'),
+  (3, 3, '2025-2026'),
+  (4, 4, '2025-2026'),
+  (5, 5, '2025-2026'),
+  (6, 6, '2025-2026')
 ON CONFLICT ("LeagueId", "Year") DO NOTHING;
 
 INSERT INTO "Stage" ("Id", "SeasonId", "Name", "SoccerdataId") OVERRIDING SYSTEM VALUE VALUES
-  (1, 1, 'Premier League', 13908)
+  (1, 1, 'Premier League', 13908),
+  (2, 2, 'Ekstraklasa', 13950),
+  (3, 3, 'LaLiga', 13947),
+  (4, 4, 'Bundesliga', 13945),
+  (5, 5, 'Serie A', 13906),
+  (6, 6, 'Ligue 1', 13935)
 ON CONFLICT ("SoccerdataId") DO NOTHING;
 
 INSERT INTO "Club" ("Name", "Slug", "LeagueId", "SoccerdataId")

@@ -1,7 +1,7 @@
 namespace NoMoreBets.Application.Common.Dto.Betting;
 
 /// <summary>
-/// Represents an upcoming game/match from Betclic Premier League page.
+/// Represents an upcoming game/match parsed from a Betclic league listing page.
 /// </summary>
 public record UpcomingGame
 {

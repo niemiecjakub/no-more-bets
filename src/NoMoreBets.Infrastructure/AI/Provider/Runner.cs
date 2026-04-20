@@ -456,7 +456,7 @@ public sealed class Runner : IAgentPhaseRunner
         If you placed any bets, publish a post on X - call CreateXPost with the post content.
         The post should be a concise summary of the bets you have just placed. 
         Keep the tone professional yet engaging. 
-        Always include hashtags for the league involved (e.g., #PremierLeague).
+        Always include hashtags for the league involved, derived from that league's name (e.g. Premier League as #PremierLeague, Serie A as #SerieA).
         """;
         await InvokeAndCollectPhaseTranscriptMessagesAsync(config, followUpPrompt, cancellationToken).ConfigureAwait(false);
       }

@@ -143,6 +143,39 @@ public class BetclicScraperTests
     await pageFetcher.Received(1).GetHtmlAsync(PremierLeagueUrl, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
   }
 
+  [Theory]
+  [InlineData("premier-league", "https://www.betclic.pl/football-sfootball/premier-league-c3")]
+  [InlineData("ekstraklasa", "https://www.betclic.pl/football-sfootball/ekstraklasa-c221")]
+  [InlineData("laliga", "https://www.betclic.pl/football-sfootball/la-liga-c7")]
+  [InlineData("bundesliga", "https://www.betclic.pl/football-sfootball/bundesliga-c5")]
+  [InlineData("serie-a", "https://www.betclic.pl/football-sfootball/serie-a-c6")]
+  [InlineData("ligue-1", "https://www.betclic.pl/football-sfootball/ligue-1-c4")]
+  public async Task GetUpcomingGamesAsync_ForLeagueSlug_RequestsConfiguredListingUrl(string leagueSlug, string expectedListingUrl)
+  {
+    var html = MinimalUpcomingGamesHtml();
+    var pageFetcher = PlaywrightPageFetcherMockHelper.CreateMock();
+    pageFetcher.GetHtmlAsync(expectedListingUrl, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
+      .Returns(Task.FromResult(html));
+    var sut = CreateScraper(pageFetcher);
+
+    await sut.GetUpcomingGamesAsync(leagueSlug);
+
+    await pageFetcher.Received(1).GetHtmlAsync(expectedListingUrl, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task GetUpcomingGamesAsync_WhenLeagueSlugNotMapped_DoesNotFetchAndReturnsEmpty()
+  {
+    var pageFetcher = PlaywrightPageFetcherMockHelper.CreateMock();
+    var sut = CreateScraper(pageFetcher);
+
+    var result = await sut.GetUpcomingGamesAsync("not-a-league");
+
+    result.Should().BeEmpty();
+    await pageFetcher.DidNotReceive()
+      .GetHtmlAsync(Arg.Any<string>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+  }
+
   [Fact]
   public async Task ExtractEventsAsync_WithMatchFixture_ParsesEvents()
   {
