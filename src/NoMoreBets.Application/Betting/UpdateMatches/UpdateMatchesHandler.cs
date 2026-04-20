@@ -1,7 +1,6 @@
 using MediatR;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
-using NoMoreBets.Application.Betting;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Betting.UpdateMatches;
@@ -9,10 +8,10 @@ namespace NoMoreBets.Application.Betting.UpdateMatches;
 /// <summary>
 /// Command to refresh Betclic games: fetches upcoming games from Betclic, and adds any match that does not yet exist (same teams, same day) to the database.
 /// </summary>
-public record UpdateMatchesCommand : IRequest<IReadOnlyList<Match>>;
+public record UpdateMatchesCommand(int LeagueId) : IRequest<IReadOnlyList<Match>>;
 
 /// <summary>
-/// Handles <see cref="UpdateMatchesCommand"/>: calls <see cref="BetclicScraper.GetUpcomingGamesAsync"/>,
+/// Handles <see cref="UpdateMatchesCommand"/>: calls <see cref="IBookmakerMatchesProvider.GetUpcomingGamesAsync"/>,
 /// for each game checks if a match for those teams on that day already exists; if not, adds it to the database.
 /// </summary>
 public class UpdateMatchesHandler(
@@ -23,7 +22,11 @@ public class UpdateMatchesHandler(
   /// <inheritdoc />
   public async Task<IReadOnlyList<Match>> Handle(UpdateMatchesCommand request, CancellationToken cancellationToken)
   {
-    var upcomingGames = await bookmakerMatchesProvider.GetUpcomingGamesAsync(cancellationToken);
+    var league = (await unitOfWork.Leagues.GetLeagues())
+      .FirstOrDefault(l => l.Id == request.LeagueId)
+      ?? throw new InvalidOperationException($"League with id {request.LeagueId} not found.");
+
+    var upcomingGames = await bookmakerMatchesProvider.GetUpcomingGamesAsync(league.Slug, cancellationToken);
     var added = new List<Match>();
     var hasUpdates = false;
 
@@ -32,8 +35,8 @@ public class UpdateMatchesHandler(
       return added;
     }
 
-    var leagues = await unitOfWork.Leagues.GetLeagues();
-    var allClubs = await unitOfWork.Clubs.GetClubs();
+    var allClubs = await unitOfWork.Clubs.GetClubs(league.Id);
+    var stage = await unitOfWork.Leagues.GetCurrentStage(league.SoccerdataId);
 
     foreach (var game in upcomingGames)
     {
@@ -63,10 +66,6 @@ public class UpdateMatchesHandler(
         throw new InvalidOperationException(
           $"Matched clubs '{homeClub.Name}' and '{awayClub.Name}' belong to different leagues.");
       }
-
-      var league = leagues.FirstOrDefault(l => l.Id == homeClub.LeagueId)
-        ?? throw new InvalidOperationException($"League with id {homeClub.LeagueId} not found.");
-      var stage = await unitOfWork.Leagues.GetCurrentStage(league.SoccerdataId);
 
       var newMatch = Match.CreateUpcomming(gameDayUtc, stage.Id, homeClub.Id, awayClub.Id);
       newMatch.BetclicUrl = game.Url;

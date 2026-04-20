@@ -38,10 +38,10 @@ public class UpdateMatchesHandlerTests
   public async Task Handle_WhenNoUpcomingGames_ReturnsEmptyList()
   {
     // Arrange
-    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(new List<UpcomingGame>()));
+    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(new List<UpcomingGame>()));
 
     // Act
-    var result = await _sut.Handle(new UpdateMatchesCommand(), CancellationToken.None);
+    var result = await _sut.Handle(new UpdateMatchesCommand(1), CancellationToken.None);
 
     // Assert
     result.Should().BeEmpty();
@@ -57,7 +57,7 @@ public class UpdateMatchesHandlerTests
     {
       new() { Date = gameDate.Date, Time = "14:00", HomeTeam = "Arsenal", AwayTeam = "Chelsea", Url = "https://betclic.pl/match" }
     };
-    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
+    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
     var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
     var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
@@ -74,7 +74,7 @@ public class UpdateMatchesHandlerTests
       .Returns(existingMatch);
 
     // Act
-    var result = await _sut.Handle(new UpdateMatchesCommand(), CancellationToken.None);
+    var result = await _sut.Handle(new UpdateMatchesCommand(1), CancellationToken.None);
 
     // Assert
     result.Should().BeEmpty();
@@ -90,7 +90,7 @@ public class UpdateMatchesHandlerTests
     {
       new() { Date = new DateTime(2026, 1, 15), Time = "15:00", HomeTeam = "Unknown Team", AwayTeam = "Chelsea", Url = "https://betclic.pl/match" }
     };
-    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
+    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
     var clubs = new List<ClubEntity> { new() { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 } };
     _unitOfWork.Clubs.GetClubs().Returns(Task.FromResult(clubs));
@@ -102,7 +102,7 @@ public class UpdateMatchesHandlerTests
       .Returns(_ => throw new InvalidOperationException("No matching club found"));
 
     // Act
-    var act = () => _sut.Handle(new UpdateMatchesCommand(), CancellationToken.None);
+    var act = () => _sut.Handle(new UpdateMatchesCommand(1), CancellationToken.None);
 
     // Assert
     await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*No matching club found*");
@@ -117,7 +117,7 @@ public class UpdateMatchesHandlerTests
     {
       new() { Date = gameDate, Time = "15:00", HomeTeam = "Arsenal", AwayTeam = "Chelsea", Url = "https://betclic.pl/arsenal-chelsea" }
     };
-    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
+    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
     var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
     var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
@@ -131,7 +131,7 @@ public class UpdateMatchesHandlerTests
     _matchMatcher.FindClub("Chelsea", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(awayClub);
 
     // Act
-    var result = await _sut.Handle(new UpdateMatchesCommand(), CancellationToken.None);
+    var result = await _sut.Handle(new UpdateMatchesCommand(1), CancellationToken.None);
 
     // Assert
     result.Should().HaveCount(1);
@@ -151,7 +151,7 @@ public class UpdateMatchesHandlerTests
     {
       new() { Date = gameDate, Time = "", HomeTeam = "Arsenal", AwayTeam = "Chelsea", Url = "https://betclic.pl/m" }
     };
-    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
+    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
     var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
     var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
@@ -163,7 +163,7 @@ public class UpdateMatchesHandlerTests
     _matchMatcher.FindClub("Chelsea", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(awayClub);
 
     // Act
-    var result = await _sut.Handle(new UpdateMatchesCommand(), CancellationToken.None);
+    var result = await _sut.Handle(new UpdateMatchesCommand(1), CancellationToken.None);
 
     // Assert: match date should be gameDate at midnight (empty time => date only)
     result.Should().HaveCount(1);
@@ -179,7 +179,7 @@ public class UpdateMatchesHandlerTests
     {
       new() { Date = gameDate, Time = "14:30", HomeTeam = "Arsenal", AwayTeam = "Chelsea", Url = "https://betclic.pl/m" }
     };
-    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
+    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
     var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
     var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
@@ -191,7 +191,7 @@ public class UpdateMatchesHandlerTests
     _matchMatcher.FindClub("Chelsea", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(awayClub);
 
     // Act
-    var result = await _sut.Handle(new UpdateMatchesCommand(), CancellationToken.None);
+    var result = await _sut.Handle(new UpdateMatchesCommand(1), CancellationToken.None);
 
     // Assert: 14:30 combined with date
     var expectedDate = DateTime.SpecifyKind(new DateTime(2026, 1, 15, 14, 30, 0), DateTimeKind.Utc);

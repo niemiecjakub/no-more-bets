@@ -15,7 +15,15 @@ namespace NoMoreBets.Infrastructure.Scraping.External.Betclic;
 public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEventsProvider
 {
   private const string BaseUrl = "https://www.betclic.pl";
-  private const string PremierLeagueUrl = BaseUrl + "/football-sfootball/premier-league-c3";
+  private static readonly IReadOnlyDictionary<string, string> LeagueUrls = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+  {
+    ["premier-league"] = BaseUrl + "/football-sfootball/premier-league-c3",
+    ["ekstraklasa"] = BaseUrl + "/football-sfootball/ekstraklasa-c221",
+    ["laliga"] = BaseUrl + "/football-sfootball/la-liga-c7",
+    ["bundesliga"] = BaseUrl + "/football-sfootball/bundesliga-c5",
+    ["serie-a"] = BaseUrl + "/football-sfootball/serie-a-c6",
+    ["ligue-1"] = BaseUrl + "/football-sfootball/ligue-1-c4"
+  };
 
   private readonly BetclicScraperOptions _betclicOptions;
   private readonly ILogger<BetclicScraper> _logger;
@@ -38,13 +46,21 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
     _logger = logger;
   }
 
-  /// <summary>Gets upcoming games from the Betclic Premier League page.</summary>
-  public async Task<IReadOnlyList<UpcomingGame>> GetUpcomingGamesAsync(CancellationToken cancellationToken = default)
+  /// <summary>Gets upcoming games from Betclic page for the provided league slug.</summary>
+  public async Task<IReadOnlyList<UpcomingGame>> GetUpcomingGamesAsync(string leagueSlug, CancellationToken cancellationToken = default)
   {
+    if (!LeagueUrls.TryGetValue(leagueSlug, out var leagueUrl))
+    {
+      _logger.LogWarning(
+        "Betclic upcoming games skipped: no URL mapping configured for league slug {LeagueSlug}",
+        leagueSlug);
+      return [];
+    }
+
     var games = new List<UpcomingGame>();
     for (var attempt = 0; attempt < _betclicOptions.EmptyResultRetryCount; attempt++)
     {
-      var html = await GetPageHtmlAsync(PremierLeagueUrl, cancellationToken).ConfigureAwait(false);
+      var html = await GetPageHtmlAsync(leagueUrl, cancellationToken).ConfigureAwait(false);
       games = (await ParseUpcomingGamesAsync(html).ConfigureAwait(false)).ToList();
       if (games.Count > 0)
         return games;
@@ -56,7 +72,7 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
           attempt + 1,
           _betclicOptions.EmptyResultRetryCount,
           Math.Round(delay, 2),
-          PremierLeagueUrl);
+          leagueUrl);
         await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken).ConfigureAwait(false);
       }
     }
@@ -64,7 +80,7 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
     _logger.LogWarning(
       "Betclic upcoming games returned no results after {MaxAttempts} attempts. Url: {Url}",
       _betclicOptions.EmptyResultRetryCount,
-      PremierLeagueUrl);
+      leagueUrl);
     return games;
   }
 

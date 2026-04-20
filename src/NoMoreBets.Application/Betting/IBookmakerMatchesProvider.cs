@@ -4,5 +4,5 @@ namespace NoMoreBets.Application.Betting;
 
 public interface IBookmakerMatchesProvider
 {
-  Task<IReadOnlyList<UpcomingGame>> GetUpcomingGamesAsync(CancellationToken cancellationToken);
+  Task<IReadOnlyList<UpcomingGame>> GetUpcomingGamesAsync(string leagueSlug, CancellationToken cancellationToken);
 }

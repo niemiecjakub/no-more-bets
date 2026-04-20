@@ -133,7 +133,7 @@ public class BetclicScraperTests
     var sut = CreateScraper(pageFetcher);
 
     // Act
-    var result = await sut.GetUpcomingGamesAsync();
+    var result = await sut.GetUpcomingGamesAsync("premier-league");
 
     // Assert
     result.Should().NotBeEmpty();

@@ -436,15 +436,39 @@ public class JobService(
   [AutomaticRetry(Attempts = 1)]
   public async Task GetBetclicGames()
   {
-    logger.LogInformation(
-      "Starting job {JobName} to process upcoming Betclic games",
-      nameof(GetBetclicGames));
+    var leagues = await db.League
+      .Select(l => new { l.Id, l.Name })
+      .ToListAsync();
+    if (leagues.Count == 0)
+    {
+      logger.LogWarning(
+        "Job {JobName} found no leagues in database. Skipping Betclic refresh.",
+        nameof(GetBetclicGames));
+      return;
+    }
 
-    var upcommingGames = await mediator.Send(new UpdateMatchesCommand());
     logger.LogInformation(
-      "Job {JobName} received {GameCount} upcoming Betclic games",
+      "Starting job {JobName} to process upcoming Betclic games for {LeagueCount} leagues",
       nameof(GetBetclicGames),
-      upcommingGames.Count);
+      leagues.Count);
+
+    var totalCount = 0;
+    foreach (var league in leagues)
+    {
+      var upcomingGames = await mediator.Send(new UpdateMatchesCommand(league.Id));
+      totalCount += upcomingGames.Count;
+      logger.LogInformation(
+        "Job {JobName} received {GameCount} upcoming Betclic games for league {LeagueId} ({LeagueName})",
+        nameof(GetBetclicGames),
+        upcomingGames.Count,
+        league.Id,
+        league.Name);
+    }
+
+    logger.LogInformation(
+      "Job {JobName} processed {TotalGameCount} upcoming Betclic games in total",
+      nameof(GetBetclicGames),
+      totalCount);
   }
 
   [AutomaticRetry(Attempts = 3)]
