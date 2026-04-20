@@ -433,6 +433,9 @@ public class JobService(
       cutoff);
   }
 
+  /// <summary>
+  /// Daily job: loads leagues and schedules <see cref="GetBetclicGamesForLeague"/> per league with a random delay (0-900s).
+  /// </summary>
   [AutomaticRetry(Attempts = 1)]
   public async Task GetBetclicGames()
   {
@@ -448,27 +451,45 @@ public class JobService(
     }
 
     logger.LogInformation(
-      "Starting job {JobName} to process upcoming Betclic games for {LeagueCount} leagues",
+      "Starting job {JobName} to schedule upcoming Betclic game refresh for {LeagueCount} leagues",
       nameof(GetBetclicGames),
       leagues.Count);
 
-    var totalCount = 0;
     foreach (var league in leagues)
     {
-      var upcomingGames = await mediator.Send(new UpdateMatchesCommand(league.Id));
-      totalCount += upcomingGames.Count;
+      var delay = TimeSpan.FromSeconds(Random.Shared.Next(0, 900));
+      BackgroundJob.Schedule<JobService>(
+        js => js.GetBetclicGamesForLeague(league.Id),
+        delay);
       logger.LogInformation(
-        "Job {JobName} received {GameCount} upcoming Betclic games for league {LeagueId} ({LeagueName})",
+        "Job {JobName} scheduled Betclic refresh for league {LeagueId} ({LeagueName}) after {DelaySeconds}s",
         nameof(GetBetclicGames),
-        upcomingGames.Count,
         league.Id,
-        league.Name);
+        league.Name,
+        delay.TotalSeconds);
     }
 
     logger.LogInformation(
-      "Job {JobName} processed {TotalGameCount} upcoming Betclic games in total",
+      "Job {JobName} scheduled {LeagueCount} per-league Betclic refresh jobs (random delay 0-900s each)",
       nameof(GetBetclicGames),
-      totalCount);
+      leagues.Count);
+  }
+
+  [AutomaticRetry(Attempts = 1)]
+  public async Task GetBetclicGamesForLeague(int leagueId)
+  {
+    var leagueName = await db.League
+      .Where(l => l.Id == leagueId)
+      .Select(l => l.Name)
+      .FirstOrDefaultAsync();
+
+    var upcomingGames = await mediator.Send(new UpdateMatchesCommand(leagueId));
+    logger.LogInformation(
+      "Job {JobName} received {GameCount} upcoming Betclic games for league {LeagueId} ({LeagueName})",
+      nameof(GetBetclicGamesForLeague),
+      upcomingGames.Count,
+      leagueId,
+      leagueName ?? "(unknown)");
   }
 
   [AutomaticRetry(Attempts = 3)]
