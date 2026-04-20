@@ -58,6 +58,11 @@ public class LeagueRepository : ILeagueRepository
     return _db.League.ToListAsync();
   }
 
+  public Task<League?> GetByIdAsync(int leagueId, CancellationToken cancellationToken = default)
+  {
+    return _db.League.AsNoTracking().FirstOrDefaultAsync(l => l.Id == leagueId, cancellationToken);
+  }
+
   public Task<Stage> GetCurrentStage(int leagueId)
   {
     return _db.Stage

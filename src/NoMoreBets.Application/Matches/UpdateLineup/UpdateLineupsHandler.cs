@@ -1,6 +1,5 @@
 using System.Text.Json;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
@@ -8,11 +7,12 @@ using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.UpdateLineup;
 
-/// <summary>Command to refresh Rotowire lineups (scrape and persist to database).</summary>
-public record UpdateLineupsCommand : IRequest<Unit>;
+/// <summary>Command to refresh lineups from RotoWire for one league (must exist and be RotoWire-supported).</summary>
+/// <param name="LeagueId">League to refresh.</param>
+public record UpdateLineupsCommand(int LeagueId) : IRequest<Unit>;
 
 /// <summary>
-/// Handles <see cref="UpdateLineupsCommand"/> by scraping RotoWire and upserting lineups into the database.
+/// Handles <see cref="UpdateLineupsCommand"/> by scraping RotoWire (per-league URLs in <c>RotowireScraper</c>) and upserting matched lineups into the database.
 /// </summary>
 public class UpdateLineupsHandler(
   ILineupProvider lineupProvider,
@@ -26,15 +26,61 @@ public class UpdateLineupsHandler(
   public async Task<Unit> Handle(UpdateLineupsCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation(
-      "Handling {HandlerName}: starting Rotowire lineups refresh",
-      nameof(UpdateLineupsHandler));
+      "Handling {HandlerName}: starting RotoWire lineups refresh for league {LeagueId}",
+      nameof(UpdateLineupsHandler),
+      request.LeagueId);
 
-    var lineups = await lineupProvider.GetSoccerLineupsAsync();
+    var supported = lineupProvider.SupportedLeagueSlugs.ToHashSet(StringComparer.OrdinalIgnoreCase);
+    var league = await unitOfWork.Leagues.GetByIdAsync(request.LeagueId, cancellationToken).ConfigureAwait(false);
+    if (league is null)
+    {
+      logger.LogWarning(
+        "Handler {HandlerName}: league {LeagueId} not found; skipping.",
+        nameof(UpdateLineupsHandler),
+        request.LeagueId);
+      return Unit.Value;
+    }
+
+    if (!supported.Contains(league.Slug))
+    {
+      logger.LogWarning(
+        "Handler {HandlerName}: league {LeagueId} (slug '{Slug}') is not supported for RotoWire lineups. Supported slugs: {SupportedSlugs}.",
+        nameof(UpdateLineupsHandler),
+        request.LeagueId,
+        league.Slug,
+        string.Join(", ", supported));
+      return Unit.Value;
+    }
 
     var matchedCount = 0;
     var unmatchedCount = 0;
     var insertedCount = 0;
     var updatedCount = 0;
+
+    IReadOnlyList<GameLineup> lineups;
+    try
+    {
+      lineups = await lineupProvider.GetSoccerLineupsAsync(league.Slug, cancellationToken).ConfigureAwait(false);
+    }
+    catch (NotSupportedException ex)
+    {
+      logger.LogWarning(
+        ex,
+        "Handler {HandlerName}: RotoWire lineups not supported for league {LeagueId}.",
+        nameof(UpdateLineupsHandler),
+        league.Id);
+      return Unit.Value;
+    }
+    catch (ArgumentException ex)
+    {
+      logger.LogWarning(
+        ex,
+        "Handler {HandlerName}: invalid league slug '{LeagueSlug}' (id {LeagueId}).",
+        nameof(UpdateLineupsHandler),
+        league.Slug,
+        league.Id);
+      return Unit.Value;
+    }
 
     foreach (var lineup in lineups)
     {
@@ -49,7 +95,7 @@ public class UpdateLineupsHandler(
       {
         unmatchedCount++;
         logger.LogWarning(
-          "Handler {HandlerName} could not find match for Rotowire lineup {HomeTeam} vs {AwayTeam} on {GameDayUtc}",
+          "Handler {HandlerName} could not find match for RotoWire lineup {HomeTeam} vs {AwayTeam} on {GameDayUtc}",
           nameof(UpdateLineupsHandler),
           lineup.HomeTeamName,
           lineup.AwayTeamName,
@@ -83,8 +129,9 @@ public class UpdateLineupsHandler(
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     logger.LogInformation(
-      "Handler {HandlerName} completed Rotowire lineups refresh. Matched={MatchedCount}, Unmatched={UnmatchedCount}, Inserted={InsertedCount}, Updated={UpdatedCount}",
+      "Handler {HandlerName} completed RotoWire lineups refresh for league {LeagueId}. Matched={MatchedCount}, Unmatched={UnmatchedCount}, Inserted={InsertedCount}, Updated={UpdatedCount}",
       nameof(UpdateLineupsHandler),
+      request.LeagueId,
       matchedCount,
       unmatchedCount,
       insertedCount,

@@ -11,17 +11,31 @@ using System.Text.RegularExpressions;
 namespace NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 
 /// <summary>
-/// RotoWire scraper for fetching and parsing soccer lineup data from rotowire.com.
+/// RotoWire scraper for fetching and parsing soccer lineup data from rotowire.com (one lineup page per configured league).
 /// </summary>
 public class RotowireScraper : BaseScraper, ILineupProvider
 {
   private const string BaseUrl = "https://www.rotowire.com";
-  private const string LineupsUrl = BaseUrl + "/soccer/lineups.php";
+
+  /// <summary>
+  /// Per-league lineup page URLs (slugs align with <c>BetclicScraper</c> league keys).
+  /// </summary>
+  private static readonly IReadOnlyDictionary<string, string> LeagueLineupUrls = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+  {
+    ["premier-league"] = BaseUrl + "/soccer/lineups.php",
+    ["laliga"] = BaseUrl + "/soccer/lineups.php?league=LIGA",
+    ["bundesliga"] = BaseUrl + "/soccer/lineups.php?league=BUND",
+    ["serie-a"] = BaseUrl + "/soccer/lineups.php?league=SERI",
+    ["ligue-1"] = BaseUrl + "/soccer/lineups.php?league=FRAN"
+  };
 
   private static readonly Regex DateRegex = new(@"(\w+\s+\d+)", RegexOptions.Compiled);
   private static readonly Regex TimeRegex = new(@"(\d+:\d+\s+(?:AM|PM)\s+ET)", RegexOptions.Compiled);
 
   private readonly ILogger<RotowireScraper> _logger;
+
+  /// <inheritdoc />
+  public IReadOnlyCollection<string> SupportedLeagueSlugs => LeagueLineupUrls.Keys.ToArray();
 
   public RotowireScraper(
       PlaywrightPageFetcher pageFetcher,
@@ -32,14 +46,34 @@ public class RotowireScraper : BaseScraper, ILineupProvider
     _logger = logger;
   }
 
-  /// <summary>Gets soccer lineups (games with team lineups, injuries) for all leagues.</summary>
-  public async Task<IReadOnlyList<GameLineup>> GetSoccerLineupsAsync(CancellationToken cancellationToken = default)
+  /// <inheritdoc />
+  public async Task<IReadOnlyList<GameLineup>> GetSoccerLineupsAsync(string leagueSlug, CancellationToken cancellationToken = default)
   {
-    var html = await GetPageHtmlAsync(LineupsUrl, cancellationToken).ConfigureAwait(false);
-    var games = await ParseLineupsAsync(html).ConfigureAwait(false);
+    if (string.IsNullOrWhiteSpace(leagueSlug))
+    {
+      throw new ArgumentException("League slug is required.", nameof(leagueSlug));
+    }
+
+    if (!LeagueLineupUrls.TryGetValue(leagueSlug, out var url))
+    {
+      throw new NotSupportedException(
+        $"RotoWire lineups are not supported for league slug '{leagueSlug}'. Supported slugs: {string.Join(", ", LeagueLineupUrls.Keys)}.");
+    }
+
+    if (string.IsNullOrWhiteSpace(url))
+    {
+      _logger.LogWarning("Rotowire lineup URL empty for league slug {LeagueSlug}; returning no games.", leagueSlug);
+      return [];
+    }
+
+    var html = await GetPageHtmlAsync(url, cancellationToken).ConfigureAwait(false);
+    var games = (await ParseLineupsAsync(html).ConfigureAwait(false)).ToList();
     if (games.Count == 0)
     {
-      _logger.LogWarning("Rotowire lineup scrape completed with zero games. Url: {Url}", LineupsUrl);
+      _logger.LogWarning(
+        "Rotowire lineup scrape completed with zero games for league {LeagueSlug}. Url: {Url}",
+        leagueSlug,
+        url);
     }
 
     return games;
