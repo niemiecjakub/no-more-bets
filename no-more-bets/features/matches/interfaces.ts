@@ -11,6 +11,10 @@ export interface MatchListItem {
   awayClubName: string;
   homeClubSlug: string;
   awayClubSlug: string;
+  /** Competition name from match stage / season / league (empty if unknown). */
+  leagueName: string;
+  /** Slug for `/leagues/{slug}.svg` (empty if unknown). */
+  leagueSlug: string;
   matchStatusId: number;
   matchStatusName: string;
   homeGoals: number | null;

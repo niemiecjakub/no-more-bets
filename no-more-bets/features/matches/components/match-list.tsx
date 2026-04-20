@@ -126,6 +126,21 @@ export function MatchList({ matches }: MatchListProps) {
                     href={`/match/${match.id}`}
                     className="flex flex-col gap-1.5 px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
                   >
+                    {match.leagueName || match.leagueSlug ? (
+                      <div className="flex min-w-0 items-center justify-center gap-1.5">
+                        <SlugIcon
+                          kind="league"
+                          slug={match.leagueSlug}
+                          alt={match.leagueName || "League"}
+                          className="h-4 w-4"
+                        />
+                        {match.leagueName ? (
+                          <p className="min-w-0 truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                            {match.leagueName}
+                          </p>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2">
                       <div className="flex min-w-0 items-center justify-end gap-2">
                         <span className="min-w-0 truncate text-end font-medium text-foreground">

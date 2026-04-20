@@ -77,6 +77,18 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
     (typeof r.awayClubSlug === "string" ? r.awayClubSlug : undefined) ??
     (typeof r.AwayClubSlug === "string" ? r.AwayClubSlug : undefined) ??
     "";
+  const leagueName = (
+    (typeof item.leagueName === "string" ? item.leagueName : undefined) ??
+    (typeof r.leagueName === "string" ? r.leagueName : undefined) ??
+    (typeof r.LeagueName === "string" ? r.LeagueName : undefined) ??
+    ""
+  ).trim();
+  const leagueSlug = (
+    (typeof item.leagueSlug === "string" ? item.leagueSlug : undefined) ??
+    (typeof r.leagueSlug === "string" ? r.leagueSlug : undefined) ??
+    (typeof r.LeagueSlug === "string" ? r.LeagueSlug : undefined) ??
+    ""
+  ).trim();
   const hasAnalysis =
     (typeof item.hasAnalysis === "boolean" ? item.hasAnalysis : undefined) ??
     (typeof r.hasAnalysis === "boolean" ? r.hasAnalysis : undefined) ??
@@ -112,6 +124,8 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
     ...item,
     homeClubSlug: homeSlug,
     awayClubSlug: awaySlug,
+    leagueName,
+    leagueSlug,
     hasAnalysis,
     hasResearch,
     hasPreview,

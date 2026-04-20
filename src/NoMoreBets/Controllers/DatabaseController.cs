@@ -197,6 +197,9 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
       .Include(m => m.MatchStatusEntity)
+      .Include(m => m.Stage)
+        .ThenInclude(s => s!.Season)
+        .ThenInclude(se => se.League)
       .OrderByDescending(m => m.MatchDate)
       .ToListAsync(cancellationToken);
 
@@ -210,6 +213,8 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
         m.AwayClub.Name,
         m.HomeClub.Slug,
         m.AwayClub.Slug,
+        m.Stage?.Season?.League?.Name ?? string.Empty,
+        m.Stage?.Season?.League?.Slug ?? string.Empty,
         m.MatchStatusId,
         m.MatchStatusEntity.Name,
         m.HomeGoals,
@@ -439,6 +444,8 @@ public record MatchDto(
   string AwayClubName,
   string HomeClubSlug,
   string AwayClubSlug,
+  string LeagueName,
+  string LeagueSlug,
   int MatchStatusId,
   string MatchStatusName,
   int? HomeGoals,
