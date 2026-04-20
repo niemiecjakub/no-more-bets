@@ -347,6 +347,42 @@ public class MatchMatcherTests
   }
 
   [Fact]
+  public void FindClub_BetclicPolishMarseilleAlias_ReturnsMarseille()
+  {
+    var marseille = new ClubEntity { Id = 1, Name = "Marseille", LeagueId = 6, SoccerdataId = 3769 };
+    var clubs = new List<ClubEntity> { marseille };
+
+    var result = _sut.FindClub("Marsylia", clubs);
+
+    result.Should().BeSameAs(marseille);
+    result.Name.Should().Be("Marseille");
+  }
+
+  [Fact]
+  public void FindClub_BetclicFcKoelnAlias_ReturnsFcCologne()
+  {
+    var fcCologne = new ClubEntity { Id = 1, Name = "FC Cologne", LeagueId = 4, SoccerdataId = 3336 };
+    var clubs = new List<ClubEntity> { fcCologne };
+
+    var result = _sut.FindClub("FC Koeln", clubs);
+
+    result.Should().BeSameAs(fcCologne);
+    result.Name.Should().Be("FC Cologne");
+  }
+
+  [Fact]
+  public void FindClub_FoldedDiacriticsExactMatch_ReturnsClub()
+  {
+    var club = new ClubEntity { Id = 1, Name = "TSV München Test", LeagueId = 1, SoccerdataId = 1 };
+    var clubs = new List<ClubEntity> { club };
+
+    var result = _sut.FindClub("TSV Munchen Test", clubs);
+
+    result.Should().BeSameAs(club);
+    result.Name.Should().Be("TSV München Test");
+  }
+
+  [Fact]
   public void FindXgStats_WhenEmptyList_ReturnsNull()
   {
     // Arrange

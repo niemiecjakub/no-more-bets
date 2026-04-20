@@ -184,16 +184,28 @@ public sealed class MatchMatcher : IMatchMatcher
         $"No clubs in league to match. Cannot resolve team '{trimmed}'.");
     }
 
+    var effectiveName = ClubNameMatchHints.ResolveEffectiveName(trimmed);
+
     foreach (var club in clubs)
     {
-      if (string.Equals(club.Name.Trim(), trimmed, StringComparison.OrdinalIgnoreCase))
+      if (string.Equals(club.Name.Trim(), effectiveName, StringComparison.OrdinalIgnoreCase))
       {
         return club;
       }
     }
 
-    var names = clubs.Select(c => c.Name).ToArray();
-    var best = Process.ExtractOne(trimmed, names, s => s ?? "", cutoff: FotmobScoreCutoff);
+    var foldedEffective = ClubNameMatchHints.FoldDiacritics(effectiveName);
+    foreach (var club in clubs)
+    {
+      var foldedClub = ClubNameMatchHints.FoldDiacritics(club.Name.Trim());
+      if (string.Equals(foldedClub, foldedEffective, StringComparison.OrdinalIgnoreCase))
+      {
+        return club;
+      }
+    }
+
+    var names = clubs.Select(c => ClubNameMatchHints.FoldDiacritics(c.Name)).ToArray();
+    var best = Process.ExtractOne(foldedEffective, names, s => s ?? "", cutoff: FotmobScoreCutoff);
     if (best != null && best.Score >= FotmobScoreCutoff && best.Index >= 0 && best.Index < clubs.Count)
     {
       return clubs[best.Index];
