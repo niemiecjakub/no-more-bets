@@ -105,7 +105,7 @@ public class MatchRepository : IMatchRepository
       .Where(m => _db.Head2Head.Any(h =>
         (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
         (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
-      .Where(m => !_db.MatchAnalysis.Any(a => a.MatchId == m.Id && a.Code == "Research"))
+      .Where(m => !_db.MatchAnalysis.Any(a => a.MatchId == m.Id && a.Code == MatchAnalysis.ResearchCode))
       .OrderBy(m => m.MatchDate)
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)

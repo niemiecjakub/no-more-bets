@@ -12,10 +12,28 @@ internal static class ClubNameMatchHints
   {
     ["Marsylia"] = "Marseille",
     ["FC Koeln"] = "FC Cologne",
+    // German sources use "Köln"; DB uses English "FC Cologne". Folded keys cover umlauts via ResolveEffectiveName.
+    ["1. FC Koln"] = "FC Cologne",
+    ["FC Koln"] = "FC Cologne",
+    // Latin "Larnaca" vs transliterated Greek "Larnaka" for the same club (bookmakers vs Soccerdata/FotMob).
+    ["AEK Larnaca"] = "AEK Larnaka",
   };
 
-  public static string ResolveEffectiveName(string trimmed) =>
-    Aliases.TryGetValue(trimmed, out var canonical) ? canonical : trimmed;
+  public static string ResolveEffectiveName(string trimmed)
+  {
+    if (Aliases.TryGetValue(trimmed, out var canonical))
+    {
+      return canonical;
+    }
+
+    var folded = FoldDiacritics(trimmed);
+    if (Aliases.TryGetValue(folded, out canonical))
+    {
+      return canonical;
+    }
+
+    return trimmed;
+  }
 
   public static string FoldDiacritics(string value)
   {

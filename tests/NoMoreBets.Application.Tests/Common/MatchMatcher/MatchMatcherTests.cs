@@ -371,6 +371,30 @@ public class MatchMatcherTests
   }
 
   [Fact]
+  public void FindClub_GermanOneFcKolnWithUmlaut_ReturnsFcCologne()
+  {
+    var fcCologne = new ClubEntity { Id = 1, Name = "FC Cologne", LeagueId = 4, SoccerdataId = 3336 };
+    var clubs = new List<ClubEntity> { fcCologne };
+
+    var result = _sut.FindClub("1. FC Köln", clubs);
+
+    result.Should().BeSameAs(fcCologne);
+    result.Name.Should().Be("FC Cologne");
+  }
+
+  [Fact]
+  public void FindClub_AekLarnacaAlias_ReturnsAekLarnaka()
+  {
+    var aek = new ClubEntity { Id = 1, Name = "AEK Larnaka", LeagueId = 1, SoccerdataId = 1 };
+    var clubs = new List<ClubEntity> { aek };
+
+    var result = _sut.FindClub("AEK Larnaca", clubs);
+
+    result.Should().BeSameAs(aek);
+    result.Name.Should().Be("AEK Larnaka");
+  }
+
+  [Fact]
   public void FindClub_FoldedDiacriticsExactMatch_ReturnsClub()
   {
     var club = new ClubEntity { Id = 1, Name = "TSV München Test", LeagueId = 1, SoccerdataId = 1 };
