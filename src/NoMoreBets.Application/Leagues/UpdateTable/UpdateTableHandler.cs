@@ -55,9 +55,19 @@ public class UpdateTableHandler(
     }
 
     var domainClubs = await unitOfWork.Clubs.GetClubs(request.LeagueId);
+    var league = (await unitOfWork.Leagues.GetLeagues())
+      .FirstOrDefault(l => l.Id == request.LeagueId);
+    if (league == null)
+    {
+      logger.LogError(
+        "Handler {HandlerName} found no league row for league {LeagueId}",
+        nameof(UpdateTableHandler),
+        request.LeagueId);
+      throw new InvalidOperationException($"No league found for id {request.LeagueId}.");
+    }
 
-    var tableTask = leagueProvider.GetLeagueTableAsync();
-    var xgTask = leagueProvider.GetXgStatsAsync();
+    var tableTask = leagueProvider.GetLeagueTableAsync(league.Slug);
+    var xgTask = leagueProvider.GetXgStatsAsync(league.Slug);
     await Task.WhenAll(tableTask, xgTask).ConfigureAwait(false);
 
     var tableClubs = tableTask.Result;

@@ -3,7 +3,6 @@ using Hangfire.PostgreSql;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Infrastructure.BackgroundJobs;
-using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
 
 namespace NoMoreBets.Infrastructure;
 public static class HangfireConfiguration
@@ -36,7 +35,7 @@ public static class HangfireConfiguration
     // Runs once per day at 01:00
     RecurringJob.AddOrUpdate<JobService>(
       "get-soccerdata-upcoming-matches",
-      jobService => jobService.GetUpcommingSoccerdataMatches(SoccerDataConstants.PremierLeagueId),
+      jobService => jobService.GetUpcommingSoccerdataMatchesForAllLeagues(),
       "0 1 * * *");
 
     // Runs once per day at 02:00 – schedule head-to-head refresh jobs for upcoming matches

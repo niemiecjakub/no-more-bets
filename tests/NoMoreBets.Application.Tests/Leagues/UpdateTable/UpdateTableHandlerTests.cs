@@ -39,8 +39,8 @@ public class UpdateTableHandlerTests
 
     (await act.Should().ThrowAsync<InvalidOperationException>())
       .WithMessage("*42*");
-    await _leagueProvider.DidNotReceive().GetLeagueTableAsync(Arg.Any<CancellationToken>());
-    await _leagueProvider.DidNotReceive().GetXgStatsAsync(Arg.Any<CancellationToken>());
+    await _leagueProvider.DidNotReceive().GetLeagueTableAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    await _leagueProvider.DidNotReceive().GetXgStatsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
   }
 
   [Fact]
@@ -52,8 +52,8 @@ public class UpdateTableHandlerTests
     var result = await _sut.Handle(new UpdateTableCommand(1), CancellationToken.None);
 
     result.Should().Be(Unit.Value);
-    await _leagueProvider.DidNotReceive().GetLeagueTableAsync(Arg.Any<CancellationToken>());
-    await _leagueProvider.DidNotReceive().GetXgStatsAsync(Arg.Any<CancellationToken>());
+    await _leagueProvider.DidNotReceive().GetLeagueTableAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    await _leagueProvider.DidNotReceive().GetXgStatsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
   }
 
   [Fact]
@@ -61,6 +61,7 @@ public class UpdateTableHandlerTests
   {
     _unitOfWork.Leagues.GetLatestSeason(Arg.Any<int>()).Returns(new Season { Id = 1, LeagueId = 1, Year = "2025" });
     _unitOfWork.Leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
+    _unitOfWork.Leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
     var domainClubs = new List<ClubEntity> { new() { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 } };
     _unitOfWork.Clubs.GetClubs(Arg.Any<int>()).Returns(Task.FromResult(domainClubs));
 
@@ -77,8 +78,8 @@ public class UpdateTableHandlerTests
       GoalDifference = "5",
       Points = 17
     };
-    _leagueProvider.GetLeagueTableAsync(Arg.Any<CancellationToken>()).Returns(new[] { tableEntry });
-    _leagueProvider.GetXgStatsAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<XgStats>());
+    _leagueProvider.GetLeagueTableAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(new[] { tableEntry });
+    _leagueProvider.GetXgStatsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<XgStats>());
 
     _matchMatcher.FindClub("Unknown Team", Arg.Any<IReadOnlyList<ClubEntity>>())
       .Returns(_ => throw new InvalidOperationException("No matching club"));
@@ -94,6 +95,7 @@ public class UpdateTableHandlerTests
   {
     _unitOfWork.Leagues.GetLatestSeason(Arg.Any<int>()).Returns(new Season { Id = 1, LeagueId = 1, Year = "2025" });
     _unitOfWork.Leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
+    _unitOfWork.Leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
 
     var club = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
     _unitOfWork.Clubs.GetClubs(Arg.Any<int>()).Returns(Task.FromResult(new List<ClubEntity> { club }));
@@ -111,8 +113,8 @@ public class UpdateTableHandlerTests
       GoalDifference = "5",
       Points = 17
     };
-    _leagueProvider.GetLeagueTableAsync(Arg.Any<CancellationToken>()).Returns(new[] { tableEntry });
-    _leagueProvider.GetXgStatsAsync(Arg.Any<CancellationToken>()).Returns(Array.Empty<XgStats>());
+    _leagueProvider.GetLeagueTableAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(new[] { tableEntry });
+    _leagueProvider.GetXgStatsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Array.Empty<XgStats>());
 
     var latestSnapshot = new LeagueTableSnapshot { Id = 1, LeagueId = 1, SeasonId = 1 };
     latestSnapshot.Rows.Add(new LeagueTableSnapshotRow { ClubId = 1, MatchesPlayed = 10 });

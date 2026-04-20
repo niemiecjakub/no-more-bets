@@ -50,6 +50,39 @@ public class JobService(
       soccerdataLeagueId);
   }
 
+  [AutomaticRetry(Attempts = 1)]
+  public async Task GetUpcommingSoccerdataMatchesForAllLeagues()
+  {
+    var leagues = await db.League
+      .Where(l => l.SoccerdataId > 0)
+      .Select(l => new { l.Id, l.Name, l.SoccerdataId })
+      .ToListAsync();
+
+    if (leagues.Count == 0)
+    {
+      logger.LogWarning(
+        "Job {JobName} found no leagues with SoccerdataId configured",
+        nameof(GetUpcommingSoccerdataMatchesForAllLeagues));
+      return;
+    }
+
+    logger.LogInformation(
+      "Job {JobName} will sync upcoming matches for {LeagueCount} leagues",
+      nameof(GetUpcommingSoccerdataMatchesForAllLeagues),
+      leagues.Count);
+
+    foreach (var league in leagues)
+    {
+      logger.LogInformation(
+        "Job {JobName} syncing league {LeagueId} ({LeagueName}) with SoccerdataId={SoccerdataLeagueId}",
+        nameof(GetUpcommingSoccerdataMatchesForAllLeagues),
+        league.Id,
+        league.Name,
+        league.SoccerdataId);
+      await GetUpcommingSoccerdataMatches(league.SoccerdataId);
+    }
+  }
+
   [AutomaticRetry(Attempts = 3)]
   public async Task ApplyPaydayIfDue()
   {
@@ -255,29 +288,33 @@ public class JobService(
   [AutomaticRetry(Attempts = 3)]
   public async Task GetLeagueTable()
   {
-    logger.LogInformation(
-      "Starting job {JobName} to refresh league table for Premier League",
-      nameof(GetLeagueTable));
-
-    var premierLeagueId = await db.League
-      .Where(l => l.Name == "Premier League")
-      .Select(l => l.Id)
-      .FirstOrDefaultAsync();
-
-    if (premierLeagueId == 0)
+    var leagues = await db.League
+      .Select(l => new { l.Id, l.Name })
+      .ToListAsync();
+    if (leagues.Count == 0)
     {
       logger.LogWarning(
-        "Job {JobName} could not find Premier League in database. Skipping refresh.",
+        "Job {JobName} found no leagues in database. Skipping refresh.",
         nameof(GetLeagueTable));
       return;
     }
 
-    await mediator.Send(new UpdateTableCommand(premierLeagueId));
-
     logger.LogInformation(
-      "Completed job {JobName} for league {LeagueId}",
+      "Starting job {JobName} to refresh league tables for {LeagueCount} leagues",
       nameof(GetLeagueTable),
-      premierLeagueId);
+      leagues.Count);
+
+    foreach (var league in leagues)
+    {
+      logger.LogInformation(
+        "Job {JobName} refreshing league table for league {LeagueId} ({LeagueName})",
+        nameof(GetLeagueTable),
+        league.Id,
+        league.Name);
+      await mediator.Send(new UpdateTableCommand(league.Id));
+    }
+
+    logger.LogInformation("Completed job {JobName}", nameof(GetLeagueTable));
   }
 
   /// <summary>
@@ -417,13 +454,18 @@ public class JobService(
       "Starting job {JobName} to fill missing scores for finished matches",
       nameof(FillMissingFinishedMatchScoresFromSoccerData));
 
-    var dbMatches = await db.Match
+    var dbMatchesWithLeague = await db.Match
       .Where(m => m.MatchStatusId == (int)MatchStatus.Finished)
       .Where(m => m.HomeGoals == null || m.AwayGoals == null)
       .Where(m => m.SoccerdataId.HasValue)
+      .Select(m => new
+      {
+        Match = m,
+        LeagueSoccerdataId = m.Stage != null ? (int?)m.Stage.Season.League.SoccerdataId : null
+      })
       .ToListAsync();
 
-    if (dbMatches.Count == 0)
+    if (dbMatchesWithLeague.Count == 0)
     {
       logger.LogInformation(
         "Job {JobName} found no finished matches with missing scores",
@@ -431,25 +473,39 @@ public class JobService(
       return;
     }
 
-    var premierLeagueMatches = await soccerDataClient.GetMatchesAsync(
-      leagueId: SoccerDataConstants.PremierLeagueId);
-
-    var soccerDataMatchesById = premierLeagueMatches
-      .SelectMany(league => league.Stage)
-      .SelectMany(stage => stage.Matches)
-      .GroupBy(match => match.Id)
-      .ToDictionary(g => g.Key, g => g.First());
+    var missingLeagueContextCount = dbMatchesWithLeague.Count(x => !x.LeagueSoccerdataId.HasValue);
+    if (missingLeagueContextCount > 0)
+    {
+      logger.LogWarning(
+        "Job {JobName} skipped {SkippedCount} matches because Stage/League context is missing",
+        nameof(FillMissingFinishedMatchScoresFromSoccerData),
+        missingLeagueContextCount);
+    }
 
     var updatedCount = 0;
-    foreach (var dbMatch in dbMatches)
-    {
-      var soccerdataId = dbMatch.SoccerdataId!.Value;
-      if (!soccerDataMatchesById.TryGetValue(soccerdataId, out var soccerDataMatch))
-        continue;
+    var matchesByLeague = dbMatchesWithLeague
+      .Where(x => x.LeagueSoccerdataId.HasValue)
+      .GroupBy(x => x.LeagueSoccerdataId!.Value);
 
-      dbMatch.HomeGoals = soccerDataMatch.Goals.HomeFtGoals;
-      dbMatch.AwayGoals = soccerDataMatch.Goals.AwayFtGoals;
-      updatedCount++;
+    foreach (var leagueGroup in matchesByLeague)
+    {
+      var leagueMatches = await soccerDataClient.GetMatchesAsync(leagueId: leagueGroup.Key);
+      var soccerDataMatchesById = leagueMatches
+        .SelectMany(league => league.Stage)
+        .SelectMany(stage => stage.Matches)
+        .GroupBy(match => match.Id)
+        .ToDictionary(g => g.Key, g => g.First());
+
+      foreach (var item in leagueGroup)
+      {
+        var soccerdataId = item.Match.SoccerdataId!.Value;
+        if (!soccerDataMatchesById.TryGetValue(soccerdataId, out var soccerDataMatch))
+          continue;
+
+        item.Match.HomeGoals = soccerDataMatch.Goals.HomeFtGoals;
+        item.Match.AwayGoals = soccerDataMatch.Goals.AwayFtGoals;
+        updatedCount++;
+      }
     }
 
     if (updatedCount > 0)

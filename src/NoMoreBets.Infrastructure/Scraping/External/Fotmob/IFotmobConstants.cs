@@ -9,6 +9,7 @@ public interface IFotmobConstants
   FotmobLeague LaLiga { get; }
   FotmobLeague SerieA { get; }
   FotmobLeague Ligue1 { get; }
+  FotmobLeague? GetLeagueBySlug(string slug);
   FotmobTeam? GetTeamById(int id);
   FotmobTeam? GetTeamByName(string name);
 }

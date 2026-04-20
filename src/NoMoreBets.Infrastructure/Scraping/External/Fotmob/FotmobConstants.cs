@@ -139,9 +139,20 @@ public class FotmobConstants : IFotmobConstants
   public FotmobTeam Toulouse { get; } = new(3129, "Toulouse");
 
   private readonly FotmobTeam[] _allTeams;
+  private readonly Dictionary<string, FotmobLeague> _leaguesBySlug;
 
   public FotmobConstants()
   {
+    _leaguesBySlug = new Dictionary<string, FotmobLeague>(StringComparer.OrdinalIgnoreCase)
+    {
+      [PremierLeague.Slug] = PremierLeague,
+      [Ekstraklasa.Slug] = Ekstraklasa,
+      [Bundesliga.Slug] = Bundesliga,
+      [LaLiga.Slug] = LaLiga,
+      [SerieA.Slug] = SerieA,
+      [Ligue1.Slug] = Ligue1
+    };
+
     _allTeams =
     [
       // Premier League
@@ -181,6 +192,16 @@ public class FotmobConstants : IFotmobConstants
       Monaco, Nantes, Nice, ParisFC, PSG,
       Rennes, Strasbourg, Toulouse
     ];
+  }
+
+  /// <inheritdoc />
+  public FotmobLeague? GetLeagueBySlug(string slug)
+  {
+    if (string.IsNullOrWhiteSpace(slug))
+      return null;
+
+    var normalized = slug.Trim();
+    return _leaguesBySlug.GetValueOrDefault(normalized);
   }
 
   /// <inheritdoc />

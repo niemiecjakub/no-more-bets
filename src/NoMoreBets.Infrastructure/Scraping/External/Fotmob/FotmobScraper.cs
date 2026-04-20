@@ -14,7 +14,7 @@ using System.Text.RegularExpressions;
 namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
 /// <summary>
-/// FotMob scraper for fetching Premier League table and xG statistics.
+/// FotMob scraper for fetching league tables and xG statistics.
 /// </summary>
 public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider, IMatchDetailsProvider
 {
@@ -74,10 +74,11 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     _fotmobConstants = fotmobConstants;
   }
 
-  /// <summary>Gets the league table (standings) for the configured league, optionally filtered by home/away/form.</summary>
-  public async Task<IReadOnlyList<TableEntry>> GetLeagueTableAsync(CancellationToken cancellationToken = default)
+  /// <summary>Gets the league table (standings) for the requested league, optionally filtered by home/away/form.</summary>
+  public async Task<IReadOnlyList<TableEntry>> GetLeagueTableAsync(string leagueSlug, CancellationToken cancellationToken = default)
   {
-    var url = $"{BaseUrl}/leagues/{_fotmobConstants.PremierLeague.Id}/table/{_fotmobConstants.PremierLeague.Slug}";
+    var league = ResolveLeague(leagueSlug);
+    var url = $"{BaseUrl}/leagues/{league.Id}/table/{league.Slug}";
     var html = await GetHtmlAfterInteractionsAsync(
         url,
         FotmobConsentSteps,
@@ -90,9 +91,10 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   }
 
   /// <inheritdoc />
-  public async Task<IReadOnlyList<XgStats>> GetXgStatsAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<XgStats>> GetXgStatsAsync(string leagueSlug, CancellationToken cancellationToken = default)
   {
-    var url = BuildXgUrl();
+    var league = ResolveLeague(leagueSlug);
+    var url = BuildXgUrl(league);
     var html = await GetHtmlAfterInteractionsAsync(
         url,
         FotmobConsentSteps,
@@ -690,9 +692,17 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     };
   }
 
-  private string BuildXgUrl()
+  private FotmobLeague ResolveLeague(string leagueSlug)
   {
-    var path = $"{BaseUrl}/leagues/{_fotmobConstants.PremierLeague.Id}/table/{_fotmobConstants.PremierLeague.Slug}";
+    var league = _fotmobConstants.GetLeagueBySlug(leagueSlug);
+    if (league is null)
+      throw new InvalidOperationException($"No Fotmob league mapping configured for slug '{leagueSlug}'.");
+    return league;
+  }
+
+  private string BuildXgUrl(FotmobLeague league)
+  {
+    var path = $"{BaseUrl}/leagues/{league.Id}/table/{league.Slug}";
     return path + "?filter=xg";
   }
 
