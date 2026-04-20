@@ -65,10 +65,11 @@ public class ClubRepository : IClubRepository
       .ToListAsync();
   }
 
-  public Task<List<Club>> GetClubs(int leagueId)
+  public Task<List<Club>> GetClubs(int? leagueId = null)
   {
-    return _db.Club
-      .Where(c => c.LeagueId == leagueId)
-      .ToListAsync();
+    var query = _db.Club.AsQueryable();
+    if (leagueId.HasValue)
+      query = query.Where(c => c.LeagueId == leagueId.Value);
+    return query.ToListAsync();
   }
 }

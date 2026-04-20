@@ -20,9 +20,6 @@ public class UpdateMatchesHandler(
   IUnitOfWork unitOfWork,
   IMatchMatcher matchMatcher) : IRequestHandler<UpdateMatchesCommand, IReadOnlyList<Match>>
 {
-  private const int LeagueId = 1;
-  private const int StageId = 1;
-
   /// <inheritdoc />
   public async Task<IReadOnlyList<Match>> Handle(UpdateMatchesCommand request, CancellationToken cancellationToken)
   {
@@ -35,7 +32,8 @@ public class UpdateMatchesHandler(
       return added;
     }
 
-    var clubs = await unitOfWork.Clubs.GetClubs(LeagueId);
+    var leagues = await unitOfWork.Leagues.GetLeagues();
+    var allClubs = await unitOfWork.Clubs.GetClubs();
 
     foreach (var game in upcomingGames)
     {
@@ -58,9 +56,19 @@ public class UpdateMatchesHandler(
         continue;
       }
 
-      var homeClub = matchMatcher.FindClub(game.HomeTeam, clubs);
-      var awayClub = matchMatcher.FindClub(game.AwayTeam, clubs);
-      var newMatch = Match.CreateUpcomming(gameDayUtc, StageId, homeClub.Id, awayClub.Id);
+      var homeClub = matchMatcher.FindClub(game.HomeTeam, allClubs);
+      var awayClub = matchMatcher.FindClub(game.AwayTeam, allClubs);
+      if (homeClub.LeagueId != awayClub.LeagueId)
+      {
+        throw new InvalidOperationException(
+          $"Matched clubs '{homeClub.Name}' and '{awayClub.Name}' belong to different leagues.");
+      }
+
+      var league = leagues.FirstOrDefault(l => l.Id == homeClub.LeagueId)
+        ?? throw new InvalidOperationException($"League with id {homeClub.LeagueId} not found.");
+      var stage = await unitOfWork.Leagues.GetCurrentStage(league.SoccerdataId);
+
+      var newMatch = Match.CreateUpcomming(gameDayUtc, stage.Id, homeClub.Id, awayClub.Id);
       newMatch.BetclicUrl = game.Url;
       await unitOfWork.Matches.AddMatch(newMatch);
       added.Add(newMatch);

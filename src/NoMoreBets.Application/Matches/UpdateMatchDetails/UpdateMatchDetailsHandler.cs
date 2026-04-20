@@ -22,9 +22,6 @@ public class UpdateMatchDetailsHandler(
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-  private const int LeagueId = 1;
-  private const int StageId = 1;
-
   public async Task<Unit> Handle(UpdateMatchDetailsCommand request, CancellationToken cancellationToken)
   {
     var fotmobGameUrl = request.FotmobGameUrl?.Trim();
@@ -120,13 +117,15 @@ public class UpdateMatchDetailsHandler(
     }
 
     // Path C: insert new match
-    var clubs = await unitOfWork.Clubs.GetClubs(LeagueId).ConfigureAwait(false);
+    var leagues = await unitOfWork.Leagues.GetLeagues().ConfigureAwait(false);
+    var allClubs = await unitOfWork.Clubs.GetClubs().ConfigureAwait(false);
+
     Club homeClub;
     Club awayClub;
     try
     {
-      homeClub = matchMatcher.FindClub(dto.HomeTeam, clubs);
-      awayClub = matchMatcher.FindClub(dto.AwayTeam, clubs);
+      homeClub = matchMatcher.FindClub(dto.HomeTeam, allClubs);
+      awayClub = matchMatcher.FindClub(dto.AwayTeam, allClubs);
     }
     catch (Exception ex)
     {
@@ -138,7 +137,31 @@ public class UpdateMatchDetailsHandler(
       return Unit.Value;
     }
 
-    var newMatch = Match.CreateUpcomming(matchDate, StageId, homeClub.Id, awayClub.Id);
+    if (homeClub.LeagueId != awayClub.LeagueId)
+    {
+      logger.LogWarning(
+        "Handler {HandlerName} resolved clubs from different leagues for insert ({Home} in {HomeLeagueId}, {Away} in {AwayLeagueId}); skipping insert.",
+        nameof(UpdateMatchDetailsHandler),
+        homeClub.Name,
+        homeClub.LeagueId,
+        awayClub.Name,
+        awayClub.LeagueId);
+      return Unit.Value;
+    }
+
+    var matchLeague = leagues.FirstOrDefault(l => l.Id == homeClub.LeagueId);
+    if (matchLeague is null)
+    {
+      logger.LogWarning(
+        "Handler {HandlerName} could not resolve league for clubs {Home} vs {Away}; skipping insert.",
+        nameof(UpdateMatchDetailsHandler),
+        homeClub.Name,
+        awayClub.Name);
+      return Unit.Value;
+    }
+
+    var stage = await unitOfWork.Leagues.GetCurrentStage(matchLeague.SoccerdataId).ConfigureAwait(false);
+    var newMatch = Match.CreateUpcomming(matchDate, stage.Id, homeClub.Id, awayClub.Id);
     await unitOfWork.Matches.AddMatch(newMatch, cancellationToken).ConfigureAwait(false);
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 

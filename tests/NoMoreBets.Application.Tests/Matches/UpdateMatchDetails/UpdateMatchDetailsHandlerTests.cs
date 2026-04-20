@@ -8,6 +8,7 @@ using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Matches.UpdateMatchDetails;
 using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
 
@@ -28,6 +29,12 @@ public class UpdateMatchDetailsHandlerTests
     _unitOfWork = Substitute.For<IUnitOfWork>();
     _logger = Substitute.For<ILogger<UpdateMatchDetailsHandler>>();
     _sut = new UpdateMatchDetailsHandler(_matchDetailsProvider, _matchMatcher, _unitOfWork, _logger);
+
+    _unitOfWork.Leagues.GetLeagues().Returns(new List<League>
+    {
+      new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 }
+    });
+    _unitOfWork.Leagues.GetCurrentStage(228).Returns(new Stage { Id = 1, SeasonId = 1, Name = "Premier League", SoccerdataId = 13908 });
   }
 
   [Fact]
@@ -114,7 +121,7 @@ public async Task Handle_WhenExistingDetailsByFotmobUrl_ReturnsWithoutUpdatingOr
     _unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(url, Arg.Any<CancellationToken>()).Returns((MatchDetails?)null);
     _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(new List<Match>());
     var clubs = new List<ClubEntity> { new() { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 } };
-    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(clubs));
+    _unitOfWork.Clubs.GetClubs().Returns(Task.FromResult(clubs));
     _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(_ => throw new InvalidOperationException("No club"));
 
     var result = await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
@@ -200,7 +207,7 @@ public async Task Handle_WhenExistingDetailsByFotmobUrl_ReturnsWithoutUpdatingOr
 
     var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
     var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
-    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    _unitOfWork.Clubs.GetClubs().Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
     _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(homeClub);
     _matchMatcher.FindClub("Chelsea", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(awayClub);
 
