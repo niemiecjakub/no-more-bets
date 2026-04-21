@@ -1,6 +1,11 @@
 import axiosInstance from "../../../lib/axios";
 import { MATCH_STATUS, type MatchAnalysisPageDto, type MatchDetailsSummary, type MatchListItem } from "../interfaces";
 
+export interface FetchMatchesFilters {
+  matchStatusId?: number;
+  leagueIds?: number[];
+}
+
 function optionalInt(v: unknown): number | null {
   if (typeof v === "number" && Number.isFinite(v)) return v;
   return null;
@@ -138,9 +143,17 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
 /**
  * Fetches all matches from the backend.
  */
-export async function fetchMatches(): Promise<MatchListItem[]> {
+export async function fetchMatches(filters?: FetchMatchesFilters): Promise<MatchListItem[]> {
+  const params = new URLSearchParams();
+  if (filters?.matchStatusId != null) {
+    params.set("matchStatusId", String(filters.matchStatusId));
+  }
+  filters?.leagueIds?.forEach((leagueId) => {
+    params.append("leagueIds", String(leagueId));
+  });
   const { data } = await axiosInstance.get<unknown[]>(
-    "/api/Database/matches"
+    "/api/Database/matches",
+    { params }
   );
   return data.map(normalizeMatchListItem);
 }

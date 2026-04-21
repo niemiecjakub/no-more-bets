@@ -3,6 +3,7 @@ import { handleServiceError } from "@/lib/error-handler";
 import {
   fetchMatches,
   fetchMatchAnalysisPage,
+  type FetchMatchesFilters,
 } from "@/features/matches/services/matches-api";
 import type { MatchListItem, MatchAnalysisPageDto } from "@/features/matches/interfaces";
 
@@ -11,7 +12,7 @@ interface MatchStore {
   matchAnalysisById: Record<number, MatchAnalysisPageDto>;
   isLoading: boolean;
   error: string | null;
-  setMatches: () => Promise<void>;
+  setMatches: (filters?: FetchMatchesFilters) => Promise<void>;
   setMatchAnalysisPage: (matchId: number) => Promise<void>;
 }
 
@@ -21,10 +22,10 @@ export const useMatchStore = create<MatchStore>((set) => ({
   isLoading: false,
   error: null,
 
-  setMatches: async () => {
+  setMatches: async (filters) => {
     set({ isLoading: true, error: null });
     try {
-      const matches = await fetchMatches();
+      const matches = await fetchMatches(filters);
       set({ matches, error: null });
     } catch (err) {
       set({

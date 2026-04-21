@@ -101,13 +101,13 @@ export function MatchList({ matches }: MatchListProps) {
                 match.awayClubName
               );
               const centerCell = showScore ? (
-                <span className="inline-block min-w-[5.5rem] text-center text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                <span className="inline-block min-w-22 text-center text-2xl font-bold tabular-nums tracking-tight text-foreground">
                   {center}
                 </span>
               ) : (
                 <time
                   dateTime={match.matchDate}
-                  className="inline-block min-w-[5rem] text-center text-lg font-semibold tabular-nums text-foreground"
+                  className="inline-block min-w-22 text-center text-2xl font-bold tabular-nums tracking-tight text-foreground"
                 >
                   {center}
                 </time>

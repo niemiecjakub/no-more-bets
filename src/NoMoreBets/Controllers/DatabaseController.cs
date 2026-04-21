@@ -135,11 +135,27 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
   /// <summary>
   /// Gets matches from the database.
   /// </summary>
+  /// <param name="matchStatusId">Optional match status filter.</param>
+  /// <param name="leagueIds">Optional league filters (multi-select).</param>
   /// <param name="cancellationToken">Cancellation token.</param>
   /// <returns>List of matches with home/away club names and status.</returns>
   [HttpGet("matches")]
-  public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetMatches(CancellationToken cancellationToken = default)
+  public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetMatches(
+    [FromQuery] int? matchStatusId = null,
+    [FromQuery] int[]? leagueIds = null,
+    CancellationToken cancellationToken = default)
   {
+    var selectedLeagueIds = (leagueIds ?? []).Distinct().ToArray();
+    var hasLeagueFilter = selectedLeagueIds.Length > 0;
+
+    var matchesQuery = db.Match.AsQueryable();
+    if (matchStatusId.HasValue)
+      matchesQuery = matchesQuery.Where(m => m.MatchStatusId == matchStatusId.Value);
+    if (hasLeagueFilter)
+      matchesQuery = matchesQuery.Where(m =>
+        m.Stage != null &&
+        selectedLeagueIds.Contains(m.Stage.Season.LeagueId));
+
     var completeMatchIds = await db.Match
       .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
       .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
@@ -193,7 +209,7 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
       .ToListAsync(cancellationToken);
     var hasResearchSet = matchIdsWithResearch.ToHashSet();
 
-    var list = await db.Match
+    var list = await matchesQuery
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
       .Include(m => m.MatchStatusEntity)
@@ -213,8 +229,8 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
         m.AwayClub.Name,
         m.HomeClub.Slug,
         m.AwayClub.Slug,
-        m.Stage?.Season?.League?.Name ?? string.Empty,
-        m.Stage?.Season?.League?.Slug ?? string.Empty,
+        m.Stage == null ? string.Empty : m.Stage.Season.League.Name,
+        m.Stage == null ? string.Empty : m.Stage.Season.League.Slug,
         m.MatchStatusId,
         m.MatchStatusEntity.Name,
         m.HomeGoals,
