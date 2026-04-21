@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MatchList } from "../features/matches/components/match-list";
 import { MATCH_STATUS } from "../features/matches/interfaces";
 import { useMatchStore } from "@/store/match-store";
@@ -73,6 +74,9 @@ function LeaguesFallback() {
 }
 
 export default function Home() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { matches, isLoading, error, setMatches } = useMatchStore();
   const [selectedLeagueIds, setSelectedLeagueIds] = useState<number[]>([]);
   const [selectedStatusId, setSelectedStatusId] = useState<number>(MATCH_STATUS.Upcoming);
@@ -87,6 +91,25 @@ export default function Home() {
     setLeagues();
   }, [setLeagues]);
 
+  useEffect(() => {
+    const statusParam = Number(searchParams.get("status"));
+    const matchedStatus = statusFilters.find(
+      (statusFilter) => statusFilter.id === statusParam
+    );
+    const parsedStatusId = matchedStatus?.id ?? MATCH_STATUS.Upcoming;
+
+    const leaguesParam = searchParams.get("leagues");
+    const parsedLeagueIds = leaguesParam
+      ? leaguesParam
+          .split(",")
+          .map((item) => Number(item.trim()))
+          .filter((id) => Number.isInteger(id) && id > 0)
+      : [];
+
+    setSelectedStatusId(parsedStatusId);
+    setSelectedLeagueIds(parsedLeagueIds);
+  }, [searchParams]);
+
   const matchFilters = useMemo(
     () => ({
       matchStatusId:
@@ -100,17 +123,29 @@ export default function Home() {
     setMatches(matchFilters);
   }, [matchFilters, setMatches]);
 
+  function syncFiltersInUrl(nextLeagueIds: number[], nextStatusId: number) {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("status", String(nextStatusId));
+    if (nextLeagueIds.length > 0) {
+      params.set("leagues", nextLeagueIds.join(","));
+    } else {
+      params.delete("leagues");
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
+
   function handleToggleLeague(leagueId: number) {
-    setSelectedLeagueIds((current) =>
-      current.includes(leagueId)
-        ? current.filter((id) => id !== leagueId)
-        : [...current, leagueId]
-    );
+    const nextLeagueIds = selectedLeagueIds.includes(leagueId)
+      ? selectedLeagueIds.filter((id) => id !== leagueId)
+      : [...selectedLeagueIds, leagueId];
+    setSelectedLeagueIds(nextLeagueIds);
+    syncFiltersInUrl(nextLeagueIds, selectedStatusId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleSelectStatus(statusId: number) {
     setSelectedStatusId(statusId);
+    syncFiltersInUrl(selectedLeagueIds, statusId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
