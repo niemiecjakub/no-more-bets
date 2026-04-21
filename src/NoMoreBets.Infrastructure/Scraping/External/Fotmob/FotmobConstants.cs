@@ -1,9 +1,11 @@
+using NoMoreBets.Application.Common.Fotmob;
+
 namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
 /// <summary>
 /// FotMob league and team constants. Registered as singleton.
 /// </summary>
-public class FotmobConstants : IFotmobConstants
+public class FotmobConstants : IFotmobConstants, IFotmobTeamLookup
 {
   public FotmobLeague PremierLeague { get; } = new(47, "Premier League", "premier-league");
   public FotmobLeague Ekstraklasa { get; } = new(196, "Ekstraklasa", "ekstraklasa");
@@ -214,4 +216,7 @@ public class FotmobConstants : IFotmobConstants
   /// <inheritdoc />
   public FotmobTeam? GetTeamByName(string name) =>
     _allTeams.FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase));
+
+  /// <inheritdoc />
+  public int? TryResolveFotmobTeamId(string clubName) => GetTeamByName(clubName)?.Id;
 }

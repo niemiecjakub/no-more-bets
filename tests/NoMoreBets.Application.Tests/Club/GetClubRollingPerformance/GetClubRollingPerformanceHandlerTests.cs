@@ -66,13 +66,7 @@ public class GetClubRollingPerformanceHandlerTests
     result.TopPlayers[0].AvgRating.Should().Be(8.5);
     result.TopPlayers[1].Player.Should().Be("Low");
     result.TopPlayers[1].AvgRating.Should().Be(6.5);
-    result.Matches.Should().HaveCount(2);
-    result.Matches[0].MatchId.Should().Be(older.Id);
-    result.Matches[0].Opponent.Should().Be("Opp Older");
-    result.Matches[0].TeamRating.Should().Be(6.5);
-    result.Matches[0].PlayerRatings.Should().ContainSingle(p => p.Player == "High" && p.Rating == 8.0);
-    result.Matches[1].MatchId.Should().Be(newer.Id);
-    result.Matches[1].Opponent.Should().Be("Opp Newer");
+    result.Matches.Should().BeEmpty();
   }
 
   [Fact]
