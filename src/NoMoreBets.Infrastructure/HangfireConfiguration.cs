@@ -27,37 +27,37 @@ public static class HangfireConfiguration
   public static void UseRecurringJobs()
   {
     // Runs hourly at minute 0 (first run 00:00)
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<MatchLifecycleJobService>(
         "close-starting-soon-matches",
         jobService => jobService.CloseStartingSoonMatches(),
         "0 * * * *");
 
     // Runs once per day at 01:00
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<PreKickoffDataSyncJobService>(
       "get-soccerdata-upcoming-matches",
       jobService => jobService.GetUpcommingSoccerdataMatchesForAllLeagues(),
       "0 1 * * *");
 
     // Runs once per day at 02:00 – schedule head-to-head refresh jobs for upcoming matches
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<PreKickoffDataSyncJobService>(
       "refresh-head2head-upcoming-matches",
       jobService => jobService.ScheduleRefreshHead2HeadForUpcomingMatches(),
       "0 2 * * *");
 
     // Runs once per day at 02:01 – schedule preview fetch jobs for upcoming matches missing a preview
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<PreKickoffDataSyncJobService>(
       "get-missing-match-previews",
       jobService => jobService.ScheduleMissingPreviewJobsForUpcomingMatches(),
       "1 2 * * *");
 
     // Runs once per day at 03:00 UTC — applies salary when today is payday (last day of month)
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<BankrollJobService>(
         "apply-payday-if-due",
         jobService => jobService.ApplyPaydayIfDue(),
         "0 3 * * *");
 
     // Runs once per day at 04:00
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<LeagueTableJobService>(
         "get-league-table",
         jobService => jobService.GetLeagueTable(),
         "0 4 * * *");
@@ -69,25 +69,25 @@ public static class HangfireConfiguration
         "15 4 * * *");
 
     // Runs once per day at 05:00
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<BookmakerListingSyncJobService>(
         "get-upcoming-betclic-games",
         jobService => jobService.GetBetclicGames(),
         "0 5 * * *");
 
     // Runs once per day at 08:00
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<ClubDailyBriefJobService>(
         "update-clubs-overview",
         jobService => jobService.UpdateClubOverview(),
         "0 8 * * *");
 
     // Runs once per day at 09:00
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<LineupJobService>(
         "get-lineups",
         jobService => jobService.GetLineups(),
         "0 9 * * *");
 
     // Runs once per day at 11:00
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<BookmakerListingSyncJobService>(
         "get-betting-odds",
         jobService => jobService.ScheduleBettingOddsJob(),
         "0 11 * * *");
@@ -99,27 +99,27 @@ public static class HangfireConfiguration
         "0 10 * * *");
 
     // Runs once per day at 11:30
-    RecurringJob.AddOrUpdate<ResearchCronService>(
+    RecurringJob.AddOrUpdate<BettingAgentCronService>(
         "betting-agent-research",
-        s => s.RunAsync(),
+        s => s.RunResearchScheduleAsync(),
         "30 11 * * *");
 
     // Runs daily at 13:00
-    RecurringJob.AddOrUpdate<BettingCronService>(
+    RecurringJob.AddOrUpdate<BettingAgentCronService>(
         "betting-agent-execution",
-        s => s.RunAsync(),
+        s => s.RunBettingExecutionAsync(),
         "0 13 * * *");
 
     // Runs once per day at 23:00
-    RecurringJob.AddOrUpdate<JobService>(
+    RecurringJob.AddOrUpdate<FinishedMatchScoreJobService>(
         "fill-missing-finished-match-scores",
         jobService => jobService.FillMissingFinishedMatchScoresFromSoccerData(),
         "0 23 * * *");
 
     // Runs daily at 23:40
-    RecurringJob.AddOrUpdate<ReflectionCronService>(
+    RecurringJob.AddOrUpdate<BettingAgentCronService>(
         "betting-agent-reflection",
-        s => s.RunAsync(),
+        s => s.RunReflectionAsync(),
         "40 23 * * *");
   }
 }

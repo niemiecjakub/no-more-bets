@@ -23,8 +23,8 @@ public sealed class MaintenanceController(
     if (!CanRunBackfill())
       return StatusCode(StatusCodes.Status403Forbidden);
 
-    BackgroundJob.Enqueue<JobService>(
-      (JobService js) => js.BackfillRecentFotmobMatchDetailsForBigFiveAndEkstraklasa());
+    BackgroundJob.Enqueue<ClubDailyBriefJobService>(
+      (ClubDailyBriefJobService js) => js.BackfillRecentFotmobMatchDetailsForBigFiveAndEkstraklasa());
     return Accepted(new { message = "Backfill job enqueued." });
   }
 

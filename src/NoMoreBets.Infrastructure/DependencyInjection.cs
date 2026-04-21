@@ -89,11 +89,17 @@ public static class DependencyInjection
     services.AddTransient<PlaywrightPageFetcher>();
 
     //Jobs
-    services.AddScoped<JobService>();
-    services.AddScoped<ResearchCronService>();
+    services.AddScoped<PreKickoffDataSyncJobService>();
+    services.AddScoped<BankrollJobService>();
+    services.AddScoped<LeagueTableJobService>();
+    services.AddScoped<LineupJobService>();
+    services.AddScoped<ClubDailyBriefJobService>();
+    services.AddScoped<MatchLifecycleJobService>();
+    services.AddScoped<BookmakerListingSyncJobService>();
+    services.AddScoped<FinishedMatchScoreJobService>();
+    services.AddScoped<MatchPredictionJobService>();
+    services.AddScoped<BettingAgentCronService>();
     services.AddScoped<UpcomingMatchesInternetResearchCronService>();
-    services.AddScoped<BettingCronService>();
-    services.AddScoped<ReflectionCronService>();
     services.AddScoped<MemoryCleanupCronService>();
 
     //HTTP resilience & external clients
