@@ -383,6 +383,30 @@ public class MatchMatcherTests
   }
 
   [Fact]
+  public void FindClub_MonchengladbachAlias_ReturnsBorussiaMGladbach()
+  {
+    var gladbach = new ClubEntity { Id = 1, Name = "Borussia M'gladbach", LeagueId = 4, SoccerdataId = 4272 };
+    var clubs = new List<ClubEntity> { gladbach };
+
+    var result = _sut.FindClub("Mönchengladbach", clubs);
+
+    result.Should().BeSameAs(gladbach);
+    result.Name.Should().Be("Borussia M'gladbach");
+  }
+
+  [Fact]
+  public void FindClub_Hoffenheim1899Alias_ReturnsHoffenheim()
+  {
+    var hoffenheim = new ClubEntity { Id = 1, Name = "Hoffenheim", LeagueId = 4, SoccerdataId = 3297 };
+    var clubs = new List<ClubEntity> { hoffenheim };
+
+    var result = _sut.FindClub("1899 Hoffenheim", clubs);
+
+    result.Should().BeSameAs(hoffenheim);
+    result.Name.Should().Be("Hoffenheim");
+  }
+
+  [Fact]
   public void FindClub_AekLarnacaAlias_ReturnsAekLarnaka()
   {
     var aek = new ClubEntity { Id = 1, Name = "AEK Larnaka", LeagueId = 1, SoccerdataId = 1 };
@@ -392,6 +416,18 @@ public class MatchMatcherTests
 
     result.Should().BeSameAs(aek);
     result.Name.Should().Be("AEK Larnaka");
+  }
+
+  [Fact]
+  public void FindClub_ParisSaintGermainAlias_ReturnsPsg()
+  {
+    var psg = new ClubEntity { Id = 1, Name = "PSG", LeagueId = 6, SoccerdataId = 4228 };
+    var clubs = new List<ClubEntity> { psg };
+
+    var result = _sut.FindClub("Paris Saint-Germain", clubs);
+
+    result.Should().BeSameAs(psg);
+    result.Name.Should().Be("PSG");
   }
 
   [Fact]
@@ -535,6 +571,110 @@ public class MatchMatcherTests
 
     // Assert
     result.Should().Be(42);
+  }
+
+  [Fact]
+  public void FindBestMatch_AliasAndUmlautVariant_ReturnsValue()
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      ("FC Cologne", "Bayer Leverkusen", 7)
+    };
+
+    var result = _sut.FindBestMatch("1. FC Köln", "Bayer Leverkusen", candidates);
+
+    result.Should().Be(7);
+  }
+
+  [Fact]
+  public void FindBestMatch_VflWolfsburgAndMonchengladbachAliases_ReturnsValue()
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      ("Wolfsburg", "Borussia M'gladbach", 11)
+    };
+
+    var result = _sut.FindBestMatch("VfL Wolfsburg", "Mönchengladbach", candidates);
+
+    result.Should().Be(11);
+  }
+
+  [Fact]
+  public void FindBestMatch_HamburgerSvAndHoffenheim1899Aliases_ReturnsValue()
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      ("Hamburg", "Hoffenheim", 12)
+    };
+
+    var result = _sut.FindBestMatch("Hamburger SV", "1899 Hoffenheim", candidates);
+
+    result.Should().Be(12);
+  }
+
+  [Fact]
+  public void FindBestMatch_RayoAndSociedadSpanishVariants_ReturnsValue()
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      ("Rayo Vallecano de Madrid", "Real Sociedad de Fútbol", 21)
+    };
+
+    var result = _sut.FindBestMatch("Rayo Vallecano", "Real Sociedad", candidates);
+
+    result.Should().Be(21);
+  }
+
+  [Fact]
+  public void FindBestMatch_OviedoAlias_ReturnsValue()
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      ("Real Oviedo", "Elche", 22)
+    };
+
+    var result = _sut.FindBestMatch("Oviedo", "Elche", candidates);
+
+    result.Should().Be(22);
+  }
+
+  [Fact]
+  public void FindBestMatch_OsasunaAndSevillaVariants_ReturnsValue()
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      ("CA Osasuna", "Sevilla FC", 23)
+    };
+
+    var result = _sut.FindBestMatch("Osasuna", "Sevilla", candidates);
+
+    result.Should().Be(23);
+  }
+
+  [Fact]
+  public void FindBestMatch_VillarrealAndCeltaVariants_ReturnsValue()
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      ("Villarreal CF", "RC Celta de Vigo", 24)
+    };
+
+    var result = _sut.FindBestMatch("Villarreal", "Celta Vigo", candidates);
+
+    result.Should().Be(24);
+  }
+
+  [Fact]
+  public void FindBestMatch_EspanyolAndLevanteVariants_ReturnsValue()
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      ("RCD Espanyol", "Levante UD", 25)
+    };
+
+    var result = _sut.FindBestMatch("Espanyol", "Levante", candidates);
+
+    result.Should().Be(25);
   }
 
   [Fact]

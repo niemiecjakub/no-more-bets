@@ -15,8 +15,30 @@ internal static class ClubNameMatchHints
     // German sources use "Köln"; DB uses English "FC Cologne". Folded keys cover umlauts via ResolveEffectiveName.
     ["1. FC Koln"] = "FC Cologne",
     ["FC Koln"] = "FC Cologne",
+    ["1. FC Köln"] = "FC Cologne",
+    ["Mönchengladbach"] = "Borussia M'gladbach",
+    ["Borussia Monchengladbach"] = "Borussia M'gladbach",
+    ["1899 Hoffenheim"] = "Hoffenheim",
+    ["VfL Wolfsburg"] = "Wolfsburg",
+    ["Hamburger SV"] = "Hamburg",
+    // Common Spanish naming variants/abbreviations used by providers.
+    ["Oviedo"] = "Real Oviedo",
+    ["Real Sociedad de Futbol"] = "Real Sociedad",
+    ["Real Sociedad de Fútbol"] = "Real Sociedad",
+    ["Rayo Vallecano de Madrid"] = "Rayo Vallecano",
+    ["CA Osasuna"] = "Osasuna",
+    ["Sevilla FC"] = "Sevilla",
+    ["Villarreal CF"] = "Villarreal",
+    ["RC Celta de Vigo"] = "Celta Vigo",
+    ["RC Celta"] = "Celta Vigo",
+    ["RCD Espanyol"] = "Espanyol",
+    ["Levante UD"] = "Levante",
     // Latin "Larnaca" vs transliterated Greek "Larnaka" for the same club (bookmakers vs Soccerdata/FotMob).
     ["AEK Larnaca"] = "AEK Larnaka",
+    // Ligue 1 providers often use full PSG name while DB seed stores short form.
+    ["Paris Saint-Germain"] = "PSG",
+    ["Paris Saint Germain"] = "PSG",
+    ["Paris SG"] = "PSG",
   };
 
   public static string ResolveEffectiveName(string trimmed)

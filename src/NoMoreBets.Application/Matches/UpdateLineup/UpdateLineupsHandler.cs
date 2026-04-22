@@ -80,7 +80,7 @@ public class UpdateLineupsHandler(
         league.Slug,
         league.Id);
       return Unit.Value;
-    }
+    } 
 
     foreach (var lineup in lineups)
     {

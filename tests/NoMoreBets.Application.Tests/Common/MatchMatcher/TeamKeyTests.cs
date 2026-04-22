@@ -65,4 +65,14 @@ public class TeamKeyTests
     // Assert
     result.Should().Be("arsenal vs chelsea");
   }
+
+  [Fact]
+  public void Constructor_WhenAliasAndUmlautVariant_ProducesCanonicalKey()
+  {
+    var key1 = new TeamKey("1. FC Köln", "Bayer Leverkusen");
+    var key2 = new TeamKey("FC Cologne", "Bayer Leverkusen");
+
+    key1.Should().Be(key2);
+    key1.ToSearchString().Should().Be("bayer leverkusen vs fc cologne");
+  }
 }

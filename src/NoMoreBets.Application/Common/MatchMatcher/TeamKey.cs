@@ -11,8 +11,8 @@ public readonly record struct TeamKey
 
   public TeamKey(string home, string away)
   {
-    var h = (home ?? string.Empty).Trim().ToLowerInvariant();
-    var a = (away ?? string.Empty).Trim().ToLowerInvariant();
+    var h = NormalizeTeamName(home);
+    var a = NormalizeTeamName(away);
     if (string.CompareOrdinal(h, a) <= 0)
     {
       First = h;
@@ -31,4 +31,12 @@ public readonly record struct TeamKey
 
   /// <summary>Search string for fuzzy matching (e.g. "team a vs team b").</summary>
   public string ToSearchString() => $"{First} vs {Second}";
+
+  private static string NormalizeTeamName(string? teamName)
+  {
+    var trimmed = (teamName ?? string.Empty).Trim();
+    var effective = ClubNameMatchHints.ResolveEffectiveName(trimmed);
+    var folded = ClubNameMatchHints.FoldDiacritics(effective);
+    return folded.ToLowerInvariant();
+  }
 }
