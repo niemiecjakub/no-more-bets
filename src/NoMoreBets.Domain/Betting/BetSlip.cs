@@ -72,4 +72,15 @@ public class BetSlip
 
     return BetStatus.Pending;
   }
+
+  public Bankroll Cancel()
+  {
+    foreach (var selection in Selections)
+    {
+      selection.Cancel();
+    }
+
+    BetStatus = BetStatus.Canceled;
+    return Bankroll.CreateBetCancellationRefund(this);
+  }
 }

@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.SemanticKernel;
+using NoMoreBets.Application.Betting.CancelBetSlip;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
@@ -201,6 +202,35 @@ public class BettingPlugin
 
     await _unitOfWork.Betting.AddBetSlipAsync(betSlip, cancellationToken).ConfigureAwait(false);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+  }
+
+  [KernelFunction("CancelBetSlip")]
+  [Description("Cancels a pending bet slip and refunds its stake. A slip can be canceled only when all of its selections are still pending.")]
+  public async Task CancelBetSlipAsync(
+    [Description("Identifier of the bet slip to cancel.")]
+    int betSlipId,
+    CancellationToken cancellationToken = default)
+  {
+    if (betSlipId <= 0)
+    {
+      _logger.LogWarning("Invalid betSlipId {BetSlipId} while canceling bet slip.", betSlipId);
+      throw new ArgumentException("betSlipId must be greater than zero.", nameof(betSlipId));
+    }
+
+    try
+    {
+      await _mediator.Send(new CancelBetSlipCommand(betSlipId), cancellationToken).ConfigureAwait(false);
+    }
+    catch (KeyNotFoundException ex)
+    {
+      _logger.LogWarning(ex, "Bet slip {BetSlipId} not found during cancel request.", betSlipId);
+      throw new InvalidOperationException($"Bet slip {betSlipId} was not found.", ex);
+    }
+    catch (InvalidOperationException ex)
+    {
+      _logger.LogWarning(ex, "Bet slip {BetSlipId} cannot be canceled in its current state.", betSlipId);
+      throw;
+    }
   }
 
   [KernelFunction("GetBetSlips")]

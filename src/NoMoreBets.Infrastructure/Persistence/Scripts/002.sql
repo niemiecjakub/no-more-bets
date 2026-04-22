@@ -84,7 +84,8 @@ ON CONFLICT ("Id") DO NOTHING;
 INSERT INTO "BetStatus" ("Id", "Name") VALUES
     (1, 'Pending'),
     (2, 'Won'),
-    (3, 'Lost')
+    (3, 'Lost'),
+    (4, 'Canceled')
 ON CONFLICT ("Id") DO NOTHING;
 
 INSERT INTO "League" ("Id", "Name", "Slug", "SoccerdataId") OVERRIDING SYSTEM VALUE VALUES

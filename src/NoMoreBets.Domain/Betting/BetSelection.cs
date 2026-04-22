@@ -32,6 +32,11 @@ public class BetSelection
     BetSlip?.TouchUpdatedAt();
   }
 
+  public void Cancel()
+  {
+    SetStatus(BetStatus.Canceled);
+  }
+
   public BetSlip BetSlip { get; set; } = null!;
   public Match Match { get; set; } = null!;
   public BettingEventTypeEntity EventTypeEntity { get; set; } = null!;
