@@ -22,10 +22,11 @@ public class AgentResearchPlugin : AgentPluginBase
     MatchPlugin matchPlugin,
     InternetSearchPlugin searchPlugin,
     MemoriesPlugin memoriesPlugin,
+    BankrollPlugin bankrollPlugin,
     IUnitOfWork unitOfWork,
     IAgentSessionContext agentSessionContext,
     ILogger<AgentResearchPlugin> logger)
-    : base(memoriesPlugin, searchPlugin)
+    : base(memoriesPlugin, searchPlugin, bankrollPlugin)
   {
     _matchPlugin = matchPlugin;
     _unitOfWork = unitOfWork;

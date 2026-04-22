@@ -17,9 +17,10 @@ public class AgentReflectionPlugin : AgentPluginBase
     BettingPlugin bettingPlugin,
     MemoriesPlugin memoriesPlugin,
     InternetSearchPlugin searchPlugin,
+    BankrollPlugin bankrollPlugin,
     IMediator mediator,
     ILogger<AgentReflectionPlugin> logger)
-    : base(memoriesPlugin, searchPlugin)
+    : base(memoriesPlugin, searchPlugin, bankrollPlugin)
   {
     _bettingPlugin = bettingPlugin;
     _mediator = mediator;

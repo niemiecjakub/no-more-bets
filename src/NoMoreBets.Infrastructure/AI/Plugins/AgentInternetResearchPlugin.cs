@@ -11,8 +11,9 @@ public class AgentInternetResearchPlugin : AgentPluginBase
   public AgentInternetResearchPlugin(
     MatchPlugin matchPlugin,
     InternetSearchPlugin searchPlugin,
-    MemoriesPlugin memoriesPlugin)
-    : base(memoriesPlugin, searchPlugin)
+    MemoriesPlugin memoriesPlugin,
+    BankrollPlugin bankrollPlugin)
+    : base(memoriesPlugin, searchPlugin, bankrollPlugin)
   {
     _matchPlugin = matchPlugin;
   }

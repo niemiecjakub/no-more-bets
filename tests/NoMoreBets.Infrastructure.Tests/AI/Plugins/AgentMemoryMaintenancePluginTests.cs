@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MediatR;
 using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
@@ -10,10 +11,12 @@ namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 public class AgentMemoryMaintenancePluginTests
 {
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+  private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly IMemoryRepository _memories = Substitute.For<IMemoryRepository>();
   private readonly ISearchService _searchService = Substitute.For<ISearchService>();
   private readonly MemoriesPlugin _memoriesPlugin;
   private readonly InternetSearchPlugin _searchPlugin;
+  private readonly BankrollPlugin _bankrollPlugin;
   private readonly AgentMemoryMaintenancePlugin _sut;
 
   public AgentMemoryMaintenancePluginTests()
@@ -21,7 +24,8 @@ public class AgentMemoryMaintenancePluginTests
     _unitOfWork.Memories.Returns(_memories);
     _memoriesPlugin = new MemoriesPlugin(_unitOfWork);
     _searchPlugin = new InternetSearchPlugin(_searchService);
-    _sut = new AgentMemoryMaintenancePlugin(_memoriesPlugin, _searchPlugin, _unitOfWork);
+    _bankrollPlugin = new BankrollPlugin(_unitOfWork, _mediator);
+    _sut = new AgentMemoryMaintenancePlugin(_memoriesPlugin, _searchPlugin, _bankrollPlugin, _unitOfWork);
   }
 
   [Fact]

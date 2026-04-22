@@ -12,7 +12,7 @@ public class FotmobConstants : IFotmobConstants, IFotmobTeamLookup
   public FotmobLeague Bundesliga { get; } = new(54, "Bundesliga", "bundesliga");
   public FotmobLeague LaLiga { get; } = new(87, "LaLiga", "laliga");
   public FotmobLeague SerieA { get; } = new(55, "Serie A", "serie");
-  public FotmobLeague Ligue1 { get; } = new(53, "Ligue 1", "ligue1");
+  public FotmobLeague Ligue1 { get; } = new(53, "Ligue 1", "ligue-1");
 
   // Premier League
   public FotmobTeam Liverpool { get; } = new(8650, "Liverpool");

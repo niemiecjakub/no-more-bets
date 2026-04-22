@@ -28,6 +28,7 @@ public class PluginFactoryTests
       .AddSingleton(_agentSessionContext)
       .AddSingleton(sp => new MemoriesPlugin(sp.GetRequiredService<IUnitOfWork>()))
       .AddSingleton(sp => new InternetSearchPlugin(sp.GetRequiredService<ISearchService>()))
+      .AddSingleton(sp => new BankrollPlugin(sp.GetRequiredService<IUnitOfWork>(), sp.GetRequiredService<IMediator>()))
       .BuildServiceProvider();
     return new PluginFactory(sp);
   }

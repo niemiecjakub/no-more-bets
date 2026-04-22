@@ -18,9 +18,10 @@ public sealed class AgentMemoryMaintenancePlugin : AgentPluginBase
   public AgentMemoryMaintenancePlugin(
     MemoriesPlugin memoriesPlugin,
     InternetSearchPlugin searchPlugin,
+    BankrollPlugin bankrollPlugin,
     IUnitOfWork unitOfWork,
     ILogger<AgentMemoryMaintenancePlugin>? logger = null)
-    : base(memoriesPlugin, searchPlugin)
+    : base(memoriesPlugin, searchPlugin, bankrollPlugin)
   {
     _unitOfWork = unitOfWork;
     _logger = logger ?? NullLogger<AgentMemoryMaintenancePlugin>.Instance;

@@ -9,11 +9,16 @@ public abstract class AgentPluginBase
 {
   private readonly MemoriesPlugin _memoriesPlugin;
   private readonly InternetSearchPlugin _searchPlugin;
+  private readonly BankrollPlugin _bankrollPlugin;
 
-  protected AgentPluginBase(MemoriesPlugin memoriesPlugin, InternetSearchPlugin searchPlugin)
+  protected AgentPluginBase(
+    MemoriesPlugin memoriesPlugin,
+    InternetSearchPlugin searchPlugin,
+    BankrollPlugin bankrollPlugin)
   {
     _memoriesPlugin = memoriesPlugin;
     _searchPlugin = searchPlugin;
+    _bankrollPlugin = bankrollPlugin;
   }
 
   [KernelFunction]
@@ -82,4 +87,14 @@ public abstract class AgentPluginBase
   {
     return await _searchPlugin.GetWebGroundingAsync(query, freshness, cancellationToken).ConfigureAwait(false);
   }
+
+  [KernelFunction("GetCurrentBalance")]
+  [Description("Returns bank account balance")]
+  public Task<decimal> GetCurrentBalanceAsync(CancellationToken cancellationToken = default) =>
+    _bankrollPlugin.GetCurrentBalanceAsync(cancellationToken);
+
+  [KernelFunction("GetDaysUntilPayday")]
+  [Description("Returns number of days untill next payday.")]
+  public Task<int> GetDaysUntilPaydayAsync(CancellationToken cancellationToken = default) =>
+    _bankrollPlugin.GetDaysUntilPaydayAsync(cancellationToken);
 }
