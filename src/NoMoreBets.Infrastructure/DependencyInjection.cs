@@ -8,7 +8,6 @@ using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Fotmob;
 using NoMoreBets.Application.Leagues;
-using NoMoreBets.Application.Matches.BackfillRecentFotmobMatchDetails;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.Search;
@@ -63,7 +62,6 @@ public static class DependencyInjection
     services.Configure<SoccerDataOptions>(configuration.GetSection(SoccerDataOptions.SectionName));
     services.Configure<ProxyOptions>(configuration.GetSection(ProxyOptions.SectionName));
     services.Configure<BraveSearchOptions>(configuration.GetSection(BraveSearchOptions.SectionName));
-    services.Configure<BackfillFotmobMatchDetailsOptions>(configuration.GetSection(BackfillFotmobMatchDetailsOptions.SectionName));
     services.Configure<XApiOptions>(configuration.GetSection(XApiOptions.SectionName));
     services.Configure<OpenAIOptions>(configuration.GetSection(OpenAIOptions.SectionName));
 

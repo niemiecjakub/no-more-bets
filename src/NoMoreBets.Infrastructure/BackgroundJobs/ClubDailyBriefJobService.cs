@@ -5,7 +5,6 @@ using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Clubs.GetOverview;
 using NoMoreBets.Application.Clubs.UpdateDailySummary;
 using NoMoreBets.Application.Common.Dto.Leagues;
-using NoMoreBets.Application.Matches.BackfillRecentFotmobMatchDetails;
 using NoMoreBets.Application.Matches.UpdateMatchDetails;
 using NoMoreBets.Infrastructure.Persistence;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
@@ -97,19 +96,5 @@ public sealed class ClubDailyBriefJobService(
   public async Task UpdateMatchDetails(string fotmobMatchUrl)
   {
     await mediator.Send(new UpdateMatchDetailsCommand(fotmobMatchUrl));
-  }
-
-  /// <summary>TEMP: One-shot FotMob backfill for Ekstraklasa + LaLiga + Bundesliga + Serie A + Ligue 1. Remove after use.</summary>
-  [AutomaticRetry(Attempts = 0)]
-  public async Task BackfillRecentFotmobMatchDetailsForBigFiveAndEkstraklasa()
-  {
-    logger.LogInformation("Starting job {JobName}", nameof(BackfillRecentFotmobMatchDetailsForBigFiveAndEkstraklasa));
-    var result = await mediator
-      .Send(new BackfillRecentFotmobMatchDetailsCommand(), CancellationToken.None)
-      .ConfigureAwait(false);
-    logger.LogInformation(
-      "Completed job {JobName}: {@Result}",
-      nameof(BackfillRecentFotmobMatchDetailsForBigFiveAndEkstraklasa),
-      result);
   }
 }

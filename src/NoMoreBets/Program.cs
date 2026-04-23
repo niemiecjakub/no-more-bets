@@ -3,14 +3,12 @@ using Hangfire.Dashboard;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using NoMoreBets.Application;
-using NoMoreBets.Configuration;
 using NoMoreBets.Infrastructure;
 using NoMoreBets.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
-builder.Services.Configure<MaintenanceOptions>(builder.Configuration.GetSection(MaintenanceOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHangfireConfiguration(builder.Configuration);
 builder.Services.AddControllers();
