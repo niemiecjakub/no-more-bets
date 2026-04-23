@@ -828,6 +828,7 @@ function AgentResearchSection({
             slip={researchSlip ?? null}
             isLoading={false}
             error={researchSlipError}
+            variant="matchPage"
           />
         </div>
       ) : null}

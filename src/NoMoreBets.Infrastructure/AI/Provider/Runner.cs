@@ -149,6 +149,11 @@ public sealed class Runner : IAgentPhaseRunner
           STRICT Tool Flow (must follow exactly):
           1) Call `GetMatchEvents` - to get the available markets and outcome option names
           2) Call `PlaceBetSlip` - to place the slip
+
+          Selection Rules (VERY IMPORTANT):
+          - Do NOT include **contradictory or overlapping selections**.
+          - Avoid combining markets that express the same dimension in conflicting ways.
+          - You cannot select multiple options from the same market.
           """;
 
     var result = await ExecuteAgentPhase(

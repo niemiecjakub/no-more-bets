@@ -38,7 +38,23 @@ function betStatusLabel(status: number): string {
   }
 }
 
-function SelectionRow({ selection }: { selection: BetSelectionSummaryDto }) {
+function SelectionRowMatchPage({ selection }: { selection: BetSelectionSummaryDto }) {
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 py-2.5 text-sm first:border-t-0 first:pt-0 dark:border-zinc-800/80">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-zinc-600 dark:text-zinc-400">
+        <span>{selection.eventTypeName}</span>
+        <span className="font-medium text-foreground">{selection.outcomeKey}</span>
+      </div>
+      <span
+        className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getStatusBadgeClass(selection.status)}`}
+      >
+        {betStatusLabel(selection.status)}
+      </span>
+    </li>
+  );
+}
+
+function SelectionRowDefault({ selection }: { selection: BetSelectionSummaryDto }) {
   const homeLogoSlug = clubLogoSlugSegment(undefined, selection.homeClubName);
   const awayLogoSlug = clubLogoSlugSegment(undefined, selection.awayClubName);
 
@@ -61,7 +77,6 @@ function SelectionRow({ selection }: { selection: BetSelectionSummaryDto }) {
           <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
             <span>{selection.eventTypeName}</span>
             <span className="font-medium text-foreground">{selection.outcomeKey}</span>
-            <span className="tabular-nums">@{selection.oddsAtPlacement.toFixed(2)}</span>
           </div>
           <span
             className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getStatusBadgeClass(selection.status)}`}
@@ -78,9 +93,16 @@ interface ResearchBetSlipSummaryProps {
   slip: BetSlipSummaryDto | null;
   isLoading: boolean;
   error?: string;
+  /** Match page: only legs (market, pick, status); no fixture link, slip header, stake grid, or odds. */
+  variant?: "default" | "matchPage";
 }
 
-export function ResearchBetSlipSummary({ slip, isLoading, error }: ResearchBetSlipSummaryProps) {
+export function ResearchBetSlipSummary({
+  slip,
+  isLoading,
+  error,
+  variant = "default",
+}: ResearchBetSlipSummaryProps) {
   if (error) {
     return <p className="text-sm text-red-800 dark:text-red-200">{error}</p>;
   }
@@ -92,6 +114,16 @@ export function ResearchBetSlipSummary({ slip, isLoading, error }: ResearchBetSl
       <p className="text-sm text-zinc-500 dark:text-zinc-400">
         No research bet slip recorded for this match yet.
       </p>
+    );
+  }
+
+  if (variant === "matchPage") {
+    return (
+      <ul className="flex flex-col">
+        {slip.selections.map((sel, idx) => (
+          <SelectionRowMatchPage key={`${slip.id}-${sel.matchId}-${idx}`} selection={sel} />
+        ))}
+      </ul>
     );
   }
 
@@ -128,7 +160,7 @@ export function ResearchBetSlipSummary({ slip, isLoading, error }: ResearchBetSl
       </div>
       <ul className="px-4 py-3">
         {slip.selections.map((sel, idx) => (
-          <SelectionRow key={`${slip.id}-${sel.matchId}-${idx}`} selection={sel} />
+          <SelectionRowDefault key={`${slip.id}-${sel.matchId}-${idx}`} selection={sel} />
         ))}
       </ul>
     </div>
