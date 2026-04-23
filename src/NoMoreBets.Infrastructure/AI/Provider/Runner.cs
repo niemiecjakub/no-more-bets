@@ -130,7 +130,7 @@ public sealed class Runner : IAgentPhaseRunner
           - Do not skip required steps
 
           ### Guardrails
-          - In response and reasoning do not mention the internal process, tool names etc. Focus on delivering the research output as if for a human analyst, not on describing your own process.
+          - Focus on delivering the research output as if for a human analyst, not on describing your own process.
           """;
 
     var result = await ExecuteAgentPhase(
@@ -153,7 +153,7 @@ public sealed class Runner : IAgentPhaseRunner
           Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
           You are a long-running betting agent with persistent memory.
           
-          You are conducting research for upcoming Premier League matches for yourself.
+          You are conducting research for upcoming matches for yourself.
           You are not writing for a syndicate or external audience: this is your own prep for your own future betting sessions.
           Structure it so your future self can quickly reuse it in the betting phase.
           Focus on narratives, news, sentiment, context of the game etc.
@@ -162,7 +162,7 @@ public sealed class Runner : IAgentPhaseRunner
           You must use the available plugin functions explicitly.
 
           Goal:
-          Produce one general research brief for upcoming fixtures that your future self can use for later match-level analysis and betting decisions.
+          Produce one (or more) general research brief(s) for upcoming fixtures that your future self can use for later match-level analysis and betting decisions.
 
           ## Required workflow
 
@@ -184,7 +184,6 @@ public sealed class Runner : IAgentPhaseRunner
 
           ## Guardrails
           - Be evidence-driven and explicit about missing data
-          - Do not mention internal tool names or process in final narrative
           """;
 
     var result = await ExecuteAgentPhase(
