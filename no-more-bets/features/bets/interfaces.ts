@@ -30,12 +30,36 @@ export interface BetSelectionItem {
   statusName: string;
 }
 
-/** Status IDs matching backend BetStatus enum (Pending=1, Won=2, Lost=3). */
+/** Status IDs matching backend BetStatus enum (Pending=1, Won=2, Lost=3, Canceled=4). */
 export const BET_STATUS = {
   Pending: 1,
   Won: 2,
   Lost: 3,
+  Canceled: 4,
 } as const;
+
+/**
+ * Paper slip from research phase — aligned with backend BetSlipSummary (GET …/research-bet-slip).
+ */
+export interface BetSlipSummaryDto {
+  id: number;
+  createdAt: string;
+  stakeAmount: number;
+  totalOdds: number;
+  potentialPayout: number;
+  status: number;
+  selections: BetSelectionSummaryDto[];
+}
+
+export interface BetSelectionSummaryDto {
+  matchId: number;
+  homeClubName: string;
+  awayClubName: string;
+  eventTypeName: string;
+  outcomeKey: string;
+  oddsAtPlacement: number;
+  status: number;
+}
 
 /** GET api/Database/bankroll — BankrollRecordDto */
 export interface BankrollRecord {

@@ -24,7 +24,9 @@ import {
   type TeamMetrics,
   type MatchDetailsSummary,
 } from "@/features/matches/interfaces";
+import type { BetSlipSummaryDto } from "@/features/bets/interfaces";
 import { LazyAgentSessionTranscript } from "@/features/bets/components/lazy-agent-session-transcript";
+import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-slip-summary";
 import {
   fetchMatchAgentResearch,
   fetchMatchBettingOddsHistory,
@@ -33,6 +35,7 @@ import {
   fetchMatchLeagueStatistics,
   fetchMatchLineups,
   fetchMatchRecentGames,
+  fetchMatchResearchBetSlip,
   fetchMatchRollingPerformance,
 } from "@/features/matches/services/match-insights-api";
 
@@ -40,6 +43,7 @@ interface MatchInsights {
   lineups: MatchLineupResult | null;
   injuries: MatchInjuriesResult | null;
   agentResearch: string | null;
+  researchBetSlip: BetSlipSummaryDto | null;
   recentGames: ClubPair<RecentMatch[] | null>;
   leagueStatistics: ClubPair<ClubLeagueStats | null>;
   headToHead: HeadToHead | null;
@@ -51,6 +55,7 @@ const insightKeys = [
   "lineups",
   "injuries",
   "agentResearch",
+  "researchBetSlip",
   "recentGames",
   "leagueStatistics",
   "headToHead",
@@ -145,6 +150,7 @@ export default function MatchPage() {
     load("lineups", () => fetchMatchLineups(matchId));
     load("injuries", () => fetchMatchInjuries(matchId));
     load("agentResearch", () => fetchMatchAgentResearch(matchId));
+    load("researchBetSlip", () => fetchMatchResearchBetSlip(matchId));
     load("recentGames", () => fetchMatchRecentGames(matchId));
     load("leagueStatistics", () => fetchMatchLeagueStatistics(matchId));
     load("headToHead", () => fetchMatchHeadToHead(matchId));
@@ -225,6 +231,11 @@ export default function MatchPage() {
               insightLoading.agentResearch && insights.agentResearch === undefined
             }
             summaryError={insightErrors.agentResearch}
+            researchSlip={insights.researchBetSlip}
+            researchSlipLoading={
+              insightLoading.researchBetSlip && insights.researchBetSlip === undefined
+            }
+            researchSlipError={insightErrors.researchBetSlip}
             researchAgentSessionId={data.researchAgentSessionId}
           />
         </Card>
@@ -780,14 +791,23 @@ function AgentResearchSection({
   summaryPreview,
   summaryLoading,
   summaryError,
+  researchSlip,
+  researchSlipLoading,
+  researchSlipError,
   researchAgentSessionId,
 }: {
   summaryPreview?: string | null;
   summaryLoading: boolean;
   summaryError?: string;
+  researchSlip?: BetSlipSummaryDto | null;
+  researchSlipLoading: boolean;
+  researchSlipError?: string;
   researchAgentSessionId: number | null;
 }) {
   const [transcriptOpen, setTranscriptOpen] = useState(false);
+
+  const showResearchBetSlipBlock =
+    !researchSlipLoading && (researchSlip != null || researchSlipError != null);
 
   return (
     <div className="px-4 py-4">
@@ -798,6 +818,19 @@ function AgentResearchSection({
         loadingMessage="Loading agent research..."
         emptyMessage="No agent research available."
       />
+      {showResearchBetSlipBlock ? (
+        <div className="mt-6 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+          <h3 className="mb-3 text-sm font-semibold text-foreground">Research bet slip</h3>
+          <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+            Fictional paper slip from the research agent (not bankroll-backed).
+          </p>
+          <ResearchBetSlipSummary
+            slip={researchSlip ?? null}
+            isLoading={false}
+            error={researchSlipError}
+          />
+        </div>
+      ) : null}
       {researchAgentSessionId != null ? (
         <details
           className="group mt-4 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800"

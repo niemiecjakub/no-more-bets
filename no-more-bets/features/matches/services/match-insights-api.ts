@@ -1,4 +1,6 @@
+import axios from "axios";
 import axiosInstance from "../../../lib/axios";
+import type { BetSlipSummaryDto } from "../../bets/interfaces";
 import type {
   ClubLeagueStats,
   ClubPair,
@@ -29,6 +31,21 @@ export async function fetchMatchAgentResearch(matchId: number): Promise<string |
     `/api/matchinsights/matches/${matchId}/agent-research`
   );
   return data;
+}
+
+/** Latest research-phase paper slip for the match, or null when none exists (404). */
+export async function fetchMatchResearchBetSlip(matchId: number): Promise<BetSlipSummaryDto | null> {
+  try {
+    const { data } = await axiosInstance.get<BetSlipSummaryDto>(
+      `/api/matchinsights/matches/${matchId}/research-bet-slip`
+    );
+    return data;
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 404) {
+      return null;
+    }
+    throw err;
+  }
 }
 
 export async function fetchMatchRecentGames(matchId: number): Promise<ClubPair<RecentMatch[] | null>> {

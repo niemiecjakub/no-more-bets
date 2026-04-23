@@ -5,7 +5,7 @@ using NoMoreBets.Domain.Enums;
 namespace NoMoreBets.Application.Betting.GetBetSlips;
 
 /// <param name="Status">When set, only slips with this status are returned; when omitted, all slips are returned.</param>
-/// <remarks>Excludes paper slips tied to research-phase agent sessions; use <c>IUnitOfWork.Betting.GetResearchPhaseBetSlipsAsync</c> for those.</remarks>
+/// <remarks>Excludes paper slips tied to research-phase agent sessions.</remarks>
 public record GetBetSlipsQuery(BetStatus? Status = null) : IRequest<IReadOnlyList<BetSlipSummary>>;
 
 public sealed class GetBetSlipsHandler(IUnitOfWork unitOfWork)

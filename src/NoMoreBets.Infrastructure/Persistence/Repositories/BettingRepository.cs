@@ -85,17 +85,23 @@ public class BettingRepository : IBettingRepository
     return await MaterializeBetSlipListAsync(query, cancellationToken).ConfigureAwait(false);
   }
 
-  public async Task<IReadOnlyList<BetSlip>> GetResearchPhaseBetSlipsAsync(
-    BetStatus? slipStatus = null,
-    CancellationToken cancellationToken = default)
+  public async Task<BetSlip?> GetLatestResearchBetSlipForMatchAsync(int matchId, CancellationToken cancellationToken = default)
   {
-    var query = _db.BetSlip.Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Research);
-    if (slipStatus is { } status)
-    {
-      query = query.Where(s => s.StatusId == (int)status);
-    }
-
-    return await MaterializeBetSlipListAsync(query, cancellationToken).ConfigureAwait(false);
+    return await _db.BetSlip
+      .AsSplitQuery()
+      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Research)
+      .Where(s => s.Selections.Any(sel => sel.MatchId == matchId))
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.EventTypeEntity)
+      .OrderByDescending(s => s.CreatedAt)
+      .FirstOrDefaultAsync(cancellationToken)
+      .ConfigureAwait(false);
   }
 
   private async Task<IReadOnlyList<BetSlip>> MaterializeBetSlipListAsync(

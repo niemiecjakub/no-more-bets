@@ -17,9 +17,9 @@ public interface IBettingRepository
   Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default);
 
   /// <summary>
-  /// Paper / prediction slips created during match research (<see cref="AgentSessionPhase.Research"/> sessions only).
+  /// Latest research-phase bet slip that includes a selection on <paramref name="matchId"/>, if any.
   /// </summary>
-  Task<IReadOnlyList<BetSlip>> GetResearchPhaseBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default);
+  Task<BetSlip?> GetLatestResearchBetSlipForMatchAsync(int matchId, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsCreatedInLastDaysAsync(int lastDays, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsUpdatedInLastDaysAsync(int lastDays, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsAwaitingReflectionAsync(CancellationToken cancellationToken = default);

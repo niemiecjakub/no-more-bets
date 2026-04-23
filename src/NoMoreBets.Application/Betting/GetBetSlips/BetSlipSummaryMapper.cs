@@ -8,6 +8,9 @@ public static class BetSlipSummaryMapper
   public static IReadOnlyList<BetSlipSummary> ToSummaries(IEnumerable<BetSlip> slips) =>
     slips.Select(ToSummary).ToList();
 
+  public static BetSlipSummary? ToSummaryOrNull(BetSlip? slip) =>
+    slip is null ? null : ToSummary(slip);
+
   private static BetSlipSummary ToSummary(BetSlip s) =>
     new(
       s.Id,
