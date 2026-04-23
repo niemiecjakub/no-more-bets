@@ -6,7 +6,7 @@ import type { LeagueListItem, LeagueTableDto } from "../interfaces";
  */
 export async function fetchLeagues(): Promise<LeagueListItem[]> {
   const { data } = await axiosInstance.get<LeagueListItem[]>(
-    "/api/Database/leagues"
+    "/api/leagues"
   );
   return data;
 }
@@ -18,7 +18,7 @@ export async function fetchLeagueTable(
   leagueId: number
 ): Promise<LeagueTableDto> {
   const { data } = await axiosInstance.get<LeagueTableDto>(
-    `/api/Database/leagues/${leagueId}/table`
+    `/api/leagues/${leagueId}/table`
   );
   return data;
 }

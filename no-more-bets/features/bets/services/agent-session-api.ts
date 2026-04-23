@@ -16,7 +16,7 @@ export async function fetchAgentSessionMessages(
   sessionId: number
 ): Promise<AgentSessionMessage[]> {
   const { data } = await axiosInstance.get<AgentSessionMessage[]>(
-    `/api/Database/agent-sessions/${sessionId}/messages`
+    `/api/agent-sessions/${sessionId}/messages`
   );
   return data;
 }

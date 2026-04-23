@@ -18,7 +18,7 @@ public class ClubsController(
   IUnitOfWork unitOfWork,
   AppDbContext db) : ControllerBase
 {
-  [HttpGet("database/clubs")]
+  [HttpGet("clubs")]
   public async Task<ActionResult<IReadOnlyList<ClubDto>>> GetClubs(CancellationToken cancellationToken = default)
   {
     var list = await db.Club

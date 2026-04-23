@@ -16,7 +16,7 @@ namespace NoMoreBets.Controllers;
 [Route("api")]
 public class MatchesController(AppDbContext db, IMediator mediator) : ControllerBase
 {
-  [HttpGet("database/matches")]
+  [HttpGet("matches")]
   public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetMatches(
     [FromQuery] int? matchStatusId = null,
     [FromQuery] int[]? leagueIds = null,
@@ -118,7 +118,7 @@ public class MatchesController(AppDbContext db, IMediator mediator) : Controller
     return Ok(result);
   }
 
-  [HttpGet("database/matches/{matchId:int}/analyses")]
+  [HttpGet("matches/{matchId:int}/analyses")]
   public async Task<ActionResult<MatchAnalysisPageDto>> GetMatchAnalyses(
     int matchId,
     CancellationToken cancellationToken = default)

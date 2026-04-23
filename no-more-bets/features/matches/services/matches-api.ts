@@ -152,7 +152,7 @@ export async function fetchMatches(filters?: FetchMatchesFilters): Promise<Match
     params.append("leagueIds", String(leagueId));
   });
   const { data } = await axiosInstance.get<unknown[]>(
-    "/api/Database/matches",
+    "/api/matches",
     { params }
   );
   return data.map(normalizeMatchListItem);
@@ -165,7 +165,7 @@ export async function fetchMatchAnalysisPage(
   matchId: number
 ): Promise<MatchAnalysisPageDto> {
   const { data } = await axiosInstance.get<unknown>(
-    `/api/Database/matches/${matchId}/analyses`
+    `/api/matches/${matchId}/analyses`
   );
   return normalizeMatchAnalysisPage(data);
 }

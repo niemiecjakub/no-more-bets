@@ -6,7 +6,7 @@ using NoMoreBets.Infrastructure.Persistence;
 namespace NoMoreBets.Controllers;
 
 [ApiController]
-[Route("api/database")]
+[Route("api")]
 public class AgentSessionsController(AppDbContext db) : ControllerBase
 {
   [HttpGet("agent-sessions")]

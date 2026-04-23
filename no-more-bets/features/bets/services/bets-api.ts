@@ -40,7 +40,7 @@ function normalizeBetSlip(raw: unknown): BetSlipListItem {
  */
 export async function fetchBetSlips(): Promise<BetSlipListItem[]> {
   const { data } = await axiosInstance.get<unknown[]>(
-    "/api/Database/bet-slips"
+    "/api/bet-slips"
   );
   return data.map(normalizeBetSlip);
 }

@@ -6,7 +6,7 @@ import type { AgentSessionListItem } from "../interfaces";
  */
 export async function fetchAgentSessions(): Promise<AgentSessionListItem[]> {
   const { data } = await axiosInstance.get<AgentSessionListItem[]>(
-    "/api/Database/agent-sessions"
+    "/api/agent-sessions"
   );
   return data;
 }

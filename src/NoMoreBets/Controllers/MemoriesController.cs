@@ -6,7 +6,7 @@ using NoMoreBets.Infrastructure.Persistence;
 namespace NoMoreBets.Controllers;
 
 [ApiController]
-[Route("api/database")]
+[Route("api")]
 public class MemoriesController(AppDbContext db) : ControllerBase
 {
   [HttpGet("memories")]

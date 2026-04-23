@@ -6,7 +6,7 @@ import type { MemoryListItem } from "../interfaces";
  */
 export async function fetchMemories(): Promise<MemoryListItem[]> {
   const { data } = await axiosInstance.get<MemoryListItem[]>(
-    "/api/Database/memories"
+    "/api/memories"
   );
   return data;
 }

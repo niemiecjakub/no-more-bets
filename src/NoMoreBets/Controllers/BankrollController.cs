@@ -5,7 +5,7 @@ using NoMoreBets.Application.Bankroll.GetBankrollDashboard;
 namespace NoMoreBets.Controllers;
 
 [ApiController]
-[Route("api/database")]
+[Route("api")]
 public class BankrollController(IMediator mediator) : ControllerBase
 {
   [HttpGet("bankroll")]

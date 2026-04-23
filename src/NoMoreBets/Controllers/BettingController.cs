@@ -15,7 +15,7 @@ namespace NoMoreBets.Controllers;
 [Route("api")]
 public class BettingController(AppDbContext db, IMediator mediator) : ControllerBase
 {
-  [HttpGet("database/bet-slips")]
+  [HttpGet("bet-slips")]
   public async Task<ActionResult<IReadOnlyList<BetSlipListItemDto>>> GetBetSlips(CancellationToken cancellationToken = default)
   {
     var slips = await db.BetSlip

@@ -6,7 +6,7 @@ import type { ClubListItem } from "../interfaces";
  */
 export async function fetchClubs(): Promise<ClubListItem[]> {
   const { data } = await axiosInstance.get<ClubListItem[]>(
-    "/api/Database/clubs"
+    "/api/clubs"
   );
   return data;
 }
