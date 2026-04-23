@@ -3,6 +3,7 @@ using MediatR;
 using NSubstitute;
 using NoMoreBets.Application.Betting.SettlePendingBetSelections;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using BankrollEntry = NoMoreBets.Domain.Bankrolls.Bankroll;
@@ -166,5 +167,48 @@ public class SettlePendingBetSelectionsHandlerTests
     await _bankroll.Received(1).AddAsync(
       Arg.Is<BankrollEntry>(b => b.Amount == 80m),
       Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Handle_ResearchPhaseSlipWon_SetsSlipWon_WithoutBankrollPayout()
+  {
+    var match = new Match { Id = 1, HomeGoals = 2, AwayGoals = 0 };
+    var researchSession = new AgentSession
+    {
+      Id = 99,
+      Phase = AgentSessionPhase.Research,
+      StartedAt = DateTime.UtcNow
+    };
+    var slip = new BetSlip
+    {
+      Id = 11,
+      AgentSessionId = 99,
+      AgentSession = researchSession,
+      PotentialPayout = 50m,
+      BetStatus = BetStatus.Pending,
+      Selections = new List<BetSelection>()
+    };
+    var selection = new BetSelection
+    {
+      Id = 1,
+      BetSlipId = 11,
+      MatchId = 1,
+      BetEventOption = BettingEventOption.MatchResult_Home,
+      BetStatus = BetStatus.Pending,
+      Match = match,
+      BetSlip = slip
+    };
+    slip.Selections.Add(selection);
+
+    _betting.GetPendingSelectionsWithBothScoresAsync(Arg.Any<CancellationToken>())
+      .Returns(new List<BetSelection> { selection });
+
+    var result = await _sut.Handle(new SettlePendingBetSelectionsCommand(), CancellationToken.None);
+
+    result.Should().Be(Unit.Value);
+    selection.BetStatus.Should().Be(BetStatus.Won);
+    slip.BetStatus.Should().Be(BetStatus.Won);
+    await _bankroll.DidNotReceive().AddAsync(Arg.Any<BankrollEntry>(), Arg.Any<CancellationToken>());
+    await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 }

@@ -9,6 +9,7 @@ public interface IPluginFactory
   object CreateMemoriesPlugin();
   object CreateAgentInternetResearchPlugin();
   object CreateAgentResearchPlugin();
+  object CreateResearchBetPlugin(int matchId);
   object CreateAgentReflectionPlugin();
   object CreateAgentMemoryMaintenancePlugin();
   object CreateBankrollPlugin();

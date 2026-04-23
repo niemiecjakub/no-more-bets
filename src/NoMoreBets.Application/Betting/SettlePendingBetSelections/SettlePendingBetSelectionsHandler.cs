@@ -1,5 +1,6 @@
 using MediatR;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using BankrollEntry = NoMoreBets.Domain.Bankrolls.Bankroll;
@@ -55,7 +56,7 @@ public sealed class SettlePendingBetSelectionsHandler(IUnitOfWork unitOfWork)
 
       slip.BetStatus = next;
 
-      if (previous == BetStatus.Pending && next == BetStatus.Won)
+      if (previous == BetStatus.Pending && next == BetStatus.Won && slip.AgentSession?.Phase != AgentSessionPhase.Research)
       {
         var payout = BankrollEntry.CreateBetWin(slip.PotentialPayout, slip.Id);
         await unitOfWork.Bankroll.AddAsync(payout, cancellationToken).ConfigureAwait(false);

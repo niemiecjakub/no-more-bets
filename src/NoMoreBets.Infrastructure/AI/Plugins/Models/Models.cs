@@ -102,6 +102,8 @@ public record CurrentOddsMarket(int EventTypeId, string EventTypeName, IReadOnly
 
 public record CurrentOddsOption(string Label, double Odds);
 
+public record MatchEventMarket(int EventTypeId, string EventTypeName, IReadOnlyList<string> Options);
+
 [Description("Match available for betting: use Id when calling GetCurrentOdds and GetMatchAnalysis")]
 public record AvailableMatch(int Id, string HomeClubName, string AwayClubName, DateTime MatchDate);
 

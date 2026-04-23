@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
@@ -75,10 +76,32 @@ public class BettingRepository : IBettingRepository
 
   public async Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default)
   {
-    var query = _db.BetSlip.AsQueryable();
+    var query = _db.BetSlip.Where(s => s.AgentSession == null || s.AgentSession.Phase != AgentSessionPhase.Research);
     if (slipStatus is { } status)
+    {
       query = query.Where(s => s.StatusId == (int)status);
+    }
 
+    return await MaterializeBetSlipListAsync(query, cancellationToken).ConfigureAwait(false);
+  }
+
+  public async Task<IReadOnlyList<BetSlip>> GetResearchPhaseBetSlipsAsync(
+    BetStatus? slipStatus = null,
+    CancellationToken cancellationToken = default)
+  {
+    var query = _db.BetSlip.Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Research);
+    if (slipStatus is { } status)
+    {
+      query = query.Where(s => s.StatusId == (int)status);
+    }
+
+    return await MaterializeBetSlipListAsync(query, cancellationToken).ConfigureAwait(false);
+  }
+
+  private async Task<IReadOnlyList<BetSlip>> MaterializeBetSlipListAsync(
+    IQueryable<BetSlip> query,
+    CancellationToken cancellationToken)
+  {
     return await query
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
@@ -133,7 +156,10 @@ public class BettingRepository : IBettingRepository
     CancellationToken cancellationToken = default)
   {
     return await _db.BetSlip
-      .Where(s => s.StatusId != (int)BetStatus.Pending && s.AgentSessionReflectedId == null)
+      .Where(s =>
+        s.StatusId != (int)BetStatus.Pending
+        && s.AgentSessionReflectedId == null
+        && (s.AgentSession == null || s.AgentSession.Phase != AgentSessionPhase.Research))
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
           .ThenInclude(m => m!.HomeClub)
@@ -176,6 +202,8 @@ public class BettingRepository : IBettingRepository
       .Where(s => s.StatusId == (int)BetStatus.Pending)
       .Where(s => s.Match.HomeGoals != null && s.Match.AwayGoals != null)
       .Include(s => s.Match)
+      .Include(s => s.BetSlip)
+        .ThenInclude(b => b.AgentSession)
       .Include(s => s.BetSlip)
       .ThenInclude(b => b.Selections)
       .ToListAsync(cancellationToken)

@@ -118,10 +118,10 @@ public class BettingPlugin
 
   [KernelFunction("PlaceBetSlip")]
   [Description("Places one bet slip per call. One selection is a single bet; multiple selections combine as a parlay on that slip. Call once per slip; you may call multiple times for multiple separate slips.")]
-  public async Task PlaceBetSlip(
-    [Description("Stake in currency units. Required; must be greater than zero and must not exceed GetCurrentBalance (call GetCurrentBalance first).")]
+  public async Task<string> PlaceBetSlip(
+    [Description("Stake in currency units. Required; must not exceed GetCurrentBalance (call GetCurrentBalance first).")]
     decimal stakeAmount,
-    [Description("JSON object with property betSelections: an array of selection objects. Each object must have: matchId (int, from GetAvailableMatches), eventType (string enum name), eventOption (string BettingEventOption enum name). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
+    [Description("JSON object with property betSelections: an array of selection objects. Each object must have: matchId (int, from GetAvailableMatches), eventType (string, from GetCurrentOdds eventTypeName), eventOption (string, from GetCurrentOdds option label). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
     string betSelectionsJson,
     CancellationToken cancellationToken = default)
   {
@@ -202,6 +202,7 @@ public class BettingPlugin
 
     await _unitOfWork.Betting.AddBetSlipAsync(betSlip, cancellationToken).ConfigureAwait(false);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    return "Bet slip placed successfully.";
   }
 
   [KernelFunction("CancelBetSlip")]

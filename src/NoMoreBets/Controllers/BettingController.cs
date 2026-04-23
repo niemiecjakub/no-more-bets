@@ -5,8 +5,8 @@ using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
 using NoMoreBets.Application.Matches.RunMatchAgentResearch;
 using NoMoreBets.Controllers.Models;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.Persistence;
 
 namespace NoMoreBets.Controllers;
@@ -19,6 +19,7 @@ public class BettingController(AppDbContext db, IMediator mediator) : Controller
   public async Task<ActionResult<IReadOnlyList<BetSlipListItemDto>>> GetBetSlips(CancellationToken cancellationToken = default)
   {
     var slips = await db.BetSlip
+      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting)
       .Include(s => s.BetStatusEntity)
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)

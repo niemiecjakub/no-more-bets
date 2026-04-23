@@ -65,14 +65,14 @@ public class AgentBettingPlugin : AgentPluginBase
   }
 
   [KernelFunction]
-  [Description("Places one bet slip per call. One selection is a single bet; multiple selections combine as a parlay on that slip. Call once per slip; you may call multiple times for multiple separate slips. Stake must not exceed current balance.")]
-  public async Task PlaceBetSlip(
+  [Description("Places one bet slip per call. One selection is a single bet; multiple selections combine as a parlay on that slip. Call once per slip; you may call multiple times for multiple separate slips. Stake must not exceed current balance. On success returns a short confirmation string.")]
+  public async Task<string> PlaceBetSlip(
     decimal stakeAmount,
     [Description("JSON object with property betSelections: an array of selection objects. Each object must have: matchId (int, from GetAvailableMatchesAsync), eventType (string enum name), eventOption (string BettingEventOption enum name). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
     string betSelectionsJson,
     CancellationToken cancellationToken = default)
   {
-    await _bettingPlugin.PlaceBetSlip(stakeAmount, betSelectionsJson, cancellationToken).ConfigureAwait(false);
+    return await _bettingPlugin.PlaceBetSlip(stakeAmount, betSelectionsJson, cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction]

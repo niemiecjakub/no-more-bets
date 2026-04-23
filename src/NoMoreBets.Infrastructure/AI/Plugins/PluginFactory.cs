@@ -46,6 +46,11 @@ public class PluginFactory : IPluginFactory
     return ActivatorUtilities.CreateInstance<AgentResearchPlugin>(_sp);
   }
 
+  public object CreateResearchBetPlugin(int matchId)
+  {
+    return ActivatorUtilities.CreateInstance<ResearchBetPlugin>(_sp, matchId);
+  }
+
   public object CreateAgentReflectionPlugin()
   {
     return ActivatorUtilities.CreateInstance<AgentReflectionPlugin>(_sp);

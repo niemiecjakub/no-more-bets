@@ -133,11 +133,36 @@ public sealed class Runner : IAgentPhaseRunner
           - Focus on delivering the research output as if for a human analyst, not on describing your own process.
           """;
 
+    var paperBetPrompt = $"""
+          Your next step is to create a **paper (fictional) prediction slip** for this match.
+
+          Purpose:
+          - This is a **research artifact**, not a real bet.
+          - It does NOT affect bankroll in any way.
+          - Odds are intentionally unavailable — ignore pricing completely.
+          - Your only goal is to **maximize correctness of predictions**.
+
+          Core Instructions:
+          - Base all selections strictly on your prior research.
+          - Single selections are ok but multiple selections (parlays) are preferred.
+
+          STRICT Tool Flow (must follow exactly):
+          1) Call `GetMatchEvents` - to get the available markets and outcome option names
+          2) Call `PlaceBetSlip` - to place the slip
+          """;
+
     var result = await ExecuteAgentPhase(
       AgentSessionPhase.Research,
       prompt,
       configureKernel,
-      cancellationToken).ConfigureAwait(false);
+      cancellationToken,
+      followUp: new AgentPhaseFollowUp(
+        kernel =>
+        {
+          kernel.Plugins.Clear();
+          kernel.Plugins.AddFromObject(_pluginFactory.CreateResearchBetPlugin(match.Id));
+        },
+        paperBetPrompt)).ConfigureAwait(false);
     return result.Messages;
   }
 
@@ -437,7 +462,6 @@ public sealed class Runner : IAgentPhaseRunner
           - If nothing qualifies: place no slips; summarize the pass in analyst terms (no tool dump)
           - If one or more opportunities qualify: place one slip per distinct bet you want (zero to many slips in total). For each slip, choose stake and build `betSelections`: one item for a single, several items for a parlay on that slip
           - Call `PlaceBetSlip` once per slip with valid JSON as described on the function. Never call `PlaceBetSlip` with an empty `betSelections` array
-          - If you place multiple slips, after each successful `PlaceBetSlip` subtract that stake from your running total against the opening balance above before choosing the next stake so you never exceed what remains
 
           7) Persist learnings:
           - Update durable insights with `AppendMemoryAsync`, `ReplaceMemoryAsync`, or `WriteMemoryAsync` as appropriate.
@@ -470,7 +494,8 @@ public sealed class Runner : IAgentPhaseRunner
     AgentSessionPhase phase,
     string userPrompt,
     Action<Kernel> configureKernel,
-    CancellationToken cancellationToken = default)
+    CancellationToken cancellationToken = default,
+    AgentPhaseFollowUp? followUp = null)
   {
     var config = _agentBuilder.BuildForScheduledJob();
     configureKernel(config.Agent.Kernel);
@@ -491,6 +516,12 @@ public sealed class Runner : IAgentPhaseRunner
     {
       var phaseMessages = await InvokeAndCollectPhaseTranscriptMessagesAsync(config, userPrompt, cancellationToken).ConfigureAwait(false);
       messages.AddRange(phaseMessages);
+
+      if (followUp is not null)
+      {
+        followUp.ConfigureKernel(config.Agent.Kernel);
+        await InvokeAndCollectPhaseTranscriptMessagesAsync(config, followUp.Prompt, cancellationToken).ConfigureAwait(false);
+      }
 
       if (xOAuthConfigured && phase == AgentSessionPhase.Betting)
       {
@@ -565,5 +596,7 @@ public sealed class Runner : IAgentPhaseRunner
     return messages;
   }
 }
+
+internal sealed record AgentPhaseFollowUp(Action<Kernel> ConfigureKernel, string Prompt);
 
 internal sealed record AgentPhaseRunResult(IReadOnlyList<IMessage> Messages, int SessionId);
