@@ -200,6 +200,8 @@ public sealed class BookmakerListingSyncJobService(
         return;
       }
 
+      snapshot.EnsureCompleteBettingEventOptionsCoverage();
+
       db.BettingOddsSnapshot.Add(snapshot);
       await db.SaveChangesAsync();
 

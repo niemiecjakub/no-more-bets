@@ -21,43 +21,12 @@ public sealed class GetUpcomingMatchesReadyForPredictionHandler(IUnitOfWork unit
     GetUpcomingMatchesReadyForPredictionQuery request,
     CancellationToken cancellationToken)
   {
-    var utcNow = DateTime.UtcNow;
-    var kickoffWithinTwoDaysEnd = utcNow.AddDays(2);
-
-    var dataComplete = request.ExcludeWithExistingResearch
-      ? await unitOfWork.Matches
-          .GetUpcomingReadyForPredictionWithoutResearchAnalysisAsync(cancellationToken)
-          .ConfigureAwait(false)
-      : await unitOfWork.Matches
-          .GetUpcomingMatchesReadyForPredictionAsync(cancellationToken)
-          .ConfigureAwait(false);
-
-    var allUpcoming = await unitOfWork.Matches
-      .GetUpcomingMatchesAsync(cancellationToken)
+    var dataComplete = await GetDataCompleteMatchesAsync(request.ExcludeWithExistingResearch, cancellationToken)
       .ConfigureAwait(false);
-
-    var soonKickoff = allUpcoming
-      .Where(m => m.MatchDate > utcNow && m.MatchDate <= kickoffWithinTwoDaysEnd)
-      .ToList();
-
-    if (request.ExcludeWithExistingResearch)
-    {
-      var dataCompleteIds = dataComplete.Select(m => m.Id).ToHashSet();
-      var soonFiltered = new List<Match>(soonKickoff.Count);
-      foreach (var m in soonKickoff)
-      {
-        if (dataCompleteIds.Contains(m.Id))
-          continue;
-
-        var research = await unitOfWork.Matches
-          .GetLatestMatchAnalysisByCodeAsync(m.Id, MatchAnalysis.ResearchCode, cancellationToken)
-          .ConfigureAwait(false);
-        if (research is null)
-          soonFiltered.Add(m);
-      }
-
-      soonKickoff = soonFiltered;
-    }
+    var soonKickoff = await GetSoonKickoffMatchesWithOddsAsync(
+        request.ExcludeWithExistingResearch,
+        cancellationToken)
+      .ConfigureAwait(false);
 
     var byId = new Dictionary<int, Match>();
     foreach (var m in dataComplete)
@@ -69,5 +38,53 @@ public sealed class GetUpcomingMatchesReadyForPredictionHandler(IUnitOfWork unit
     }
 
     return byId.Values.OrderBy(m => m.MatchDate).ToList();
+  }
+
+  private async Task<IReadOnlyList<Match>> GetDataCompleteMatchesAsync(
+    bool excludeWithExistingResearch,
+    CancellationToken cancellationToken)
+  {
+    return excludeWithExistingResearch
+      ? await unitOfWork.Matches
+          .GetUpcomingReadyForPredictionWithoutResearchAnalysisAsync(cancellationToken)
+          .ConfigureAwait(false)
+      : await unitOfWork.Matches
+          .GetUpcomingMatchesReadyForPredictionAsync(cancellationToken)
+          .ConfigureAwait(false);
+  }
+
+  private async Task<IReadOnlyList<Match>> GetSoonKickoffMatchesWithOddsAsync(
+    bool excludeWithExistingResearch,
+    CancellationToken cancellationToken)
+  {
+    var utcNow = DateTime.UtcNow;
+    var kickoffWithinTwoDaysEnd = utcNow.AddDays(2);
+
+    var upcomingWithOdds = await unitOfWork.Matches
+      .GetUpcomingMatchesWithOddsSnapshotsAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var soonKickoff = upcomingWithOdds
+      .Where(m => m.MatchDate > utcNow && m.MatchDate <= kickoffWithinTwoDaysEnd)
+      .ToList();
+
+    if (soonKickoff.Count == 0)
+      return soonKickoff;
+
+    if (!excludeWithExistingResearch)
+      return soonKickoff;
+
+    var researchChecks = soonKickoff.Select(async m => new
+    {
+      Match = m,
+      Research = await unitOfWork.Matches
+        .GetLatestMatchAnalysisByCodeAsync(m.Id, MatchAnalysis.ResearchCode, cancellationToken)
+        .ConfigureAwait(false)
+    });
+
+    return (await Task.WhenAll(researchChecks).ConfigureAwait(false))
+      .Where(x => x.Research is null)
+      .Select(x => x.Match)
+      .ToList();
   }
 }

@@ -10,6 +10,7 @@ public interface IMatchRepository
   public Task<Head2Head?> GetHeadToHead(int team1, int team2);
   public Task<List<Match>> GetMatches(DateTime date);
   public Task<IReadOnlyList<Match>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default);
+  public Task<IReadOnlyList<Match>> GetUpcomingMatchesWithOddsSnapshotsAsync(CancellationToken cancellationToken = default);
   public Task<IReadOnlyList<Match>> GetUpcomingMatchesReadyForPredictionAsync(CancellationToken cancellationToken = default);
   public Task<IReadOnlyList<Match>> GetUpcomingReadyForPredictionWithoutResearchAnalysisAsync(CancellationToken cancellationToken = default);
   public Task<Lineup?> GetLineup(int matchId);

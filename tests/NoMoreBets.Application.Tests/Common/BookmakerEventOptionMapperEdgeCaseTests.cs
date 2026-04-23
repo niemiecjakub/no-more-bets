@@ -29,6 +29,9 @@ public class BookmakerEventOptionMapperEdgeCaseTests
     { "Everton", "Liverpool", false },
     { "Burnley", "Barnsley", false },
     { "Arsenal", "Chelsea", false },
+    { "Marsylia", "Marseille", true },
+    { "FC Koeln", "FC Cologne", true },
+    { "Paris Saint-Germain", "PSG", true },
     { "", "Everton", false },
     { "Everton", "", false }
   };

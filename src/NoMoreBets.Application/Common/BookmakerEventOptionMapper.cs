@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using FuzzySharp;
 using NoMoreBets.Application.Common.Dto.Betting;
+using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using SoccerMatch = NoMoreBets.Domain.Matches.Match;
@@ -78,13 +79,18 @@ public static class BookmakerEventOptionMapper
   {
     if (string.IsNullOrWhiteSpace(bookmakerName) || string.IsNullOrWhiteSpace(clubName))
       return false;
-    var a = bookmakerName.Trim();
-    var b = clubName.Trim();
+    var a = ClubNameMatchHints.ResolveEffectiveName(bookmakerName.Trim());
+    var b = ClubNameMatchHints.ResolveEffectiveName(clubName.Trim());
     if (string.Equals(a, b, StringComparison.OrdinalIgnoreCase))
       return true;
 
-    var aa = a.ToLowerInvariant();
-    var bb = b.ToLowerInvariant();
+    var af = ClubNameMatchHints.FoldDiacritics(a);
+    var bf = ClubNameMatchHints.FoldDiacritics(b);
+    if (string.Equals(af, bf, StringComparison.OrdinalIgnoreCase))
+      return true;
+
+    var aa = af.ToLowerInvariant();
+    var bb = bf.ToLowerInvariant();
     var score = Math.Max(
       Math.Max(Fuzz.Ratio(aa, bb), Fuzz.PartialRatio(aa, bb)),
       Math.Max(Fuzz.TokenSortRatio(aa, bb), Fuzz.TokenSetRatio(aa, bb)));

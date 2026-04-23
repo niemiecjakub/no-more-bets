@@ -95,6 +95,18 @@ public class MatchRepository : IMatchRepository
       .ConfigureAwait(false);
   }
 
+  public async Task<IReadOnlyList<Match>> GetUpcomingMatchesWithOddsSnapshotsAsync(CancellationToken cancellationToken = default)
+  {
+    return await _db.Match
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
+      .Where(m => _db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
+      .OrderBy(m => m.MatchDate)
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task<IReadOnlyList<Match>> GetUpcomingMatchesReadyForPredictionAsync(CancellationToken cancellationToken = default)
   {
     return await _db.Match
@@ -193,4 +205,5 @@ public class MatchRepository : IMatchRepository
       .OrderByDescending(a => a.Id)
       .FirstOrDefaultAsync(cancellationToken);
   }
+
 }
