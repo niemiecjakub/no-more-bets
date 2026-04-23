@@ -123,11 +123,13 @@ public record BetSlipListItemDto(
   IReadOnlyList<BetSelectionItemDto> Selections,
   int? AgentSessionId);
 
+/// <param name="MessageCount">Transcript messages only; excludes function-call (tool) rows.</param>
 public record AgentSessionListItemDto(
   int Id,
   int PhaseId,
   string PhaseName,
   DateTime StartedAt,
-  int MessageCount);
+  int MessageCount,
+  int? MatchId = null);
 
 public record AgentSessionMessageDto(int Id, int SessionId, int Ordinal, int Kind, string Text);

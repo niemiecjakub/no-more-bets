@@ -1,5 +1,16 @@
 "use client";
 
+import Link from "next/link";
+import {
+  Bot,
+  ChevronRight,
+  Globe,
+  Lightbulb,
+  Search,
+  Ticket,
+  Trash2,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { AgentSessionTranscript } from "@/features/bets/components/agent-session-transcript";
 import {
@@ -18,6 +29,24 @@ function formatDate(iso: string) {
     });
   } catch {
     return iso;
+  }
+}
+
+/** Mirrors `AgentSessionPhase` in the API (Research=1 … MemoryCleanup=5). */
+function sessionPhaseIcon(phaseId: number): LucideIcon {
+  switch (phaseId) {
+    case 1:
+      return Search;
+    case 2:
+      return Ticket;
+    case 3:
+      return Lightbulb;
+    case 4:
+      return Globe;
+    case 5:
+      return Trash2;
+    default:
+      return Bot;
   }
 }
 
@@ -151,6 +180,10 @@ export default function SessionsPage() {
       ? sortedSessions.find((s) => s.id === selectedId)
       : undefined;
 
+  const SelectedPhaseIcon = selectedSession
+    ? sessionPhaseIcon(selectedSession.phaseId)
+    : Bot;
+
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -176,24 +209,43 @@ export default function SessionsPage() {
               <ul className="min-h-0 min-w-0 flex-1 space-y-1 overflow-y-auto p-2">
                 {sortedSessions.map((s) => {
                   const isSelected = s.id === selectedId;
+                  const PhaseIcon = sessionPhaseIcon(s.phaseId);
                   return (
                     <li key={s.id} className="min-w-0">
                       <button
                         type="button"
                         onClick={() => setSelectedId(s.id)}
                         className={
-                          "min-w-0 max-w-full rounded-md border px-3 py-2.5 text-left transition-colors " +
+                          "flex min-w-0 max-w-full gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors " +
                           (isSelected
                             ? "border-zinc-300 bg-zinc-100 ring-2 ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-900 dark:ring-zinc-500/30"
                             : "border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900/80")
                         }
                       >
-                        <span className="line-clamp-1 min-w-0 max-w-full font-medium text-foreground">
-                          Session #{s.id} · {s.phaseName}
-                        </span>
-                        <span className="mt-1 block min-w-0 max-w-full truncate text-xs text-zinc-500 dark:text-zinc-500">
-                          {formatDate(s.startedAt)} · {s.messageCount} messages
-                        </span>
+                        <PhaseIcon
+                          className={
+                            "mt-0.5 h-4 w-4 shrink-0 " +
+                            (isSelected
+                              ? "text-zinc-700 dark:text-zinc-300"
+                              : "text-zinc-400 dark:text-zinc-500")
+                          }
+                          aria-hidden
+                        />
+                        <div className="min-w-0 flex-1">
+                          <span className="line-clamp-1 min-w-0 max-w-full">
+                            <span className="font-medium text-foreground">
+                              {s.phaseName}
+                            </span>
+                            <span className="text-xs font-normal text-zinc-500 dark:text-zinc-500">
+                              {" · Session #"}
+                              {s.id}
+                            </span>
+                          </span>
+                          <span className="mt-1 block min-w-0 max-w-full truncate text-xs text-zinc-500 dark:text-zinc-500">
+                            {formatDate(s.startedAt)} · {s.messageCount}{" "}
+                            messages
+                          </span>
+                        </div>
                       </button>
                     </li>
                   );
@@ -203,14 +255,35 @@ export default function SessionsPage() {
             <div className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
               {selectedSession ? (
                 <>
-                  <div className="min-w-0 shrink-0 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-                    <h2 className="text-lg font-semibold text-foreground">
-                      Transcript
-                    </h2>
-                    <p className="mt-1 min-w-0 wrap-break-word text-xs text-zinc-500 dark:text-zinc-500">
-                      Session #{selectedSession.id} · {selectedSession.phaseName}{" "}
-                      · {formatDate(selectedSession.startedAt)}
-                    </p>
+                  <div className="flex min-w-0 shrink-0 items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <SelectedPhaseIcon
+                        className="mt-1 h-5 w-5 shrink-0 text-zinc-500 dark:text-zinc-400"
+                        aria-hidden
+                      />
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-lg font-semibold text-foreground">
+                          Transcript
+                        </h2>
+                        <p className="mt-1 min-w-0 wrap-break-word text-xs text-zinc-500 dark:text-zinc-500">
+                          Session #{selectedSession.id} ·{" "}
+                          {selectedSession.phaseName} ·{" "}
+                          {formatDate(selectedSession.startedAt)}
+                        </p>
+                      </div>
+                    </div>
+                    {selectedSession.matchId != null ? (
+                      <Link
+                        href={`/match/${selectedSession.matchId}`}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-sky-300 bg-sky-500 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-sky-600 dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500"
+                      >
+                        Match
+                        <ChevronRight
+                          className="h-4 w-4 text-white/90"
+                          aria-hidden
+                        />
+                      </Link>
+                    ) : null}
                   </div>
                   <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
                     {isLoadingTranscript && transcriptMessages === null ? (

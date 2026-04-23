@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Controllers.Models;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.Persistence;
 
 namespace NoMoreBets.Controllers;
@@ -21,9 +22,25 @@ public class AgentSessionsController(AppDbContext db) : ControllerBase
         s.Id,
         s.Phase,
         s.StartedAt,
-        MessageCount = s.Messages.Count,
+        MessageCount = s.Messages.Count(m => m.Kind != AgentSessionMessageKind.FunctionCall),
       })
       .ToListAsync(cancellationToken);
+
+    var matchIdBySessionId = new Dictionary<int, int>();
+    if (rows.Count > 0)
+    {
+      var sessionIds = rows.ConvertAll(r => r.Id);
+      var pairs = await db.MatchAnalysis
+        .AsNoTracking()
+        .Where(a => a.AgentSessionId != null && sessionIds.Contains(a.AgentSessionId.Value))
+        .Select(a => new { SessionId = a.AgentSessionId!.Value, a.MatchId })
+        .ToListAsync(cancellationToken);
+
+      foreach (var g in pairs.GroupBy(p => p.SessionId))
+      {
+        matchIdBySessionId[g.Key] = g.First().MatchId;
+      }
+    }
 
     var list = rows
       .Select(r => new AgentSessionListItemDto(
@@ -31,7 +48,8 @@ public class AgentSessionsController(AppDbContext db) : ControllerBase
         (int)r.Phase,
         r.Phase.ToString(),
         r.StartedAt,
-        r.MessageCount))
+        r.MessageCount,
+        matchIdBySessionId.TryGetValue(r.Id, out var matchId) ? matchId : null))
       .ToList();
 
     return Ok(list);
