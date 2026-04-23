@@ -431,6 +431,34 @@ public class MatchMatcherTests
   }
 
   [Fact]
+  public void FindClub_ParisFcAndPsgInLeague_Disambiguates()
+  {
+    var parisFc = new ClubEntity { Id = 1, Name = "Paris FC", LeagueId = 6, SoccerdataId = 4241 };
+    var psg = new ClubEntity { Id = 2, Name = "PSG", LeagueId = 6, SoccerdataId = 4228 };
+    var clubs = new List<ClubEntity> { psg, parisFc };
+
+    _sut.FindClub("Paris FC", clubs).Should().BeSameAs(parisFc);
+    _sut.FindClub("Paris  SG", clubs).Should().BeSameAs(psg);
+    _sut.FindClub("Paris SG", clubs).Should().BeSameAs(psg);
+    _sut.FindClub("Paris Saint-Germain", clubs).Should().BeSameAs(psg);
+  }
+
+  [Fact]
+  public void FindFotmobClub_ShortParisQuery_PrefersLongerTeamNameOverParisFc()
+  {
+    var clubs = new List<ClubDto>
+    {
+      new(1, "Paris FC", "PFC", 1, "", 0, 0, 0, 0, 0, 0, "0", 0, [], null, null, null),
+      new(2, "Paris Saint-Germain", "PSG", 2, "", 0, 0, 0, 0, 0, 0, "0", 0, [], null, null, null),
+    };
+
+    var result = _sut.FindFotmobClub("paris", clubs);
+
+    result.Should().NotBeNull();
+    result!.TeamName.Should().Be("Paris Saint-Germain");
+  }
+
+  [Fact]
   public void FindClub_FoldedDiacriticsExactMatch_ReturnsClub()
   {
     var club = new ClubEntity { Id = 1, Name = "TSV München Test", LeagueId = 1, SoccerdataId = 1 };

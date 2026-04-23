@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace NoMoreBets.Application.Common.MatchMatcher;
 
@@ -8,6 +9,8 @@ namespace NoMoreBets.Application.Common.MatchMatcher;
 /// </summary>
 internal static class ClubNameMatchHints
 {
+  private static readonly Regex CollapseWhitespace = new(@"\s+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
   private static readonly Dictionary<string, string> Aliases = new(StringComparer.OrdinalIgnoreCase)
   {
     ["Marsylia"] = "Marseille",
@@ -39,10 +42,16 @@ internal static class ClubNameMatchHints
     ["Paris Saint-Germain"] = "PSG",
     ["Paris Saint Germain"] = "PSG",
     ["Paris SG"] = "PSG",
+    ["Strasbourg"] = "RC Strasbourg",
   };
 
   public static string ResolveEffectiveName(string trimmed)
   {
+    if (!string.IsNullOrEmpty(trimmed))
+    {
+      trimmed = CollapseWhitespace.Replace(trimmed.Trim(), " ");
+    }
+
     if (Aliases.TryGetValue(trimmed, out var canonical))
     {
       return canonical;

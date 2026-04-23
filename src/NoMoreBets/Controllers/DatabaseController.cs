@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Application.Bankroll.GetBankrollDashboard;
+using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
@@ -156,18 +157,11 @@ public class DatabaseController(AppDbContext db, IMediator mediator) : Controlle
         m.Stage != null &&
         selectedLeagueIds.Contains(m.Stage.Season.LeagueId));
 
-    var completeMatchIds = await db.Match
-      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
-      .Where(m => db.MatchPreview.Any(mp => mp.MatchId == m.Id))
-      .Where(m => db.Lineup.Any(l => l.MatchId == m.Id))
-      .Where(m => db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
-      .Where(m => db.Head2Head.Any(h =>
-        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
-        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
-      .Select(m => m.Id)
-      .ToListAsync(cancellationToken);
+    var readyForPrediction = await mediator
+      .Send(new GetUpcomingMatchesReadyForPredictionQuery(ExcludeWithExistingResearch: false), cancellationToken)
+      .ConfigureAwait(false);
 
-    var completeSet = completeMatchIds.ToHashSet();
+    var completeSet = readyForPrediction.Select(m => m.Id).ToHashSet();
     var matchIdsWithPreview = await db.MatchPreview
       .Select(mp => mp.MatchId)
       .Distinct()

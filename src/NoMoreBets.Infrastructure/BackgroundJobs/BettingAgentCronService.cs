@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
@@ -20,8 +21,8 @@ public sealed class BettingAgentCronService(
   public async Task RunResearchScheduleAsync()
   {
     logger.LogInformation("Starting scheduled research agent phase");
-    var matches = await unitOfWork.Matches
-      .GetUpcomingReadyForPredictionWithoutResearchAnalysisAsync(CancellationToken.None)
+    var matches = await mediator
+      .Send(new GetUpcomingMatchesReadyForPredictionQuery(), CancellationToken.None)
       .ConfigureAwait(false);
 
     for (var i = 0; i < matches.Count; i++)

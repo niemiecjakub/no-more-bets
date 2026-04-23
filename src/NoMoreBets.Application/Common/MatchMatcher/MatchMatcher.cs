@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using FuzzySharp;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Domain.Clubs;
@@ -15,6 +16,13 @@ public sealed class MatchMatcher : IMatchMatcher
 {
   private const int LineupAndSoccerDataScoreCutoff = 85;
   private const int FotmobScoreCutoff = 70;
+
+  /// <summary>Ligue 1: external strings like "Paris FC" must not fuzzy-match to PSG.</summary>
+  private static readonly Regex ParisFcInInput = new(@"\bParis\s+FC\b", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
+  /// <summary>Ligue 1: PSG variants that must not fuzzy-match to Paris FC.</summary>
+  private static readonly Regex PsgInInput = new(@"\bParis\s+Saint[- ]?Germain\b|\bParis\s+SG\b", RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
   private readonly ILogger<MatchMatcher> _logger;
 
   public MatchMatcher(ILogger<MatchMatcher> logger)
@@ -142,7 +150,7 @@ public sealed class MatchMatcher : IMatchMatcher
       }
     }
 
-    foreach (var club in clubs)
+    foreach (var club in clubs.OrderByDescending(c => (c.TeamName ?? string.Empty).Trim().Length))
     {
       var cn = club.TeamName.Trim().ToLowerInvariant();
       if (normalized.Contains(cn, StringComparison.Ordinal) || cn.Contains(normalized, StringComparison.Ordinal))
@@ -208,11 +216,54 @@ public sealed class MatchMatcher : IMatchMatcher
     var best = Process.ExtractOne(foldedEffective, names, s => s ?? "", cutoff: FotmobScoreCutoff);
     if (best != null && best.Score >= FotmobScoreCutoff && best.Index >= 0 && best.Index < clubs.Count)
     {
-      return clubs[best.Index];
+      return DisambiguateParisClubs(trimmed, effectiveName, clubs[best.Index], clubs);
     }
 
     throw new InvalidOperationException(
       $"No matching club found for '{trimmed}' among {clubs.Count} clubs. Ensure the team exists in the league.");
+  }
+
+  /// <summary>
+  /// When both Paris FC and PSG exist in the same league list, FuzzySharp can pick the wrong Paris club.
+  /// Prefer explicit "Paris FC" vs PSG naming (including <see cref="ClubNameMatchHints"/> canonical "PSG").
+  /// </summary>
+  private static Club DisambiguateParisClubs(string trimmed, string effectiveName, Club chosen, IReadOnlyList<Club> clubs)
+  {
+    Club? parisFc = null;
+    Club? psg = null;
+    foreach (var c in clubs)
+    {
+      var n = c.Name.Trim();
+      if (n.Equals("Paris FC", StringComparison.OrdinalIgnoreCase))
+      {
+        parisFc = c;
+      }
+      else if (n.Equals("PSG", StringComparison.OrdinalIgnoreCase))
+      {
+        psg = c;
+      }
+    }
+
+    if (parisFc is null || psg is null)
+    {
+      return chosen;
+    }
+
+    var meantPsg = PsgInInput.IsMatch(trimmed)
+      || effectiveName.Trim().Equals("PSG", StringComparison.OrdinalIgnoreCase);
+    var meantParisFc = ParisFcInInput.IsMatch(trimmed);
+
+    if (ReferenceEquals(chosen, psg) && meantParisFc && !meantPsg)
+    {
+      return parisFc;
+    }
+
+    if (ReferenceEquals(chosen, parisFc) && meantPsg)
+    {
+      return psg;
+    }
+
+    return chosen;
   }
 
   /// <inheritdoc />
@@ -234,7 +285,7 @@ public sealed class MatchMatcher : IMatchMatcher
       }
     }
 
-    foreach (var stat in xgStats)
+    foreach (var stat in xgStats.OrderByDescending(s => (s.TeamName ?? string.Empty).Trim().Length))
     {
       var tn = (stat.TeamName ?? string.Empty).Trim().ToLowerInvariant();
       if (normalized.Contains(tn, StringComparison.Ordinal) || tn.Contains(normalized, StringComparison.Ordinal))
