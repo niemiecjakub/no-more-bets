@@ -38,8 +38,9 @@ public class ClubsController(
     if (match == null)
       return NotFound();
 
-    var home = await mediator.Send(new GetClubRecentGamesQuery(match.HomeClubId), cancellationToken).ConfigureAwait(false);
-    var away = await mediator.Send(new GetClubRecentGamesQuery(match.AwayClubId), cancellationToken).ConfigureAwait(false);
+    var asOfDate = DateOnly.FromDateTime(match.MatchDate);
+    var home = await mediator.Send(new GetClubRecentGamesQuery(match.HomeClubId, asOfDate), cancellationToken).ConfigureAwait(false);
+    var away = await mediator.Send(new GetClubRecentGamesQuery(match.AwayClubId, asOfDate), cancellationToken).ConfigureAwait(false);
     return Ok(new ClubPairDto<IReadOnlyList<RecentMatch>?>(home, away));
   }
 
@@ -52,8 +53,9 @@ public class ClubsController(
     if (match == null)
       return NotFound();
 
-    var home = await mediator.Send(new GetClubLeagueStatisticsQuery(match.HomeClubId), cancellationToken).ConfigureAwait(false);
-    var away = await mediator.Send(new GetClubLeagueStatisticsQuery(match.AwayClubId), cancellationToken).ConfigureAwait(false);
+    var asOfDate = DateOnly.FromDateTime(match.MatchDate);
+    var home = await mediator.Send(new GetClubLeagueStatisticsQuery(match.HomeClubId, asOfDate), cancellationToken).ConfigureAwait(false);
+    var away = await mediator.Send(new GetClubLeagueStatisticsQuery(match.AwayClubId, asOfDate), cancellationToken).ConfigureAwait(false);
     return Ok(new ClubPairDto<ClubLeagueStats?>(home, away));
   }
 

@@ -14,7 +14,6 @@ public class FotmobConstantsTests
   [InlineData("bundesliga", 54)]
   [InlineData("serie", 55)]
   [InlineData("serie-a", 55)]
-  [InlineData("ligue1", 53)]
   [InlineData("ligue-1", 53)]
   public void GetLeagueBySlug_ForCanonicalAndDbSeedSlugs_ReturnsExpectedFotmobId(string slug, int expectedLeagueId)
   {

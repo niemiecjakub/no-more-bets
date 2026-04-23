@@ -43,8 +43,9 @@ public class MatchRepository : IMatchRepository
     var query = _db.Match
       .Where(m => (m.HomeClubId == clubId || m.AwayClubId == clubId) && m.MatchStatusId == (int)MatchStatus.Finished);
 
+    // Exclusive: prior form for a fixture dated D must not include matches on D (e.g. the same game when finished).
     if (upToDate.HasValue)
-      query = query.Where(m => DateOnly.FromDateTime(m.MatchDate) <= upToDate.Value);
+      query = query.Where(m => DateOnly.FromDateTime(m.MatchDate) < upToDate.Value);
 
     return await query
       .OrderByDescending(m => m.MatchDate)

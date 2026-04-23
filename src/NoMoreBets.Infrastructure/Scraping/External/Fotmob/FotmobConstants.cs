@@ -155,8 +155,7 @@ public class FotmobConstants : IFotmobConstants, IFotmobTeamLookup
       [Ligue1.Slug] = Ligue1,
 
       // League.Slug in DB (002 seed) where it differs from FotMob path slugs.
-      ["serie-a"] = SerieA,
-      ["ligue-1"] = Ligue1
+      ["serie-a"] = SerieA
     };
 
     _allTeams =
