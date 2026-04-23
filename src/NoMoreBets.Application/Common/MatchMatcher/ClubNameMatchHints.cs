@@ -43,6 +43,11 @@ internal static class ClubNameMatchHints
     ["Paris Saint Germain"] = "PSG",
     ["Paris SG"] = "PSG",
     ["Strasbourg"] = "RC Strasbourg",
+    // Ekstraklasa/LaLiga localized variants seen in bookmaker feeds.
+    ["Wisła Płock"] = "Wisla Plock",
+    ["RKS Radomiak"] = "Radomiak Radom",
+    ["Real Madryt"] = "Real Madrid",
+    ["Bayern Monachium"] = "Bayern Munich",
   };
 
   public static string ResolveEffectiveName(string trimmed)

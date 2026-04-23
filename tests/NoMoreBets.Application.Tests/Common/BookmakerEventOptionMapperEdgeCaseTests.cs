@@ -32,6 +32,10 @@ public class BookmakerEventOptionMapperEdgeCaseTests
     { "Marsylia", "Marseille", true },
     { "FC Koeln", "FC Cologne", true },
     { "Paris Saint-Germain", "PSG", true },
+    { "Wisła Płock", "Wisla Plock", true },
+    { "RKS Radomiak", "Radomiak Radom", true },
+    { "Real Madryt", "Real Madrid", true },
+    { "Bayern Monachium", "Bayern Munich", true },
     { "", "Everton", false },
     { "Everton", "", false }
   };

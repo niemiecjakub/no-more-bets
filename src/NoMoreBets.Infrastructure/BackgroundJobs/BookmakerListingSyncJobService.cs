@@ -108,7 +108,7 @@ public sealed class BookmakerListingSyncJobService(
       upcommingGames.Count);
   }
 
-  [AutomaticRetry(Attempts = 3)]
+  [AutomaticRetry(Attempts = 0)]
   public async Task GetBettingOdds(string gameUrl)
   {
     logger.LogInformation(
