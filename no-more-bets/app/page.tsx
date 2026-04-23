@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MatchList } from "../features/matches/components/match-list";
 import { MATCH_STATUS } from "../features/matches/interfaces";
@@ -78,8 +78,6 @@ export default function Home() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { matches, isLoading, error, setMatches } = useMatchStore();
-  const [selectedLeagueIds, setSelectedLeagueIds] = useState<number[]>([]);
-  const [selectedStatusId, setSelectedStatusId] = useState<number>(MATCH_STATUS.Upcoming);
   const {
     leagues,
     isLoading: isLeaguesLoading,
@@ -87,11 +85,7 @@ export default function Home() {
     setLeagues,
   } = useLeagueStore();
 
-  useEffect(() => {
-    setLeagues();
-  }, [setLeagues]);
-
-  useEffect(() => {
+  const { selectedLeagueIds, selectedStatusId, matchFilters } = useMemo(() => {
     const statusParam = Number(searchParams.get("status"));
     const matchedStatus = statusFilters.find(
       (statusFilter) => statusFilter.id === statusParam
@@ -106,18 +100,20 @@ export default function Home() {
           .filter((id) => Number.isInteger(id) && id > 0)
       : [];
 
-    setSelectedStatusId(parsedStatusId);
-    setSelectedLeagueIds(parsedLeagueIds);
+    return {
+      selectedLeagueIds: parsedLeagueIds,
+      selectedStatusId: parsedStatusId,
+      matchFilters: {
+        matchStatusId:
+          parsedStatusId === ALL_STATUSES_ID ? undefined : parsedStatusId,
+        leagueIds: parsedLeagueIds.length > 0 ? parsedLeagueIds : undefined,
+      },
+    };
   }, [searchParams]);
 
-  const matchFilters = useMemo(
-    () => ({
-      matchStatusId:
-        selectedStatusId === ALL_STATUSES_ID ? undefined : selectedStatusId,
-      leagueIds: selectedLeagueIds.length > 0 ? selectedLeagueIds : undefined,
-    }),
-    [selectedLeagueIds, selectedStatusId]
-  );
+  useEffect(() => {
+    setLeagues();
+  }, [setLeagues]);
 
   useEffect(() => {
     setMatches(matchFilters);
@@ -138,13 +134,11 @@ export default function Home() {
     const nextLeagueIds = selectedLeagueIds.includes(leagueId)
       ? selectedLeagueIds.filter((id) => id !== leagueId)
       : [...selectedLeagueIds, leagueId];
-    setSelectedLeagueIds(nextLeagueIds);
     syncFiltersInUrl(nextLeagueIds, selectedStatusId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function handleSelectStatus(statusId: number) {
-    setSelectedStatusId(statusId);
     syncFiltersInUrl(selectedLeagueIds, statusId);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
