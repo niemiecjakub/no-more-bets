@@ -207,4 +207,22 @@ public class MatchRepository : IMatchRepository
       .FirstOrDefaultAsync(cancellationToken);
   }
 
+  public async Task<IReadOnlySet<int>> GetMatchIdsWithAnalysisCodeAsync(
+    IReadOnlyCollection<int> matchIds,
+    string code,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return new HashSet<int>();
+
+    var ids = await _db.MatchAnalysis
+      .Where(a => a.Code == code && matchIds.Contains(a.MatchId))
+      .Select(a => a.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return ids.ToHashSet();
+  }
+
 }

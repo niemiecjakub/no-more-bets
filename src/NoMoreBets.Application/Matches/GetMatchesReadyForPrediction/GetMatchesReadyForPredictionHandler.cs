@@ -74,17 +74,13 @@ public sealed class GetUpcomingMatchesReadyForPredictionHandler(IUnitOfWork unit
     if (!excludeWithExistingResearch)
       return soonKickoff;
 
-    var researchChecks = soonKickoff.Select(async m => new
-    {
-      Match = m,
-      Research = await unitOfWork.Matches
-        .GetLatestMatchAnalysisByCodeAsync(m.Id, MatchAnalysis.ResearchCode, cancellationToken)
-        .ConfigureAwait(false)
-    });
+    var soonKickoffIds = soonKickoff.Select(m => m.Id).ToArray();
+    var researchedMatchIds = await unitOfWork.Matches
+      .GetMatchIdsWithAnalysisCodeAsync(soonKickoffIds, MatchAnalysis.ResearchCode, cancellationToken)
+      .ConfigureAwait(false);
 
-    return (await Task.WhenAll(researchChecks).ConfigureAwait(false))
-      .Where(x => x.Research is null)
-      .Select(x => x.Match)
+    return soonKickoff
+      .Where(m => !researchedMatchIds.Contains(m.Id))
       .ToList();
   }
 }

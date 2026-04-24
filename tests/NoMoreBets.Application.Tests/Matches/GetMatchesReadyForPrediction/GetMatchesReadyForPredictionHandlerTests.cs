@@ -39,7 +39,7 @@ public class GetMatchesReadyForPredictionHandlerTests
 
     result.Select(m => m.Id).Should().Equal(1, 2, 3);
     await _matches.DidNotReceive()
-      .GetLatestMatchAnalysisByCodeAsync(Arg.Any<int>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+      .GetMatchIdsWithAnalysisCodeAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
   }
 
   [Fact]
@@ -54,10 +54,11 @@ public class GetMatchesReadyForPredictionHandlerTests
       .Returns(new List<Match> { dataComplete });
     _matches.GetUpcomingMatchesWithOddsSnapshotsAsync(Arg.Any<CancellationToken>())
       .Returns(new List<Match> { soonNoResearch, soonWithResearch });
-    _matches.GetLatestMatchAnalysisByCodeAsync(11, MatchAnalysis.ResearchCode, Arg.Any<CancellationToken>())
-      .Returns((MatchAnalysis?)null);
-    _matches.GetLatestMatchAnalysisByCodeAsync(12, MatchAnalysis.ResearchCode, Arg.Any<CancellationToken>())
-      .Returns(new MatchAnalysis { MatchId = 12, Code = MatchAnalysis.ResearchCode, Content = "x" });
+    _matches.GetMatchIdsWithAnalysisCodeAsync(
+        Arg.Is<IReadOnlyCollection<int>>(ids => ids.Contains(11) && ids.Contains(12)),
+        MatchAnalysis.ResearchCode,
+        Arg.Any<CancellationToken>())
+      .Returns(new HashSet<int> { 12 });
 
     var result = await _sut.Handle(new GetUpcomingMatchesReadyForPredictionQuery(), CancellationToken.None);
 
