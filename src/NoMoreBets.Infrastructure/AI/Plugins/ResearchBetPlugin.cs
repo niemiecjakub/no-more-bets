@@ -139,15 +139,6 @@ public class ResearchBetPlugin
 
     foreach (var row in latest.Rows)
     {
-      if (row.EventTypeEntity is null)
-      {
-        _logger.LogWarning(
-          "Skipping event row with missing event type entity for match {MatchId}. EventTypeId={EventTypeId}",
-          _matchId,
-          row.EventTypeId);
-        continue;
-      }
-
       var optionName = row.EventOptionEntity?.Name;
       if (string.IsNullOrEmpty(optionName))
       {
@@ -170,6 +161,28 @@ public class ResearchBetPlugin
       .ToList();
   }
 
+  [KernelFunction("GetMatchBasicInfo")]
+  [Description("Returns basic information for this match: home/away club ids and names.")]
+  public async Task<MatchBasicInfo> GetMatchBasicInfoAsync(CancellationToken cancellationToken = default)
+  {
+    var match = await _unitOfWork.Matches.GetMatchByIdAsync(_matchId, cancellationToken).ConfigureAwait(false)
+      ?? throw new InvalidOperationException($"Match {_matchId} not found.");
+
+    return new MatchBasicInfo(
+      match.Id,
+      match.HomeClubId,
+      match.HomeClub.Name,
+      match.AwayClubId,
+      match.AwayClub.Name);
+  }
+
   private sealed record PlaceResearchBetSlipArgs(List<ResearchBetSelectionRecord> BetSelections);
   private sealed record ResearchBetSelectionRecord(BettingEventType EventType, BettingEventOption Option);
 }
+
+public record MatchBasicInfo(
+  int MatchId,
+  int HomeClubId,
+  string HomeClubName,
+  int AwayClubId,
+  string AwayClubName);

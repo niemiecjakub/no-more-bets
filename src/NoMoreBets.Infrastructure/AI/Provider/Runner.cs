@@ -147,8 +147,9 @@ public sealed class Runner : IAgentPhaseRunner
           - Single selections are ok but multiple selections (parlays) are preferred.
 
           STRICT Tool Flow (must follow exactly):
-          1) Call `GetMatchEvents` - to get the available markets and outcome option names
-          2) Call `PlaceBetSlip` - to place the slip
+          1) Call `GetMatchBasicInfo` - to get home/away club ids and names for this match
+          2) Call `GetMatchEvents` - to get the available markets and outcome option names
+          3) Call `PlaceBetSlip` - to place the slip
 
           Selection Rules (VERY IMPORTANT):
           - Do NOT include **contradictory or overlapping selections**.
@@ -429,7 +430,7 @@ public sealed class Runner : IAgentPhaseRunner
 
           You are executing the betting phase for the portfolio: review every match that is open for betting, align with stored strategy and bankroll rules.
           You may place zero bet slips (pass entirely), exactly one bet slip, or more than one bet slip in this run, as strategy and bankroll allow.
-          Each call to `PlaceBetSlip` is one separate bet (one slip) with its own stake. That slip is either a single (one selection, one event market) or a parlay (multiple selections combined on the same slip, across one or more matches). The `betSelections` JSON array must contain at least one selection per slip: one element means a single bet; multiple elements mean a parlay on that slip.
+          Each call to `PlaceBetSlip` is one separate bet (one slip) with its own stake. That slip is either a single (one selection, one event market) or a parlay (multiple selections combined on the same slip; parlay selections can come from many different matches). The `betSelections` JSON array must contain at least one selection per slip: one element means a single bet; multiple elements mean a parlay on that slip.
           You must use the available plugin functions explicitly.
 
           Goal:
