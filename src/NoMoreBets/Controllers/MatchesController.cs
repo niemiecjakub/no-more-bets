@@ -6,6 +6,7 @@ using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 using NoMoreBets.Controllers.Models;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.Persistence;
@@ -65,19 +66,18 @@ public class MatchesController(AppDbContext db, IMediator mediator) : Controller
       .ToListAsync(cancellationToken);
     var hasHeadToHeadSet = matchIdsWithHeadToHead.ToHashSet();
 
-    var matchIdsWithAnalysis = await db.MatchAnalysis
-      .Where(a => a.Code != MatchAnalysis.ResearchCode)
-      .Select(a => a.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasAnalysisSet = matchIdsWithAnalysis.ToHashSet();
-
     var matchIdsWithResearch = await db.MatchAnalysis
       .Where(a => a.Code == MatchAnalysis.ResearchCode)
       .Select(a => a.MatchId)
       .Distinct()
       .ToListAsync(cancellationToken);
     var hasResearchSet = matchIdsWithResearch.ToHashSet();
+    var matchIdsWithResearchBet = await db.BetSelection
+      .Where(sel => sel.BetSlip.AgentSession != null && sel.BetSlip.AgentSession.Phase == AgentSessionPhase.Research)
+      .Select(sel => sel.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken);
+    var hasResearchBetSet = matchIdsWithResearchBet.ToHashSet();
 
     var list = await matchesQuery
       .Include(m => m.HomeClub)
@@ -107,8 +107,8 @@ public class MatchesController(AppDbContext db, IMediator mediator) : Controller
         m.AwayGoals,
         m.BetclicUrl,
         completeSet.Contains(m.Id),
-        hasAnalysisSet.Contains(m.Id),
         hasResearchSet.Contains(m.Id),
+        hasResearchBetSet.Contains(m.Id),
         hasPreviewSet.Contains(m.Id),
         hasLineupSet.Contains(m.Id),
         hasOddsSet.Contains(m.Id),

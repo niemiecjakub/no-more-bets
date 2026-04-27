@@ -94,15 +94,15 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
     (typeof r.LeagueSlug === "string" ? r.LeagueSlug : undefined) ??
     ""
   ).trim();
-  const hasAnalysis =
-    (typeof item.hasAnalysis === "boolean" ? item.hasAnalysis : undefined) ??
-    (typeof r.hasAnalysis === "boolean" ? r.hasAnalysis : undefined) ??
-    (typeof r.HasAnalysis === "boolean" ? r.HasAnalysis : undefined) ??
-    false;
   const hasResearch =
     (typeof item.hasResearch === "boolean" ? item.hasResearch : undefined) ??
     (typeof r.hasResearch === "boolean" ? r.hasResearch : undefined) ??
     (typeof r.HasResearch === "boolean" ? r.HasResearch : undefined) ??
+    false;
+  const hasResearchBet =
+    (typeof item.hasResearchBet === "boolean" ? item.hasResearchBet : undefined) ??
+    (typeof r.hasResearchBet === "boolean" ? r.hasResearchBet : undefined) ??
+    (typeof r.HasResearchBet === "boolean" ? r.HasResearchBet : undefined) ??
     false;
   const hasPreview =
     (typeof item.hasPreview === "boolean" ? item.hasPreview : undefined) ??
@@ -131,8 +131,8 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
     awayClubSlug: awaySlug,
     leagueName,
     leagueSlug,
-    hasAnalysis,
     hasResearch,
+    hasResearchBet,
     hasPreview,
     hasLineup,
     hasOdds,

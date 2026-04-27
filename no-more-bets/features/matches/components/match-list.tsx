@@ -113,7 +113,7 @@ export function MatchList({ matches }: MatchListProps) {
                 </time>
               );
               const showChips =
-                match.hasAnalysis || match.hasResearch || match.isReadyToPredict;
+                match.hasResearch || match.hasResearchBet || match.isReadyToPredict;
               const readinessChips = [
                 { key: "preview", label: "Preview", isReady: match.hasPreview },
                 { key: "lineup", label: "Lineup", isReady: match.hasLineup },
@@ -168,14 +168,14 @@ export function MatchList({ matches }: MatchListProps) {
                     </div>
                     {showChips ? (
                       <div className="flex flex-wrap items-center justify-center gap-2 pt-0.5">
-                        {match.hasAnalysis ? (
-                          <span className="inline-flex items-center rounded-md bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-800 ring-1 ring-inset ring-sky-600/20 dark:bg-sky-900/40 dark:text-sky-400 dark:ring-sky-500/30">
-                            Analysis
-                          </span>
-                        ) : null}
                         {match.hasResearch ? (
                           <span className="inline-flex items-center rounded-md bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-800 ring-1 ring-inset ring-violet-600/20 dark:bg-violet-900/40 dark:text-violet-400 dark:ring-violet-500/30">
                             Research
+                          </span>
+                        ) : null}
+                        {match.hasResearchBet ? (
+                          <span className="inline-flex items-center rounded-md bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-600/20 dark:bg-amber-900/40 dark:text-amber-400 dark:ring-amber-500/30">
+                            Research bet
                           </span>
                         ) : null}
                         {match.isReadyToPredict ? (

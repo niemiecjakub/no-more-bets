@@ -21,8 +21,8 @@ export interface MatchListItem {
   awayGoals: number | null;
   betclicUrl: string | null;
   isReadyToPredict: boolean;
-  hasAnalysis: boolean;
   hasResearch: boolean;
+  hasResearchBet: boolean;
   hasPreview: boolean;
   hasLineup: boolean;
   hasOdds: boolean;
