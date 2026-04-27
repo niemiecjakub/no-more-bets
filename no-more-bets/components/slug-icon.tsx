@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+/** Tried in order; first existing file under /public/clubs or /public/leagues wins. */
+const LOGO_EXTENSIONS = ["svg", "png"] as const;
 
 type SlugIconProps = {
   kind: "club" | "league";
@@ -15,19 +18,27 @@ export function SlugIcon({
   alt,
   className = "h-6 w-6",
 }: SlugIconProps) {
-  const [hidden, setHidden] = useState(false);
   const segment = (slug ?? "").trim().toLowerCase();
-  if (hidden || !segment) return null;
+  const [extIndex, setExtIndex] = useState(0);
 
-  const src =
-    kind === "club" ? `/clubs/${segment}.svg` : `/leagues/${segment}.svg`;
+  useEffect(() => {
+    setExtIndex(0);
+  }, [segment, kind]);
+
+  if (!segment) return null;
+  if (extIndex >= LOGO_EXTENSIONS.length) return null;
+
+  const ext = LOGO_EXTENSIONS[extIndex];
+  const prefix = kind === "club" ? "/clubs/" : "/leagues/";
+  const src = `${prefix}${segment}.${ext}`;
 
   return (
     <img
+      key={src}
       src={src}
       alt={alt}
       className={`shrink-0 object-contain ${className}`}
-      onError={() => setHidden(true)}
+      onError={() => setExtIndex((i) => i + 1)}
     />
   );
 }

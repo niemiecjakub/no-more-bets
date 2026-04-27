@@ -1,5 +1,5 @@
 /**
- * Public asset path uses `/clubs/{segment}.svg`. Normalizes API slug and
+ * Public assets: `/clubs/{segment}.svg` then `.png` (see SlugIcon). Normalizes API slug and
  * falls back to a kebab-case guess from the club name when slug is missing.
  */
 export function clubLogoSlugSegment(
