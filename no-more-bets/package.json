@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "generate:logo-manifest": "node scripts/generate-logo-manifest.mjs",
+    "predev": "npm run generate:logo-manifest",
+    "prebuild": "npm run generate:logo-manifest",
     "dev": "node scripts/dev-with-insecure-ssl.js",
     "build": "next build",
     "start": "next start",

@@ -38,7 +38,7 @@ public sealed class SettlePendingBetSelectionsHandler(IUnitOfWork unitOfWork)
         selection.BetEventOption,
         home,
         away);
-    }
+      }
 
     var slipsToRollup = pendingWithScores
       .Select(s => s.BetSlip)

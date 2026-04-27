@@ -1,5 +1,6 @@
 /**
- * Public assets: `/clubs/{segment}.svg` then `.png` (see SlugIcon). Normalizes API slug and
+ * Public assets: `/clubs/{segment}.{ext}` from generated `lib/logo-manifest.gen.ts`
+ * (run `npm run generate:logo-manifest` after adding files). Normalizes API slug and
  * falls back to a kebab-case guess from the club name when slug is missing.
  */
 export function clubLogoSlugSegment(

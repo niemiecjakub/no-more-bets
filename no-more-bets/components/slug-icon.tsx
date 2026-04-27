@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-/** Tried in order; first existing file under /public/clubs or /public/leagues wins. */
-const LOGO_EXTENSIONS = ["svg", "png"] as const;
+import {
+  clubLogoExtBySlug,
+  leagueLogoExtBySlug,
+} from "@/lib/logo-manifest.gen";
 
 type SlugIconProps = {
   kind: "club" | "league";
@@ -19,26 +19,22 @@ export function SlugIcon({
   className = "h-6 w-6",
 }: SlugIconProps) {
   const segment = (slug ?? "").trim().toLowerCase();
-  const [extIndex, setExtIndex] = useState(0);
-
-  useEffect(() => {
-    setExtIndex(0);
-  }, [segment, kind]);
-
   if (!segment) return null;
-  if (extIndex >= LOGO_EXTENSIONS.length) return null;
 
-  const ext = LOGO_EXTENSIONS[extIndex];
+  const ext =
+    kind === "club"
+      ? clubLogoExtBySlug[segment]
+      : leagueLogoExtBySlug[segment];
+  if (!ext) return null;
+
   const prefix = kind === "club" ? "/clubs/" : "/leagues/";
   const src = `${prefix}${segment}.${ext}`;
 
   return (
     <img
-      key={src}
       src={src}
       alt={alt}
       className={`shrink-0 object-contain ${className}`}
-      onError={() => setExtIndex((i) => i + 1)}
     />
   );
 }
