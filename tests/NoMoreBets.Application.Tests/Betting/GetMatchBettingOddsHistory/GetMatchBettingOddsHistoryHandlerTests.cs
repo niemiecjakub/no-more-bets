@@ -117,6 +117,44 @@ public class GetMatchBettingOddsHistoryHandlerTests
     result![0].Outcomes[0].OutcomeName.Should().Be("UnknownFutureOption");
   }
 
+  [Fact]
+  public async Task Handle_OrdersMarketsByConfiguredDisplayOrder()
+  {
+    // Arrange — rows appear in snapshot in an order that does not match UI order
+    var t1 = DateTime.UtcNow.AddHours(-1);
+    var snapshot = new BettingOddsSnapshot { SnapshotTime = t1, MatchId = 10 };
+    snapshot.Rows.Add(BuildRow(BettingEventType.ExactScore, BettingEventOption.CorrectScore_0_0));
+    snapshot.Rows.Add(BuildRow(BettingEventType.OverUnderGoals, BettingEventOption.TotalGoals_Over_2_5));
+    snapshot.Rows.Add(BuildRow(BettingEventType.MatchResult, BettingEventOption.MatchResult_Home));
+    snapshot.Rows.Add(BuildRow(BettingEventType.BothTeamsToScore, BettingEventOption.BothTeamsToScore_Yes));
+    _bettingRepository.GetBettingOddsSnapshotsForMatchAsync(10, Arg.Any<CancellationToken>())
+      .Returns(new List<BettingOddsSnapshot> { snapshot });
+
+    // Act
+    var result = await _sut.Handle(new GetMatchBettingOddsHistoryQuery(10), CancellationToken.None);
+
+    // Assert
+    result.Should().NotBeNull();
+    result!.Select(m => m.MarketKey).Should().ContainInOrder(
+      nameof(BettingEventType.MatchResult),
+      nameof(BettingEventType.BothTeamsToScore),
+      nameof(BettingEventType.OverUnderGoals),
+      nameof(BettingEventType.ExactScore));
+  }
+
+  private static BettingOddsSnapshotRow BuildRow(BettingEventType eventType, BettingEventOption option)
+  {
+    var optionName = option.ToString();
+    return new BettingOddsSnapshotRow
+    {
+      EventTypeId = (int)eventType,
+      EventTypeEntity = new BettingEventTypeEntity { Id = (int)eventType, Name = eventType.ToString() },
+      EventOptionId = (int)option,
+      EventOptionEntity = new BettingEventOptionEntity { Id = (int)option, Name = optionName },
+      Odds = 2.0m,
+    };
+  }
+
   private static BettingOddsSnapshot BuildSnapshot(DateTime snapshotTime, double homeOdds)
   {
     const string homeOutcome = "MatchResult_Home";

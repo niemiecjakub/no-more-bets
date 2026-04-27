@@ -61,21 +61,23 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork, IL
       }
     }
 
-    return byEventType.Select(kv =>
-    {
-      var acc = kv.Value;
-      var eventType = (BettingEventType)kv.Key;
-      var marketDisplayName = BettingEventTypeDisplay.GetDisplayName(eventType);
-      var options = acc.OptionOrder.Select(label =>
+    return byEventType
+      .OrderBy(kv => BettingEventTypeDisplay.GetDisplayOrder((BettingEventType)kv.Key))
+      .Select(kv =>
       {
-        var segments = CollapseToSegments(acc.OddsByLabel.TryGetValue(label, out var o) ? o : Array.Empty<(double, DateTime)>());
-        var outcomeDisplay = Enum.TryParse<BettingEventOption>(label, ignoreCase: false, out var parsedOption)
-          ? BettingEventOptionDisplay.GetDisplayName(parsedOption, homeName, awayName)
-          : label;
-        return new OutcomePriceTimeline(outcomeDisplay, segments);
+        var acc = kv.Value;
+        var eventType = (BettingEventType)kv.Key;
+        var marketDisplayName = BettingEventTypeDisplay.GetDisplayName(eventType);
+        var options = acc.OptionOrder.Select(label =>
+        {
+          var segments = CollapseToSegments(acc.OddsByLabel.TryGetValue(label, out var o) ? o : Array.Empty<(double, DateTime)>());
+          var outcomeDisplay = Enum.TryParse<BettingEventOption>(label, ignoreCase: false, out var parsedOption)
+            ? BettingEventOptionDisplay.GetDisplayName(parsedOption, homeName, awayName)
+            : label;
+          return new OutcomePriceTimeline(outcomeDisplay, segments);
+        }).ToList();
+        return new MarketPriceHistory(acc.EventTypeName, marketDisplayName, options);
       }).ToList();
-      return new MarketPriceHistory(acc.EventTypeName, marketDisplayName, options);
-    }).ToList();
   }
 
   private static IReadOnlyList<PricePoint> CollapseToSegments(IReadOnlyList<(double Odds, DateTime At)> points)

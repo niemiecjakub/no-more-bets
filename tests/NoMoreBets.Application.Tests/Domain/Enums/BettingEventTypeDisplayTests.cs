@@ -39,4 +39,29 @@ public class BettingEventTypeDisplayTests
     // Assert
     act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("type");
   }
+
+  [Fact]
+  public void DisplayOrder_FollowsMatchHistoryUiSequence()
+  {
+    BettingEventTypeDisplay.DisplayOrder.Should().ContainInOrder(
+      BettingEventType.MatchResult,
+      BettingEventType.DoubleChance,
+      BettingEventType.BothTeamsToScore,
+      BettingEventType.OverUnderGoals,
+      BettingEventType.Handicap,
+      BettingEventType.ExactScore);
+  }
+
+  [Fact]
+  public void GetDisplayOrder_KnownTypes_ReturnsIndexInDisplayOrder()
+  {
+    for (var i = 0; i < BettingEventTypeDisplay.DisplayOrder.Count; i++)
+      BettingEventTypeDisplay.GetDisplayOrder(BettingEventTypeDisplay.DisplayOrder[i]).Should().Be(i);
+  }
+
+  [Fact]
+  public void GetDisplayOrder_WhenEnumValueUnknown_SortsLast()
+  {
+    BettingEventTypeDisplay.GetDisplayOrder((BettingEventType)999).Should().Be(int.MaxValue);
+  }
 }
