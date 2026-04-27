@@ -741,6 +741,7 @@ function AgentResearchSection({
     researchAgentSessionId: number | null;
 }) {
     const [transcriptOpen, setTranscriptOpen] = useState(false);
+    const [internalProcessOpen, setInternalProcessOpen] = useState(false);
 
     const showResearchBetSlipBlock = !researchSlipLoading && (researchSlip != null || researchSlipError != null);
 
@@ -760,12 +761,13 @@ function AgentResearchSection({
                     onToggle={(e) => {
                         const el = e.currentTarget;
                         if (el.open) setTranscriptOpen(true);
+                        setInternalProcessOpen(el.open);
                     }}
                 >
                     <summary className="cursor-pointer list-none bg-zinc-50 px-3 py-2 text-sm font-medium text-foreground hover:bg-zinc-100 dark:bg-zinc-900/50 dark:hover:bg-zinc-900">
                         <span className="inline-flex w-full items-center justify-between gap-2">
                             <span>Internal process</span>
-                            <span className="text-xs text-zinc-500 transition-transform group-open:rotate-180 dark:text-zinc-400">▼</span>
+                            <span className="text-xs text-zinc-500 dark:text-zinc-400">{internalProcessOpen ? "▲" : "▼"}</span>
                         </span>
                     </summary>
                     <div className="border-t border-zinc-200 dark:border-zinc-800">
