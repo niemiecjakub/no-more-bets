@@ -60,7 +60,7 @@ export function AgentSessionTranscript({ messages }: AgentSessionTranscriptProps
 
   if (visible.length === 0) {
     return (
-      <p className="px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
         {messages.length === 0
           ? "No messages in this session."
           : "No transcript text to show (only tool calls were recorded)."}
@@ -68,13 +68,13 @@ export function AgentSessionTranscript({ messages }: AgentSessionTranscriptProps
     );
   }
   return (
-    <ul className="flex w-full min-w-0 flex-col divide-y divide-zinc-200 overflow-hidden border-0 bg-zinc-50/80 dark:divide-zinc-800 dark:bg-zinc-900/40">
+    <ul className="flex w-full min-w-0 flex-1 flex-col divide-y divide-zinc-200 overflow-hidden border-0 bg-zinc-50/80 dark:divide-zinc-800 dark:bg-zinc-900/40">
       {visible.map((m) => {
         const badge = messageKindBadgeStyle(m.kind);
         const BadgeIcon = badge.icon;
 
         return (
-          <li key={m.id} className="px-3 py-3 text-sm">
+          <li key={m.id} className="w-full min-w-0 px-4 py-3 text-sm">
             <div className="mb-0 flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
               <span
                 className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-medium ${badge.className}`}

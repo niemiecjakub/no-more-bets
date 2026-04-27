@@ -42,9 +42,9 @@ function sessionPhaseIcon(phaseId: number): LucideIcon {
 function SessionsFallback() {
     return (
         <div className="grid animate-pulse grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
-            <div className="flex flex-col gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
+            <div className="flex w-full flex-col gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
                 {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="rounded-md border border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
+                    <div key={i} className="w-full rounded-md border border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
                         <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800" />
                         <div className="mt-2 h-3 w-full rounded bg-zinc-200 dark:bg-zinc-800" />
                         <div className="mt-2 h-3 w-20 rounded bg-zinc-200 dark:bg-zinc-800" />
@@ -166,18 +166,18 @@ export default function SessionsPage() {
                     </p>
                 ) : (
                     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
-                        <div className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start lg:w-full">
-                            <ul className="min-w-0 space-y-1 p-2">
+                        <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
+                            <ul className="w-full min-w-0 space-y-1 p-2">
                                 {sortedSessions.map((s) => {
                                     const isSelected = s.id === selectedId;
                                     const PhaseIcon = sessionPhaseIcon(s.phaseId);
                                     return (
-                                        <li key={s.id} className="min-w-0">
+                                        <li key={s.id} className="w-full min-w-0">
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedId(s.id)}
                                                 className={
-                                                    "flex min-w-0 max-w-full gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors " +
+                                                    "flex w-full min-w-0 max-w-full gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors " +
                                                     (isSelected
                                                         ? "border-zinc-300 bg-zinc-100 ring-2 ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-900 dark:ring-zinc-500/30"
                                                         : "border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900/80")
@@ -188,16 +188,15 @@ export default function SessionsPage() {
                                                     aria-hidden
                                                 />
                                                 <div className="min-w-0 flex-1">
-                                                    <span className="line-clamp-1 min-w-0 max-w-full">
-                                                        <span className="font-medium text-foreground">{s.phaseName}</span>
-                                                        <span className="text-xs font-normal text-zinc-500 dark:text-zinc-500">
-                                                            {" · Session #"}
-                                                            {s.id}
+                                                    <span className="block min-w-0 truncate font-medium text-foreground">{s.phaseName}</span>
+                                                    <div className="mt-1 flex min-w-0 items-center gap-2">
+                                                        <span className="min-w-0 flex-1 truncate text-left text-xs text-zinc-500 dark:text-zinc-500">
+                                                            {formatDate(s.startedAt)}
                                                         </span>
-                                                    </span>
-                                                    <span className="mt-1 block min-w-0 max-w-full truncate text-xs text-zinc-500 dark:text-zinc-500">
-                                                        {formatDate(s.startedAt)} · {s.messageCount} messages
-                                                    </span>
+                                                        <span className="shrink-0 text-right text-xs font-normal tabular-nums text-zinc-500 dark:text-zinc-500">
+                                                            Session #{s.id}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </button>
                                         </li>
@@ -212,9 +211,7 @@ export default function SessionsPage() {
                                         <div className="flex min-w-0 flex-1 items-center gap-3">
                                             <SelectedPhaseIcon className="h-5 w-5 shrink-0 text-zinc-500 dark:text-zinc-400" aria-hidden />
                                             <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
-                                                <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-foreground">
-                                                    {selectedSession.phaseName}
-                                                </h2>
+                                                <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-foreground">{selectedSession.phaseName}</h2>
                                                 <span className="shrink-0 text-right text-xs font-normal whitespace-nowrap text-zinc-500 dark:text-zinc-500">
                                                     Session #{selectedSession.id} · {formatDate(selectedSession.startedAt)}
                                                 </span>
@@ -230,11 +227,11 @@ export default function SessionsPage() {
                                             </Link>
                                         ) : null}
                                     </div>
-                                    <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+                                    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
                                         {isLoadingTranscript && transcriptMessages === null ? (
-                                            <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading transcript...</p>
+                                            <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">Loading transcript...</p>
                                         ) : transcriptError ? (
-                                            <p className="text-sm text-red-800 dark:text-red-200">{transcriptError}</p>
+                                            <p className="px-4 py-3 text-sm text-red-800 dark:text-red-200">{transcriptError}</p>
                                         ) : transcriptMessages ? (
                                             <AgentSessionTranscript messages={transcriptMessages} />
                                         ) : null}
