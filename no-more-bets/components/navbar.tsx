@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ const agentTabs = [
 ] as const;
 
 export function Navbar() {
+  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -109,6 +110,7 @@ export function Navbar() {
 
                   <NavigationMenu.Item className="relative">
                     <NavigationMenu.Trigger
+                      onClick={() => router.push("/agent?tab=bets")}
                       className={cn(
                         "inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium transition-colors",
                         isAgentRoute
@@ -215,7 +217,7 @@ export function Navbar() {
 
             <div className="pt-2">
               <Link
-                href="/agent"
+                href="/agent?tab=bets"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`block rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   pathname.startsWith("/agent")
