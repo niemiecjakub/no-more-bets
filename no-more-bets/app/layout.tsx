@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { Navbar } from "../components/navbar";
 import { NavigationRefresh } from "../components/navigation-refresh";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,7 +33,9 @@ export default function RootLayout({
       >
         <TooltipProvider>
           <NavigationRefresh />
-          <Navbar />
+          <Suspense fallback={null}>
+            <Navbar />
+          </Suspense>
           {children}
         </TooltipProvider>
       </body>
