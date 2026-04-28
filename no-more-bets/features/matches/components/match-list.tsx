@@ -23,7 +23,11 @@ function centerScoreOrTime(match: MatchListItem): string {
 }
 
 function toDateKey(matchDate: string): string {
-  return new Date(matchDate).toISOString().slice(0, 10);
+  const date = new Date(matchDate);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function formatDateHeading(date: Date): string {
@@ -37,9 +41,9 @@ function formatDateHeading(date: Date): string {
 
 function getFutureDayDistanceLabel(date: Date): string | null {
   const now = new Date();
-  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-  const dateUtc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
-  const dayDiff = Math.floor((dateUtc - todayUtc) / (1000 * 60 * 60 * 24));
+  const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const dateLocal = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const dayDiff = Math.floor((dateLocal - todayLocal) / (1000 * 60 * 60 * 24));
 
   if (dayDiff <= 0) return null;
   if (dayDiff === 1) return "in 1 day";

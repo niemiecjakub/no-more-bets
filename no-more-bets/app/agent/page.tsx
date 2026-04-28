@@ -37,9 +37,15 @@ function isAgentTab(value: string | null): value is AgentTabId {
 
 function formatDate(iso: string) {
   try {
+    const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     return new Date(iso).toLocaleString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: localTimeZone,
     });
   } catch {
     return iso;

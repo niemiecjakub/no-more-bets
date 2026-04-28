@@ -1,6 +1,5 @@
 /**
- * Formats an ISO date string for match display (date DD/MM/YYYY + time).
- * Uses a fixed locale and UTC so server and client render the same (avoids hydration mismatch).
+ * Formats an ISO date string for match display (date + time) in the user's local timezone.
  */
 export function formatMatchDate(isoDateString: string): string {
   const date = new Date(isoDateString);
@@ -10,18 +9,31 @@ export function formatMatchDate(isoDateString: string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC",
   }).format(date);
 }
 
 /**
- * Time only (HH:MM), UTC — consistent with formatMatchDate for list rows.
+ * Time only (HH:MM) in the user's local timezone.
  */
 export function formatMatchTime(isoDateString: string): string {
   const date = new Date(isoDateString);
   return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC",
   }).format(date);
+}
+
+/**
+ * Returns the user's local timezone label (e.g. "GMT+2" or "CEST").
+ */
+export function getLocalTimeZoneLabel(): string {
+  try {
+    const parts = new Intl.DateTimeFormat(undefined, {
+      timeZoneName: "short",
+    }).formatToParts(new Date());
+    const tzPart = parts.find((part) => part.type === "timeZoneName");
+    return tzPart?.value ?? "local time";
+  } catch {
+    return "local time";
+  }
 }
