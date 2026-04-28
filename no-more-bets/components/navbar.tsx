@@ -6,10 +6,8 @@ import { usePathname } from "next/navigation";
 
 const tabs = [
   { href: "/", label: "Matches" },
-  { href: "/bets", label: "Bets" },
+  { href: "/agent", label: "Agent" },
   { href: "/leagues", label: "Leagues" },
-  { href: "/memories", label: "Memories" },
-  { href: "/sessions", label: "Sessions" },
 ] as const;
 
 export function Navbar() {
