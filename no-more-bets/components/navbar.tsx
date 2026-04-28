@@ -2,17 +2,28 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import * as NavigationMenu from "@radix-ui/react-navigation-menu";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/", label: "Matches" },
-  { href: "/agent", label: "Agent" },
   { href: "/leagues", label: "Leagues" },
+] as const;
+
+const agentTabs = [
+  { href: "/agent?tab=bets", label: "Bets", tab: "bets" },
+  { href: "/agent?tab=sessions", label: "Sessions", tab: "sessions" },
+  { href: "/agent?tab=memories", label: "Memories", tab: "memories" },
 ] as const;
 
 export function Navbar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const activeAgentTab = searchParams.get("tab");
+  const isAgentRoute = pathname.startsWith("/agent");
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
@@ -72,23 +83,70 @@ export function Navbar() {
                 )}
               </svg>
             </button>
-            <div className="hidden min-w-0 flex-1 gap-1 overflow-x-auto sm:flex">
-            {tabs.map(({ href, label }) => {
-              const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  className={`shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-zinc-100 dark:bg-zinc-800 text-foreground"
-                      : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:text-foreground"
-                  }`}
-                >
-                  {label}
-                </Link>
-              );
-            })}
+            <div className="hidden min-w-0 flex-1 sm:flex">
+              <NavigationMenu.Root delayDuration={80} skipDelayDuration={120}>
+                <NavigationMenu.List className="flex items-center gap-1">
+                  {tabs.map(({ href, label }) => {
+                    const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+                    return (
+                      <NavigationMenu.Item key={href}>
+                        <NavigationMenu.Link asChild active={isActive}>
+                          <Link
+                            href={href}
+                            className={cn(
+                              "shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                              isActive
+                                ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                                : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                            )}
+                          >
+                            {label}
+                          </Link>
+                        </NavigationMenu.Link>
+                      </NavigationMenu.Item>
+                    );
+                  })}
+
+                  <NavigationMenu.Item className="relative">
+                    <NavigationMenu.Trigger
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                        isAgentRoute
+                          ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                          : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                      )}
+                    >
+                      Agent
+                      <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
+                    </NavigationMenu.Trigger>
+
+                    <NavigationMenu.Content className="absolute left-0 top-full z-50 mt-1 w-44 rounded-md border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+                      <ul className="space-y-1">
+                        {agentTabs.map(({ href, label, tab }) => {
+                          const isActive = isAgentRoute && activeAgentTab === tab;
+                          return (
+                            <li key={href}>
+                              <NavigationMenu.Link asChild active={isActive}>
+                                <Link
+                                  href={href}
+                                  className={cn(
+                                    "block rounded-md px-3 py-2 text-sm transition-colors",
+                                    isActive
+                                      ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                                      : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                                  )}
+                                >
+                                  {label}
+                                </Link>
+                              </NavigationMenu.Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </NavigationMenu.Content>
+                  </NavigationMenu.Item>
+                </NavigationMenu.List>
+              </NavigationMenu.Root>
             </div>
           </div>
 
@@ -154,6 +212,39 @@ export function Navbar() {
                 </Link>
               );
             })}
+
+            <div className="pt-2">
+              <Link
+                href="/agent"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                  pathname.startsWith("/agent")
+                    ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                    : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                }`}
+              >
+                Agent
+              </Link>
+              <div className="mt-1 space-y-1 pl-3">
+                {agentTabs.map(({ href, label, tab }) => {
+                  const isActive = pathname.startsWith("/agent") && activeAgentTab === tab;
+                  return (
+                    <Link
+                      key={`mobile-${href}`}
+                      href={href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`block rounded-md px-4 py-2 text-sm transition-colors ${
+                        isActive
+                          ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                          : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                      }`}
+                    >
+                      {label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
