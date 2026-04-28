@@ -3,13 +3,13 @@ using Hangfire;
 
 namespace NoMoreBets.Infrastructure
 {
-  internal sealed class RecurringJobRegistrationBuilder(BackgroundJobs.IRecurringJobRegistry registry)
+  internal sealed class RecurringJobRegistrationBuilder(BackgroundJobs.RecurringJobRegistry registry)
   {
     public JobBuilder<T> For<T>(Expression<Func<T, Task>> methodCall) => new(registry, methodCall);
   }
 
   internal sealed class JobBuilder<T>(
-    BackgroundJobs.IRecurringJobRegistry registry,
+    BackgroundJobs.RecurringJobRegistry registry,
     Expression<Func<T, Task>> methodCall)
   {
     private string _id = string.Empty;

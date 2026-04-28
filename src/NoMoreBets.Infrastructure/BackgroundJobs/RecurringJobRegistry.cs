@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
-public sealed class RecurringJobRegistry : IRecurringJobRegistry
+public sealed class RecurringJobRegistry
 {
   private readonly ConcurrentDictionary<string, JobMetadata> _jobs = new(StringComparer.Ordinal);
 

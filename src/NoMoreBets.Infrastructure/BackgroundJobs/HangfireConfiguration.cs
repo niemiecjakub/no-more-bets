@@ -14,7 +14,7 @@ public static class HangfireConfiguration
     var connectionString = configuration.GetConnectionString("DefaultConnection")
       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
-    services.AddSingleton<IRecurringJobRegistry, RecurringJobRegistry>();
+    services.AddSingleton<RecurringJobRegistry>();
 
     services.AddHangfire(config => config
       .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
@@ -30,12 +30,12 @@ public static class HangfireConfiguration
 
   public static IApplicationBuilder UseRecurringJobs(this IApplicationBuilder app)
   {
-    var registry = app.ApplicationServices.GetRequiredService<IRecurringJobRegistry>();
+    var registry = app.ApplicationServices.GetRequiredService<RecurringJobRegistry>();
     RegisterRecurringJobs(registry);
     return app;
   }
 
-  private static void RegisterRecurringJobs(IRecurringJobRegistry registry)
+  private static void RegisterRecurringJobs(RecurringJobRegistry registry)
   {
     var builder = new RecurringJobRegistrationBuilder(registry);
 

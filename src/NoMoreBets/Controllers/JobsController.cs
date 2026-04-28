@@ -7,7 +7,7 @@ namespace NoMoreBets.Controllers;
 
 [ApiController]
 [Route("api/jobs")]
-public class JobsController(IRecurringJobRegistry registry) : ControllerBase
+public class JobsController(RecurringJobRegistry registry) : ControllerBase
 {
   /// <summary>Visible recurring jobs grouped by group, with next run from Hangfire storage.</summary>
   [HttpGet("groups")]
