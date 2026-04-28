@@ -45,14 +45,14 @@ public static class HangfireConfiguration
       .WithGroup(JobGroups.MatchLifecycle)
       .WithName("Close starting-soon matches")
       .WithDescription("Hourly sweep that closes betting on matches kicking off soon.")
-      .Visible()
       .WithCron("0 * * * *")
       .Register();
 
     // Runs once per day at 01:00
     builder.For<PreKickoffDataSyncJobService>(s => s.GetUpcommingSoccerdataMatchesForAllLeagues())
       .WithId("get-soccerdata-upcoming-matches")
-      .WithGroup(JobGroups.PreKickoffSync)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Sync upcoming matches from Soccerdata")
       .WithDescription("Fetches upcoming matches for all leagues from Soccerdata.")
       .Visible()
@@ -62,7 +62,8 @@ public static class HangfireConfiguration
     // Runs once per day at 02:00
     builder.For<PreKickoffDataSyncJobService>(s => s.ScheduleRefreshHead2HeadForUpcomingMatches())
       .WithId("refresh-head2head-upcoming-matches")
-      .WithGroup(JobGroups.PreKickoffSync)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Schedule head-to-head refresh")
       .WithDescription("Schedules head-to-head refresh jobs for upcoming matches.")
       .Visible()
@@ -72,7 +73,8 @@ public static class HangfireConfiguration
     // Runs once per day at 02:01
     builder.For<PreKickoffDataSyncJobService>(s => s.ScheduleMissingPreviewJobsForUpcomingMatches())
       .WithId("get-missing-match-previews")
-      .WithGroup(JobGroups.PreKickoffSync)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Schedule missing preview fetches")
       .WithDescription("Schedules preview fetch jobs for upcoming matches missing a preview.")
       .Visible()
@@ -85,14 +87,14 @@ public static class HangfireConfiguration
       .WithGroup(JobGroups.Bankroll)
       .WithName("Apply payday if due")
       .WithDescription("Applies salary when today is payday (last day of month).")
-      .Visible()
       .WithCron("0 3 * * *")
       .Register();
 
     // Runs once per day at 04:00
     builder.For<LeagueTableJobService>(s => s.GetLeagueTable())
       .WithId("get-league-table")
-      .WithGroup(JobGroups.LeagueData)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Refresh league tables")
       .WithDescription("Updates league table data.")
       .Visible()
@@ -102,7 +104,8 @@ public static class HangfireConfiguration
     // Runs once per day at 04:15 UTC
     builder.For<MemoryCleanupCronService>(s => s.RunAsync())
       .WithId("betting-agent-memory-cleanup")
-      .WithGroup(JobGroups.BettingAgent)
+      .WithGroup(JobGroups.Maintenance)
+      .WithOrder(2)
       .WithName("Betting agent memory cleanup")
       .WithDescription("Prunes stale fixture-specific memories for the agent.")
       .Visible()
@@ -112,7 +115,8 @@ public static class HangfireConfiguration
     // Runs once per day at 05:00
     builder.For<BookmakerListingSyncJobService>(s => s.GetBetclicGames())
       .WithId("get-upcoming-betclic-games")
-      .WithGroup(JobGroups.BookmakerSync)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Sync upcoming Betclic games")
       .WithDescription("Fetches upcoming games from Betclic.")
       .Visible()
@@ -122,7 +126,8 @@ public static class HangfireConfiguration
     // Runs once per day at 08:00
     builder.For<ClubDailyBriefJobService>(s => s.UpdateClubOverview())
       .WithId("update-clubs-overview")
-      .WithGroup(JobGroups.ClubInsights)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Update clubs overview")
       .WithDescription("Refreshes daily club overview content.")
       .Visible()
@@ -132,7 +137,8 @@ public static class HangfireConfiguration
     // Runs once per day at 09:00
     builder.For<LineupJobService>(s => s.GetLineups())
       .WithId("get-lineups")
-      .WithGroup(JobGroups.Lineups)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Fetch lineups")
       .WithDescription("Pulls lineup data for upcoming fixtures.")
       .Visible()
@@ -142,7 +148,8 @@ public static class HangfireConfiguration
     // Runs once per day at 11:00
     builder.For<BookmakerListingSyncJobService>(s => s.ScheduleBettingOddsJob())
       .WithId("get-betting-odds")
-      .WithGroup(JobGroups.BookmakerSync)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Schedule betting odds jobs")
       .WithDescription("Schedules per-fixture betting odds refresh jobs.")
       .Visible()
@@ -152,7 +159,8 @@ public static class HangfireConfiguration
     // Runs once per day at 10:00
     builder.For<UpcomingMatchesInternetResearchCronService>(s => s.RunAsync())
       .WithId("betting-agent-upcoming-internet-research")
-      .WithGroup(JobGroups.BettingAgent)
+      .WithGroup(JobGroups.Research)
+      .WithOrder(3)
       .WithName("Portfolio internet research")
       .WithDescription("Internet research for upcoming fixtures before per-match research.")
       .Visible()
@@ -162,7 +170,8 @@ public static class HangfireConfiguration
     // Runs once per day at 11:30
     builder.For<BettingAgentCronService>(s => s.RunResearchScheduleAsync())
       .WithId("betting-agent-research")
-      .WithGroup(JobGroups.BettingAgent)
+      .WithGroup(JobGroups.Research)
+      .WithOrder(3)
       .WithName("Betting agent research")
       .WithDescription("Runs the betting agent research schedule.")
       .Visible()
@@ -172,7 +181,8 @@ public static class HangfireConfiguration
     // Runs daily at 13:00
     builder.For<BettingAgentCronService>(s => s.RunBettingExecutionAsync())
       .WithId("betting-agent-execution")
-      .WithGroup(JobGroups.BettingAgent)
+      .WithGroup(JobGroups.Betting)
+      .WithOrder(4)
       .WithName("Betting agent execution")
       .WithDescription("Executes betting decisions for the agent.")
       .Visible()
@@ -182,7 +192,8 @@ public static class HangfireConfiguration
     // Runs once per day at 23:00
     builder.For<FinishedMatchScoreJobService>(s => s.FillMissingFinishedMatchScoresFromSoccerData())
       .WithId("fill-missing-finished-match-scores")
-      .WithGroup(JobGroups.Results)
+      .WithGroup(JobGroups.DataPreparation)
+      .WithOrder(1)
       .WithName("Fill missing finished match scores")
       .WithDescription("Backfills finished match scores from Soccerdata where missing.")
       .Visible()
@@ -192,7 +203,8 @@ public static class HangfireConfiguration
     // Runs daily at 23:40
     builder.For<BettingAgentCronService>(s => s.RunReflectionAsync())
       .WithId("betting-agent-reflection")
-      .WithGroup(JobGroups.BettingAgent)
+      .WithGroup(JobGroups.Reflection)
+      .WithOrder(5)
       .WithName("Betting agent reflection")
       .WithDescription("Runs end-of-day reflection for the betting agent.")
       .Visible()

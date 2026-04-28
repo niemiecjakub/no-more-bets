@@ -2,10 +2,11 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AgentBetsTab } from "./_components/agent-bets-tab";
+import { AgentDashboardTab } from "./_components/agent-dashboard-tab";
 import { AgentMemoriesTab } from "./_components/agent-memories-tab";
 import { AgentSessionsTab } from "./_components/agent-sessions-tab";
 
-type AgentTabId = "bets" | "sessions" | "memories";
+type AgentTabId = "dashboard" | "bets" | "sessions" | "memories";
 
 interface AgentTab {
   id: AgentTabId;
@@ -13,13 +14,14 @@ interface AgentTab {
 }
 
 const AGENT_TABS: AgentTab[] = [
+  { id: "dashboard", label: "Dashboard" },
   { id: "bets", label: "Bets" },
   { id: "sessions", label: "Sessions" },
   { id: "memories", label: "Memories" },
 ];
 
 function isAgentTab(value: string | null): value is AgentTabId {
-  return value === "bets" || value === "sessions" || value === "memories";
+  return value === "dashboard" || value === "bets" || value === "sessions" || value === "memories";
 }
 
 export default function AgentPage() {
@@ -28,7 +30,7 @@ export default function AgentPage() {
   const searchParams = useSearchParams();
 
   const tabFromQuery = searchParams.get("tab");
-  const activeTab: AgentTabId = isAgentTab(tabFromQuery) ? tabFromQuery : "bets";
+  const activeTab: AgentTabId = isAgentTab(tabFromQuery) ? tabFromQuery : "dashboard";
 
   function handleTabChange(nextTab: AgentTabId) {
     const params = new URLSearchParams(searchParams.toString());
@@ -63,6 +65,7 @@ export default function AgentPage() {
           })}
         </nav>
 
+        {activeTab === "dashboard" ? <AgentDashboardTab /> : null}
         {activeTab === "bets" ? <AgentBetsTab /> : null}
         {activeTab === "sessions" ? <AgentSessionsTab /> : null}
         {activeTab === "memories" ? <AgentMemoriesTab /> : null}

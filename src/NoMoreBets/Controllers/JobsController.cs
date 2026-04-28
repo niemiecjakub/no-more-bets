@@ -33,17 +33,17 @@ public class JobsController(RecurringJobRegistry registry) : ControllerBase
         return new
         {
           meta.Group,
+          meta.Order,
           Job = new JobInfoDto(
             meta.Id,
             meta.Name,
             meta.Description,
-            meta.CronExpression,
-            nextUtc,
             timeUntil)
         };
       })
       .GroupBy(x => x.Group, StringComparer.Ordinal)
-      .OrderBy(g => g.Key)
+      .OrderBy(g => g.Min(x => x.Order))
+      .ThenBy(g => g.Key, StringComparer.Ordinal)
       .Select(g => new JobGroupDto(
         g.Key,
         g.Select(x => x.Job).OrderBy(j => j.Name, StringComparer.Ordinal).ToList()))
@@ -57,8 +57,6 @@ public sealed record JobInfoDto(
   string Id,
   string Name,
   string Description,
-  string CronExpression,
-  DateTime? NextExecutionUtc,
   TimeSpan? TimeUntilNextRun);
 
 public sealed record JobGroupDto(string Group, IReadOnlyList<JobInfoDto> Jobs);

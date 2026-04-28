@@ -4,12 +4,10 @@ namespace NoMoreBets.Infrastructure.BackgroundJobs;
 public static class JobGroups
 {
   public const string MatchLifecycle = "Match Lifecycle";
-  public const string PreKickoffSync = "Pre-Kickoff Data Sync";
+  public const string DataPreparation = "Data Preparation";
   public const string Bankroll = "Bankroll";
-  public const string LeagueData = "League Data";
-  public const string BettingAgent = "Betting Agent";
-  public const string BookmakerSync = "Bookmaker Sync";
-  public const string ClubInsights = "Club Insights";
-  public const string Lineups = "Lineups";
-  public const string Results = "Results";
+  public const string Betting = "Betting";
+  public const string Maintenance = "Maintenance";
+  public const string Reflection = "Reflection";
+  public const string Research = "Research";
 }
