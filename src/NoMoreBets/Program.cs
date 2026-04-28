@@ -43,7 +43,7 @@ app.UseHangfireDashboard("/hangfire", new DashboardOptions
   Authorization = [new AllowAllDashboardAuthorizationFilter()]
 });
 
-HangfireConfiguration.UseRecurringJobs();
+app.UseRecurringJobs();
 
 using (var scope = app.Services.CreateScope())
 {
