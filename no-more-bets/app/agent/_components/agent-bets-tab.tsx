@@ -1,0 +1,99 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { BetSlipList } from "@/features/bets/components/bet-slip-list";
+import { BankrollSidebar } from "@/features/bets/components/bankroll-sidebar";
+import type { BankrollDashboard } from "@/features/bets/interfaces";
+import { fetchBankrollDashboard } from "@/features/bets/services/bankroll-api";
+import { handleServiceError } from "@/lib/error-handler";
+import { useBetSlipStore } from "@/store/bet-slip-store";
+
+function BetsFallback() {
+  return (
+    <div className="animate-pulse space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div
+          key={i}
+          className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+        >
+          <div className="flex gap-2 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+            <div className="h-5 w-16 rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-4 w-24 rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+          <div className="grid grid-cols-3 gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
+            <div className="h-8 w-20 rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-8 w-16 rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-8 w-24 rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+          <div className="space-y-2 px-4 py-3">
+            <div className="h-4 max-w-sm rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-3 max-w-md rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-4 max-w-xs rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-3 max-w-sm rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function AgentBetsTab() {
+  const {
+    betSlips,
+    isLoading: isLoadingBets,
+    error: betsError,
+    setBetSlips,
+  } = useBetSlipStore();
+  const [bankroll, setBankroll] = useState<BankrollDashboard | null>(null);
+  const [bankrollLoading, setBankrollLoading] = useState(true);
+  const [bankrollError, setBankrollError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBetSlips();
+  }, [setBetSlips]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setBankrollLoading(true);
+      setBankrollError(null);
+      try {
+        const data = await fetchBankrollDashboard();
+        if (!cancelled) {
+          setBankroll(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setBankrollError(handleServiceError(error, "Failed to load bankroll."));
+        }
+      } finally {
+        if (!cancelled) {
+          setBankrollLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-[1fr_18rem] lg:items-start">
+      <div>
+        {isLoadingBets && betSlips.length === 0 ? (
+          <BetsFallback />
+        ) : betsError ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+            {betsError}
+          </p>
+        ) : (
+          <BetSlipList betSlips={betSlips} />
+        )}
+      </div>
+      <aside className="lg:sticky lg:top-8">
+        <BankrollSidebar data={bankroll} isLoading={bankrollLoading} error={bankrollError} />
+      </aside>
+    </div>
+  );
+}
