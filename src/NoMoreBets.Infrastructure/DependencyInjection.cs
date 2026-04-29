@@ -96,6 +96,7 @@ public static class DependencyInjection
     services.AddScoped<BookmakerListingSyncJobService>();
     services.AddScoped<FinishedMatchScoreJobService>();
     services.AddScoped<MatchPredictionJobService>();
+    services.AddScoped<BetslipSettlementJobService>();
     services.AddScoped<BettingAgentCronService>();
     services.AddScoped<UpcomingMatchesInternetResearchCronService>();
     services.AddScoped<MemoryCleanupCronService>();

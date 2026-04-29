@@ -189,6 +189,17 @@ public static class HangfireConfiguration
       .WithCron("0 13 * * *")
       .Register();
 
+    // Runs once per day at 22:30
+    builder.For<BetslipSettlementJobService>(s => s.ResolveBetslipStatuses())
+      .WithId("resolve-betslip-statuses")
+      .WithGroup(JobGroups.Betting)
+      .WithOrder(2)
+      .WithName("Resolve betslip statuses")
+      .WithDescription("Settles pending bet selections and updates betslip statuses.")
+      .Visible()
+      .WithCron("30 22 * * *")
+      .Register();
+
     // Runs once per day at 23:00
     builder.For<FinishedMatchScoreJobService>(s => s.FillMissingFinishedMatchScoresFromSoccerData())
       .WithId("fill-missing-finished-match-scores")
