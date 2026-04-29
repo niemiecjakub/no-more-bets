@@ -7,5 +7,6 @@ export interface JobInfo {
 
 export interface JobGroup {
   group: string;
+  order: number;
   jobs: JobInfo[];
 }

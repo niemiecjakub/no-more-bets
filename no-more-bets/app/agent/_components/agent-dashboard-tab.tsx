@@ -47,6 +47,7 @@ export function AgentDashboardTab() {
   const [jobGroups, setJobGroups] = useState<JobGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expandedStepGroup, setExpandedStepGroup] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -57,6 +58,7 @@ export function AgentDashboardTab() {
         const data = await fetchJobGroups();
         if (!cancelled) {
           setJobGroups(data);
+          setExpandedStepGroup(data[0]?.group ?? null);
         }
       } catch (caughtError) {
         if (!cancelled) {
@@ -98,18 +100,53 @@ export function AgentDashboardTab() {
     );
   }
 
+  const orderedGroups = [...jobGroups].sort((a, b) => {
+    if (a.order !== b.order) {
+      return a.order - b.order;
+    }
+
+    return a.group.localeCompare(b.group);
+  });
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="space-y-4">
-        {jobGroups.map((group) => (
+      <div className="space-y-3">
+        {orderedGroups.map((group, index) => {
+          const isExpanded = expandedStepGroup === group.group;
+
+          return (
           <section
             key={group.group}
-            className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+            className="overflow-hidden rounded-lg border border-zinc-200 bg-white transition-colors dark:border-zinc-800 dark:bg-zinc-950"
           >
-            <header className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-              <h2 className="text-base font-semibold text-foreground">{group.group}</h2>
-            </header>
-            <div className="overflow-x-auto">
+            <button
+              type="button"
+              onClick={() => setExpandedStepGroup((current) => (current === group.group ? null : group.group))}
+              className="flex w-full items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 text-left dark:border-zinc-800"
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <span
+                  className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
+                    isExpanded
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-950"
+                      : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                  }`}
+                >
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <h2 className="truncate text-base font-semibold text-foreground">{group.group}</h2>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    {group.jobs.length} job{group.jobs.length === 1 ? "" : "s"}
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                {isExpanded ? "Collapse" : "Expand"}
+              </span>
+            </button>
+            {isExpanded ? (
+              <div className="overflow-x-auto">
               <table className="min-w-full table-fixed text-sm">
                 <colgroup>
                   <col className="w-88" />
@@ -143,9 +180,11 @@ export function AgentDashboardTab() {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            ) : null}
           </section>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

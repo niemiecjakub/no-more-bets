@@ -14,7 +14,6 @@ namespace NoMoreBets.Infrastructure
   {
     private string _id = string.Empty;
     private string _group = string.Empty;
-    private int _order = int.MaxValue;
     private string _name = string.Empty;
     private string _description = string.Empty;
     private string _cron = string.Empty;
@@ -29,12 +28,6 @@ namespace NoMoreBets.Infrastructure
     public JobBuilder<T> WithGroup(string group)
     {
       _group = group;
-      return this;
-    }
-
-    public JobBuilder<T> WithOrder(int order)
-    {
-      _order = order;
       return this;
     }
 
@@ -70,7 +63,7 @@ namespace NoMoreBets.Infrastructure
       }
 
       RecurringJob.AddOrUpdate(_id, methodCall, _cron);
-      registry.Register(new BackgroundJobs.JobMetadata(_id, _group, _order, _name, _description, _cron, _isVisible));
+      registry.Register(new BackgroundJobs.JobMetadata(_id, _group, _name, _description, _cron, _isVisible));
     }
   }
 }
@@ -80,7 +73,6 @@ namespace NoMoreBets.Infrastructure.BackgroundJobs
   public sealed record JobMetadata(
     string Id,
     string Group,
-  int Order,
     string Name,
     string Description,
     string CronExpression,

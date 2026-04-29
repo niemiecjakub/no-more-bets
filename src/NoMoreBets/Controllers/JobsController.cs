@@ -33,7 +33,7 @@ public class JobsController(RecurringJobRegistry registry) : ControllerBase
         return new
         {
           meta.Group,
-          meta.Order,
+          Order = JobGroups.GetOrder(meta.Group),
           Job = new JobInfoDto(
             meta.Id,
             meta.Name,
@@ -41,11 +41,12 @@ public class JobsController(RecurringJobRegistry registry) : ControllerBase
             timeUntil)
         };
       })
-      .GroupBy(x => x.Group, StringComparer.Ordinal)
-      .OrderBy(g => g.Min(x => x.Order))
-      .ThenBy(g => g.Key, StringComparer.Ordinal)
+      .GroupBy(x => new { x.Group, x.Order })
+      .OrderBy(g => g.Key.Order)
+      .ThenBy(g => g.Key.Group, StringComparer.Ordinal)
       .Select(g => new JobGroupDto(
-        g.Key,
+        g.Key.Group,
+        g.Key.Order,
         g.Select(x => x.Job).OrderBy(j => j.Name, StringComparer.Ordinal).ToList()))
       .ToList();
 
@@ -59,4 +60,4 @@ public sealed record JobInfoDto(
   string Description,
   TimeSpan? TimeUntilNextRun);
 
-public sealed record JobGroupDto(string Group, IReadOnlyList<JobInfoDto> Jobs);
+public sealed record JobGroupDto(string Group, int Order, IReadOnlyList<JobInfoDto> Jobs);
