@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
-import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const tabs = [
@@ -19,7 +18,6 @@ const agentTabs = [
 ] as const;
 
 export function Navbar() {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -108,44 +106,20 @@ export function Navbar() {
                     );
                   })}
 
-                  <NavigationMenu.Item className="relative">
-                    <NavigationMenu.Trigger
-                      onClick={() => router.push("/agent?tab=bets")}
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-                        isAgentRoute
-                          ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
-                          : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
-                      )}
-                    >
-                      Agent
-                      <ChevronDown className="h-4 w-4 transition-transform data-[state=open]:rotate-180" />
-                    </NavigationMenu.Trigger>
-
-                    <NavigationMenu.Content className="absolute left-0 top-full z-50 mt-1 w-44 rounded-md border border-zinc-200 bg-white p-1 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
-                      <ul className="space-y-1">
-                        {agentTabs.map(({ href, label, tab }) => {
-                          const isActive = isAgentRoute && activeAgentTab === tab;
-                          return (
-                            <li key={href}>
-                              <NavigationMenu.Link asChild active={isActive}>
-                                <Link
-                                  href={href}
-                                  className={cn(
-                                    "block rounded-md px-3 py-2 text-sm transition-colors",
-                                    isActive
-                                      ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
-                                      : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
-                                  )}
-                                >
-                                  {label}
-                                </Link>
-                              </NavigationMenu.Link>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </NavigationMenu.Content>
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild active={isAgentRoute}>
+                      <Link
+                        href="/agent?tab=dashboard"
+                        className={cn(
+                          "shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                          isAgentRoute
+                            ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                            : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                        )}
+                      >
+                        Agent
+                      </Link>
+                    </NavigationMenu.Link>
                   </NavigationMenu.Item>
                 </NavigationMenu.List>
               </NavigationMenu.Root>
@@ -217,7 +191,7 @@ export function Navbar() {
 
             <div className="pt-2">
               <Link
-                href="/agent?tab=bets"
+                href="/agent?tab=dashboard"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`block rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   pathname.startsWith("/agent")

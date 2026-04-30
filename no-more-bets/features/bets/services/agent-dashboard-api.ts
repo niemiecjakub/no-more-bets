@@ -3,7 +3,9 @@ import type {
   AgentDashboardBankrollWidget,
   AgentDashboardBettingSummaryDetails,
   AgentDashboardBettingSummaryWidget,
+  AgentDashboardMemoriesWidget,
   AgentDashboardPendingBetsWidget,
+  AgentDashboardSessionsWidget,
 } from "../interfaces";
 
 export async function fetchAgentDashboardBankrollWidget(): Promise<AgentDashboardBankrollWidget> {
@@ -30,6 +32,20 @@ export async function fetchAgentDashboardBettingSummaryDetails(): Promise<AgentD
 export async function fetchAgentDashboardPendingBetsWidget(): Promise<AgentDashboardPendingBetsWidget> {
   const { data } = await axiosInstance.get<AgentDashboardPendingBetsWidget>(
     "/api/agent/dashboard/pending-bets"
+  );
+  return data;
+}
+
+export async function fetchAgentDashboardSessionsWidget(): Promise<AgentDashboardSessionsWidget> {
+  const { data } = await axiosInstance.get<AgentDashboardSessionsWidget>(
+    "/api/agent/dashboard/sessions"
+  );
+  return data;
+}
+
+export async function fetchAgentDashboardMemoriesWidget(): Promise<AgentDashboardMemoriesWidget> {
+  const { data } = await axiosInstance.get<AgentDashboardMemoriesWidget>(
+    "/api/agent/dashboard/memories"
   );
   return data;
 }

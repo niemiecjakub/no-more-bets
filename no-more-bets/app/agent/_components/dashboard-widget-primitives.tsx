@@ -11,7 +11,7 @@ export function WidgetCard({
 }: {
   title: string;
   value: ReactNode;
-  meta: ReactNode;
+  meta?: ReactNode;
   accentClassName: string;
   valueClassName?: string;
   isActive?: boolean;
@@ -19,7 +19,7 @@ export function WidgetCard({
 }) {
   const cardClassName = `relative overflow-hidden rounded-lg border bg-white p-4 text-left transition-colors dark:bg-zinc-950 ${
     isActive
-      ? "border-zinc-900 dark:border-zinc-100"
+      ? "border-zinc-900 bg-sky-50 dark:border-zinc-100 dark:bg-sky-950/40"
       : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
   }`;
 
@@ -29,7 +29,7 @@ export function WidgetCard({
         <div className={`absolute left-0 top-0 h-1 w-full ${accentClassName}`} />
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{title}</p>
         <div className={`mt-2 text-2xl font-semibold ${valueClassName ?? "text-foreground"}`}>{value}</div>
-        <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{meta}</div>
+        {meta ? <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{meta}</div> : null}
       </button>
     );
   }
@@ -39,7 +39,7 @@ export function WidgetCard({
       <div className={`absolute left-0 top-0 h-1 w-full ${accentClassName}`} />
       <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{title}</p>
       <div className={`mt-2 text-2xl font-semibold ${valueClassName ?? "text-foreground"}`}>{value}</div>
-      <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{meta}</div>
+      {meta ? <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-300">{meta}</div> : null}
     </article>
   );
 }

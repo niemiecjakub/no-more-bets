@@ -150,6 +150,53 @@ public class AgentDashboardController(AppDbContext db) : ControllerBase
         .Select(s => (DateTime?)s.CreatedAt)
         .FirstOrDefault()));
   }
+
+  [HttpGet("sessions")]
+  public async Task<ActionResult<AgentDashboardSessionsDto>> GetSessionsWidget(
+    CancellationToken cancellationToken = default)
+  {
+    var sessions = await db.AgentSession
+      .AsNoTracking()
+      .Select(s => new
+      {
+        s.StartedAt,
+        s.Phase
+      })
+      .ToListAsync(cancellationToken);
+
+    var latestSession = sessions
+      .OrderByDescending(s => s.StartedAt)
+      .FirstOrDefault();
+
+    return Ok(new AgentDashboardSessionsDto(
+      SessionsCount: sessions.Count,
+      LatestStartedAt: latestSession?.StartedAt,
+      LatestPhaseName: latestSession?.Phase.ToString()));
+  }
+
+  [HttpGet("memories")]
+  public async Task<ActionResult<AgentDashboardMemoriesDto>> GetMemoriesWidget(
+    CancellationToken cancellationToken = default)
+  {
+    var memories = await db.Memory
+      .AsNoTracking()
+      .Where(m => m.DeletedAt == null)
+      .Select(m => new
+      {
+        m.Name,
+        m.UpdatedAt
+      })
+      .ToListAsync(cancellationToken);
+
+    var latestMemory = memories
+      .OrderByDescending(m => m.UpdatedAt)
+      .FirstOrDefault();
+
+    return Ok(new AgentDashboardMemoriesDto(
+      MemoriesCount: memories.Count,
+      LatestUpdatedAt: latestMemory?.UpdatedAt,
+      LatestName: latestMemory?.Name));
+  }
 }
 
 public record AgentDashboardBankrollDto(decimal TotalValue, decimal Balance);
@@ -174,3 +221,13 @@ public record AgentDashboardPendingBetsDto(
   decimal PendingStakeTotal,
   decimal PendingPotentialPayoutTotal,
   DateTime? LatestPendingCreatedAt);
+
+public record AgentDashboardSessionsDto(
+  int SessionsCount,
+  DateTime? LatestStartedAt,
+  string? LatestPhaseName);
+
+public record AgentDashboardMemoriesDto(
+  int MemoriesCount,
+  DateTime? LatestUpdatedAt,
+  string? LatestName);

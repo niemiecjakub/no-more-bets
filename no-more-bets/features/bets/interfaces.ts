@@ -116,6 +116,20 @@ export interface AgentDashboardPendingBetsWidget {
   latestPendingCreatedAt: string | null;
 }
 
+/** GET api/agent/dashboard/sessions */
+export interface AgentDashboardSessionsWidget {
+  sessionsCount: number;
+  latestStartedAt: string | null;
+  latestPhaseName: string | null;
+}
+
+/** GET api/agent/dashboard/memories */
+export interface AgentDashboardMemoriesWidget {
+  memoriesCount: number;
+  latestUpdatedAt: string | null;
+  latestName: string | null;
+}
+
 /** GET api/bankroll/flow-points */
 export interface BankrollFlowPointDto {
   entryId: number;

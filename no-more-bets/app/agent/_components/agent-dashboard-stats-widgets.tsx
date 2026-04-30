@@ -2,11 +2,15 @@ import { useState } from "react";
 import type {
   AgentDashboardBankrollWidget,
   AgentDashboardBettingSummaryWidget,
+  AgentDashboardMemoriesWidget,
   AgentDashboardPendingBetsWidget,
+  AgentDashboardSessionsWidget,
 } from "@/features/bets/interfaces";
 import { formatCurrency } from "@/utils/format-currency";
 import { AgentBettingSummaryDetailsPanel } from "./agent-betting-summary-details-panel";
 import { AgentBankrollDetailsPanel } from "./agent-bankroll-details-panel";
+import { AgentDashboardMemoriesDetailsPanel } from "./agent-dashboard-memories-details-panel";
+import { AgentDashboardSessionsDetailsPanel } from "./agent-dashboard-sessions-details-panel";
 import { AgentPendingBetsDetailsPanel } from "./agent-pending-bets-details-panel";
 import { WidgetCard, WidgetSkeleton } from "./dashboard-widget-primitives";
 
@@ -32,33 +36,45 @@ interface AgentDashboardStatsWidgetsProps {
   bankrollWidget: AgentDashboardBankrollWidget | null;
   bettingSummaryWidget: AgentDashboardBettingSummaryWidget | null;
   pendingBetsWidget: AgentDashboardPendingBetsWidget | null;
+  sessionsWidget: AgentDashboardSessionsWidget | null;
+  memoriesWidget: AgentDashboardMemoriesWidget | null;
   isBankrollLoading: boolean;
   isBettingSummaryLoading: boolean;
   isPendingBetsLoading: boolean;
+  isSessionsLoading: boolean;
+  isMemoriesLoading: boolean;
   bankrollError: string | null;
   bettingSummaryError: string | null;
   pendingBetsError: string | null;
+  sessionsError: string | null;
+  memoriesError: string | null;
 }
 
 export function AgentDashboardStatsWidgets({
   bankrollWidget,
   bettingSummaryWidget,
   pendingBetsWidget,
+  sessionsWidget,
+  memoriesWidget,
   isBankrollLoading,
   isBettingSummaryLoading,
   isPendingBetsLoading,
+  isSessionsLoading,
+  isMemoriesLoading,
   bankrollError,
   bettingSummaryError,
   pendingBetsError,
+  sessionsError,
+  memoriesError,
 }: AgentDashboardStatsWidgetsProps) {
-  const [activeWidget, setActiveWidget] = useState<"bankroll" | "summary" | "pending">("bankroll");
+  const [activeWidget, setActiveWidget] = useState<"bankroll" | "summary" | "pending" | "sessions" | "memories">("bankroll");
   const bankrollBalance = bankrollWidget?.balance ?? 0;
   const isNegativeBankroll = bankrollBalance < 0;
   const bankrollAccentClassName = isNegativeBankroll ? "bg-red-500/80" : "bg-emerald-500/80";
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
       <WidgetCard
         title="Bankroll"
         value={
@@ -119,8 +135,8 @@ export function AgentDashboardStatsWidgets({
             "No settled slips yet"
           ) : (
             <span>
-              Win: {bettingSummaryWidget.winRatePercent.toFixed(1)}% ({bettingSummaryWidget.wonSlipsCount}) | Loss:{" "}
-              {bettingSummaryWidget.lossRatePercent.toFixed(1)}% ({bettingSummaryWidget.lostSlipsCount})
+              Win: {bettingSummaryWidget.winRatePercent.toFixed(1)}% | Loss:{" "}
+              {bettingSummaryWidget.lossRatePercent.toFixed(1)}%
             </span>
           )
         }
@@ -138,15 +154,47 @@ export function AgentDashboardStatsWidgets({
               ? pendingBetsError
               : !pendingBetsWidget || pendingBetsWidget.pendingSlipsCount === 0
                 ? "No pending bets"
-                : `${formatCurrency(pendingBetsWidget.pendingStakeTotal)} staked, ${formatCurrency(pendingBetsWidget.pendingPotentialPayoutTotal)} potential payout${
-                    pendingBetsWidget.latestPendingCreatedAt
-                      ? `, latest ${formatRelativeDate(pendingBetsWidget.latestPendingCreatedAt)}`
-                      : ""
-                  }`
+                : `Staked ${formatCurrency(pendingBetsWidget.pendingStakeTotal)} / Payout ${formatCurrency(pendingBetsWidget.pendingPotentialPayoutTotal)}`
         }
         accentClassName="bg-amber-500/80"
         isActive={activeWidget === "pending"}
         onClick={() => setActiveWidget("pending")}
+      />
+      <WidgetCard
+        title="Sessions"
+        value={isSessionsLoading ? <WidgetSkeleton /> : `${sessionsWidget?.sessionsCount ?? 0} total`}
+        meta={
+          isSessionsLoading
+            ? "Loading sessions..."
+            : sessionsError
+              ? sessionsError
+              : !sessionsWidget || sessionsWidget.sessionsCount === 0
+                ? "No sessions recorded yet"
+                : `${sessionsWidget.latestPhaseName ?? "Latest session"}${
+                    sessionsWidget.latestStartedAt ? `, ${formatRelativeDate(sessionsWidget.latestStartedAt)}` : ""
+                  }`
+        }
+        accentClassName="bg-violet-500/80"
+        isActive={activeWidget === "sessions"}
+        onClick={() => setActiveWidget("sessions")}
+      />
+      <WidgetCard
+        title="Memories"
+        value={isMemoriesLoading ? <WidgetSkeleton /> : `${memoriesWidget?.memoriesCount ?? 0} saved`}
+        meta={
+          isMemoriesLoading
+            ? "Loading memories..."
+            : memoriesError
+              ? memoriesError
+              : !memoriesWidget || memoriesWidget.memoriesCount === 0
+                ? "No memories saved yet"
+                : memoriesWidget.latestUpdatedAt
+                  ? `Updated ${formatRelativeDate(memoriesWidget.latestUpdatedAt)}`
+                  : "Latest memory available"
+        }
+        accentClassName="bg-fuchsia-500/80"
+        isActive={activeWidget === "memories"}
+        onClick={() => setActiveWidget("memories")}
       />
       </div>
       {activeWidget === "bankroll" ? (
@@ -157,6 +205,12 @@ export function AgentDashboardStatsWidgets({
       ) : null}
       {activeWidget === "pending" ? (
         <AgentPendingBetsDetailsPanel />
+      ) : null}
+      {activeWidget === "sessions" ? (
+        <AgentDashboardSessionsDetailsPanel />
+      ) : null}
+      {activeWidget === "memories" ? (
+        <AgentDashboardMemoriesDetailsPanel />
       ) : null}
     </section>
   );
