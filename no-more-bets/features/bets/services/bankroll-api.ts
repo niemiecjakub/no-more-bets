@@ -1,9 +1,35 @@
 import axiosInstance from "@/lib/axios";
-import type { BankrollDashboard } from "../interfaces";
+import type {
+  BankrollBettingBalance,
+  BankrollDashboard,
+  BankrollEntryBetDetailsDto,
+  BankrollEntryListItemDto,
+} from "../interfaces";
 
 export async function fetchBankrollDashboard(): Promise<BankrollDashboard> {
   const { data } = await axiosInstance.get<BankrollDashboard>(
     "/api/bankroll"
+  );
+  return data;
+}
+
+export async function fetchBankrollBettingBalance(): Promise<BankrollBettingBalance> {
+  const { data } = await axiosInstance.get<BankrollBettingBalance>(
+    "/api/bankroll/betting-balance"
+  );
+  return data;
+}
+
+export async function fetchBankrollEntries(): Promise<BankrollEntryListItemDto[]> {
+  const { data } = await axiosInstance.get<BankrollEntryListItemDto[]>(
+    "/api/bankroll/entries"
+  );
+  return data;
+}
+
+export async function fetchBankrollEntryBetDetails(entryId: number): Promise<BankrollEntryBetDetailsDto> {
+  const { data } = await axiosInstance.get<BankrollEntryBetDetailsDto>(
+    `/api/bankroll/entries/${entryId}/bet-details`
   );
   return data;
 }
