@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type {
   AgentDashboardBankrollWidget,
   AgentDashboardBettingSummaryWidget,
@@ -7,11 +6,6 @@ import type {
   AgentDashboardSessionsWidget,
 } from "@/features/bets/interfaces";
 import { formatCurrency } from "@/utils/format-currency";
-import { AgentBettingSummaryDetailsPanel } from "./agent-betting-summary-details-panel";
-import { AgentBankrollDetailsPanel } from "./agent-bankroll-details-panel";
-import { AgentDashboardMemoriesDetailsPanel } from "./agent-dashboard-memories-details-panel";
-import { AgentDashboardSessionsDetailsPanel } from "./agent-dashboard-sessions-details-panel";
-import { AgentPendingBetsDetailsPanel } from "./agent-pending-bets-details-panel";
 import { WidgetCard, WidgetSkeleton } from "./dashboard-widget-primitives";
 
 function formatRelativeDate(value: string | null) {
@@ -32,7 +26,7 @@ function formatRelativeDate(value: string | null) {
   return `${days}d ago`;
 }
 
-interface AgentDashboardStatsWidgetsProps {
+interface AgentWidgetNavigationProps {
   bankrollWidget: AgentDashboardBankrollWidget | null;
   bettingSummaryWidget: AgentDashboardBettingSummaryWidget | null;
   pendingBetsWidget: AgentDashboardPendingBetsWidget | null;
@@ -48,9 +42,21 @@ interface AgentDashboardStatsWidgetsProps {
   pendingBetsError: string | null;
   sessionsError: string | null;
   memoriesError: string | null;
+  activeWidget: AgentWidgetNavigationId;
+  onSelectWidget: (widget: AgentWidgetNavigationId) => void;
 }
 
-export function AgentDashboardStatsWidgets({
+export const AGENT_WIDGET_IDS = {
+  BANKROLL: "bankroll",
+  SUMMARY: "summary",
+  PENDING: "pending",
+  SESSIONS: "sessions",
+  MEMORIES: "memories",
+} as const;
+
+export type AgentWidgetNavigationId = (typeof AGENT_WIDGET_IDS)[keyof typeof AGENT_WIDGET_IDS];
+
+export function AgentWidgetNavigation({
   bankrollWidget,
   bettingSummaryWidget,
   pendingBetsWidget,
@@ -66,8 +72,9 @@ export function AgentDashboardStatsWidgets({
   pendingBetsError,
   sessionsError,
   memoriesError,
-}: AgentDashboardStatsWidgetsProps) {
-  const [activeWidget, setActiveWidget] = useState<"bankroll" | "summary" | "pending" | "sessions" | "memories">("bankroll");
+  activeWidget,
+  onSelectWidget,
+}: AgentWidgetNavigationProps) {
   const bankrollBalance = bankrollWidget?.balance ?? 0;
   const isNegativeBankroll = bankrollBalance < 0;
   const bankrollAccentClassName = isNegativeBankroll ? "bg-red-500/80" : "bg-emerald-500/80";
@@ -109,8 +116,8 @@ export function AgentDashboardStatsWidgets({
                 : "Dashboard data unavailable"
         }
         accentClassName={bankrollAccentClassName}
-        isActive={activeWidget === "bankroll"}
-        onClick={() => setActiveWidget("bankroll")}
+        isActive={activeWidget === AGENT_WIDGET_IDS.BANKROLL}
+        onClick={() => onSelectWidget(AGENT_WIDGET_IDS.BANKROLL)}
       />
       <WidgetCard
         title="Betting Summary"
@@ -141,8 +148,8 @@ export function AgentDashboardStatsWidgets({
           )
         }
         accentClassName="bg-sky-500/80"
-        isActive={activeWidget === "summary"}
-        onClick={() => setActiveWidget("summary")}
+        isActive={activeWidget === AGENT_WIDGET_IDS.SUMMARY}
+        onClick={() => onSelectWidget(AGENT_WIDGET_IDS.SUMMARY)}
       />
       <WidgetCard
         title="Pending Bets"
@@ -157,8 +164,8 @@ export function AgentDashboardStatsWidgets({
                 : `Staked ${formatCurrency(pendingBetsWidget.pendingStakeTotal)} / Payout ${formatCurrency(pendingBetsWidget.pendingPotentialPayoutTotal)}`
         }
         accentClassName="bg-amber-500/80"
-        isActive={activeWidget === "pending"}
-        onClick={() => setActiveWidget("pending")}
+        isActive={activeWidget === AGENT_WIDGET_IDS.PENDING}
+        onClick={() => onSelectWidget(AGENT_WIDGET_IDS.PENDING)}
       />
       <WidgetCard
         title="Sessions"
@@ -175,8 +182,8 @@ export function AgentDashboardStatsWidgets({
                   }`
         }
         accentClassName="bg-violet-500/80"
-        isActive={activeWidget === "sessions"}
-        onClick={() => setActiveWidget("sessions")}
+        isActive={activeWidget === AGENT_WIDGET_IDS.SESSIONS}
+        onClick={() => onSelectWidget(AGENT_WIDGET_IDS.SESSIONS)}
       />
       <WidgetCard
         title="Memories"
@@ -193,25 +200,10 @@ export function AgentDashboardStatsWidgets({
                   : "Latest memory available"
         }
         accentClassName="bg-fuchsia-500/80"
-        isActive={activeWidget === "memories"}
-        onClick={() => setActiveWidget("memories")}
+        isActive={activeWidget === AGENT_WIDGET_IDS.MEMORIES}
+        onClick={() => onSelectWidget(AGENT_WIDGET_IDS.MEMORIES)}
       />
       </div>
-      {activeWidget === "bankroll" ? (
-        <AgentBankrollDetailsPanel />
-      ) : null}
-      {activeWidget === "summary" ? (
-        <AgentBettingSummaryDetailsPanel />
-      ) : null}
-      {activeWidget === "pending" ? (
-        <AgentPendingBetsDetailsPanel />
-      ) : null}
-      {activeWidget === "sessions" ? (
-        <AgentDashboardSessionsDetailsPanel />
-      ) : null}
-      {activeWidget === "memories" ? (
-        <AgentDashboardMemoriesDetailsPanel />
-      ) : null}
     </section>
   );
 }
