@@ -19,7 +19,7 @@ export function WidgetCard({
 }) {
   const cardClassName = `relative overflow-hidden rounded-lg border bg-white p-4 text-left transition-colors dark:bg-zinc-950 ${
     isActive
-      ? "border-zinc-900 bg-sky-50 dark:border-zinc-100 dark:bg-sky-950/40"
+      ? "border-zinc-500 !bg-zinc-100 ring-2 ring-zinc-400/35 dark:border-zinc-500 dark:!bg-zinc-800 dark:ring-zinc-300/20"
       : "border-zinc-200 hover:border-zinc-400 dark:border-zinc-800 dark:hover:border-zinc-600"
   }`;
 

@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bot, ChevronRight, Globe, Lightbulb, Search, Ticket, Trash2 } from "lucide-react";
+import { Bot, ChevronRight, Globe, Lightbulb, Search, Ticket, Trash2, WalletCards } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { BetSlipList } from "@/features/bets/components/bet-slip-list";
+import type { BetSlipListItem } from "@/features/bets/interfaces";
+import { fetchBetSlips } from "@/features/bets/services/bets-api";
 import { AgentSessionTranscript } from "@/features/bets/components/agent-session-transcript";
 import { fetchAgentSessionMessages, type AgentSessionMessage } from "@/features/bets/services/agent-session-api";
 import type { AgentSessionListItem } from "@/features/sessions/interfaces";
@@ -80,6 +83,9 @@ export function AgentDashboardSessionsDetailsPanel({
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
+  const [allBetSlips, setAllBetSlips] = useState<BetSlipListItem[]>([]);
+  const [isLoadingBetSlips, setIsLoadingBetSlips] = useState(true);
+  const [betSlipsError, setBetSlipsError] = useState<string | null>(null);
   const [transcriptMessages, setTranscriptMessages] = useState<AgentSessionMessage[] | null>(null);
   const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
   const [transcriptError, setTranscriptError] = useState<string | null>(null);
@@ -109,6 +115,29 @@ export function AgentDashboardSessionsDetailsPanel({
         }
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoadingBetSlips(true);
+    setBetSlipsError(null);
+
+    fetchBetSlips()
+      .then((data) => {
+        if (!cancelled) setAllBetSlips(data);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setBetSlipsError(handleServiceError(error, "Failed to load session bet slips."));
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingBetSlips(false);
+      });
 
     return () => {
       cancelled = true;
@@ -166,6 +195,10 @@ export function AgentDashboardSessionsDetailsPanel({
 
   const selectedSession = selectedSessionId != null ? sortedSessions.find((session) => session.id === selectedSessionId) : undefined;
   const SelectedPhaseIcon = selectedSession ? sessionPhaseIcon(selectedSession.phaseId) : Bot;
+  const selectedSessionSlips = useMemo(() => {
+    if (selectedSessionId == null) return [];
+    return allBetSlips.filter((slip) => slip.agentSessionId === selectedSessionId);
+  }, [allBetSlips, selectedSessionId]);
 
   function selectSession(sessionId: number) {
     setSelectedSessionId(sessionId);
@@ -261,6 +294,37 @@ export function AgentDashboardSessionsDetailsPanel({
               ) : null}
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+              <details className="group border-b border-violet-200 bg-violet-50/80 dark:border-violet-900/60 dark:bg-violet-950/30">
+                <summary className="cursor-pointer list-none px-4 py-3 transition-colors hover:bg-zinc-100/90 dark:hover:bg-zinc-800/80">
+                  <span className="inline-flex w-full items-center justify-between gap-3">
+                    <span className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      <WalletCards className="h-4 w-4 text-violet-600 dark:text-violet-400" aria-hidden />
+                      See bets placed in this session
+                      <span className="inline-flex items-center rounded-md border border-violet-300 bg-violet-100 px-1.5 py-0.5 text-xs font-semibold text-violet-700 dark:border-violet-500/50 dark:bg-violet-950/50 dark:text-violet-300">
+                        {selectedSessionSlips.length}
+                      </span>
+                    </span>
+                    <span className="text-xs font-medium text-zinc-600 transition-transform group-open:rotate-180 dark:text-zinc-300">▼</span>
+                  </span>
+                </summary>
+                <div className="border-t border-violet-200/80 bg-white/70 px-4 py-3 dark:border-violet-900/60 dark:bg-zinc-950/70">
+                  {isLoadingBetSlips ? (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading bet slips...</p>
+                  ) : betSlipsError ? (
+                    <p className="text-sm text-red-800 dark:text-red-200">{betSlipsError}</p>
+                  ) : selectedSessionSlips.length > 0 ? (
+                    <BetSlipList
+                      betSlips={selectedSessionSlips}
+                      groupBySession={false}
+                      showSessionLink={false}
+                    />
+                  ) : (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                      No bet slips were placed in this session.
+                    </p>
+                  )}
+                </div>
+              </details>
               {isLoadingTranscript && transcriptMessages === null ? (
                 <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">Loading transcript...</p>
               ) : transcriptError ? (

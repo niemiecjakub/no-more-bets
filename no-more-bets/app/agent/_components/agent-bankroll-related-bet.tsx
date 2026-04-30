@@ -84,7 +84,7 @@ export function AgentBankrollRelatedBet({
           {details.agentSessionId != null ? (
             <Link
               href={`/agent?widget=sessions&sessionId=${details.agentSessionId}`}
-              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-300 bg-violet-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-violet-600 dark:border-violet-500 dark:bg-violet-600 dark:hover:bg-violet-500"
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-zinc-300 bg-zinc-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 dark:border-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600"
             >
               Session #{details.agentSessionId}
               <ChevronRight className="h-3.5 w-3.5 text-white/90" aria-hidden />

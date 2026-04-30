@@ -153,7 +153,7 @@ export function AgentWidgetNavigation({
       />
       <WidgetCard
         title="Pending Bets"
-        value={isPendingBetsLoading ? <WidgetSkeleton /> : `${pendingBetsWidget?.pendingSlipsCount ?? 0} open`}
+        value={isPendingBetsLoading ? <WidgetSkeleton /> : `${pendingBetsWidget?.pendingSlipsCount ?? 0}`}
         meta={
           isPendingBetsLoading
             ? "Loading pending bets..."
@@ -169,7 +169,7 @@ export function AgentWidgetNavigation({
       />
       <WidgetCard
         title="Sessions"
-        value={isSessionsLoading ? <WidgetSkeleton /> : `${sessionsWidget?.sessionsCount ?? 0} total`}
+        value={isSessionsLoading ? <WidgetSkeleton /> : `${sessionsWidget?.sessionsCount ?? 0}`}
         meta={
           isSessionsLoading
             ? "Loading sessions..."
@@ -187,7 +187,7 @@ export function AgentWidgetNavigation({
       />
       <WidgetCard
         title="Memories"
-        value={isMemoriesLoading ? <WidgetSkeleton /> : `${memoriesWidget?.memoriesCount ?? 0} saved`}
+        value={isMemoriesLoading ? <WidgetSkeleton /> : `${memoriesWidget?.memoriesCount ?? 0}`}
         meta={
           isMemoriesLoading
             ? "Loading memories..."

@@ -14,6 +14,7 @@ import { LazyAgentSessionTranscript } from "./lazy-agent-session-transcript";
 interface BetSlipListProps {
   betSlips: BetSlipListItem[];
   groupBySession?: boolean;
+  showSessionLink?: boolean;
 }
 
 interface BetSlipGroupModel {
@@ -91,9 +92,11 @@ function SelectionRow({ selection }: { selection: BetSelectionItem }) {
 function BetSlipCard({
   slip,
   stackInSession,
+  showSessionLink = true,
 }: {
   slip: BetSlipListItem;
   stackInSession?: { index: number; total: number };
+  showSessionLink?: boolean;
 }) {
   const stackClass =
     stackInSession != null
@@ -124,10 +127,10 @@ function BetSlipCard({
             Placed: {formatMatchDate(slip.createdAt)}
           </time>
         </div>
-        {slip.agentSessionId != null ? (
+        {showSessionLink && slip.agentSessionId != null ? (
           <Link
             href={`/agent?widget=sessions&sessionId=${slip.agentSessionId}`}
-            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-300 bg-violet-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-violet-600 dark:border-violet-500 dark:bg-violet-600 dark:hover:bg-violet-500"
+            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-zinc-300 bg-zinc-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 dark:border-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600"
           >
             Session #{slip.agentSessionId}
             <ChevronRight className="h-3.5 w-3.5 text-white/90" aria-hidden />
@@ -220,7 +223,11 @@ function BetSessionGroupHeader({
   );
 }
 
-export function BetSlipList({ betSlips, groupBySession = true }: BetSlipListProps) {
+export function BetSlipList({
+  betSlips,
+  groupBySession = true,
+  showSessionLink = true,
+}: BetSlipListProps) {
   const groups = useMemo(
     () => (groupBySession ? groupBetSlips(betSlips) : []),
     [betSlips, groupBySession]
@@ -236,7 +243,7 @@ export function BetSlipList({ betSlips, groupBySession = true }: BetSlipListProp
     return (
       <ul className="space-y-3">
         {betSlips.map((slip) => (
-          <BetSlipCard key={slip.id} slip={slip} />
+          <BetSlipCard key={slip.id} slip={slip} showSessionLink={showSessionLink} />
         ))}
       </ul>
     );
@@ -258,6 +265,7 @@ export function BetSlipList({ betSlips, groupBySession = true }: BetSlipListProp
                     key={slip.id}
                     slip={slip}
                     stackInSession={{ index, total: group.slips.length }}
+                    showSessionLink={showSessionLink}
                   />
                 ))}
               </ul>
@@ -265,7 +273,7 @@ export function BetSlipList({ betSlips, groupBySession = true }: BetSlipListProp
           ) : (
             <ul>
               {group.slips.map((slip) => (
-                <BetSlipCard key={slip.id} slip={slip} />
+                <BetSlipCard key={slip.id} slip={slip} showSessionLink={showSessionLink} />
               ))}
             </ul>
           )}
