@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bot, ChevronRight, Globe, Lightbulb, Search, Ticket, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -65,7 +66,16 @@ function SessionsFallback() {
   );
 }
 
-export function AgentDashboardSessionsDetailsPanel() {
+export interface AgentDashboardSessionsDetailsPanelProps {
+  initialSelectedSessionId?: number | null;
+}
+
+export function AgentDashboardSessionsDetailsPanel({
+  initialSelectedSessionId = null,
+}: AgentDashboardSessionsDetailsPanelProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [sessions, setSessions] = useState<AgentSessionListItem[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
@@ -109,9 +119,15 @@ export function AgentDashboardSessionsDetailsPanel() {
     setSelectedSessionId((previous) => {
       if (sortedSessions.length === 0) return null;
       if (previous != null && sortedSessions.some((session) => session.id === previous)) return previous;
+      if (
+        initialSelectedSessionId != null &&
+        sortedSessions.some((session) => session.id === initialSelectedSessionId)
+      ) {
+        return initialSelectedSessionId;
+      }
       return sortedSessions[0].id;
     });
-  }, [sortedSessions]);
+  }, [sortedSessions, initialSelectedSessionId]);
 
   useEffect(() => {
     if (selectedSessionId == null) {
@@ -151,6 +167,14 @@ export function AgentDashboardSessionsDetailsPanel() {
   const selectedSession = selectedSessionId != null ? sortedSessions.find((session) => session.id === selectedSessionId) : undefined;
   const SelectedPhaseIcon = selectedSession ? sessionPhaseIcon(selectedSession.phaseId) : Bot;
 
+  function selectSession(sessionId: number) {
+    setSelectedSessionId(sessionId);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("widget", "sessions");
+    params.set("sessionId", String(sessionId));
+    router.replace(`${pathname}?${params.toString()}`);
+  }
+
   if (isLoadingSessions && sessions.length === 0) {
     return <SessionsFallback />;
   }
@@ -183,7 +207,7 @@ export function AgentDashboardSessionsDetailsPanel() {
                 <li key={session.id} className="w-full min-w-0">
                   <button
                     type="button"
-                    onClick={() => setSelectedSessionId(session.id)}
+                    onClick={() => selectSession(session.id)}
                     className={
                       "flex w-full min-w-0 max-w-full gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors " +
                       (isSelected

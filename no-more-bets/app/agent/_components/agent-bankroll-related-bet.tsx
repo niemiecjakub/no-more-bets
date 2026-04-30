@@ -1,4 +1,6 @@
 import type { BankrollEntryBetDetailsDto, BankrollEntryListItemDto } from "@/features/bets/interfaces";
+import Link from "next/link";
+import { ChevronRight } from "lucide-react";
 import { SlugIcon } from "@/components/slug-icon";
 import { formatCurrency } from "@/utils/format-currency";
 import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
@@ -79,6 +81,15 @@ export function AgentBankrollRelatedBet({
               {formatMatchDate(details.betCreatedAt)}
             </time>
           </div>
+          {details.agentSessionId != null ? (
+            <Link
+              href={`/agent?widget=sessions&sessionId=${details.agentSessionId}`}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-violet-300 bg-violet-500 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-violet-600 dark:border-violet-500 dark:bg-violet-600 dark:hover:bg-violet-500"
+            >
+              Session #{details.agentSessionId}
+              <ChevronRight className="h-3.5 w-3.5 text-white/90" aria-hidden />
+            </Link>
+          ) : null}
         </div>
 
         <div className="grid grid-cols-3 gap-3 border-b border-zinc-100 px-4 py-3 text-sm dark:border-zinc-800/80">
