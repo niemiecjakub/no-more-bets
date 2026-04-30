@@ -99,6 +99,15 @@ export interface AgentDashboardBettingSummaryWidget {
   lossRatePercent: number;
 }
 
+/** GET api/agent/dashboard/research-betting-summary */
+export interface AgentDashboardResearchBettingSummaryWidget {
+  settledSelectionsCount: number;
+  wonSelectionsCount: number;
+  lostSelectionsCount: number;
+  winRatePercent: number;
+  lossRatePercent: number;
+}
+
 /** GET api/agent/dashboard/betting-summary/details */
 export interface AgentDashboardBettingSummaryDetails {
   wonSlipsCount: number;

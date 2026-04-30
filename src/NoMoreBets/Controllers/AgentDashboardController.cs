@@ -61,6 +61,57 @@ public class AgentDashboardController(AppDbContext db) : ControllerBase
       LossRatePercent: lossRate));
   }
 
+  [HttpGet("research-betting-summary")]
+  public async Task<ActionResult<AgentDashboardResearchBettingSummaryDto>> GetResearchBettingSummaryWidget(
+    [FromQuery] int[]? leagueIds,
+    [FromQuery(Name = "leagueIds[]")] int[]? leagueIdsBracket,
+    CancellationToken cancellationToken = default)
+  {
+    var selectedLeagueIds = (leagueIds ?? [])
+      .Concat(leagueIdsBracket ?? [])
+      .Where(id => id > 0)
+      .Distinct()
+      .ToArray();
+
+    var settledQuery = db.BetSlip
+      .AsNoTracking()
+      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Research)
+      .Where(s => s.StatusId != (int)BetStatus.Pending);
+
+    if (selectedLeagueIds.Length > 0)
+    {
+      settledQuery = settledQuery
+        .Where(s => s.Selections.Any(sel =>
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          selectedLeagueIds.Contains(sel.Match.Stage.Season.LeagueId)));
+    }
+
+    var settledSelections = await settledQuery
+      .SelectMany(s => s.Selections)
+      .Where(sel => selectedLeagueIds.Length == 0 || (
+        sel.Match != null &&
+        sel.Match.Stage != null &&
+        sel.Match.Stage.Season != null &&
+        selectedLeagueIds.Contains(sel.Match.Stage.Season.LeagueId)))
+      .Select(sel => sel.StatusId)
+      .ToListAsync(cancellationToken);
+
+    var settledSelectionsCount = settledSelections.Count;
+    var wonSelectionsCount = settledSelections.Count(statusId => statusId == (int)BetStatus.Won);
+    var lostSelectionsCount = settledSelections.Count(statusId => statusId == (int)BetStatus.Lost);
+    var winRate = settledSelectionsCount == 0 ? 0m : (decimal)wonSelectionsCount / settledSelectionsCount * 100m;
+    var lossRate = settledSelectionsCount == 0 ? 0m : (decimal)lostSelectionsCount / settledSelectionsCount * 100m;
+
+    return Ok(new AgentDashboardResearchBettingSummaryDto(
+      SettledSelectionsCount: settledSelectionsCount,
+      WonSelectionsCount: wonSelectionsCount,
+      LostSelectionsCount: lostSelectionsCount,
+      WinRatePercent: winRate,
+      LossRatePercent: lossRate));
+  }
+
   [HttpGet("betting-summary/details")]
   public async Task<ActionResult<AgentDashboardBettingSummaryDetailsDto>> GetBettingSummaryDetails(
     CancellationToken cancellationToken = default)
@@ -206,6 +257,13 @@ public record AgentDashboardBettingSummaryDto(
   int SettledSelectionsCount,
   int WonSlipsCount,
   int LostSlipsCount,
+  decimal WinRatePercent,
+  decimal LossRatePercent);
+
+public record AgentDashboardResearchBettingSummaryDto(
+  int SettledSelectionsCount,
+  int WonSelectionsCount,
+  int LostSelectionsCount,
   decimal WinRatePercent,
   decimal LossRatePercent);
 

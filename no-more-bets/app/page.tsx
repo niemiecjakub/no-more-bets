@@ -1,24 +1,24 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Pie, PieChart } from "recharts";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MatchList } from "../features/matches/components/match-list";
 import { MATCH_STATUS } from "../features/matches/interfaces";
 import { useMatchStore } from "@/store/match-store";
 import { LeagueList } from "../features/leagues/components/league-list";
 import { useLeagueStore } from "@/store/league-store";
-import {
-  fetchAgentDashboardBankrollWidget,
-  fetchAgentDashboardBettingSummaryWidget,
-  fetchAgentDashboardPendingBetsWidget,
-} from "@/features/bets/services/agent-dashboard-api";
+import { fetchAgentDashboardResearchBettingSummaryWidget } from "@/features/bets/services/research-dashboard-api";
 import type {
-  AgentDashboardBankrollWidget,
-  AgentDashboardBettingSummaryWidget,
-  AgentDashboardPendingBetsWidget,
+  AgentDashboardResearchBettingSummaryWidget,
 } from "@/features/bets/interfaces";
 import { handleServiceError } from "@/lib/error-handler";
-import { formatCurrency } from "@/utils/format-currency";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 const ALL_STATUSES_ID = -1;
 
@@ -112,6 +112,11 @@ function LeaguesFallback() {
   );
 }
 
+const SUMMARY_CHART_CONFIG = {
+  won: { label: "Won", color: "#22c55e" },
+  lost: { label: "Lost", color: "#ef4444" },
+} satisfies ChartConfig;
+
 export default function Home() {
   const router = useRouter();
   const pathname = usePathname();
@@ -123,12 +128,8 @@ export default function Home() {
     error: leaguesError,
     setLeagues,
   } = useLeagueStore();
-  const [bankrollWidget, setBankrollWidget] =
-    useState<AgentDashboardBankrollWidget | null>(null);
   const [summaryWidget, setSummaryWidget] =
-    useState<AgentDashboardBettingSummaryWidget | null>(null);
-  const [pendingWidget, setPendingWidget] =
-    useState<AgentDashboardPendingBetsWidget | null>(null);
+    useState<AgentDashboardResearchBettingSummaryWidget | null>(null);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
 
@@ -158,6 +159,17 @@ export default function Home() {
     };
   }, [searchParams]);
 
+  const researchStatsScopeLabel = useMemo(() => {
+    if (selectedLeagueIds.length === 0) return "All leagues";
+
+    const selectedNames = leagues
+      .filter((league) => selectedLeagueIds.includes(league.id))
+      .map((league) => league.name);
+
+    if (selectedNames.length === 0) return "Selected leagues";
+    return selectedNames.join(", ");
+  }, [leagues, selectedLeagueIds]);
+
   useEffect(() => {
     setLeagues();
   }, [setLeagues]);
@@ -173,15 +185,9 @@ export default function Home() {
       setIsStatsLoading(true);
       setStatsError(null);
       try {
-        const [bankroll, summary, pending] = await Promise.all([
-          fetchAgentDashboardBankrollWidget(),
-          fetchAgentDashboardBettingSummaryWidget(),
-          fetchAgentDashboardPendingBetsWidget(),
-        ]);
+        const summary = await fetchAgentDashboardResearchBettingSummaryWidget(selectedLeagueIds);
         if (!isMounted) return;
-        setBankrollWidget(bankroll);
         setSummaryWidget(summary);
-        setPendingWidget(pending);
       } catch (err) {
         if (!isMounted) return;
         setStatsError(handleServiceError(err, "Failed to load betting stats."));
@@ -194,7 +200,7 @@ export default function Home() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [selectedLeagueIds]);
 
   function syncFiltersInUrl(nextLeagueIds: number[], nextStatusId: number) {
     const params = new URLSearchParams(searchParams.toString());
@@ -286,39 +292,47 @@ export default function Home() {
             <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Research betting
             </h2>
+            <p className="px-1 text-xs text-zinc-500 dark:text-zinc-400">
+              Scope: {researchStatsScopeLabel}
+            </p>
             {statsError ? (
               <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
                 {statsError}
               </p>
             ) : null}
-            <StatCard
-              label="Settled slips"
-              value={
-                summaryWidget ? String(summaryWidget.settledSlipsCount) : "—"
-              }
-              helper={
-                isStatsLoading && !summaryWidget
-                  ? "Loading..."
-                  : summaryWidget
-                  ? `${summaryWidget.settledSelectionsCount} selections`
-                  : undefined
-              }
-            />
-            <StatCard
-              label="Win / loss rate"
-              value={
-                summaryWidget
-                  ? `${summaryWidget.winRatePercent.toFixed(1)}% / ${summaryWidget.lossRatePercent.toFixed(1)}%`
-                  : "—"
-              }
-              helper={
-                summaryWidget
-                  ? `Won ${summaryWidget.wonSlipsCount} | Lost ${summaryWidget.lostSlipsCount}`
-                  : isStatsLoading
-                  ? "Loading..."
-                  : undefined
-              }
-            />
+            {summaryWidget ? (
+              <article className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Won vs lost selections
+                </p>
+                <div className="mb-2">
+                  <p className="text-base font-semibold tabular-nums tracking-tight text-foreground">
+                    {summaryWidget.winRatePercent.toFixed(1)}% /{" "}
+                    {summaryWidget.lossRatePercent.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                    Won {summaryWidget.wonSelectionsCount} | Lost {summaryWidget.lostSelectionsCount}
+                  </p>
+                </div>
+                <ChartContainer config={SUMMARY_CHART_CONFIG} className="h-40 w-full">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent nameKey="result" />} />
+                    <Pie
+                      data={[
+                        { result: "won", value: summaryWidget.wonSelectionsCount, fill: "var(--color-won)" },
+                        { result: "lost", value: summaryWidget.lostSelectionsCount, fill: "var(--color-lost)" },
+                      ]}
+                      dataKey="value"
+                      nameKey="result"
+                      innerRadius={38}
+                      outerRadius={58}
+                      strokeWidth={0}
+                      paddingAngle={2}
+                    />
+                  </PieChart>
+                </ChartContainer>
+              </article>
+            ) : null}
           </aside>
         </div>
       </main>
