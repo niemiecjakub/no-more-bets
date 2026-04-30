@@ -3,6 +3,7 @@ import type { LeagueListItem } from "../interfaces";
 
 interface LeagueListProps {
   leagues: LeagueListItem[];
+  className?: string;
 }
 
 type MultiSelectProps = LeagueListProps & {
@@ -17,8 +18,17 @@ type SingleSelectProps = LeagueListProps & {
 
 type Props = MultiSelectProps | SingleSelectProps;
 
+const leagueAccentByName: Record<string, string> = {
+  "premier league": "#3D195B",
+  "serie a": "#004C97",
+  ekstraklasa: "#001E4B",
+  "ligue 1": "#001E90",
+  "la liga": "#FF4B44",
+  bundesliga: "#D3010C",
+};
+
 export function LeagueList(props: Props) {
-  const { leagues } = props;
+  const { leagues, className } = props;
 
   if (leagues.length === 0) {
     return (
@@ -29,37 +39,48 @@ export function LeagueList(props: Props) {
   }
 
   return (
-    <ul className="divide-y divide-zinc-200 dark:divide-zinc-800 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+    <div className={className ?? "grid grid-cols-1 gap-0"}>
       {leagues.map((league) => {
+        const isFirst = leagues[0]?.id === league.id;
+        const isLast = leagues[leagues.length - 1]?.id === league.id;
         const selected =
           "selectedLeagueIds" in props
             ? props.selectedLeagueIds.includes(league.id)
             : props.selectedLeagueId === league.id;
+        const accentColor =
+          leagueAccentByName[league.name.toLowerCase()] ??
+          "rgb(228 228 231 / 1)";
         return (
-          <li
+          <button
             key={league.id}
-            className={`text-foreground transition-colors ${
+            type="button"
+            onClick={() =>
+              "onToggleLeague" in props
+                ? props.onToggleLeague(league.id)
+                : props.onSelectLeague(league.id)
+            }
+            aria-pressed={selected}
+            className={`relative overflow-hidden border bg-white px-3.5 py-3 text-left transition-colors dark:bg-zinc-950 ${
+              isFirst ? "rounded-t-lg" : ""
+            } ${isLast ? "rounded-b-lg" : ""} ${
               selected
-                ? "bg-zinc-100 dark:bg-zinc-900"
-                : "bg-white hover:bg-zinc-50 dark:bg-zinc-950 dark:hover:bg-zinc-900"
+                ? "border-zinc-500 !bg-zinc-100 ring-2 ring-zinc-400/35 dark:border-zinc-500 dark:!bg-zinc-800 dark:ring-zinc-300/20"
+                : "border-zinc-200 hover:border-zinc-400 hover:bg-zinc-100 dark:border-zinc-800 dark:hover:border-zinc-600 dark:hover:bg-zinc-800"
             }`}
           >
-            <button
-              type="button"
-              onClick={() =>
-                "onToggleLeague" in props
-                  ? props.onToggleLeague(league.id)
-                  : props.onSelectLeague(league.id)
-              }
-              aria-pressed={selected}
-              className="flex w-full items-center gap-2 px-4 py-3 text-left font-medium"
-            >
+            <div
+              className="absolute left-0 top-0 h-full w-1"
+              style={{ backgroundColor: accentColor }}
+            />
+            <div className="flex items-center gap-3">
               <SlugIcon kind="league" slug={league.slug} alt={league.name} />
-              <span className="truncate">{league.name}</span>
-            </button>
-          </li>
+              <span className="truncate text-sm font-semibold text-foreground">
+                {league.name}
+              </span>
+            </div>
+          </button>
         );
       })}
-    </ul>
+    </div>
   );
 }
