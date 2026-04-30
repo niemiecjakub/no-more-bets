@@ -6,7 +6,7 @@ import type {
   AgentDashboardSessionsWidget,
 } from "@/features/bets/interfaces";
 import { formatCurrency } from "@/utils/format-currency";
-import { WidgetCard, WidgetSkeleton } from "./dashboard-widget-primitives";
+import { WidgetCard, WidgetSkeleton } from "./widget-primitives";
 
 function formatRelativeDate(value: string | null) {
   if (!value) return "N/A";

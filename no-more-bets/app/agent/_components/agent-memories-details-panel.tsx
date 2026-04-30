@@ -10,6 +10,7 @@ function formatDate(iso: string) {
     return new Date(iso).toLocaleString(undefined, {
       dateStyle: "medium",
       timeStyle: "short",
+      hour12: false,
     });
   } catch {
     return iso;
@@ -28,7 +29,7 @@ function MemoriesFallback() {
           </div>
         ))}
       </div>
-      <div className="min-h-[min(70vh,36rem)] overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="min-h-[min(78vh,44rem)] overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
           <div className="h-6 w-2/5 max-w-md rounded bg-zinc-200 dark:bg-zinc-800" />
           <div className="h-3 w-36 shrink-0 rounded bg-zinc-200 dark:bg-zinc-800" />
@@ -44,7 +45,7 @@ function MemoriesFallback() {
   );
 }
 
-export function AgentDashboardMemoriesDetailsPanel() {
+export function AgentMemoriesDetailsPanel() {
   const [memories, setMemories] = useState<MemoryListItem[]>([]);
   const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
   const [isLoadingMemories, setIsLoadingMemories] = useState(true);
@@ -114,7 +115,7 @@ export function AgentDashboardMemoriesDetailsPanel() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
       <div className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start lg:w-full">
-        <div className="h-full max-h-[min(70vh,36rem)] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:var(--color-zinc-400)_transparent] dark:[scrollbar-color:var(--color-zinc-600)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:hover:bg-zinc-400 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 dark:[&::-webkit-scrollbar-thumb]:hover:bg-zinc-600">
+        <div className="h-full max-h-[min(78vh,44rem)] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:var(--color-zinc-400)_transparent] dark:[scrollbar-color:var(--color-zinc-600)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:hover:bg-zinc-400 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 dark:[&::-webkit-scrollbar-thumb]:hover:bg-zinc-600">
           <ul className="min-w-0 space-y-1 p-2">
             {sortedMemories.map((memory) => {
               const isSelected = memory.id === selectedMemoryId;
@@ -146,7 +147,7 @@ export function AgentDashboardMemoriesDetailsPanel() {
           </ul>
         </div>
       </div>
-      <div className="flex min-h-[min(70vh,36rem)] min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div className="flex min-h-[min(78vh,44rem)] min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         {selectedMemory ? (
           <>
             <div className="flex min-w-0 shrink-0 items-center border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">

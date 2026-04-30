@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Pie, PieChart } from "recharts";
 import type { AgentDashboardBettingSummaryDetails } from "@/features/bets/interfaces";
 import { fetchAgentDashboardBettingSummaryDetails } from "@/features/bets/services/agent-dashboard-api";
 import { handleServiceError } from "@/lib/error-handler";
 import { BetSlipList } from "@/features/bets/components/bet-slip-list";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 const CHART_COLORS = {
   won: "#22c55e",
@@ -28,35 +34,39 @@ function SummaryDonut({
 }) {
   const total = won + lost;
   const data = [
-    { name: "Won", value: won, color: CHART_COLORS.won },
-    { name: "Lost", value: lost, color: CHART_COLORS.lost },
+    { result: "won", value: won, fill: "var(--color-won)" },
+    { result: "lost", value: lost, fill: "var(--color-lost)" },
   ];
+  const chartConfig = {
+    won: {
+      label: "Won",
+      color: CHART_COLORS.won,
+    },
+    lost: {
+      label: "Lost",
+      color: CHART_COLORS.lost,
+    },
+  } satisfies ChartConfig;
 
   return (
     <article className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
       <h4 className="mb-3 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
         {title}
       </h4>
-      <div className="h-52">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={52}
-              outerRadius={76}
-              paddingAngle={2}
-              strokeWidth={0}
-            >
-              {data.map((entry) => (
-                <Cell key={entry.name} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+      <ChartContainer config={chartConfig} className="h-52 min-h-52 w-full">
+        <PieChart>
+          <ChartTooltip content={<ChartTooltipContent nameKey="result" />} />
+          <Pie
+            data={data}
+            dataKey="value"
+            nameKey="result"
+            innerRadius={52}
+            outerRadius={76}
+            paddingAngle={2}
+            strokeWidth={0}
+          />
+        </PieChart>
+      </ChartContainer>
       <div className="mt-2 flex items-center justify-between text-sm">
         <span className="text-zinc-600 dark:text-zinc-300">
           Won: <strong>{percent(won, total).toFixed(1)}%</strong> ({won})

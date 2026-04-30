@@ -12,16 +12,16 @@ const tabs = [
 ] as const;
 
 const agentTabs = [
-  { href: "/agent?tab=bets", label: "Bets", tab: "bets" },
-  { href: "/agent?tab=sessions", label: "Sessions", tab: "sessions" },
-  { href: "/agent?tab=memories", label: "Memories", tab: "memories" },
+  { href: "/agent?widget=pending", label: "Bets", widget: "pending" },
+  { href: "/agent?widget=sessions", label: "Sessions", widget: "sessions" },
+  { href: "/agent?widget=memories", label: "Memories", widget: "memories" },
 ] as const;
 
 export function Navbar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const activeAgentTab = searchParams.get("tab");
+  const activeAgentWidget = searchParams.get("widget");
   const isAgentRoute = pathname.startsWith("/agent");
 
   useEffect(() => {
@@ -109,7 +109,7 @@ export function Navbar() {
                   <NavigationMenu.Item>
                     <NavigationMenu.Link asChild active={isAgentRoute}>
                       <Link
-                        href="/agent?tab=dashboard"
+                        href="/agent"
                         className={cn(
                           "shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors",
                           isAgentRoute
@@ -191,7 +191,7 @@ export function Navbar() {
 
             <div className="pt-2">
               <Link
-                href="/agent?tab=dashboard"
+                href="/agent"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`block rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   pathname.startsWith("/agent")
@@ -202,8 +202,8 @@ export function Navbar() {
                 Agent
               </Link>
               <div className="mt-1 space-y-1 pl-3">
-                {agentTabs.map(({ href, label, tab }) => {
-                  const isActive = pathname.startsWith("/agent") && activeAgentTab === tab;
+                {agentTabs.map(({ href, label, widget }) => {
+                  const isActive = pathname.startsWith("/agent") && activeAgentWidget === widget;
                   return (
                     <Link
                       key={`mobile-${href}`}

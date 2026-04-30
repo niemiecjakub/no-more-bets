@@ -130,17 +130,6 @@ export interface AgentDashboardMemoriesWidget {
   latestName: string | null;
 }
 
-/** GET api/bankroll/flow-points */
-export interface BankrollFlowPointDto {
-  entryId: number;
-  timestamp: string;
-  delta: number;
-  balanceAfter: number;
-  flow: "In" | "Out";
-  betId: number | null;
-  name: string;
-}
-
 /** GET api/bankroll/entries */
 export interface BankrollEntryListItemDto {
   id: number;

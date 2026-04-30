@@ -1,5 +1,5 @@
 import type { JobGroup } from "@/features/jobs/interfaces";
-import { WidgetSkeleton } from "./dashboard-widget-primitives";
+import { WidgetSkeleton } from "./widget-primitives";
 
 function parseTimeUntil(value: string | null) {
   if (!value) return null;
@@ -38,7 +38,7 @@ function formatTimeUntil(value: string | null) {
   return parsed.label;
 }
 
-interface AgentDashboardProcessWidgetProps {
+interface AgentProcessWidgetProps {
   jobGroups: JobGroup[];
   isJobsLoading: boolean;
   jobsError: string | null;
@@ -46,13 +46,13 @@ interface AgentDashboardProcessWidgetProps {
   onSelectStepGroup: (group: string) => void;
 }
 
-export function AgentDashboardProcessWidget({
+export function AgentProcessWidget({
   jobGroups,
   isJobsLoading,
   jobsError,
   activeStepGroup,
   onSelectStepGroup,
-}: AgentDashboardProcessWidgetProps) {
+}: AgentProcessWidgetProps) {
   const orderedGroups = [...jobGroups].sort((a, b) => {
     if (a.order !== b.order) return a.order - b.order;
     return a.group.localeCompare(b.group);

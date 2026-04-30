@@ -4,7 +4,6 @@ import type {
   BankrollDashboard,
   BankrollEntryBetDetailsDto,
   BankrollEntryListItemDto,
-  BankrollFlowPointDto,
 } from "../interfaces";
 
 export async function fetchBankrollDashboard(): Promise<BankrollDashboard> {
@@ -17,13 +16,6 @@ export async function fetchBankrollDashboard(): Promise<BankrollDashboard> {
 export async function fetchBankrollBettingBalance(): Promise<BankrollBettingBalance> {
   const { data } = await axiosInstance.get<BankrollBettingBalance>(
     "/api/bankroll/betting-balance"
-  );
-  return data;
-}
-
-export async function fetchBankrollFlowPoints(): Promise<BankrollFlowPointDto[]> {
-  const { data } = await axiosInstance.get<BankrollFlowPointDto[]>(
-    "/api/bankroll/flow-points"
   );
   return data;
 }

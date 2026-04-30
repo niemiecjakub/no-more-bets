@@ -19,12 +19,12 @@ import {
 import { handleServiceError } from "@/lib/error-handler";
 import { AgentBankrollDetailsPanel } from "./_components/agent-bankroll-details-panel";
 import { AgentBettingSummaryDetailsPanel } from "./_components/agent-betting-summary-details-panel";
-import { AgentDashboardMemoriesDetailsPanel } from "./_components/agent-dashboard-memories-details-panel";
+import { AgentMemoriesDetailsPanel } from "./_components/agent-memories-details-panel";
 import {
-  AgentDashboardSessionsDetailsPanel,
-  type AgentDashboardSessionsDetailsPanelProps,
-} from "./_components/agent-dashboard-sessions-details-panel";
-import { AgentDashboardTab } from "./_components/agent-dashboard-tab";
+  AgentSessionsDetailsPanel,
+  type AgentSessionsDetailsPanelProps,
+} from "./_components/agent-sessions-details-panel";
+import { AgentProcessTab } from "./_components/agent-process-tab";
 import { AgentPendingBetsDetailsPanel } from "./_components/agent-pending-bets-details-panel";
 import {
   AGENT_WIDGET_IDS,
@@ -34,13 +34,13 @@ import {
 
 const WIDGET_DETAILS_PANEL_RENDERERS: Record<
   AgentWidgetNavigationId,
-  (props: AgentDashboardSessionsDetailsPanelProps) => ReactNode
+  (props: AgentSessionsDetailsPanelProps) => ReactNode
 > = {
   [AGENT_WIDGET_IDS.BANKROLL]: () => <AgentBankrollDetailsPanel />,
   [AGENT_WIDGET_IDS.SUMMARY]: () => <AgentBettingSummaryDetailsPanel />,
   [AGENT_WIDGET_IDS.PENDING]: () => <AgentPendingBetsDetailsPanel />,
-  [AGENT_WIDGET_IDS.SESSIONS]: (props) => <AgentDashboardSessionsDetailsPanel {...props} />,
-  [AGENT_WIDGET_IDS.MEMORIES]: () => <AgentDashboardMemoriesDetailsPanel />,
+  [AGENT_WIDGET_IDS.SESSIONS]: (props) => <AgentSessionsDetailsPanel {...props} />,
+  [AGENT_WIDGET_IDS.MEMORIES]: () => <AgentMemoriesDetailsPanel />,
 };
 
 export default function AgentPage() {
@@ -238,7 +238,7 @@ export default function AgentPage() {
           {WIDGET_DETAILS_PANEL_RENDERERS[activeWidget]({
             initialSelectedSessionId: initialSessionId,
           })}
-          <AgentDashboardTab />
+          <AgentProcessTab />
         </div>
       </main>
     </div>

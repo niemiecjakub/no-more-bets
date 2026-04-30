@@ -5,7 +5,6 @@ using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Betting.GetMatchResearchBetSlip;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
-using NoMoreBets.Application.Matches.RunMatchAgentResearch;
 using NoMoreBets.Controllers.Models;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Enums;
@@ -71,16 +70,6 @@ public class BettingController(AppDbContext db, IMediator mediator) : Controller
 
     var result = await mediator.Send(new GetMatchAgentResearchQuery(matchId), cancellationToken).ConfigureAwait(false);
     return Ok(result);
-  }
-
-  [HttpPost("matchinsights/matches/{matchId:int}/agent-research/run")]
-  public async Task<ActionResult> RunAgentResearch(int matchId, CancellationToken cancellationToken = default)
-  {
-    if (!await MatchExists(matchId, cancellationToken).ConfigureAwait(false))
-      return NotFound();
-
-    await mediator.Send(new RunMatchAgentResearchCommand(matchId), cancellationToken).ConfigureAwait(false);
-    return Accepted();
   }
 
   [HttpGet("matchinsights/matches/{matchId:int}/betting-odds-history")]

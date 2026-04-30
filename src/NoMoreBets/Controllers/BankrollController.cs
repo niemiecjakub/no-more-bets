@@ -14,14 +14,6 @@ namespace NoMoreBets.Controllers;
 public class BankrollController(IMediator mediator, AppDbContext db) : ControllerBase
 {
   public record BankrollBettingBalanceDto(decimal Balance);
-  public record BankrollFlowPointDto(
-    int EntryId,
-    DateTime Timestamp,
-    decimal Delta,
-    decimal BalanceAfter,
-    string Flow,
-    int? BetId,
-    string Name);
   public record BankrollEntryListItemDto(
     int Id,
     string Name,
@@ -63,39 +55,6 @@ public class BankrollController(IMediator mediator, AppDbContext db) : Controlle
         cancellationToken)) ?? 0m;
 
     return Ok(new BankrollBettingBalanceDto(balance));
-  }
-
-  [HttpGet("bankroll/flow-points")]
-  public async Task<ActionResult<IReadOnlyList<BankrollFlowPointDto>>> GetFlowPoints(
-    CancellationToken cancellationToken = default)
-  {
-    var rows = await db.Bankroll
-      .AsNoTracking()
-      .OrderBy(row => row.CreatedAt)
-      .ThenBy(row => row.Id)
-      .Select(row => new
-      {
-        row.Id,
-        row.CreatedAt,
-        row.Amount,
-        row.Flow,
-        row.BetId,
-        row.Name
-      })
-      .ToListAsync(cancellationToken);
-
-    var runningBalance = 0m;
-    var points = rows
-      .Select(row =>
-      {
-        var delta = row.Flow == BankrollFlowExtensions.InCode ? row.Amount : -row.Amount;
-        runningBalance += delta;
-        var flow = row.Flow == BankrollFlowExtensions.InCode ? nameof(BankrollFlow.In) : nameof(BankrollFlow.Out);
-        return new BankrollFlowPointDto(row.Id, row.CreatedAt, delta, runningBalance, flow, row.BetId, row.Name);
-      })
-      .ToList();
-
-    return Ok(points);
   }
 
   [HttpGet("bankroll/entries")]

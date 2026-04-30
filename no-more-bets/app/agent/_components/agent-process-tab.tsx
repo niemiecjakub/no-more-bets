@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import type { JobGroup } from "@/features/jobs/interfaces";
 import { fetchJobGroups } from "@/features/jobs/services/jobs-api";
 import { handleServiceError } from "@/lib/error-handler";
-import { AgentDashboardProcessWidget } from "./agent-dashboard-process-widget";
+import { AgentProcessWidget } from "./agent-process-widget";
 
-export function AgentDashboardTab() {
+export function AgentProcessTab() {
   const [jobGroups, setJobGroups] = useState<JobGroup[]>([]);
   const [isJobsLoading, setIsJobsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export function AgentDashboardTab() {
           setActiveStepGroup(jobsData[0]?.group ?? null);
         }
       } catch (caughtError) {
-        const message = handleServiceError(caughtError, "Failed to load dashboard data.");
+        const message = handleServiceError(caughtError, "Failed to load agent data.");
         if (!cancelled) {
           setError(message);
         }
@@ -41,7 +41,7 @@ export function AgentDashboardTab() {
   }, []);
 
   return (
-    <AgentDashboardProcessWidget
+    <AgentProcessWidget
       jobGroups={jobGroups}
       isJobsLoading={isJobsLoading}
       jobsError={error}
