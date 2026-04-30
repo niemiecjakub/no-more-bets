@@ -12,6 +12,7 @@ import { LazyAgentSessionTranscript } from "./lazy-agent-session-transcript";
 
 interface BetSlipListProps {
   betSlips: BetSlipListItem[];
+  groupBySession?: boolean;
 }
 
 interface BetSlipGroupModel {
@@ -208,12 +209,25 @@ function BetSessionGroupHeader({
   );
 }
 
-export function BetSlipList({ betSlips }: BetSlipListProps) {
-  const groups = useMemo(() => groupBetSlips(betSlips), [betSlips]);
+export function BetSlipList({ betSlips, groupBySession = true }: BetSlipListProps) {
+  const groups = useMemo(
+    () => (groupBySession ? groupBetSlips(betSlips) : []),
+    [betSlips, groupBySession]
+  );
 
   if (betSlips.length === 0) {
     return (
       <p className="py-12 text-center text-zinc-500 dark:text-zinc-400">No bet slips yet.</p>
+    );
+  }
+
+  if (!groupBySession) {
+    return (
+      <ul className="space-y-3">
+        {betSlips.map((slip) => (
+          <BetSlipCard key={slip.id} slip={slip} />
+        ))}
+      </ul>
     );
   }
 

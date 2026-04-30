@@ -77,3 +77,78 @@ export interface BankrollDashboard {
   daysUntilPayday: number;
   records: BankrollRecord[];
 }
+
+/** GET api/bankroll/betting-balance */
+export interface BankrollBettingBalance {
+  balance: number;
+}
+
+/** GET api/agent/dashboard/bankroll */
+export interface AgentDashboardBankrollWidget {
+  totalValue: number;
+  balance: number;
+}
+
+/** GET api/agent/dashboard/betting-summary */
+export interface AgentDashboardBettingSummaryWidget {
+  settledSlipsCount: number;
+  settledSelectionsCount: number;
+  wonSlipsCount: number;
+  lostSlipsCount: number;
+  winRatePercent: number;
+  lossRatePercent: number;
+}
+
+/** GET api/agent/dashboard/betting-summary/details */
+export interface AgentDashboardBettingSummaryDetails {
+  wonSlipsCount: number;
+  lostSlipsCount: number;
+  wonSelectionsCount: number;
+  lostSelectionsCount: number;
+  slips: BetSlipListItem[];
+}
+
+/** GET api/agent/dashboard/pending-bets */
+export interface AgentDashboardPendingBetsWidget {
+  pendingSlipsCount: number;
+  pendingStakeTotal: number;
+  pendingPotentialPayoutTotal: number;
+  latestPendingCreatedAt: string | null;
+}
+
+/** GET api/bankroll/flow-points */
+export interface BankrollFlowPointDto {
+  entryId: number;
+  timestamp: string;
+  delta: number;
+  balanceAfter: number;
+  flow: "In" | "Out";
+  betId: number | null;
+  name: string;
+}
+
+/** GET api/bankroll/entries */
+export interface BankrollEntryListItemDto {
+  id: number;
+  name: string;
+  amount: number;
+  flow: "In" | "Out";
+  delta: number;
+  createdAt: string;
+  betId: number | null;
+  balanceAfter: number;
+}
+
+/** GET api/bankroll/entries/{entryId}/bet-details */
+export interface BankrollEntryBetDetailsDto {
+  entryId: number;
+  betId: number;
+  betCreatedAt: string;
+  stakeAmount: number;
+  totalOdds: number;
+  potentialPayout: number;
+  statusId: number;
+  statusName: string;
+  agentSessionId: number | null;
+  selections: BetSelectionItem[];
+}
