@@ -76,6 +76,16 @@ const dataSources = [
     role: "Injuries & availability",
     href: "https://www.rotowire.com/soccer/",
   },
+  {
+    name: "Brave Search API",
+    role: "Web search for news and context",
+    href: "https://brave.com/search/api/",
+  },
+  {
+    name: "X API",
+    role: "Posts, reactions, and breaking updates",
+    href: "https://developer.x.com/",
+  },
 ] as const;
 
 export default function AboutPage() {
