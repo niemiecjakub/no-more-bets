@@ -65,9 +65,6 @@ export function AgentProcessWidget({
 
   return (
     <section className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-      <header className="border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-        <h2 className="text-base font-semibold text-foreground">Process</h2>
-      </header>
       {isJobsLoading ? (
         <div className="p-4">
           <WidgetSkeleton />
@@ -140,11 +137,13 @@ export function AgentProcessWidget({
                       {job.description}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${timeUntilBadgeClass(job.timeUntilNextRun)}`}
-                      >
-                        {formatTimeUntil(job.timeUntilNextRun)}
-                      </span>
+                      <div className="flex justify-start">
+                        <span
+                          className={`inline-flex w-24 shrink-0 items-center justify-center rounded-full border px-2.5 py-1 text-xs font-semibold tabular-nums ${timeUntilBadgeClass(job.timeUntilNextRun)}`}
+                        >
+                          {formatTimeUntil(job.timeUntilNextRun)}
+                        </span>
+                      </div>
                     </td>
                   </tr>
                 ))}

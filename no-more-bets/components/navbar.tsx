@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const tabs = [
   { href: "/", label: "Matches" },
-  { href: "/leagues", label: "Leagues" },
+  { href: "/about", label: "About" },
 ] as const;
 
 const agentTabs = [
@@ -85,6 +85,22 @@ export function Navbar() {
             <div className="hidden min-w-0 flex-1 sm:flex">
               <NavigationMenu.Root delayDuration={80} skipDelayDuration={120}>
                 <NavigationMenu.List className="flex items-center gap-1">
+                  <NavigationMenu.Item>
+                    <NavigationMenu.Link asChild active={isAgentRoute}>
+                      <Link
+                        href="/agent"
+                        className={cn(
+                          "shrink-0 rounded-md px-4 py-2 text-sm font-bold transition-colors",
+                          isAgentRoute
+                            ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                            : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                        )}
+                      >
+                        Agent
+                      </Link>
+                    </NavigationMenu.Link>
+                  </NavigationMenu.Item>
+
                   {tabs.map(({ href, label }) => {
                     const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
                     return (
@@ -93,7 +109,7 @@ export function Navbar() {
                           <Link
                             href={href}
                             className={cn(
-                              "shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors",
+                              "shrink-0 rounded-md px-4 py-2 text-sm font-bold transition-colors",
                               isActive
                                 ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
                                 : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
@@ -105,22 +121,6 @@ export function Navbar() {
                       </NavigationMenu.Item>
                     );
                   })}
-
-                  <NavigationMenu.Item>
-                    <NavigationMenu.Link asChild active={isAgentRoute}>
-                      <Link
-                        href="/agent"
-                        className={cn(
-                          "shrink-0 rounded-md px-4 py-2 text-sm font-medium transition-colors",
-                          isAgentRoute
-                            ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
-                            : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
-                        )}
-                      >
-                        Agent
-                      </Link>
-                    </NavigationMenu.Link>
-                  </NavigationMenu.Item>
                 </NavigationMenu.List>
               </NavigationMenu.Root>
             </div>
@@ -171,29 +171,11 @@ export function Navbar() {
           }`}
         >
           <div className="space-y-1">
-            {tabs.map(({ href, label }) => {
-              const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
-              return (
-                <Link
-                  key={`mobile-${href}`}
-                  href={href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`block rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
-                      : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
-                  }`}
-                >
-                  {label}
-                </Link>
-              );
-            })}
-
             <div className="pt-2">
               <Link
                 href="/agent"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                className={`block rounded-md px-4 py-2 text-sm font-bold transition-colors ${
                   pathname.startsWith("/agent")
                     ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
                     : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
@@ -221,6 +203,24 @@ export function Navbar() {
                 })}
               </div>
             </div>
+
+            {tabs.map(({ href, label }) => {
+              const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+              return (
+                <Link
+                  key={`mobile-${href}`}
+                  href={href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`block rounded-md px-4 py-2 text-sm font-bold transition-colors ${
+                    isActive
+                      ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                      : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  {label}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

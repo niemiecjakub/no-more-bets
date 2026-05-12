@@ -229,9 +229,6 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight text-foreground">
-          Matches
-        </h1>
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)_320px] lg:items-start">
           <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-20">
             <h3 className="px-1 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">

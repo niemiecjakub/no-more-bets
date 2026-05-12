@@ -24,7 +24,6 @@ import {
   AgentSessionsDetailsPanel,
   type AgentSessionsDetailsPanelProps,
 } from "./_components/agent-sessions-details-panel";
-import { AgentProcessTab } from "./_components/agent-process-tab";
 import { AgentPendingBetsDetailsPanel } from "./_components/agent-pending-bets-details-panel";
 import {
   AGENT_WIDGET_IDS,
@@ -43,11 +42,22 @@ const WIDGET_DETAILS_PANEL_RENDERERS: Record<
   [AGENT_WIDGET_IDS.MEMORIES]: () => <AgentMemoriesDetailsPanel />,
 };
 
+function resolveRequestedWidget(searchParams: URLSearchParams): AgentWidgetNavigationId | null {
+  const requestedWidget = searchParams.get("widget");
+  if (!requestedWidget) return null;
+  if (Object.values(AGENT_WIDGET_IDS).includes(requestedWidget as AgentWidgetNavigationId))
+    return requestedWidget as AgentWidgetNavigationId;
+  return null;
+}
+
 export default function AgentPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [activeWidget, setActiveWidget] = useState<AgentWidgetNavigationId>(AGENT_WIDGET_IDS.BANKROLL);
+  const [activeWidget, setActiveWidget] = useState<AgentWidgetNavigationId>(() => {
+    const requestedWidget = resolveRequestedWidget(new URLSearchParams(searchParams.toString()));
+    return requestedWidget ?? AGENT_WIDGET_IDS.BANKROLL;
+  });
   const [bankrollWidget, setBankrollWidget] = useState<AgentDashboardBankrollWidget | null>(null);
   const [bettingSummaryWidget, setBettingSummaryWidget] = useState<AgentDashboardBettingSummaryWidget | null>(null);
   const [pendingBetsWidget, setPendingBetsWidget] = useState<AgentDashboardPendingBetsWidget | null>(null);
@@ -71,19 +81,23 @@ export default function AgentPage() {
   }, [searchParams]);
 
   useEffect(() => {
-    const requestedWidget = searchParams.get("widget");
-    if (!requestedWidget) return;
-    if (Object.values(AGENT_WIDGET_IDS).includes(requestedWidget as AgentWidgetNavigationId))
-      setActiveWidget(requestedWidget as AgentWidgetNavigationId);
+    const requestedWidget = resolveRequestedWidget(new URLSearchParams(searchParams.toString()));
+    if (requestedWidget) {
+      setActiveWidget(requestedWidget);
+      return;
+    }
+
+    setActiveWidget(AGENT_WIDGET_IDS.BANKROLL);
   }, [searchParams]);
 
   useEffect(() => {
-    const requestedWidget = searchParams.get("widget");
+    const requestedWidget = resolveRequestedWidget(new URLSearchParams(searchParams.toString()));
     if (requestedWidget) return;
+
     const params = new URLSearchParams(searchParams.toString());
-    params.set("widget", AGENT_WIDGET_IDS.BANKROLL);
+    params.set("widget", activeWidget);
     router.replace(`${pathname}?${params.toString()}`);
-  }, [pathname, router, searchParams]);
+  }, [activeWidget, pathname, router, searchParams]);
 
   const handleSelectWidget = useCallback(
     (widget: AgentWidgetNavigationId) => {
@@ -214,7 +228,6 @@ export default function AgentPage() {
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <h1 className="mb-4 text-2xl font-semibold tracking-tight text-foreground">Agent</h1>
         <div className="flex flex-col gap-4">
           <AgentWidgetNavigation
             bankrollWidget={bankrollWidget}
@@ -238,7 +251,6 @@ export default function AgentPage() {
           {WIDGET_DETAILS_PANEL_RENDERERS[activeWidget]({
             initialSelectedSessionId: initialSessionId,
           })}
-          <AgentProcessTab />
         </div>
       </main>
     </div>
