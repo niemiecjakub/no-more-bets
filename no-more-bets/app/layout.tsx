@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { Navbar } from "../components/navbar";
+import { SiteFooter } from "../components/site-footer";
 import { NavigationRefresh } from "../components/navigation-refresh";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -32,11 +33,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <TooltipProvider>
-          <NavigationRefresh />
-          <Suspense fallback={null}>
-            <Navbar />
-          </Suspense>
-          {children}
+          <div className="flex min-h-screen flex-col">
+            <NavigationRefresh />
+            <Suspense fallback={null}>
+              <Navbar />
+            </Suspense>
+            <div className="flex-1">{children}</div>
+            <SiteFooter />
+          </div>
         </TooltipProvider>
       </body>
     </html>

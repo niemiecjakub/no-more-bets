@@ -87,6 +87,8 @@ export interface BankrollBettingBalance {
 export interface AgentDashboardBankrollWidget {
   totalValue: number;
   balance: number;
+  /** Whole UTC calendar days until month-end salary (0 = payday today). */
+  daysUntilPayday: number;
 }
 
 /** GET api/agent/dashboard/betting-summary */

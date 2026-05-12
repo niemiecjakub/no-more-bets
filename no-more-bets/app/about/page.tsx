@@ -6,7 +6,6 @@ import {
   Calendar,
   Globe,
   MessagesSquare,
-  ShieldAlert,
   Sparkles,
   Target,
   Wallet,
@@ -204,39 +203,6 @@ export default function AboutPage() {
                 </li>
               ))}
             </ul>
-          </div>
-        </section>
-
-        <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-900/60 dark:bg-amber-950/30">
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
-              <ShieldAlert className="h-5 w-5" aria-hidden />
-            </span>
-            <div className="space-y-2 text-sm leading-6 text-amber-900 dark:text-amber-100">
-              <p className="text-base font-semibold">
-                Educational and research project
-              </p>
-              <p>
-                No More Bets explores whether a disciplined LLM agent with
-                persistent memory can find structural edge in football betting
-                markets, with its process and outcomes visible over time. It is
-                not financial advice. Bet results are inherently variable;
-                nothing here implies future profit.
-              </p>
-              <p className="flex items-center gap-2 text-amber-900/90 dark:text-amber-200/90">
-                <Wallet className="h-4 w-4" aria-hidden />
-                If gambling is hurting you, please reach out to{" "}
-                <a
-                  href="https://www.begambleaware.org/"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="underline-offset-2 hover:underline"
-                >
-                  BeGambleAware
-                </a>{" "}
-                or your local responsible-gambling service.
-              </p>
-            </div>
           </div>
         </section>
       </main>

@@ -1,5 +1,7 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Controllers.Models;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Enums;
@@ -9,7 +11,7 @@ namespace NoMoreBets.Controllers;
 
 [ApiController]
 [Route("api/agent/dashboard")]
-public class AgentDashboardController(AppDbContext db) : ControllerBase
+public class AgentDashboardController(AppDbContext db, IMediator mediator) : ControllerBase
 {
   [HttpGet("bankroll")]
   public async Task<ActionResult<AgentDashboardBankrollDto>> GetBankrollWidget(
@@ -28,7 +30,11 @@ public class AgentDashboardController(AppDbContext db) : ControllerBase
         record => (decimal?)(record.Flow == BankrollFlowExtensions.InCode ? record.Amount : -record.Amount),
         cancellationToken)) ?? 0m;
 
-    return Ok(new AgentDashboardBankrollDto(totalValue, balance));
+    var daysUntilPayday = await mediator
+      .Send(new GetDaysUntilPaydayQuery(), cancellationToken)
+      .ConfigureAwait(false);
+
+    return Ok(new AgentDashboardBankrollDto(totalValue, balance, daysUntilPayday));
   }
 
   [HttpGet("betting-summary")]
@@ -250,7 +256,7 @@ public class AgentDashboardController(AppDbContext db) : ControllerBase
   }
 }
 
-public record AgentDashboardBankrollDto(decimal TotalValue, decimal Balance);
+public record AgentDashboardBankrollDto(decimal TotalValue, decimal Balance, int DaysUntilPayday);
 
 public record AgentDashboardBettingSummaryDto(
   int SettledSlipsCount,

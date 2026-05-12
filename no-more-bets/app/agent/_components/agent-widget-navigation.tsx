@@ -8,6 +8,12 @@ import type {
 import { formatCurrency } from "@/utils/format-currency";
 import { WidgetCard, WidgetSkeleton } from "./widget-primitives";
 
+function paydayLabel(days: number): string {
+  if (days === 0) return "Payday today";
+  if (days === 1) return "1 day until payday";
+  return `${days} days until payday`;
+}
+
 function formatRelativeDate(value: string | null) {
   if (!value) return "N/A";
   const date = new Date(value);
@@ -112,7 +118,14 @@ export function AgentWidgetNavigation({
             : bankrollError
               ? bankrollError
               : bankrollWidget
-                ? "Total bankroll and betting balance"
+                ? (
+                    <div className="flex flex-col gap-0.5">
+                      <span className="block">Total bankroll and betting balance</span>
+                      <span className="block text-zinc-500 dark:text-zinc-400">
+                        {paydayLabel(bankrollWidget.daysUntilPayday)}
+                      </span>
+                    </div>
+                  )
                 : "Dashboard data unavailable"
         }
         accentClassName={bankrollAccentClassName}
