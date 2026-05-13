@@ -38,4 +38,11 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
     await db.AgentSessionMessage.AddRangeAsync(messages, cancellationToken).ConfigureAwait(false);
     await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
   }
+
+  public Task DeleteSessionAsync(int sessionId, CancellationToken cancellationToken = default)
+  {
+    return db.AgentSession
+      .Where(s => s.Id == sessionId)
+      .ExecuteDeleteAsync(cancellationToken);
+  }
 }

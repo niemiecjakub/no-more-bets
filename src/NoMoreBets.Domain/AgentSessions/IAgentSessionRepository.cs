@@ -8,4 +8,6 @@ public interface IAgentSessionRepository
     int sessionId,
     IReadOnlyList<AgentSessionMessage> messages,
     CancellationToken cancellationToken = default);
+
+  Task DeleteSessionAsync(int sessionId, CancellationToken cancellationToken = default);
 }

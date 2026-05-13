@@ -400,10 +400,10 @@ public sealed class Runner : IAgentPhaseRunner
       configureKernel,
       cancellationToken).ConfigureAwait(false);
 
-    if (reflectionBetSlipIds.Count > 0)
+    if (reflectionBetSlipIds.Count > 0 && result.SessionId is int reflectionSessionId)
     {
       await _unitOfWork.Betting
-        .MarkBetSlipsAgentSessionReflectedAsync(result.SessionId, reflectionBetSlipIds, cancellationToken)
+        .MarkBetSlipsAgentSessionReflectedAsync(reflectionSessionId, reflectionBetSlipIds, cancellationToken)
         .ConfigureAwait(false);
     }
 
@@ -517,6 +517,7 @@ public sealed class Runner : IAgentPhaseRunner
       .ConfigureAwait(false);
     _agentSessionContext.SessionId = sessionId;
 
+    var persistedSessionId = (int?)sessionId;
     var messages = new List<IMessage>();
     try
     {
@@ -546,14 +547,31 @@ public sealed class Runner : IAgentPhaseRunner
     {
       try
       {
-        var rows = AgentSessionTranscriptMapper.ToEntities(messages);
-        await _unitOfWork.AgentSessions
-          .AddMessagesAsync(sessionId, rows, cancellationToken)
-          .ConfigureAwait(false);
+        if (messages.Count == 0)
+        {
+          await _unitOfWork.AgentSessions
+            .DeleteSessionAsync(sessionId, cancellationToken)
+            .ConfigureAwait(false);
+          persistedSessionId = null;
+        }
+        else
+        {
+          var rows = AgentSessionTranscriptMapper.ToEntities(messages);
+          await _unitOfWork.AgentSessions
+            .AddMessagesAsync(sessionId, rows, cancellationToken)
+            .ConfigureAwait(false);
+        }
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to persist agent session {SessionId} transcript", sessionId);
+        if (messages.Count == 0)
+        {
+          _logger.LogError(ex, "Failed to delete empty agent session {SessionId}", sessionId);
+        }
+        else
+        {
+          _logger.LogError(ex, "Failed to persist agent session {SessionId} transcript", sessionId);
+        }
       }
 
       _agentSessionContext.SessionId = null;
@@ -564,7 +582,7 @@ public sealed class Runner : IAgentPhaseRunner
       phaseName,
       messages.Count);
 
-    return new AgentPhaseRunResult(messages, sessionId);
+    return new AgentPhaseRunResult(messages, persistedSessionId);
   }
 
   private static async Task<List<IMessage>> InvokeAndCollectPhaseTranscriptMessagesAsync(
@@ -605,4 +623,4 @@ public sealed class Runner : IAgentPhaseRunner
 
 internal sealed record AgentPhaseFollowUp(Action<Kernel> ConfigureKernel, string Prompt);
 
-internal sealed record AgentPhaseRunResult(IReadOnlyList<IMessage> Messages, int SessionId);
+internal sealed record AgentPhaseRunResult(IReadOnlyList<IMessage> Messages, int? SessionId);
