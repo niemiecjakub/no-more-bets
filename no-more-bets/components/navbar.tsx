@@ -12,6 +12,8 @@ const tabs = [
 ] as const;
 
 const agentTabs = [
+  { href: "/agent?widget=bankroll", label: "Bankroll", widget: "bankroll" },
+  { href: "/agent?widget=summary", label: "Summary", widget: "summary" },
   { href: "/agent?widget=pending", label: "Bets", widget: "pending" },
   { href: "/agent?widget=sessions", label: "Sessions", widget: "sessions" },
   { href: "/agent?widget=memories", label: "Memories", widget: "memories" },
@@ -211,7 +213,10 @@ export function Navbar() {
               </Link>
               <div className="mt-1 space-y-1 pl-3">
                 {agentTabs.map(({ href, label, widget }) => {
-                  const isActive = pathname.startsWith("/agent") && activeAgentWidget === widget;
+                  const isActive =
+                    pathname.startsWith("/agent") &&
+                    (activeAgentWidget === widget ||
+                      (activeAgentWidget === null && widget === "bankroll"));
                   return (
                     <Link
                       key={`mobile-${href}`}
