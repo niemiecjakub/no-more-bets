@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Sixtyfour_Convergence } from "next/font/google";
 import { Suspense } from "react";
 import { Navbar } from "../components/navbar";
 import { SiteFooter } from "../components/site-footer";
@@ -17,6 +17,12 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const sixtyfourConvergence = Sixtyfour_Convergence({
+  variable: "--font-sixtyfour-convergence",
+  subsets: ["latin"],
+  weight: "400",
+});
+
 export const metadata: Metadata = {
   title: "No More Bets",
   description: "Match list and betting information",
@@ -30,7 +36,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${sixtyfourConvergence.variable} antialiased`}
       >
         <TooltipProvider>
           <div className="flex min-h-screen flex-col">
