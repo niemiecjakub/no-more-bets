@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Matches.GetMatchPrediction;
 using NoMoreBets.Infrastructure.AI.Plugins;
 using NoMoreBets.Infrastructure.AI.Provider;
 
@@ -19,7 +18,6 @@ public static class SemanticKernelProvider
     services.AddScoped<AgentResearchPlugin>();
     services.AddScoped<BankrollPlugin>();
     services.AddScoped<SocialMediaPlugin>();
-    services.AddScoped<IMatchPrediction, AIGateway>();
     services.AddScoped<ContextBuilder>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<IAgentSessionContext, AgentSessionContext>();
