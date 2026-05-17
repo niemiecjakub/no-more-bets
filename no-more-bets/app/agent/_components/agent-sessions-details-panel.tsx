@@ -100,7 +100,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     const [sessions, setSessions] = useState<AgentSessionListItem[]>([]);
     const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
     const [hasMore, setHasMore] = useState(false);
-    const [nextCursor, setNextCursor] = useState<{ startedAt: string; id: number } | null>(null);
+    const [nextCursor, setNextCursor] = useState<{ at: string; id: number } | null>(null);
     const [isLoadingSessions, setIsLoadingSessions] = useState(true);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [sessionsError, setSessionsError] = useState<string | null>(null);
@@ -118,8 +118,8 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
             setSessions((current) => (append ? mergeSessions(current, page.items) : page.items));
             setHasMore(page.hasMore);
             setNextCursor(
-                page.hasMore && page.nextCursorStartedAt != null && page.nextCursorId != null
-                    ? { startedAt: page.nextCursorStartedAt, id: page.nextCursorId }
+                page.hasMore && page.nextCursorAt != null && page.nextCursorId != null
+                    ? { at: page.nextCursorAt, id: page.nextCursorId }
                     : null,
             );
         },
@@ -160,7 +160,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         setLoadMoreError(null);
 
         fetchAgentSessionsPage({
-            afterStartedAt: nextCursor.startedAt,
+            afterStartedAt: nextCursor.at,
             afterId: nextCursor.id,
         })
             .then((page) => {

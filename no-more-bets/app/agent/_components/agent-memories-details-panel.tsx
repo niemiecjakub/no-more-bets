@@ -61,7 +61,7 @@ export function AgentMemoriesDetailsPanel() {
   const [memories, setMemories] = useState<MemoryListItem[]>([]);
   const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<{ updatedAt: string; id: number } | null>(null);
+  const [nextCursor, setNextCursor] = useState<{ at: string; id: number } | null>(null);
   const [isLoadingMemories, setIsLoadingMemories] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [memoriesError, setMemoriesError] = useState<string | null>(null);
@@ -73,8 +73,8 @@ export function AgentMemoriesDetailsPanel() {
       setMemories((current) => (append ? mergeMemories(current, page.items) : page.items));
       setHasMore(page.hasMore);
       setNextCursor(
-        page.hasMore && page.nextCursorUpdatedAt != null && page.nextCursorId != null
-          ? { updatedAt: page.nextCursorUpdatedAt, id: page.nextCursorId }
+        page.hasMore && page.nextCursorAt != null && page.nextCursorId != null
+          ? { at: page.nextCursorAt, id: page.nextCursorId }
           : null,
       );
     },
@@ -113,7 +113,7 @@ export function AgentMemoriesDetailsPanel() {
     setLoadMoreError(null);
 
     fetchMemoriesPage({
-      afterUpdatedAt: nextCursor.updatedAt,
+      afterUpdatedAt: nextCursor.at,
       afterId: nextCursor.id,
     })
       .then((page) => {

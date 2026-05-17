@@ -1,7 +1,8 @@
 import axiosInstance from "../../../lib/axios";
-import type { MemoriesPage } from "../interfaces";
+import { normalizePagedResponse, type PagedResponse } from "@/lib/paged-response";
+import type { MemoryListItem } from "../interfaces";
 
-const MEMORIES_PAGE_SIZE = 25;
+const MEMORIES_PAGE_SIZE = 15;
 
 export interface FetchMemoriesPageParams {
   limit?: number;
@@ -14,13 +15,13 @@ export interface FetchMemoriesPageParams {
  */
 export async function fetchMemoriesPage(
   params: FetchMemoriesPageParams = {},
-): Promise<MemoriesPage> {
-  const { data } = await axiosInstance.get<MemoriesPage>("/api/memories", {
+): Promise<PagedResponse<MemoryListItem>> {
+  const { data } = await axiosInstance.get<unknown>("/api/memories", {
     params: {
       limit: params.limit ?? MEMORIES_PAGE_SIZE,
       afterUpdatedAt: params.afterUpdatedAt,
       afterId: params.afterId,
     },
   });
-  return data;
+  return normalizePagedResponse(data, (item) => item as MemoryListItem);
 }

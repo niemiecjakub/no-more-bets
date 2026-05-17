@@ -1,11 +1,3 @@
-/** GET api/memories */
-export interface MemoriesPage {
-  items: MemoryListItem[];
-  hasMore: boolean;
-  nextCursorUpdatedAt: string | null;
-  nextCursorId: number | null;
-}
-
 /**
  * GET api/memories list item (MemoryListItemDto).
  */

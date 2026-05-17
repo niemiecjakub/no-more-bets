@@ -100,7 +100,7 @@ export function AgentBettingSummaryDetailsPanel() {
   const [summary, setSummary] = useState<AgentDashboardBettingSummaryDetails | null>(null);
   const [slips, setSlips] = useState<BetSlipListItem[]>([]);
   const [hasMore, setHasMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<{ createdAt: string; id: number } | null>(null);
+  const [nextCursor, setNextCursor] = useState<{ at: string; id: number } | null>(null);
 
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSlipsLoading, setIsSlipsLoading] = useState(true);
@@ -116,8 +116,8 @@ export function AgentBettingSummaryDetailsPanel() {
       setSlips((current) => (append ? mergeSlips(current, page.items) : page.items));
       setHasMore(page.hasMore);
       setNextCursor(
-        page.hasMore && page.nextCursorCreatedAt != null && page.nextCursorId != null
-          ? { createdAt: page.nextCursorCreatedAt, id: page.nextCursorId }
+        page.hasMore && page.nextCursorAt != null && page.nextCursorId != null
+          ? { at: page.nextCursorAt, id: page.nextCursorId }
           : null,
       );
     },
@@ -166,7 +166,7 @@ export function AgentBettingSummaryDetailsPanel() {
     setLoadMoreError(null);
 
     fetchAgentDashboardBettingSummarySlipsPage({
-      afterCreatedAt: nextCursor.createdAt,
+      afterCreatedAt: nextCursor.at,
       afterId: nextCursor.id,
     })
       .then((page) => {

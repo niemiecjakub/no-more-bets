@@ -1,11 +1,3 @@
-/** GET api/agent-sessions */
-export interface AgentSessionsPage {
-  items: AgentSessionListItem[];
-  hasMore: boolean;
-  nextCursorStartedAt: string | null;
-  nextCursorId: number | null;
-}
-
 /** Aligned with backend AgentSessionListItemDto. */
 export interface AgentSessionListItem {
   id: number;

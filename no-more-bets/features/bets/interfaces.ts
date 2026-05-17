@@ -118,14 +118,6 @@ export interface AgentDashboardBettingSummaryDetails {
   lostSelectionsCount: number;
 }
 
-/** GET api/agent/dashboard/betting-summary/slips */
-export interface AgentDashboardBettingSummarySlipsPage {
-  items: BetSlipListItem[];
-  hasMore: boolean;
-  nextCursorCreatedAt: string | null;
-  nextCursorId: number | null;
-}
-
 /** GET api/agent/dashboard/pending-bets */
 export interface AgentDashboardPendingBetsWidget {
   pendingSlipsCount: number;
@@ -146,14 +138,6 @@ export interface AgentDashboardMemoriesWidget {
   memoriesCount: number;
   latestUpdatedAt: string | null;
   latestName: string | null;
-}
-
-/** GET api/bankroll/entries */
-export interface BankrollEntriesPage {
-  items: BankrollEntryListItemDto[];
-  hasMore: boolean;
-  nextCursorCreatedAt: string | null;
-  nextCursorId: number | null;
 }
 
 export interface BankrollEntryListItemDto {

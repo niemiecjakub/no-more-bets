@@ -23,11 +23,6 @@ public class BankrollController(IMediator mediator, AppDbContext db) : Controlle
     decimal Delta,
     DateTime CreatedAt,
     int? BetId);
-  public record BankrollEntriesPageDto(
-    IReadOnlyList<BankrollEntryListItemDto> Items,
-    bool HasMore,
-    DateTime? NextCursorCreatedAt,
-    int? NextCursorId);
   public record BankrollEntryBetDetailsDto(
     int EntryId,
     int BetId,
@@ -63,8 +58,8 @@ public class BankrollController(IMediator mediator, AppDbContext db) : Controlle
   }
 
   [HttpGet("bankroll/entries")]
-  public async Task<ActionResult<BankrollEntriesPageDto>> GetEntries(
-    [FromQuery] int limit = 25,
+  public async Task<ActionResult<PagedResponse<BankrollEntryListItemDto>>> GetEntries(
+    [FromQuery] int limit = 15,
     [FromQuery] DateTime? afterCreatedAt = null,
     [FromQuery] int? afterId = null,
     CancellationToken cancellationToken = default)
@@ -114,16 +109,7 @@ public class BankrollController(IMediator mediator, AppDbContext db) : Controlle
         item.BetId))
       .ToList();
 
-    DateTime? nextCursorCreatedAt = null;
-    int? nextCursorId = null;
-    if (hasMore && items.Count > 0)
-    {
-      var lastItem = items[^1];
-      nextCursorCreatedAt = lastItem.CreatedAt;
-      nextCursorId = lastItem.Id;
-    }
-
-    return Ok(new BankrollEntriesPageDto(items, hasMore, nextCursorCreatedAt, nextCursorId));
+    return Ok(PagedResponseFactory.Create(items, hasMore, item => item.CreatedAt, item => item.Id));
   }
 
   [HttpGet("bankroll/entries/{entryId:int}/bet-details")]

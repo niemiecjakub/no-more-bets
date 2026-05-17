@@ -33,7 +33,7 @@ export function AgentBankrollDetailsPanel() {
   const [selectedBetDetails, setSelectedBetDetails] = useState<BankrollEntryBetDetailsDto | null>(null);
 
   const [hasMore, setHasMore] = useState(false);
-  const [nextCursor, setNextCursor] = useState<{ createdAt: string; id: number } | null>(null);
+  const [nextCursor, setNextCursor] = useState<{ at: string; id: number } | null>(null);
 
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -73,8 +73,8 @@ export function AgentBankrollDetailsPanel() {
     setEntries((current) => (append ? mergeEntries(current, page.items) : page.items));
     setHasMore(page.hasMore);
     setNextCursor(
-      page.hasMore && page.nextCursorCreatedAt != null && page.nextCursorId != null
-        ? { createdAt: page.nextCursorCreatedAt, id: page.nextCursorId }
+      page.hasMore && page.nextCursorAt != null && page.nextCursorId != null
+        ? { at: page.nextCursorAt, id: page.nextCursorId }
         : null,
     );
   }, []);
@@ -115,7 +115,7 @@ export function AgentBankrollDetailsPanel() {
     setLoadMoreError(null);
 
     fetchBankrollEntriesPage({
-      afterCreatedAt: nextCursor.createdAt,
+      afterCreatedAt: nextCursor.at,
       afterId: nextCursor.id,
     })
       .then((page) => {

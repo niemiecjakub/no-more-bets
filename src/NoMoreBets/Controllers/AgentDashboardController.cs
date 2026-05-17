@@ -144,8 +144,8 @@ public class AgentDashboardController(AppDbContext db, IMediator mediator) : Con
   }
 
   [HttpGet("betting-summary/slips")]
-  public async Task<ActionResult<AgentDashboardBettingSummarySlipsPageDto>> GetBettingSummarySlips(
-    [FromQuery] int limit = 25,
+  public async Task<ActionResult<PagedResponse<BetSlipListItemDto>>> GetBettingSummarySlips(
+    [FromQuery] int limit = 10,
     [FromQuery] DateTime? afterCreatedAt = null,
     [FromQuery] int? afterId = null,
     CancellationToken cancellationToken = default)
@@ -180,11 +180,7 @@ public class AgentDashboardController(AppDbContext db, IMediator mediator) : Con
 
     if (slipIds.Count == 0)
     {
-      return Ok(new AgentDashboardBettingSummarySlipsPageDto(
-        Items: Array.Empty<BetSlipListItemDto>(),
-        HasMore: false,
-        NextCursorCreatedAt: null,
-        NextCursorId: null));
+      return Ok(new PagedResponse<BetSlipListItemDto>(Array.Empty<BetSlipListItemDto>(), false, null, null));
     }
 
     var slips = await db.BetSlip
@@ -208,20 +204,7 @@ public class AgentDashboardController(AppDbContext db, IMediator mediator) : Con
 
     var items = slips.Select(MapBetSlipListItem).ToList();
 
-    DateTime? nextCursorCreatedAt = null;
-    int? nextCursorId = null;
-    if (hasMore && items.Count > 0)
-    {
-      var lastItem = items[^1];
-      nextCursorCreatedAt = lastItem.CreatedAt;
-      nextCursorId = lastItem.Id;
-    }
-
-    return Ok(new AgentDashboardBettingSummarySlipsPageDto(
-      Items: items,
-      HasMore: hasMore,
-      NextCursorCreatedAt: nextCursorCreatedAt,
-      NextCursorId: nextCursorId));
+    return Ok(PagedResponseFactory.Create(items, hasMore, item => item.CreatedAt, item => item.Id));
   }
 
   private IQueryable<BetSlip> SettledBettingSlipsQuery() =>
@@ -357,12 +340,6 @@ public record AgentDashboardBettingSummaryDetailsDto(
   int LostSlipsCount,
   int WonSelectionsCount,
   int LostSelectionsCount);
-
-public record AgentDashboardBettingSummarySlipsPageDto(
-  IReadOnlyList<BetSlipListItemDto> Items,
-  bool HasMore,
-  DateTime? NextCursorCreatedAt,
-  int? NextCursorId);
 
 public record AgentDashboardPendingBetsDto(
   int PendingSlipsCount,

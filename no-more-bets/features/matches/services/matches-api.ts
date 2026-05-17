@@ -1,10 +1,10 @@
 import axiosInstance from "../../../lib/axios";
+import { normalizePagedResponse, type PagedResponse } from "@/lib/paged-response";
 import {
   MATCH_STATUS,
   type MatchAnalysisPageDto,
   type MatchDetailsSummary,
   type MatchListItem,
-  type MatchesPage,
 } from "../interfaces";
 
 export interface FetchMatchesFilters {
@@ -140,38 +140,12 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
   };
 }
 
-const MATCHES_PAGE_SIZE = 25;
+const MATCHES_PAGE_SIZE = 10;
 
 export interface FetchMatchesPageParams {
   limit?: number;
   afterMatchDate?: string;
   afterId?: number;
-}
-
-function normalizeMatchesPage(raw: unknown): MatchesPage {
-  const r = raw as Record<string, unknown>;
-  const itemsRaw = Array.isArray(r.items)
-    ? r.items
-    : Array.isArray(r.Items)
-      ? r.Items
-      : [];
-  const hasMore =
-    (typeof r.hasMore === "boolean" ? r.hasMore : undefined) ??
-    (typeof r.HasMore === "boolean" ? r.HasMore : undefined) ??
-    false;
-  const nextCursorMatchDate =
-    (typeof r.nextCursorMatchDate === "string" ? r.nextCursorMatchDate : undefined) ??
-    (typeof r.NextCursorMatchDate === "string" ? r.NextCursorMatchDate : undefined) ??
-    null;
-  const nextCursorId =
-    optionalInt(r.nextCursorId) ?? optionalInt(r.NextCursorId);
-
-  return {
-    items: itemsRaw.map(normalizeMatchListItem),
-    hasMore,
-    nextCursorMatchDate,
-    nextCursorId,
-  };
 }
 
 /**
@@ -180,7 +154,7 @@ function normalizeMatchesPage(raw: unknown): MatchesPage {
 export async function fetchMatchesPage(
   filters?: FetchMatchesFilters,
   params: FetchMatchesPageParams = {},
-): Promise<MatchesPage> {
+): Promise<PagedResponse<MatchListItem>> {
   const query: Record<string, string | number> = {
     limit: params.limit ?? MATCHES_PAGE_SIZE,
   };
@@ -200,7 +174,7 @@ export async function fetchMatchesPage(
       leagueIds: filters?.leagueIds,
     },
   });
-  return normalizeMatchesPage(data);
+  return normalizePagedResponse(data, normalizeMatchListItem);
 }
 
 /**

@@ -18,10 +18,10 @@ namespace NoMoreBets.Controllers;
 public class MatchesController(AppDbContext db, IMediator mediator) : ControllerBase
 {
   [HttpGet("matches")]
-  public async Task<ActionResult<MatchesPageDto>> GetMatches(
+  public async Task<ActionResult<PagedResponse<MatchDto>>> GetMatches(
     [FromQuery] int? matchStatusId = null,
     [FromQuery] int[]? leagueIds = null,
-    [FromQuery] int limit = 25,
+    [FromQuery] int limit = 10,
     [FromQuery] DateTime? afterMatchDate = null,
     [FromQuery] int? afterId = null,
     CancellationToken cancellationToken = default)
@@ -134,16 +134,7 @@ public class MatchesController(AppDbContext db, IMediator mediator) : Controller
         hasHeadToHeadSet))
       .ToList();
 
-    DateTime? nextCursorMatchDate = null;
-    int? nextCursorId = null;
-    if (hasMore && rows.Count > 0)
-    {
-      var lastItem = rows[^1];
-      nextCursorMatchDate = lastItem.MatchDate;
-      nextCursorId = lastItem.Id;
-    }
-
-    return Ok(new MatchesPageDto(items, hasMore, nextCursorMatchDate, nextCursorId));
+    return Ok(PagedResponseFactory.Create(items, hasMore, item => item.MatchDate, item => item.Id));
   }
 
   [HttpGet("matches/{matchId:int}/analyses")]
@@ -272,9 +263,3 @@ public class MatchesController(AppDbContext db, IMediator mediator) : Controller
       hasOddsSet.Contains(m.Id),
       hasHeadToHeadSet.Contains(m.Id));
 }
-
-public record MatchesPageDto(
-  IReadOnlyList<MatchDto> Items,
-  bool HasMore,
-  DateTime? NextCursorMatchDate,
-  int? NextCursorId);

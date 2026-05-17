@@ -24,7 +24,7 @@ interface MatchStore {
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
-  nextCursor: { matchDate: string; id: number } | null;
+  nextCursor: { at: string; id: number } | null;
   lastFilters: FetchMatchesFilters | undefined;
   error: string | null;
   loadMoreError: string | null;
@@ -62,8 +62,8 @@ export const useMatchStore = create<MatchStore>((set, get) => ({
         matches: page.items,
         hasMore: page.hasMore,
         nextCursor:
-          page.hasMore && page.nextCursorMatchDate != null && page.nextCursorId != null
-            ? { matchDate: page.nextCursorMatchDate, id: page.nextCursorId }
+          page.hasMore && page.nextCursorAt != null && page.nextCursorId != null
+            ? { at: page.nextCursorAt, id: page.nextCursorId }
             : null,
         error: null,
       });
@@ -85,15 +85,15 @@ export const useMatchStore = create<MatchStore>((set, get) => ({
     set({ isLoadingMore: true, loadMoreError: null });
     try {
       const page = await fetchMatchesPage(lastFilters, {
-        afterMatchDate: nextCursor.matchDate,
+        afterMatchDate: nextCursor.at,
         afterId: nextCursor.id,
       });
       set((state) => ({
         matches: mergeMatches(state.matches, page.items),
         hasMore: page.hasMore,
         nextCursor:
-          page.hasMore && page.nextCursorMatchDate != null && page.nextCursorId != null
-            ? { matchDate: page.nextCursorMatchDate, id: page.nextCursorId }
+          page.hasMore && page.nextCursorAt != null && page.nextCursorId != null
+            ? { at: page.nextCursorAt, id: page.nextCursorId }
             : null,
       }));
     } catch (err) {

@@ -1,7 +1,8 @@
 import axiosInstance from "../../../lib/axios";
-import type { AgentSessionsPage } from "../interfaces";
+import { normalizePagedResponse, type PagedResponse } from "@/lib/paged-response";
+import type { AgentSessionListItem } from "../interfaces";
 
-const AGENT_SESSIONS_PAGE_SIZE = 25;
+const AGENT_SESSIONS_PAGE_SIZE = 15;
 
 export interface FetchAgentSessionsPageParams {
   limit?: number;
@@ -15,8 +16,8 @@ export interface FetchAgentSessionsPageParams {
  */
 export async function fetchAgentSessionsPage(
   params: FetchAgentSessionsPageParams = {},
-): Promise<AgentSessionsPage> {
-  const { data } = await axiosInstance.get<AgentSessionsPage>("/api/agent-sessions", {
+): Promise<PagedResponse<AgentSessionListItem>> {
+  const { data } = await axiosInstance.get<unknown>("/api/agent-sessions", {
     params: {
       limit: params.limit ?? AGENT_SESSIONS_PAGE_SIZE,
       afterStartedAt: params.afterStartedAt,
@@ -24,5 +25,5 @@ export async function fetchAgentSessionsPage(
       includeSessionId: params.includeSessionId,
     },
   });
-  return data;
+  return normalizePagedResponse(data, (item) => item as AgentSessionListItem);
 }

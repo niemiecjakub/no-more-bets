@@ -1,15 +1,16 @@
 import axiosInstance from "@/lib/axios";
+import { type PagedResponse } from "@/lib/paged-response";
 import type {
   AgentDashboardBankrollWidget,
   AgentDashboardBettingSummaryDetails,
-  AgentDashboardBettingSummarySlipsPage,
   AgentDashboardBettingSummaryWidget,
   AgentDashboardMemoriesWidget,
   AgentDashboardPendingBetsWidget,
   AgentDashboardSessionsWidget,
+  BetSlipListItem,
 } from "../interfaces";
 
-const BETTING_SUMMARY_SLIPS_PAGE_SIZE = 25;
+const BETTING_SUMMARY_SLIPS_PAGE_SIZE = 10;
 
 export interface FetchAgentDashboardBettingSummarySlipsPageParams {
   limit?: number;
@@ -40,8 +41,8 @@ export async function fetchAgentDashboardBettingSummaryDetails(): Promise<AgentD
 
 export async function fetchAgentDashboardBettingSummarySlipsPage(
   params: FetchAgentDashboardBettingSummarySlipsPageParams = {},
-): Promise<AgentDashboardBettingSummarySlipsPage> {
-  const { data } = await axiosInstance.get<AgentDashboardBettingSummarySlipsPage>(
+): Promise<PagedResponse<BetSlipListItem>> {
+  const { data } = await axiosInstance.get<PagedResponse<BetSlipListItem>>(
     "/api/agent/dashboard/betting-summary/slips",
     {
       params: {

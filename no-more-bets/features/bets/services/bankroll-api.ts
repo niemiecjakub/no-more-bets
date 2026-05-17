@@ -1,12 +1,13 @@
 import axiosInstance from "@/lib/axios";
+import { type PagedResponse } from "@/lib/paged-response";
 import type {
   BankrollBettingBalance,
   BankrollDashboard,
-  BankrollEntriesPage,
   BankrollEntryBetDetailsDto,
+  BankrollEntryListItemDto,
 } from "../interfaces";
 
-const BANKROLL_ENTRIES_PAGE_SIZE = 25;
+const BANKROLL_ENTRIES_PAGE_SIZE = 15;
 
 export interface FetchBankrollEntriesPageParams {
   limit?: number;
@@ -30,8 +31,8 @@ export async function fetchBankrollBettingBalance(): Promise<BankrollBettingBala
 
 export async function fetchBankrollEntriesPage(
   params: FetchBankrollEntriesPageParams = {},
-): Promise<BankrollEntriesPage> {
-  const { data } = await axiosInstance.get<BankrollEntriesPage>("/api/bankroll/entries", {
+): Promise<PagedResponse<BankrollEntryListItemDto>> {
+  const { data } = await axiosInstance.get<PagedResponse<BankrollEntryListItemDto>>("/api/bankroll/entries", {
     params: {
       limit: params.limit ?? BANKROLL_ENTRIES_PAGE_SIZE,
       afterCreatedAt: params.afterCreatedAt,
