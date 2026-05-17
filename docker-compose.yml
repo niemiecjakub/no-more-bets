@@ -2,7 +2,7 @@ services:
   backend:
     container_name: no-more-bets-api
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"

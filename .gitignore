@@ -1,4 +1,4 @@
-# VS Code
+# IDE
 .vs/
 .vscode/
 .cursor/
@@ -8,20 +8,11 @@
 # Build outputs
 bin/
 obj/
-src/NoMoreBets/Output/
+artifacts/
 
 venv/
 .coverage
 .pytest_cache/
 
-# Resources
-src/NoMoreBets/NoMoreBets.Data/Resources/*
 .env
 plans/
-
-nanobot/
-
-src/NoMoreBets/appsettings.Development.json
-src/NoMoreBets/appsettings.json
-
-tests/**/*.html

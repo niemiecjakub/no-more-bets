@@ -1,0 +1,16 @@
+# Visual Studio
+.vs/
+
+# Build outputs
+bin/
+obj/
+src/NoMoreBets/Output/
+
+# Resources
+src/NoMoreBets/NoMoreBets.Data/Resources/*
+
+src/NoMoreBets/appsettings.Development.json
+src/NoMoreBets/appsettings.json
+
+# Test fixtures
+tests/**/*.html
