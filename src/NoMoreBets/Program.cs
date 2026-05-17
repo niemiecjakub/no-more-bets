@@ -1,5 +1,5 @@
 using Hangfire;
-using Hangfire.Dashboard;
+using Hangfire.Dashboard.BasicAuthorization;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using NoMoreBets.Application;
@@ -40,7 +40,20 @@ app.MapHealthChecks("/health", new HealthCheckOptions()
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-  Authorization = [new AllowAllDashboardAuthorizationFilter()]
+  Authorization =
+  [
+    new BasicAuthAuthorizationFilter(new BasicAuthAuthorizationFilterOptions
+    {
+      Users =
+      [
+        new BasicAuthAuthorizationUser
+        {
+          Login = builder.Configuration["Hangfire:Dashboard:Login"],
+          PasswordClear = builder.Configuration["Hangfire:Dashboard:Password"]
+        }
+      ]
+    })
+  ]
 });
 
 app.UseRecurringJobs();
@@ -62,11 +75,3 @@ app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
-
-public class AllowAllDashboardAuthorizationFilter : IDashboardAuthorizationFilter
-{
-  public bool Authorize(DashboardContext context)
-  {
-    return true;
-  }
-}

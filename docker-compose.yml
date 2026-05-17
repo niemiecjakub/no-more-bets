@@ -24,6 +24,8 @@ services:
       - ProxyOptions__ProxyUser=${PROXY_USER}
       - ProxyOptions__ProxyPassword=${PROXY_PASSWORD}
       - ProxyOptions__ProxyServer=${PROXY_SERVER}
+      - Hangfire__Dashboard__Login=${HANGFIRE_DASHBOARD_LOGIN}
+      - Hangfire__Dashboard__Password=${HANGFIRE_DASHBOARD_PASSWORD}
     networks:
       - backend_db
     depends_on:
