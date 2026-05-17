@@ -37,7 +37,6 @@ public record MatchDto(
   bool IsReadyToPredict = false,
   bool HasResearch = false,
   bool HasResearchBet = false,
-  bool HasPreview = false,
   bool HasLineup = false,
   bool HasOdds = false,
   bool HasHeadToHead = false);

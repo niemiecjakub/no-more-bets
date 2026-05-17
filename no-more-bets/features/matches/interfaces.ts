@@ -23,7 +23,6 @@ export interface MatchListItem {
   isReadyToPredict: boolean;
   hasResearch: boolean;
   hasResearchBet: boolean;
-  hasPreview: boolean;
   hasLineup: boolean;
   hasOdds: boolean;
   hasHeadToHead: boolean;

@@ -90,7 +90,6 @@ public sealed class Runner : IAgentPhaseRunner
           - Call `ReadMemoryAsync` for relevant records before new analysis
 
           2) Build core match intelligence:
-          - `GetMatchPreviewAsync`
           - `GetLineupsAsync`
           - `GetInjuriesAsync`
           - `GetHead2HeadStatsAsync`

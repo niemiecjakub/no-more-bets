@@ -119,7 +119,6 @@ export function MatchList({ matches }: MatchListProps) {
               const showChips =
                 match.hasResearch || match.hasResearchBet || match.isReadyToPredict;
               const readinessChips = [
-                { key: "preview", label: "Preview", isReady: match.hasPreview },
                 { key: "lineup", label: "Lineup", isReady: match.hasLineup },
                 { key: "odds", label: "Odds", isReady: match.hasOdds },
                 { key: "h2h", label: "H2H", isReady: match.hasHeadToHead },

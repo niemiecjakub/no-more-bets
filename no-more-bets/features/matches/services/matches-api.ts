@@ -104,11 +104,6 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
     (typeof r.hasResearchBet === "boolean" ? r.hasResearchBet : undefined) ??
     (typeof r.HasResearchBet === "boolean" ? r.HasResearchBet : undefined) ??
     false;
-  const hasPreview =
-    (typeof item.hasPreview === "boolean" ? item.hasPreview : undefined) ??
-    (typeof r.hasPreview === "boolean" ? r.hasPreview : undefined) ??
-    (typeof r.HasPreview === "boolean" ? r.HasPreview : undefined) ??
-    false;
   const hasLineup =
     (typeof item.hasLineup === "boolean" ? item.hasLineup : undefined) ??
     (typeof r.hasLineup === "boolean" ? r.hasLineup : undefined) ??
@@ -133,7 +128,6 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
     leagueSlug,
     hasResearch,
     hasResearchBet,
-    hasPreview,
     hasLineup,
     hasOdds,
     hasHeadToHead,

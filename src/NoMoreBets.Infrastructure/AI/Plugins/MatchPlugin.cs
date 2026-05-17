@@ -12,7 +12,6 @@ using NoMoreBets.Application.Leagues.GetLeagueTable;
 using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
-using NoMoreBets.Application.Matches.GetMatchPreview;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
@@ -46,13 +45,6 @@ public class MatchPlugin
   public async Task<MatchInjuriesResult?> GetInjuriesAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetMatchInjuriesQuery(matchId), cancellationToken).ConfigureAwait(false);
-  }
-
-  [KernelFunction("GetMatchPreview")]
-  [Description("Retrieves a textual preview of the match.")]
-  public async Task<string?> GetMatchPreviewAsync(int matchId, CancellationToken cancellationToken = default)
-  {
-    return await _mediator.Send(new GetMatchPreviewQuery(matchId), cancellationToken).ConfigureAwait(false);
   }
 
   [KernelFunction("GetHead2HeadStats")]

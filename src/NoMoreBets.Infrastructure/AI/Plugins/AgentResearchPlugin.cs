@@ -57,13 +57,6 @@ public class AgentResearchPlugin : AgentPluginBase
   }
 
   [KernelFunction]
-  [Description("Retrieves a textual preview of the match.")]
-  public async Task<string?> GetMatchPreviewAsync(int matchId, CancellationToken cancellationToken = default)
-  {
-    return await _matchPlugin.GetMatchPreviewAsync(matchId, cancellationToken).ConfigureAwait(false);
-  }
-
-  [KernelFunction]
   [Description("Provides historical head-to-head statistics between the two clubs for the match.")]
   public async Task<NoMoreBets.Application.Matches.GetHeadToHeadStats.H2H?> GetHead2HeadStatsAsync(int matchId, CancellationToken cancellationToken = default)
   {

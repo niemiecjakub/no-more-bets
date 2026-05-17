@@ -39,11 +39,6 @@ public class MatchesController(AppDbContext db, IMediator mediator) : Controller
       .ConfigureAwait(false);
 
     var completeSet = readyForPrediction.Select(m => m.Id).ToHashSet();
-    var matchIdsWithPreview = await db.MatchPreview
-      .Select(mp => mp.MatchId)
-      .Distinct()
-      .ToListAsync(cancellationToken);
-    var hasPreviewSet = matchIdsWithPreview.ToHashSet();
 
     var matchIdsWithLineup = await db.Lineup
       .Select(l => l.MatchId)
@@ -109,7 +104,6 @@ public class MatchesController(AppDbContext db, IMediator mediator) : Controller
         completeSet.Contains(m.Id),
         hasResearchSet.Contains(m.Id),
         hasResearchBetSet.Contains(m.Id),
-        hasPreviewSet.Contains(m.Id),
         hasLineupSet.Contains(m.Id),
         hasOddsSet.Contains(m.Id),
         hasHeadToHeadSet.Contains(m.Id)))

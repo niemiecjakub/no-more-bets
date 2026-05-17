@@ -112,7 +112,6 @@ public class MatchRepository : IMatchRepository
   {
     return await _db.Match
       .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
-      .Where(m => _db.MatchPreview.Any(mp => mp.MatchId == m.Id))
       .Where(m => _db.Lineup.Any(l => l.MatchId == m.Id))
       .Where(m => _db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
       .Where(m => _db.Head2Head.Any(h =>
@@ -127,7 +126,6 @@ public class MatchRepository : IMatchRepository
   {
     return await _db.Match
       .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
-      .Where(m => _db.MatchPreview.Any(mp => mp.MatchId == m.Id))
       .Where(m => _db.Lineup.Any(l => l.MatchId == m.Id))
       .Where(m => _db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
       .Where(m => _db.Head2Head.Any(h =>

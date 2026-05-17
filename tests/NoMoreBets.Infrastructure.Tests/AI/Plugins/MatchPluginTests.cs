@@ -11,7 +11,6 @@ using NoMoreBets.Application.Leagues.GetLeagueTable;
 using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
-using NoMoreBets.Application.Matches.GetMatchPreview;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
@@ -80,16 +79,6 @@ public class MatchPluginTests
     await _sut.GetInjuriesAsync(MatchId);
 
     await _mediator.Received(1).Send(Arg.Is<GetMatchInjuriesQuery>(q => q.MatchId == MatchId), Arg.Any<CancellationToken>());
-  }
-
-  [Fact]
-  public async Task GetMatchPreviewAsync_WhenCalled_DispatchesGetMatchPreviewQuery()
-  {
-    _mediator.Send(Arg.Any<GetMatchPreviewQuery>(), Arg.Any<CancellationToken>()).Returns("preview");
-
-    await _sut.GetMatchPreviewAsync(MatchId);
-
-    await _mediator.Received(1).Send(Arg.Is<GetMatchPreviewQuery>(q => q.MatchId == MatchId), Arg.Any<CancellationToken>());
   }
 
   [Fact]
