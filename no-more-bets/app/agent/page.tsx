@@ -22,6 +22,7 @@ import { AgentBettingSummaryDetailsPanel } from "./_components/agent-betting-sum
 import { AgentMemoriesDetailsPanel } from "./_components/agent-memories-details-panel";
 import { AgentSessionsDetailsPanel, type AgentSessionsDetailsPanelProps } from "./_components/agent-sessions-details-panel";
 import { AgentPendingBetsDetailsPanel } from "./_components/agent-pending-bets-details-panel";
+import { AgentDashboardGreeting } from "./_components/agent-dashboard-greeting";
 import { AGENT_WIDGET_IDS, AgentWidgetNavigation, type AgentWidgetNavigationId } from "./_components/agent-widget-navigation";
 
 const WIDGET_DETAILS_PANEL_RENDERERS: Record<AgentWidgetNavigationId, (props: AgentSessionsDetailsPanelProps) => ReactNode> = {
@@ -218,6 +219,7 @@ export default function AgentPage() {
         <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
             <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
                 <div className="flex flex-col gap-4">
+                    <AgentDashboardGreeting />
                     <AgentWidgetNavigation
                         bankrollWidget={bankrollWidget}
                         bettingSummaryWidget={bettingSummaryWidget}

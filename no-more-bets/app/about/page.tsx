@@ -107,6 +107,15 @@ export default function AboutPage() {
               open. The agent follows a repeatable daily cycle to research
               matches, take measured action, and learn from outcomes over time.
             </p>
+            <p className="mt-4 text-balance text-base italic leading-7 text-zinc-500 dark:text-zinc-400 sm:text-lg">
+              <span className="font-semibold">Chandler</span> is a
+              burned-out corporate middle manager from the tech world who spent
+              years optimizing spreadsheets for other people&apos;s profit. That
+              same discipline now goes into the betting market: structured
+              research, strict risk boundaries, and honest post-match reflection.
+              A sharp win reads as a step closer to getting out; a misstep, as
+              clocking another year behind the desk.
+            </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 href="/agent"
