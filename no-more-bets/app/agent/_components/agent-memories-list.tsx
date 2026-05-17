@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { BankrollEntryListItemDto } from "@/features/bets/interfaces";
-import { formatCurrency } from "@/utils/format-currency";
+import type { MemoryListItem } from "@/features/memories/interfaces";
 
-interface AgentBankrollEntriesListProps {
-  entries: BankrollEntryListItemDto[];
-  selectedEntryId: number | null;
-  onSelectEntry: (entry: BankrollEntryListItemDto) => void;
+interface AgentMemoriesListProps {
+  memories: MemoryListItem[];
+  selectedMemoryId: number | null;
+  onSelectMemory: (memoryId: number) => void;
   isLoading: boolean;
   hasMore: boolean;
   isLoadingMore: boolean;
@@ -16,27 +15,29 @@ interface AgentBankrollEntriesListProps {
   onRetryLoadMore: () => void;
 }
 
-function formatDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-    hour12: false,
-  });
+function formatDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+      hour12: false,
+    });
+  } catch {
+    return iso;
+  }
 }
 
-export function AgentBankrollEntriesList({
-  entries,
-  selectedEntryId,
-  onSelectEntry,
+export function AgentMemoriesList({
+  memories,
+  selectedMemoryId,
+  onSelectMemory,
   isLoading,
   hasMore,
   isLoadingMore,
   onLoadMore,
   loadMoreError,
   onRetryLoadMore,
-}: AgentBankrollEntriesListProps) {
+}: AgentMemoriesListProps) {
   const scrollRootRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -48,8 +49,8 @@ export function AgentBankrollEntriesList({
     if (!root || !sentinel) return;
 
     const observer = new IntersectionObserver(
-      (observerEntries) => {
-        if (observerEntries.some((entry) => entry.isIntersecting)) {
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
           onLoadMore();
         }
       },
@@ -63,16 +64,18 @@ export function AgentBankrollEntriesList({
   if (isLoading) {
     return (
       <div className="h-full min-h-[min(78vh,44rem)] animate-pulse p-3">
-        <div className="h-full rounded-lg bg-zinc-100 dark:bg-zinc-900" />
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-16 rounded-md bg-zinc-100 dark:bg-zinc-900" />
+          ))}
+        </div>
       </div>
     );
   }
 
-  if (entries.length === 0) {
+  if (memories.length === 0) {
     return (
-      <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">
-        No bankroll entries found.
-      </div>
+      <p className="p-4 text-sm text-zinc-500 dark:text-zinc-400">No memories saved yet.</p>
     );
   }
 
@@ -81,31 +84,32 @@ export function AgentBankrollEntriesList({
       ref={scrollRootRef}
       className="h-full max-h-[min(78vh,44rem)] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:var(--color-zinc-400)_transparent] dark:[scrollbar-color:var(--color-zinc-600)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:hover:bg-zinc-400 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 dark:[&::-webkit-scrollbar-thumb]:hover:bg-zinc-600"
     >
-      <ul className="space-y-1 p-2">
-        {entries.map((entry) => {
-          const isActive = selectedEntryId === entry.id;
-          const isIn = entry.flow === "In";
+      <ul className="min-w-0 space-y-1 p-2">
+        {memories.map((memory) => {
+          const isSelected = memory.id === selectedMemoryId;
           return (
-            <li key={entry.id} className="w-full min-w-0">
+            <li key={memory.id} className="min-w-0">
               <button
                 type="button"
-                onClick={() => onSelectEntry(entry)}
-                className={`flex w-full min-w-0 flex-col gap-1.5 rounded-md border px-3 py-2.5 text-left transition-colors ${
-                  isActive
+                onClick={() => onSelectMemory(memory.id)}
+                className={
+                  "min-w-0 max-w-full rounded-md border px-3 py-2.5 text-left transition-colors " +
+                  (isSelected
                     ? "border-zinc-300 bg-zinc-100 ring-2 ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-900 dark:ring-zinc-500/30"
-                    : "border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900/80"
-                }`}
+                    : "border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900/80")
+                }
               >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="line-clamp-2 text-sm font-medium text-foreground">{entry.name}</span>
-                  <span className={`text-sm font-semibold tabular-nums ${isIn ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-                    {isIn ? "+" : "-"}
-                    {formatCurrency(entry.amount)}
+                <span className="line-clamp-2 min-w-0 max-w-full break-all wrap-break-word font-medium text-foreground">
+                  {memory.name}
+                </span>
+                {memory.description ? (
+                  <span className="mt-1 block min-w-0 max-w-full line-clamp-2 wrap-break-word text-sm text-zinc-600 dark:text-zinc-400">
+                    {memory.description}
                   </span>
-                </div>
-                <div className="flex flex-wrap gap-2 text-xs text-zinc-500 dark:text-zinc-500">
-                  <span>{formatDateTime(entry.createdAt)}</span>
-                </div>
+                ) : null}
+                <span className="mt-2 block min-w-0 max-w-full truncate text-xs text-zinc-500 dark:text-zinc-500">
+                  Updated {formatDate(memory.updatedAt)}
+                </span>
               </button>
             </li>
           );

@@ -28,6 +28,13 @@ export interface MatchListItem {
   hasHeadToHead: boolean;
 }
 
+export interface MatchesPage {
+  items: MatchListItem[];
+  hasMore: boolean;
+  nextCursorMatchDate: string | null;
+  nextCursorId: number | null;
+}
+
 /** MatchStatusId from backend enum: Upcomming = 1, Finished = 2 */
 export const MATCH_STATUS = {
   Upcoming: 1,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pie, PieChart } from "recharts";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MatchList } from "../features/matches/components/match-list";
@@ -121,7 +121,25 @@ export default function Home() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { matches, isLoading, error, setMatches } = useMatchStore();
+  const {
+    matches,
+    isLoading,
+    error,
+    hasMore,
+    isLoadingMore,
+    loadMoreError,
+    setMatches,
+    loadMoreMatches,
+    retryLoadMore,
+  } = useMatchStore();
+
+  const handleLoadMoreMatches = useCallback(() => {
+    void loadMoreMatches();
+  }, [loadMoreMatches]);
+
+  const handleRetryLoadMoreMatches = useCallback(() => {
+    retryLoadMore();
+  }, [retryLoadMore]);
   const {
     leagues,
     isLoading: isLeaguesLoading,
@@ -282,7 +300,14 @@ export default function Home() {
                 {error}
               </p>
             ) : (
-              <MatchList matches={matches} />
+              <MatchList
+                matches={matches}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={handleLoadMoreMatches}
+                loadMoreError={loadMoreError}
+                onRetryLoadMore={handleRetryLoadMoreMatches}
+              />
             )}
           </section>
           <aside className="flex flex-col gap-3 self-start lg:sticky lg:top-20">

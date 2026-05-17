@@ -308,6 +308,7 @@ CREATE TABLE "BetSlip" (
 	CONSTRAINT fk_betslip_agentsession_reflected FOREIGN KEY ("AgentSessionReflectedId") REFERENCES "AgentSession"("Id") ON DELETE SET NULL
 );
 CREATE INDEX idx_betslip_statusid ON public."BetSlip" USING btree ("StatusId");
+CREATE INDEX "IX_BetSlip_CreatedAt_Id" ON public."BetSlip" USING btree ("CreatedAt", "Id");
 CREATE INDEX "IX_BetSlip_AgentSessionId" ON public."BetSlip" USING btree ("AgentSessionId");
 CREATE INDEX "IX_BetSlip_AgentSessionReflectedId" ON public."BetSlip" USING btree ("AgentSessionReflectedId");
 
@@ -368,3 +369,4 @@ CREATE TABLE "Bankroll" (
 	CONSTRAINT fk_bankroll_betslip FOREIGN KEY ("BetId") REFERENCES "BetSlip"("Id") ON DELETE RESTRICT
 );
 CREATE INDEX idx_bankroll_betid ON public."Bankroll" USING btree ("BetId");
+CREATE INDEX "IX_Bankroll_CreatedAt_Id" ON public."Bankroll" USING btree ("CreatedAt", "Id");

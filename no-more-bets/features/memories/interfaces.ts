@@ -1,5 +1,13 @@
+/** GET api/memories */
+export interface MemoriesPage {
+  items: MemoryListItem[];
+  hasMore: boolean;
+  nextCursorUpdatedAt: string | null;
+  nextCursorId: number | null;
+}
+
 /**
- * GET api/Database/memories returns an array of these (MemoryListItemDto).
+ * GET api/memories list item (MemoryListItemDto).
  */
 export interface MemoryListItem {
   id: number;

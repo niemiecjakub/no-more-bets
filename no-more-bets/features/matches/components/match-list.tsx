@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { SlugIcon } from "@/components/slug-icon";
 import type { MatchListItem } from "../interfaces";
 import { MATCH_STATUS } from "../interfaces";
@@ -7,6 +10,11 @@ import { formatMatchTime } from "../../../utils/format-date";
 
 interface MatchListProps {
   matches: MatchListItem[];
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
+  loadMoreError?: string | null;
+  onRetryLoadMore?: () => void;
 }
 
 interface MatchDateGroup {
@@ -50,7 +58,35 @@ function getFutureDayDistanceLabel(date: Date): string | null {
   return `in ${dayDiff} days`;
 }
 
-export function MatchList({ matches }: MatchListProps) {
+export function MatchList({
+  matches,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
+  loadMoreError = null,
+  onRetryLoadMore,
+}: MatchListProps) {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!hasMore || isLoadingMore || !onLoadMore) return;
+
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          onLoadMore();
+        }
+      },
+      { root: null, rootMargin: "200px", threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, isLoadingMore, onLoadMore]);
+
   if (matches.length === 0) {
     return (
       <p className="text-center text-zinc-500 dark:text-zinc-400 py-8">
@@ -208,6 +244,27 @@ export function MatchList({ matches }: MatchListProps) {
         </section>
         );
       })}
+
+      {loadMoreError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900 dark:bg-red-950/30">
+          <p className="text-sm text-red-800 dark:text-red-200">{loadMoreError}</p>
+          {onRetryLoadMore ? (
+            <button
+              type="button"
+              onClick={onRetryLoadMore}
+              className="mt-2 text-sm font-medium text-red-900 underline-offset-2 hover:underline dark:text-red-100"
+            >
+              Retry
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isLoadingMore ? (
+        <div className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />
+      ) : null}
+
+      {hasMore ? <div ref={sentinelRef} className="h-1" aria-hidden /> : null}
     </div>
   );
 }

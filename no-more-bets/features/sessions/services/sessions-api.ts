@@ -1,12 +1,28 @@
 import axiosInstance from "../../../lib/axios";
-import type { AgentSessionListItem } from "../interfaces";
+import type { AgentSessionsPage } from "../interfaces";
+
+const AGENT_SESSIONS_PAGE_SIZE = 25;
+
+export interface FetchAgentSessionsPageParams {
+  limit?: number;
+  afterStartedAt?: string;
+  afterId?: number;
+  includeSessionId?: number;
+}
 
 /**
- * Fetches all agent sessions from the backend (newest first).
+ * Fetches a page of agent sessions from the backend (newest first).
  */
-export async function fetchAgentSessions(): Promise<AgentSessionListItem[]> {
-  const { data } = await axiosInstance.get<AgentSessionListItem[]>(
-    "/api/agent-sessions"
-  );
+export async function fetchAgentSessionsPage(
+  params: FetchAgentSessionsPageParams = {},
+): Promise<AgentSessionsPage> {
+  const { data } = await axiosInstance.get<AgentSessionsPage>("/api/agent-sessions", {
+    params: {
+      limit: params.limit ?? AGENT_SESSIONS_PAGE_SIZE,
+      afterStartedAt: params.afterStartedAt,
+      afterId: params.afterId,
+      includeSessionId: params.includeSessionId,
+    },
+  });
   return data;
 }

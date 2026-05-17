@@ -1,5 +1,11 @@
 import axiosInstance from "../../../lib/axios";
-import { MATCH_STATUS, type MatchAnalysisPageDto, type MatchDetailsSummary, type MatchListItem } from "../interfaces";
+import {
+  MATCH_STATUS,
+  type MatchAnalysisPageDto,
+  type MatchDetailsSummary,
+  type MatchListItem,
+  type MatchesPage,
+} from "../interfaces";
 
 export interface FetchMatchesFilters {
   matchStatusId?: number;
@@ -134,22 +140,67 @@ function normalizeMatchListItem(raw: unknown): MatchListItem {
   };
 }
 
+const MATCHES_PAGE_SIZE = 25;
+
+export interface FetchMatchesPageParams {
+  limit?: number;
+  afterMatchDate?: string;
+  afterId?: number;
+}
+
+function normalizeMatchesPage(raw: unknown): MatchesPage {
+  const r = raw as Record<string, unknown>;
+  const itemsRaw = Array.isArray(r.items)
+    ? r.items
+    : Array.isArray(r.Items)
+      ? r.Items
+      : [];
+  const hasMore =
+    (typeof r.hasMore === "boolean" ? r.hasMore : undefined) ??
+    (typeof r.HasMore === "boolean" ? r.HasMore : undefined) ??
+    false;
+  const nextCursorMatchDate =
+    (typeof r.nextCursorMatchDate === "string" ? r.nextCursorMatchDate : undefined) ??
+    (typeof r.NextCursorMatchDate === "string" ? r.NextCursorMatchDate : undefined) ??
+    null;
+  const nextCursorId =
+    optionalInt(r.nextCursorId) ?? optionalInt(r.NextCursorId);
+
+  return {
+    items: itemsRaw.map(normalizeMatchListItem),
+    hasMore,
+    nextCursorMatchDate,
+    nextCursorId,
+  };
+}
+
 /**
- * Fetches all matches from the backend.
+ * Fetches a page of matches from the backend (newest match date first).
  */
-export async function fetchMatches(filters?: FetchMatchesFilters): Promise<MatchListItem[]> {
-  const params = new URLSearchParams();
+export async function fetchMatchesPage(
+  filters?: FetchMatchesFilters,
+  params: FetchMatchesPageParams = {},
+): Promise<MatchesPage> {
+  const query: Record<string, string | number> = {
+    limit: params.limit ?? MATCHES_PAGE_SIZE,
+  };
   if (filters?.matchStatusId != null) {
-    params.set("matchStatusId", String(filters.matchStatusId));
+    query.matchStatusId = filters.matchStatusId;
   }
-  filters?.leagueIds?.forEach((leagueId) => {
-    params.append("leagueIds", String(leagueId));
+  if (params.afterMatchDate != null) {
+    query.afterMatchDate = params.afterMatchDate;
+  }
+  if (params.afterId != null) {
+    query.afterId = params.afterId;
+  }
+
+  const { data } = await axiosInstance.get<unknown>("/api/matches", {
+    params: {
+      ...query,
+      leagueIds: filters?.leagueIds,
+    },
   });
-  const { data } = await axiosInstance.get<unknown[]>(
-    "/api/matches",
-    { params }
-  );
-  return data.map(normalizeMatchListItem);
+  return normalizeMatchesPage(data);
 }
 
 /**

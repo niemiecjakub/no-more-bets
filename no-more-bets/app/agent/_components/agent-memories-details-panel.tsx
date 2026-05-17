@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { MemoryListItem } from "@/features/memories/interfaces";
-import { fetchMemories } from "@/features/memories/services/memories-api";
+import { fetchMemoriesPage } from "@/features/memories/services/memories-api";
 import { handleServiceError } from "@/lib/error-handler";
+import { AgentMemoriesList } from "./agent-memories-list";
 
 function formatDate(iso: string) {
   try {
@@ -15,6 +16,17 @@ function formatDate(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function mergeMemories(existing: MemoryListItem[], incoming: MemoryListItem[]): MemoryListItem[] {
+  const seen = new Set(existing.map((memory) => memory.id));
+  const merged = [...existing];
+  for (const memory of incoming) {
+    if (seen.has(memory.id)) continue;
+    seen.add(memory.id);
+    merged.push(memory);
+  }
+  return merged;
 }
 
 function MemoriesFallback() {
@@ -48,49 +60,83 @@ function MemoriesFallback() {
 export function AgentMemoriesDetailsPanel() {
   const [memories, setMemories] = useState<MemoryListItem[]>([]);
   const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<{ updatedAt: string; id: number } | null>(null);
   const [isLoadingMemories, setIsLoadingMemories] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [memoriesError, setMemoriesError] = useState<string | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  const isLoadingMoreRef = useRef(false);
 
-  const sortedMemories = useMemo(
-    () => [...memories].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()),
-    [memories]
+  const applyMemoriesPage = useCallback(
+    (page: Awaited<ReturnType<typeof fetchMemoriesPage>>, append: boolean) => {
+      setMemories((current) => (append ? mergeMemories(current, page.items) : page.items));
+      setHasMore(page.hasMore);
+      setNextCursor(
+        page.hasMore && page.nextCursorUpdatedAt != null && page.nextCursorId != null
+          ? { updatedAt: page.nextCursorUpdatedAt, id: page.nextCursorId }
+          : null,
+      );
+    },
+    [],
   );
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      setIsLoadingMemories(true);
-      setMemoriesError(null);
-      try {
-        const data = await fetchMemories();
-        if (!cancelled) {
-          setMemories(data);
-        }
-      } catch (error) {
+    setIsLoadingMemories(true);
+    setMemoriesError(null);
+    setLoadMoreError(null);
+
+    fetchMemoriesPage()
+      .then((page) => {
+        if (!cancelled) applyMemoriesPage(page, false);
+      })
+      .catch((error) => {
         if (!cancelled) {
           setMemoriesError(handleServiceError(error, "Failed to load memories."));
         }
-      } finally {
-        if (!cancelled) {
-          setIsLoadingMemories(false);
-        }
-      }
-    })();
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingMemories(false);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyMemoriesPage]);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
+
+    isLoadingMoreRef.current = true;
+    setIsLoadingMore(true);
+    setLoadMoreError(null);
+
+    fetchMemoriesPage({
+      afterUpdatedAt: nextCursor.updatedAt,
+      afterId: nextCursor.id,
+    })
+      .then((page) => {
+        applyMemoriesPage(page, true);
+      })
+      .catch((error) => {
+        setLoadMoreError(handleServiceError(error, "Failed to load more memories."));
+      })
+      .finally(() => {
+        isLoadingMoreRef.current = false;
+        setIsLoadingMore(false);
+      });
+  }, [applyMemoriesPage, hasMore, nextCursor]);
 
   useEffect(() => {
     setSelectedMemoryId((previous) => {
-      if (sortedMemories.length === 0) return null;
-      if (previous != null && sortedMemories.some((memory) => memory.id === previous)) return previous;
-      return sortedMemories[0].id;
+      if (memories.length === 0) return null;
+      if (previous != null && memories.some((memory) => memory.id === previous)) return previous;
+      return memories[0].id;
     });
-  }, [sortedMemories]);
+  }, [memories]);
 
-  const selectedMemory = selectedMemoryId != null ? sortedMemories.find((memory) => memory.id === selectedMemoryId) : undefined;
+  const selectedMemory = selectedMemoryId != null ? memories.find((memory) => memory.id === selectedMemoryId) : undefined;
 
   if (isLoadingMemories && memories.length === 0) {
     return <MemoriesFallback />;
@@ -115,37 +161,17 @@ export function AgentMemoriesDetailsPanel() {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
       <div className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start lg:w-full">
-        <div className="h-full max-h-[min(78vh,44rem)] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:var(--color-zinc-400)_transparent] dark:[scrollbar-color:var(--color-zinc-600)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:hover:bg-zinc-400 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 dark:[&::-webkit-scrollbar-thumb]:hover:bg-zinc-600">
-          <ul className="min-w-0 space-y-1 p-2">
-            {sortedMemories.map((memory) => {
-              const isSelected = memory.id === selectedMemoryId;
-              return (
-                <li key={memory.id} className="min-w-0">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedMemoryId(memory.id)}
-                    className={
-                      "min-w-0 max-w-full rounded-md border px-3 py-2.5 text-left transition-colors " +
-                      (isSelected
-                        ? "border-zinc-300 bg-zinc-100 ring-2 ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-900 dark:ring-zinc-500/30"
-                        : "border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900/80")
-                    }
-                  >
-                    <span className="line-clamp-2 min-w-0 max-w-full break-all wrap-break-word font-medium text-foreground">{memory.name}</span>
-                    {memory.description ? (
-                      <span className="mt-1 block min-w-0 max-w-full line-clamp-2 wrap-break-word text-sm text-zinc-600 dark:text-zinc-400">
-                        {memory.description}
-                      </span>
-                    ) : null}
-                    <span className="mt-2 block min-w-0 max-w-full truncate text-xs text-zinc-500 dark:text-zinc-500">
-                      Updated {formatDate(memory.updatedAt)}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <AgentMemoriesList
+          memories={memories}
+          selectedMemoryId={selectedMemoryId}
+          onSelectMemory={setSelectedMemoryId}
+          isLoading={isLoadingMemories}
+          hasMore={hasMore}
+          isLoadingMore={isLoadingMore}
+          onLoadMore={loadMore}
+          loadMoreError={loadMoreError}
+          onRetryLoadMore={loadMore}
+        />
       </div>
       <div className="flex min-h-[min(78vh,44rem)] min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
         {selectedMemory ? (

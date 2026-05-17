@@ -2,9 +2,17 @@ import axiosInstance from "@/lib/axios";
 import type {
   BankrollBettingBalance,
   BankrollDashboard,
+  BankrollEntriesPage,
   BankrollEntryBetDetailsDto,
-  BankrollEntryListItemDto,
 } from "../interfaces";
+
+const BANKROLL_ENTRIES_PAGE_SIZE = 25;
+
+export interface FetchBankrollEntriesPageParams {
+  limit?: number;
+  afterCreatedAt?: string;
+  afterId?: number;
+}
 
 export async function fetchBankrollDashboard(): Promise<BankrollDashboard> {
   const { data } = await axiosInstance.get<BankrollDashboard>(
@@ -20,10 +28,16 @@ export async function fetchBankrollBettingBalance(): Promise<BankrollBettingBala
   return data;
 }
 
-export async function fetchBankrollEntries(): Promise<BankrollEntryListItemDto[]> {
-  const { data } = await axiosInstance.get<BankrollEntryListItemDto[]>(
-    "/api/bankroll/entries"
-  );
+export async function fetchBankrollEntriesPage(
+  params: FetchBankrollEntriesPageParams = {},
+): Promise<BankrollEntriesPage> {
+  const { data } = await axiosInstance.get<BankrollEntriesPage>("/api/bankroll/entries", {
+    params: {
+      limit: params.limit ?? BANKROLL_ENTRIES_PAGE_SIZE,
+      afterCreatedAt: params.afterCreatedAt,
+      afterId: params.afterId,
+    },
+  });
   return data;
 }
 

@@ -1,30 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   BankrollEntryBetDetailsDto,
   BankrollEntryListItemDto,
 } from "@/features/bets/interfaces";
 import {
-  fetchBankrollEntries,
+  fetchBankrollEntriesPage,
   fetchBankrollEntryBetDetails,
 } from "@/features/bets/services/bankroll-api";
 import { handleServiceError } from "@/lib/error-handler";
 import { AgentBankrollEntriesList } from "./agent-bankroll-entries-list";
 import { AgentBankrollRelatedBet } from "./agent-bankroll-related-bet";
 
+function mergeEntries(
+  existing: BankrollEntryListItemDto[],
+  incoming: BankrollEntryListItemDto[],
+): BankrollEntryListItemDto[] {
+  const seen = new Set(existing.map((entry) => entry.id));
+  const merged = [...existing];
+  for (const entry of incoming) {
+    if (seen.has(entry.id)) continue;
+    seen.add(entry.id);
+    merged.push(entry);
+  }
+  return merged;
+}
+
 export function AgentBankrollDetailsPanel() {
   const [entries, setEntries] = useState<BankrollEntryListItemDto[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<BankrollEntryListItemDto | null>(null);
   const [selectedBetDetails, setSelectedBetDetails] = useState<BankrollEntryBetDetailsDto | null>(null);
 
-  const [isEntriesLoading, setIsEntriesLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<{ createdAt: string; id: number } | null>(null);
+
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isBetDetailsLoading, setIsBetDetailsLoading] = useState(false);
 
   const [entriesError, setEntriesError] = useState<string | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [betDetailsError, setBetDetailsError] = useState<string | null>(null);
 
-  function loadBetDetailsForEntry(entry: BankrollEntryListItemDto | null) {
+  const isLoadingMoreRef = useRef(false);
+
+  const loadBetDetailsForEntry = useCallback((entry: BankrollEntryListItemDto | null) => {
     setSelectedEntry(entry);
     setSelectedBetDetails(null);
     setBetDetailsError(null);
@@ -46,16 +67,30 @@ export function AgentBankrollDetailsPanel() {
       .finally(() => {
         setIsBetDetailsLoading(false);
       });
-  }
+  }, []);
+
+  const applyPage = useCallback((page: Awaited<ReturnType<typeof fetchBankrollEntriesPage>>, append: boolean) => {
+    setEntries((current) => (append ? mergeEntries(current, page.items) : page.items));
+    setHasMore(page.hasMore);
+    setNextCursor(
+      page.hasMore && page.nextCursorCreatedAt != null && page.nextCursorId != null
+        ? { createdAt: page.nextCursorCreatedAt, id: page.nextCursorId }
+        : null,
+    );
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchBankrollEntries()
-      .then((data) => {
+    setIsInitialLoading(true);
+    setEntriesError(null);
+    setLoadMoreError(null);
+
+    fetchBankrollEntriesPage()
+      .then((page) => {
         if (cancelled) return;
-        setEntries(data);
-        const firstWithBet = data.find((entry) => entry.betId !== null) ?? data[0] ?? null;
+        applyPage(page, false);
+        const firstWithBet = page.items.find((entry) => entry.betId !== null) ?? page.items[0] ?? null;
         loadBetDetailsForEntry(firstWithBet);
       })
       .catch((caughtError) => {
@@ -64,13 +99,36 @@ export function AgentBankrollDetailsPanel() {
         }
       })
       .finally(() => {
-        if (!cancelled) setIsEntriesLoading(false);
+        if (!cancelled) setIsInitialLoading(false);
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyPage, loadBetDetailsForEntry]);
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
+
+    isLoadingMoreRef.current = true;
+    setIsLoadingMore(true);
+    setLoadMoreError(null);
+
+    fetchBankrollEntriesPage({
+      afterCreatedAt: nextCursor.createdAt,
+      afterId: nextCursor.id,
+    })
+      .then((page) => {
+        applyPage(page, true);
+      })
+      .catch((caughtError) => {
+        setLoadMoreError(handleServiceError(caughtError, "Failed to load more entries."));
+      })
+      .finally(() => {
+        isLoadingMoreRef.current = false;
+        setIsLoadingMore(false);
+      });
+  }, [applyPage, hasMore, nextCursor]);
 
   return (
     <section className="flex flex-col gap-4">
@@ -85,7 +143,12 @@ export function AgentBankrollDetailsPanel() {
               entries={entries}
               selectedEntryId={selectedEntry?.id ?? null}
               onSelectEntry={loadBetDetailsForEntry}
-              isLoading={isEntriesLoading}
+              isLoading={isInitialLoading}
+              hasMore={hasMore}
+              isLoadingMore={isLoadingMore}
+              onLoadMore={loadMore}
+              loadMoreError={loadMoreError}
+              onRetryLoadMore={loadMore}
             />
           )}
         </section>

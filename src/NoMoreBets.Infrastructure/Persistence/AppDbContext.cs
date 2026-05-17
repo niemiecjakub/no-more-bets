@@ -318,6 +318,7 @@ public class AppDbContext : DbContext
         .UsePropertyAccessMode(PropertyAccessMode.FieldDuringConstruction);
       entity.Property(e => e.UpdatedAt).IsRequired(false);
       entity.Property(e => e.CreatedAt).IsRequired();
+      entity.HasIndex(e => new { e.CreatedAt, e.Id });
       entity.HasIndex(e => e.StatusId);
       entity.HasIndex(e => e.AgentSessionId);
       entity.HasIndex(e => e.AgentSessionReflectedId);
@@ -393,6 +394,7 @@ public class AppDbContext : DbContext
       entity.Property(e => e.BetId).IsRequired(false);
       entity.Property(e => e.CreatedAt).IsRequired();
       entity.HasIndex(e => e.BetId);
+      entity.HasIndex(e => new { e.CreatedAt, e.Id });
       entity.HasOne(e => e.BetSlip).WithMany(s => s.Bankrolls).HasForeignKey(e => e.BetId).OnDelete(DeleteBehavior.Restrict);
     });
 

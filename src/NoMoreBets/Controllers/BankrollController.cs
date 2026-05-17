@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Application.Bankroll.GetBankrollDashboard;
+using NoMoreBets.Application.Bankroll.GetBankrollEntriesPage;
 using NoMoreBets.Controllers.Models;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Enums;
@@ -21,8 +22,12 @@ public class BankrollController(IMediator mediator, AppDbContext db) : Controlle
     string Flow,
     decimal Delta,
     DateTime CreatedAt,
-    int? BetId,
-    decimal BalanceAfter);
+    int? BetId);
+  public record BankrollEntriesPageDto(
+    IReadOnlyList<BankrollEntryListItemDto> Items,
+    bool HasMore,
+    DateTime? NextCursorCreatedAt,
+    int? NextCursorId);
   public record BankrollEntryBetDetailsDto(
     int EntryId,
     int BetId,
@@ -58,46 +63,67 @@ public class BankrollController(IMediator mediator, AppDbContext db) : Controlle
   }
 
   [HttpGet("bankroll/entries")]
-  public async Task<ActionResult<IReadOnlyList<BankrollEntryListItemDto>>> GetEntries(
+  public async Task<ActionResult<BankrollEntriesPageDto>> GetEntries(
+    [FromQuery] int limit = 25,
+    [FromQuery] DateTime? afterCreatedAt = null,
+    [FromQuery] int? afterId = null,
     CancellationToken cancellationToken = default)
   {
-    var rows = await db.Bankroll
-      .AsNoTracking()
-      .OrderBy(row => row.CreatedAt)
-      .ThenBy(row => row.Id)
-      .Select(row => new
-      {
+    limit = Math.Clamp(limit, 1, 100);
+
+    if (afterCreatedAt is null != afterId is null)
+    {
+      return BadRequest("afterCreatedAt and afterId must both be provided or omitted.");
+    }
+
+    var query = db.Bankroll.AsNoTracking();
+    if (afterCreatedAt is not null && afterId is not null)
+    {
+      var cursorCreatedAt = DateTimeQueryExtensions.ToUtc(afterCreatedAt.Value);
+      var cursorId = afterId.Value;
+      query = query.Where(row =>
+        row.CreatedAt < cursorCreatedAt
+        || (row.CreatedAt == cursorCreatedAt && row.Id < cursorId));
+    }
+
+    var rows = await query
+      .OrderByDescending(row => row.CreatedAt)
+      .ThenByDescending(row => row.Id)
+      .Take(limit + 1)
+      .Select(row => new BankrollEntryRow(
         row.Id,
         row.Name,
         row.Amount,
         row.Flow,
         row.CreatedAt,
-        row.BetId
-      })
+        row.BetId))
       .ToListAsync(cancellationToken);
 
-    var runningBalance = 0m;
-    var entries = rows
-      .Select(row =>
-      {
-        var delta = row.Flow == BankrollFlowExtensions.InCode ? row.Amount : -row.Amount;
-        runningBalance += delta;
-        var flow = row.Flow == BankrollFlowExtensions.InCode ? nameof(BankrollFlow.In) : nameof(BankrollFlow.Out);
-        return new BankrollEntryListItemDto(
-          row.Id,
-          row.Name,
-          row.Amount,
-          flow,
-          delta,
-          row.CreatedAt,
-          row.BetId,
-          runningBalance);
-      })
-      .OrderByDescending(row => row.CreatedAt)
-      .ThenByDescending(row => row.Id)
+    var hasMore = rows.Count > limit;
+    if (hasMore)
+      rows.RemoveAt(rows.Count - 1);
+
+    var items = BankrollEntriesPagination.MapRows(rows)
+      .Select(item => new BankrollEntryListItemDto(
+        item.Id,
+        item.Name,
+        item.Amount,
+        item.Flow,
+        item.Delta,
+        item.CreatedAt,
+        item.BetId))
       .ToList();
 
-    return Ok(entries);
+    DateTime? nextCursorCreatedAt = null;
+    int? nextCursorId = null;
+    if (hasMore && items.Count > 0)
+    {
+      var lastItem = items[^1];
+      nextCursorCreatedAt = lastItem.CreatedAt;
+      nextCursorId = lastItem.Id;
+    }
+
+    return Ok(new BankrollEntriesPageDto(items, hasMore, nextCursorCreatedAt, nextCursorId));
   }
 
   [HttpGet("bankroll/entries/{entryId:int}/bet-details")]

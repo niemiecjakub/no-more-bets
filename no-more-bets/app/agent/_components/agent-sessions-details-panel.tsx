@@ -4,15 +4,30 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bot, ChevronRight, Globe, Lightbulb, Search, Ticket, Trash2, WalletCards } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BetSlipList } from "@/features/bets/components/bet-slip-list";
 import type { BetSlipListItem } from "@/features/bets/interfaces";
 import { fetchBetSlips } from "@/features/bets/services/bets-api";
 import { AgentSessionTranscript } from "@/features/bets/components/agent-session-transcript";
 import { fetchAgentSessionMessages, type AgentSessionMessage } from "@/features/bets/services/agent-session-api";
 import type { AgentSessionListItem } from "@/features/sessions/interfaces";
-import { fetchAgentSessions } from "@/features/sessions/services/sessions-api";
+import { fetchAgentSessionsPage } from "@/features/sessions/services/sessions-api";
 import { handleServiceError } from "@/lib/error-handler";
+import { AgentSessionsList } from "./agent-sessions-list";
+
+function mergeSessions(
+  existing: AgentSessionListItem[],
+  incoming: AgentSessionListItem[],
+): AgentSessionListItem[] {
+  const seen = new Set(existing.map((session) => session.id));
+  const merged = [...existing];
+  for (const session of incoming) {
+    if (seen.has(session.id)) continue;
+    seen.add(session.id);
+    merged.push(session);
+  }
+  return merged;
+}
 
 function formatDate(iso: string) {
     try {
@@ -84,8 +99,13 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     const searchParams = useSearchParams();
     const [sessions, setSessions] = useState<AgentSessionListItem[]>([]);
     const [selectedSessionId, setSelectedSessionId] = useState<number | null>(null);
+    const [hasMore, setHasMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<{ startedAt: string; id: number } | null>(null);
     const [isLoadingSessions, setIsLoadingSessions] = useState(true);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
     const [sessionsError, setSessionsError] = useState<string | null>(null);
+    const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+    const isLoadingMoreRef = useRef(false);
     const [allBetSlips, setAllBetSlips] = useState<BetSlipListItem[]>([]);
     const [isLoadingBetSlips, setIsLoadingBetSlips] = useState(true);
     const [betSlipsError, setBetSlipsError] = useState<string | null>(null);
@@ -93,33 +113,67 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
     const [transcriptError, setTranscriptError] = useState<string | null>(null);
 
-    const sortedSessions = useMemo(() => [...sessions].sort((a, b) => new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()), [sessions]);
+    const applySessionsPage = useCallback(
+        (page: Awaited<ReturnType<typeof fetchAgentSessionsPage>>, append: boolean) => {
+            setSessions((current) => (append ? mergeSessions(current, page.items) : page.items));
+            setHasMore(page.hasMore);
+            setNextCursor(
+                page.hasMore && page.nextCursorStartedAt != null && page.nextCursorId != null
+                    ? { startedAt: page.nextCursorStartedAt, id: page.nextCursorId }
+                    : null,
+            );
+        },
+        [],
+    );
 
     useEffect(() => {
         let cancelled = false;
-        (async () => {
-            setIsLoadingSessions(true);
-            setSessionsError(null);
-            try {
-                const data = await fetchAgentSessions();
-                if (!cancelled) {
-                    setSessions(data);
-                }
-            } catch (error) {
+        setIsLoadingSessions(true);
+        setSessionsError(null);
+        setLoadMoreError(null);
+
+        fetchAgentSessionsPage({
+            includeSessionId: initialSelectedSessionId ?? undefined,
+        })
+            .then((page) => {
+                if (!cancelled) applySessionsPage(page, false);
+            })
+            .catch((error) => {
                 if (!cancelled) {
                     setSessionsError(handleServiceError(error, "Failed to load agent sessions."));
                 }
-            } finally {
-                if (!cancelled) {
-                    setIsLoadingSessions(false);
-                }
-            }
-        })();
+            })
+            .finally(() => {
+                if (!cancelled) setIsLoadingSessions(false);
+            });
 
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [applySessionsPage, initialSelectedSessionId]);
+
+    const loadMore = useCallback(() => {
+        if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
+
+        isLoadingMoreRef.current = true;
+        setIsLoadingMore(true);
+        setLoadMoreError(null);
+
+        fetchAgentSessionsPage({
+            afterStartedAt: nextCursor.startedAt,
+            afterId: nextCursor.id,
+        })
+            .then((page) => {
+                applySessionsPage(page, true);
+            })
+            .catch((error) => {
+                setLoadMoreError(handleServiceError(error, "Failed to load more sessions."));
+            })
+            .finally(() => {
+                isLoadingMoreRef.current = false;
+                setIsLoadingMore(false);
+            });
+    }, [applySessionsPage, hasMore, nextCursor]);
 
     useEffect(() => {
         let cancelled = false;
@@ -146,14 +200,14 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
 
     useEffect(() => {
         setSelectedSessionId((previous) => {
-            if (sortedSessions.length === 0) return null;
-            if (previous != null && sortedSessions.some((session) => session.id === previous)) return previous;
-            if (initialSelectedSessionId != null && sortedSessions.some((session) => session.id === initialSelectedSessionId)) {
+            if (sessions.length === 0) return null;
+            if (previous != null && sessions.some((session) => session.id === previous)) return previous;
+            if (initialSelectedSessionId != null && sessions.some((session) => session.id === initialSelectedSessionId)) {
                 return initialSelectedSessionId;
             }
-            return sortedSessions[0].id;
+            return sessions[0].id;
         });
-    }, [sortedSessions, initialSelectedSessionId]);
+    }, [sessions, initialSelectedSessionId]);
 
     useEffect(() => {
         if (selectedSessionId == null) {
@@ -190,7 +244,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         };
     }, [selectedSessionId]);
 
-    const selectedSession = selectedSessionId != null ? sortedSessions.find((session) => session.id === selectedSessionId) : undefined;
+    const selectedSession = selectedSessionId != null ? sessions.find((session) => session.id === selectedSessionId) : undefined;
     const SelectedPhaseIcon = selectedSession ? sessionPhaseIcon(selectedSession.phaseId) : Bot;
     const selectedSessionSlips = useMemo(() => {
         if (selectedSessionId == null) return [];
@@ -222,37 +276,17 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     return (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
             <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
-                <div className="h-full max-h-[min(78vh,44rem)] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:var(--color-zinc-400)_transparent] dark:[scrollbar-color:var(--color-zinc-600)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:hover:bg-zinc-400 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 dark:[&::-webkit-scrollbar-thumb]:hover:bg-zinc-600">
-                    <ul className="w-full min-w-0 space-y-1 p-2">
-                        {sortedSessions.map((session) => {
-                            const isSelected = session.id === selectedSessionId;
-                            const PhaseIcon = sessionPhaseIcon(session.phaseId);
-                            return (
-                                <li key={session.id} className="w-full min-w-0">
-                                    <button
-                                        type="button"
-                                        onClick={() => selectSession(session.id)}
-                                        className={
-                                            "flex w-full min-w-0 max-w-full gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors " +
-                                            (isSelected
-                                                ? "border-zinc-300 bg-zinc-100 ring-2 ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-900 dark:ring-zinc-500/30"
-                                                : "border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900/80")
-                                        }
-                                    >
-                                        <PhaseIcon className={"mt-0.5 h-4 w-4 shrink-0 " + (isSelected ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500")} aria-hidden />
-                                        <div className="min-w-0 flex-1">
-                                            <span className="block min-w-0 truncate font-medium text-foreground">{session.phaseName}</span>
-                                            <div className="mt-1 flex min-w-0 items-center gap-2">
-                                                <span className="min-w-0 flex-1 truncate text-left text-xs text-zinc-500 dark:text-zinc-500">{formatDate(session.startedAt)}</span>
-                                                <span className="shrink-0 text-right text-xs font-normal tabular-nums text-zinc-500 dark:text-zinc-500">Session #{session.id}</span>
-                                            </div>
-                                        </div>
-                                    </button>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                </div>
+                <AgentSessionsList
+                    sessions={sessions}
+                    selectedSessionId={selectedSessionId}
+                    onSelectSession={selectSession}
+                    isLoading={isLoadingSessions}
+                    hasMore={hasMore}
+                    isLoadingMore={isLoadingMore}
+                    onLoadMore={loadMore}
+                    loadMoreError={loadMoreError}
+                    onRetryLoadMore={loadMore}
+                />
             </div>
             <div className="flex min-h-[min(78vh,44rem)] min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
                 {selectedSession ? (
