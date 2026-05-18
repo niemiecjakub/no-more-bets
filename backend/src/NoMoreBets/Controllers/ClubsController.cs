@@ -1,31 +1,24 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using NoMoreBets.Application.Clubs.Common;
 using NoMoreBets.Application.Clubs.GetClubRecentGames;
+using NoMoreBets.Application.Clubs.GetClubsList;
 using NoMoreBets.Application.Clubs.GetClubRollingPerformance;
-using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Leagues.GetClubLeagueStatistics;
-using NoMoreBets.Controllers.Models;
+using NoMoreBets.Application.Clubs.GetMatchLeagueStatisticsPair;
+using NoMoreBets.Application.Clubs.GetMatchRecentGamesPair;
+using NoMoreBets.Application.Clubs.GetMatchRollingPerformancePair;
 using NoMoreBets.Domain.Clubs;
-using NoMoreBets.Infrastructure.Persistence;
 
 namespace NoMoreBets.Controllers;
 
 [ApiController]
 [Route("api")]
-public class ClubsController(
-  IMediator mediator,
-  IUnitOfWork unitOfWork,
-  AppDbContext db) : ControllerBase
+public class ClubsController(IMediator mediator) : ControllerBase
 {
   [HttpGet("clubs")]
   public async Task<ActionResult<IReadOnlyList<ClubDto>>> GetClubs(CancellationToken cancellationToken = default)
   {
-    var list = await db.Club
-      .Include(c => c.League)
-      .OrderBy(c => c.Name)
-      .Select(c => new ClubDto(c.Id, c.Name, c.LeagueId, c.League.Name, c.Slug, c.League.Slug))
-      .ToListAsync(cancellationToken);
+    var list = await mediator.Send(new GetClubsListQuery(), cancellationToken).ConfigureAwait(false);
     return Ok(list);
   }
 
@@ -34,14 +27,12 @@ public class ClubsController(
     int matchId,
     CancellationToken cancellationToken = default)
   {
-    var match = await GetMatch(matchId, cancellationToken).ConfigureAwait(false);
-    if (match == null)
+    var result = await mediator
+      .Send(new GetMatchRecentGamesPairQuery(matchId), cancellationToken)
+      .ConfigureAwait(false);
+    if (result == null)
       return NotFound();
-
-    var asOfDate = DateOnly.FromDateTime(match.MatchDate);
-    var home = await mediator.Send(new GetClubRecentGamesQuery(match.HomeClubId, asOfDate), cancellationToken).ConfigureAwait(false);
-    var away = await mediator.Send(new GetClubRecentGamesQuery(match.AwayClubId, asOfDate), cancellationToken).ConfigureAwait(false);
-    return Ok(new ClubPairDto<IReadOnlyList<RecentMatch>?>(home, away));
+    return Ok(result);
   }
 
   [HttpGet("matchinsights/matches/{matchId:int}/league-statistics")]
@@ -49,14 +40,12 @@ public class ClubsController(
     int matchId,
     CancellationToken cancellationToken = default)
   {
-    var match = await GetMatch(matchId, cancellationToken).ConfigureAwait(false);
-    if (match == null)
+    var result = await mediator
+      .Send(new GetMatchLeagueStatisticsPairQuery(matchId), cancellationToken)
+      .ConfigureAwait(false);
+    if (result == null)
       return NotFound();
-
-    var asOfDate = DateOnly.FromDateTime(match.MatchDate);
-    var home = await mediator.Send(new GetClubLeagueStatisticsQuery(match.HomeClubId, asOfDate), cancellationToken).ConfigureAwait(false);
-    var away = await mediator.Send(new GetClubLeagueStatisticsQuery(match.AwayClubId, asOfDate), cancellationToken).ConfigureAwait(false);
-    return Ok(new ClubPairDto<ClubLeagueStats?>(home, away));
+    return Ok(result);
   }
 
   [HttpGet("matchinsights/matches/{matchId:int}/rolling-performance")]
@@ -64,16 +53,11 @@ public class ClubsController(
     int matchId,
     CancellationToken cancellationToken = default)
   {
-    var match = await GetMatch(matchId, cancellationToken).ConfigureAwait(false);
-    if (match == null)
+    var result = await mediator
+      .Send(new GetMatchRollingPerformancePairQuery(matchId), cancellationToken)
+      .ConfigureAwait(false);
+    if (result == null)
       return NotFound();
-
-    var asOfDate = DateOnly.FromDateTime(match.MatchDate);
-    var home = await mediator.Send(new GetClubRollingPerformanceQuery(match.HomeClubId, asOfDate), cancellationToken).ConfigureAwait(false);
-    var away = await mediator.Send(new GetClubRollingPerformanceQuery(match.AwayClubId, asOfDate), cancellationToken).ConfigureAwait(false);
-    return Ok(new ClubPairDto<TeamPerformanceResult?>(home, away));
+    return Ok(result);
   }
-
-  private Task<Domain.Matches.Match?> GetMatch(int matchId, CancellationToken cancellationToken) =>
-    unitOfWork.Matches.GetMatchByIdAsync(matchId, cancellationToken);
 }

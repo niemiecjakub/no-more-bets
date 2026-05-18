@@ -65,6 +65,16 @@ public class ClubRepository : IClubRepository
       .ToListAsync();
   }
 
+  public async Task<IReadOnlyList<Club>> GetClubsWithLeagueOrderedByNameAsync(CancellationToken cancellationToken = default)
+  {
+    return await _db.Club
+      .AsNoTracking()
+      .Include(c => c.League)
+      .OrderBy(c => c.Name)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public Task<List<Club>> GetClubs(int? leagueId = null)
   {
     var query = _db.Club.AsQueryable();

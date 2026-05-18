@@ -11,7 +11,7 @@ namespace NoMoreBets.Controllers;
 public class MemoriesController(IMediator mediator) : ControllerBase
 {
   [HttpGet("memories")]
-  public async Task<ActionResult<PagedResponse<MemoryListItem>>> GetMemories(
+  public async Task<ActionResult<Paged<MemoryListItem>>> GetMemories(
     [FromQuery] int limit = 15,
     [FromQuery] DateTime? afterUpdatedAt = null,
     [FromQuery] int? afterId = null,

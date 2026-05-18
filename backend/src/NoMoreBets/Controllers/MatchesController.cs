@@ -18,7 +18,7 @@ namespace NoMoreBets.Controllers;
 public class MatchesController(IMediator mediator) : ControllerBase
 {
   [HttpGet("matches")]
-  public async Task<ActionResult<PagedResponse<MatchDto>>> GetMatches(
+  public async Task<ActionResult<Paged<MatchDto>>> GetMatches(
     [FromQuery] int? matchStatusId = null,
     [FromQuery] int[]? leagueIds = null,
     [FromQuery] int limit = 10,

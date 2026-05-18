@@ -85,6 +85,25 @@ public class BettingRepository : IBettingRepository
     return await MaterializeBetSlipListAsync(query, cancellationToken).ConfigureAwait(false);
   }
 
+  public async Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsAsync(CancellationToken cancellationToken = default)
+  {
+    return await _db.BetSlip
+      .AsNoTracking()
+      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting)
+      .Include(s => s.BetStatusEntity)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.BetStatusEntity)
+      .OrderByDescending(s => s.CreatedAt)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task<BetSlip?> GetLatestResearchBetSlipForMatchAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _db.BetSlip
@@ -234,5 +253,162 @@ public class BettingRepository : IBettingRepository
       .ConfigureAwait(false);
 
     return ids.ToHashSet();
+  }
+
+  private IQueryable<BetSlip> SettledBettingSlipsQuery() =>
+    _db.BetSlip
+      .AsNoTracking()
+      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting)
+      .Where(s => s.StatusId != (int)BetStatus.Pending);
+
+  public async Task<BettingPhaseSummaryStats> GetBettingPhaseSettledSummaryAsync(
+    CancellationToken cancellationToken = default)
+  {
+    var settled = await SettledBettingSlipsQuery()
+      .Select(s => new { s.StatusId, SelectionsCount = s.Selections.Count })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var settledCount = settled.Count;
+    var wonCount = settled.Count(s => s.StatusId == (int)BetStatus.Won);
+    var lostCount = settled.Count(s => s.StatusId == (int)BetStatus.Lost);
+
+    return new BettingPhaseSummaryStats(
+      settledCount,
+      settled.Sum(s => s.SelectionsCount),
+      wonCount,
+      lostCount);
+  }
+
+  public async Task<ResearchPhaseSummaryStats> GetResearchPhaseSettledSummaryAsync(
+    IReadOnlyList<int> leagueIds,
+    CancellationToken cancellationToken = default)
+  {
+    var settledQuery = _db.BetSlip
+      .AsNoTracking()
+      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Research)
+      .Where(s => s.StatusId != (int)BetStatus.Pending);
+
+    if (leagueIds.Count > 0)
+    {
+      settledQuery = settledQuery
+        .Where(s => s.Selections.Any(sel =>
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          leagueIds.Contains(sel.Match.Stage.Season.LeagueId)));
+    }
+
+    var settledSelections = await settledQuery
+      .SelectMany(s => s.Selections)
+      .Where(sel => leagueIds.Count == 0 || (
+        sel.Match != null &&
+        sel.Match.Stage != null &&
+        sel.Match.Stage.Season != null &&
+        leagueIds.Contains(sel.Match.Stage.Season.LeagueId)))
+      .Select(sel => sel.StatusId)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var won = settledSelections.Count(statusId => statusId == (int)BetStatus.Won);
+    var lost = settledSelections.Count(statusId => statusId == (int)BetStatus.Lost);
+
+    return new ResearchPhaseSummaryStats(settledSelections.Count, won, lost);
+  }
+
+  public async Task<BettingPhaseDetailCounts> GetBettingPhaseSettledDetailCountsAsync(
+    CancellationToken cancellationToken = default)
+  {
+    var settledSlips = SettledBettingSlipsQuery();
+    var wonSlips = await settledSlips.CountAsync(s => s.StatusId == (int)BetStatus.Won, cancellationToken).ConfigureAwait(false);
+    var lostSlips = await settledSlips.CountAsync(s => s.StatusId == (int)BetStatus.Lost, cancellationToken).ConfigureAwait(false);
+
+    var settledSelections = _db.BetSelection
+      .AsNoTracking()
+      .Where(sel => sel.BetSlip.AgentSession != null && sel.BetSlip.AgentSession.Phase == AgentSessionPhase.Betting)
+      .Where(sel => sel.BetSlip.StatusId == (int)BetStatus.Won || sel.BetSlip.StatusId == (int)BetStatus.Lost);
+
+    var wonSelections = await settledSelections.CountAsync(sel => sel.StatusId == (int)BetStatus.Won, cancellationToken).ConfigureAwait(false);
+    var lostSelections = await settledSelections.CountAsync(sel => sel.StatusId == (int)BetStatus.Lost, cancellationToken).ConfigureAwait(false);
+
+    return new BettingPhaseDetailCounts(wonSlips, lostSlips, wonSelections, lostSelections);
+  }
+
+  public async Task<BetSlipIdPage> GetSettledBettingSlipIdsPageAsync(
+    int limit,
+    DateTime? afterCreatedAtUtc,
+    int? afterId,
+    CancellationToken cancellationToken = default)
+  {
+    var query = SettledBettingSlipsQuery()
+      .Where(s => s.StatusId == (int)BetStatus.Won || s.StatusId == (int)BetStatus.Lost);
+
+    if (afterCreatedAtUtc is not null && afterId is not null)
+    {
+      var cursorCreatedAt = afterCreatedAtUtc.Value;
+      var cursorId = afterId.Value;
+      query = query.Where(s =>
+        s.CreatedAt < cursorCreatedAt
+        || (s.CreatedAt == cursorCreatedAt && s.Id < cursorId));
+    }
+
+    var slipIds = await query
+      .OrderByDescending(s => s.CreatedAt)
+      .ThenByDescending(s => s.Id)
+      .Take(limit + 1)
+      .Select(s => s.Id)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var hasMore = slipIds.Count > limit;
+    if (hasMore)
+      slipIds.RemoveAt(slipIds.Count - 1);
+
+    return new BetSlipIdPage(slipIds, hasMore);
+  }
+
+  public async Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsByIdsAsync(
+    IReadOnlyList<int> slipIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (slipIds.Count == 0)
+      return Array.Empty<BetSlip>();
+
+    var slips = await _db.BetSlip
+      .AsNoTracking()
+      .Where(s => slipIds.Contains(s.Id))
+      .Include(s => s.BetStatusEntity)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.BetStatusEntity)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var order = slipIds.Select((id, index) => new { id, index }).ToDictionary(x => x.id, x => x.index);
+    slips.Sort((left, right) => order[left.Id].CompareTo(order[right.Id]));
+    return slips;
+  }
+
+  public async Task<PendingBetsWidgetData> GetBettingPhasePendingBetsWidgetAsync(
+    CancellationToken cancellationToken = default)
+  {
+    var pending = await _db.BetSlip
+      .AsNoTracking()
+      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting)
+      .Where(s => s.StatusId == (int)BetStatus.Pending)
+      .Select(s => new { s.StakeAmount, s.PotentialPayout, s.CreatedAt })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return new PendingBetsWidgetData(
+      pending.Count,
+      pending.Sum(s => s.StakeAmount),
+      pending.Sum(s => s.PotentialPayout),
+      pending.OrderByDescending(s => s.CreatedAt).Select(s => (DateTime?)s.CreatedAt).FirstOrDefault());
   }
 }

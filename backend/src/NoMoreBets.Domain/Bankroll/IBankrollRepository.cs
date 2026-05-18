@@ -1,3 +1,5 @@
+using NoMoreBets.Domain.Betting;
+
 namespace NoMoreBets.Domain.Bankrolls;
 
 public interface IBankrollRepository
@@ -8,4 +10,12 @@ public interface IBankrollRepository
     CancellationToken cancellationToken = default);
 
   Task AddAsync(Bankroll entity, CancellationToken cancellationToken = default);
+  Task<decimal> GetBettingBalanceAsync(CancellationToken cancellationToken = default);
+  Task<decimal> GetTotalValueAsync(CancellationToken cancellationToken = default);
+  Task<BankrollPage> GetEntriesPageAsync(
+    int limit,
+    DateTime? afterCreatedAtUtc,
+    int? afterId,
+    CancellationToken cancellationToken = default);
+  Task<BetSlip?> GetBettingPhaseBetSlipForEntryAsync(int entryId, CancellationToken cancellationToken = default);
 }

@@ -10,4 +10,18 @@ public interface IAgentSessionRepository
     CancellationToken cancellationToken = default);
 
   Task DeleteSessionAsync(int sessionId, CancellationToken cancellationToken = default);
+  Task<AgentSessionPage> GetSessionsPageAsync(
+    int limit,
+    DateTime? afterStartedAtUtc,
+    int? afterId,
+    int? includeSessionId,
+    CancellationToken cancellationToken = default);
+  Task<IReadOnlyDictionary<int, int>> GetMatchIdsBySessionIdsAsync(
+    IReadOnlyCollection<int> sessionIds,
+    CancellationToken cancellationToken = default);
+  Task<bool> SessionExistsAsync(int sessionId, CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<AgentSessionMessage>> GetMessagesAsync(
+    int sessionId,
+    CancellationToken cancellationToken = default);
+  Task<AgentSessionsWidgetData> GetSessionsWidgetAsync(CancellationToken cancellationToken = default);
 }

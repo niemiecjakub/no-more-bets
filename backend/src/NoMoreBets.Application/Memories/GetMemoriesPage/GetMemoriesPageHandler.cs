@@ -7,12 +7,12 @@ namespace NoMoreBets.Application.Memories.GetMemoriesPage;
 public record GetMemoriesPageQuery(
   int Limit,
   DateTime? AfterUpdatedAtUtc,
-  int? AfterId) : IRequest<PagedResponse<MemoryListItem>>;
+  int? AfterId) : IRequest<Paged<MemoryListItem>>;
 
 public sealed class GetMemoriesPageHandler(IUnitOfWork unitOfWork)
-  : IRequestHandler<GetMemoriesPageQuery, PagedResponse<MemoryListItem>>
+  : IRequestHandler<GetMemoriesPageQuery, Paged<MemoryListItem>>
 {
-  public async Task<PagedResponse<MemoryListItem>> Handle(
+  public async Task<Paged<MemoryListItem>> Handle(
     GetMemoriesPageQuery request,
     CancellationToken cancellationToken)
   {
@@ -20,7 +20,7 @@ public sealed class GetMemoriesPageHandler(IUnitOfWork unitOfWork)
       .GetPageAsync(request.Limit, request.AfterUpdatedAtUtc, request.AfterId, cancellationToken)
       .ConfigureAwait(false);
 
-    return PagedResponseFactory.Create(
+    return PagedFactory.Create(
       page.Items,
       page.HasMore,
       item => item.UpdatedAt,

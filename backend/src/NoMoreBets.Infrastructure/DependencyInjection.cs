@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 using NoMoreBets.Application.Betting;
 using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Common.Fotmob;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.SocialMedia;
@@ -114,7 +113,6 @@ public static class DependencyInjection
 
     // Scrapers
     services.AddSingleton<IFotmobConstants, FotmobConstants>();
-    services.AddSingleton<IFotmobTeamLookup>(sp => (IFotmobTeamLookup)sp.GetRequiredService<IFotmobConstants>());
     services.AddSingleton<RotowireScraper>();
     services.AddSingleton<BetclicScraper>();
     services.AddSingleton<FotmobScraper>();

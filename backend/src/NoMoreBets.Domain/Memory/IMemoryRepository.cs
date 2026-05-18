@@ -11,4 +11,5 @@ public interface IMemoryRepository
   Task<Memory?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
   Task AddAsync(Memory memory, CancellationToken cancellationToken = default);
   Task<bool> SoftDeleteByNameAsync(string name, CancellationToken cancellationToken = default);
+  Task<MemoriesWidgetData> GetActiveMemoriesWidgetAsync(CancellationToken cancellationToken = default);
 }

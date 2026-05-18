@@ -10,12 +10,12 @@ public record GetMatchesPageQuery(
   int? MatchStatusId,
   IReadOnlyList<int> LeagueIds,
   DateTime? AfterMatchDateUtc,
-  int? AfterId) : IRequest<PagedResponse<MatchDto>>;
+  int? AfterId) : IRequest<Paged<MatchDto>>;
 
 public sealed class GetMatchesPageHandler(IUnitOfWork unitOfWork, IMediator mediator)
-  : IRequestHandler<GetMatchesPageQuery, PagedResponse<MatchDto>>
+  : IRequestHandler<GetMatchesPageQuery, Paged<MatchDto>>
 {
-  public async Task<PagedResponse<MatchDto>> Handle(
+  public async Task<Paged<MatchDto>> Handle(
     GetMatchesPageQuery request,
     CancellationToken cancellationToken)
   {
@@ -72,6 +72,6 @@ public sealed class GetMatchesPageHandler(IUnitOfWork unitOfWork, IMediator medi
         hasHeadToHeadSet))
       .ToList();
 
-    return PagedResponseFactory.Create(items, page.HasMore, item => item.MatchDate, item => item.Id);
+    return PagedFactory.Create(items, page.HasMore, item => item.MatchDate, item => item.Id);
   }
 }

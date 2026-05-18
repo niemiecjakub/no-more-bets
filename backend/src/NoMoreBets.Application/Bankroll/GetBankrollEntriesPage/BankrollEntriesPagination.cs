@@ -1,14 +1,7 @@
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Application.Bankroll.GetBankrollEntriesPage;
-
-public record BankrollEntryRow(
-  int Id,
-  string Name,
-  decimal Amount,
-  string Flow,
-  DateTime CreatedAt,
-  int? BetId);
 
 public record BankrollEntryListItem(
   int Id,

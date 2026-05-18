@@ -89,4 +89,21 @@ public class MemoryRepository : IMemoryRepository
     entity.MarkDeleted();
     return true;
   }
+
+  public async Task<MemoriesWidgetData> GetActiveMemoriesWidgetAsync(CancellationToken cancellationToken = default)
+  {
+    var memories = await _db.Memory
+      .AsNoTracking()
+      .Where(m => m.DeletedAt == null)
+      .Select(m => new { m.Name, m.UpdatedAt })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var latest = memories.OrderByDescending(m => m.UpdatedAt).FirstOrDefault();
+
+    return new MemoriesWidgetData(
+      memories.Count,
+      latest?.UpdatedAt,
+      latest?.Name);
+  }
 }

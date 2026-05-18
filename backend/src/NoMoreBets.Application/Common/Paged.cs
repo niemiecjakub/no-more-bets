@@ -1,14 +1,14 @@
 namespace NoMoreBets.Application.Common;
 
-public record PagedResponse<T>(
+public record Paged<T>(
   IReadOnlyList<T> Items,
   bool HasMore,
   DateTime? NextCursorAt,
   int? NextCursorId);
 
-public static class PagedResponseFactory
+public static class PagedFactory
 {
-  public static PagedResponse<T> Create<T>(
+  public static Paged<T> Create<T>(
     IReadOnlyList<T> items,
     bool hasMore,
     Func<T, DateTime> getSortAt,

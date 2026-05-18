@@ -45,4 +45,116 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
       .Where(s => s.Id == sessionId)
       .ExecuteDeleteAsync(cancellationToken);
   }
+
+  public async Task<AgentSessionPage> GetSessionsPageAsync(
+    int limit,
+    DateTime? afterStartedAtUtc,
+    int? afterId,
+    int? includeSessionId,
+    CancellationToken cancellationToken = default)
+  {
+    var isFirstPage = afterStartedAtUtc is null && afterId is null;
+    if (!isFirstPage)
+      includeSessionId = null;
+
+    var query = db.AgentSession.AsNoTracking();
+    if (afterStartedAtUtc is not null && afterId is not null)
+    {
+      var cursorStartedAt = afterStartedAtUtc.Value;
+      var cursorId = afterId.Value;
+      query = query.Where(s =>
+        s.StartedAt < cursorStartedAt
+        || (s.StartedAt == cursorStartedAt && s.Id < cursorId));
+    }
+
+    var rows = await query
+      .OrderByDescending(s => s.StartedAt)
+      .ThenByDescending(s => s.Id)
+      .Take(limit + 1)
+      .Select(s => new AgentSessionListRow(
+        s.Id,
+        s.Phase,
+        s.StartedAt,
+        s.Messages.Count(m => m.Kind != AgentSessionMessageKind.FunctionCall)))
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var hasMore = rows.Count > limit;
+    if (hasMore)
+      rows.RemoveAt(rows.Count - 1);
+
+    if (isFirstPage && includeSessionId is > 0 && rows.All(r => r.Id != includeSessionId.Value))
+    {
+      var included = await db.AgentSession
+        .AsNoTracking()
+        .Where(s => s.Id == includeSessionId.Value)
+        .Select(s => new AgentSessionListRow(
+          s.Id,
+          s.Phase,
+          s.StartedAt,
+          s.Messages.Count(m => m.Kind != AgentSessionMessageKind.FunctionCall)))
+        .SingleOrDefaultAsync(cancellationToken)
+        .ConfigureAwait(false);
+
+      if (included is not null)
+        rows.Add(included);
+    }
+
+    rows = rows
+      .OrderByDescending(r => r.StartedAt)
+      .ThenByDescending(r => r.Id)
+      .ToList();
+
+    return new AgentSessionPage(rows, hasMore);
+  }
+
+  public async Task<IReadOnlyDictionary<int, int>> GetMatchIdsBySessionIdsAsync(
+    IReadOnlyCollection<int> sessionIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (sessionIds.Count == 0)
+      return new Dictionary<int, int>();
+
+    var pairs = await db.MatchAnalysis
+      .AsNoTracking()
+      .Where(a => a.AgentSessionId != null && sessionIds.Contains(a.AgentSessionId.Value))
+      .Select(a => new { SessionId = a.AgentSessionId!.Value, a.MatchId })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return pairs
+      .GroupBy(p => p.SessionId)
+      .ToDictionary(g => g.Key, g => g.First().MatchId);
+  }
+
+  public Task<bool> SessionExistsAsync(int sessionId, CancellationToken cancellationToken = default) =>
+    db.AgentSession.AsNoTracking().AnyAsync(s => s.Id == sessionId, cancellationToken);
+
+  public async Task<IReadOnlyList<AgentSessionMessage>> GetMessagesAsync(
+    int sessionId,
+    CancellationToken cancellationToken = default)
+  {
+    return await db.AgentSessionMessage
+      .AsNoTracking()
+      .Where(m => m.SessionId == sessionId)
+      .OrderBy(m => m.Ordinal)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+  public async Task<AgentSessionsWidgetData> GetSessionsWidgetAsync(CancellationToken cancellationToken = default)
+  {
+    var sessions = await db.AgentSession
+      .AsNoTracking()
+      .Select(s => new { s.StartedAt, s.Phase })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var latest = sessions.OrderByDescending(s => s.StartedAt).FirstOrDefault();
+
+    return new AgentSessionsWidgetData(
+      sessions.Count,
+      latest?.StartedAt,
+      latest?.Phase.ToString());
+  }
 }

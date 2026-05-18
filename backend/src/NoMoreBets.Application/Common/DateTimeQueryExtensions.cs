@@ -1,6 +1,6 @@
-namespace NoMoreBets.Controllers;
+namespace NoMoreBets.Application.Common;
 
-internal static class DateTimeQueryExtensions
+public static class DateTimeQueryExtensions
 {
   public static DateTime ToUtc(DateTime value) =>
     value.Kind switch
