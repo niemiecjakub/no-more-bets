@@ -27,4 +27,23 @@ public interface IMatchRepository
     IReadOnlyCollection<int> matchIds,
     string code,
     CancellationToken cancellationToken = default);
+  Task<MatchPage> GetMatchesPageAsync(
+    int limit,
+    int? matchStatusId,
+    IReadOnlyList<int> leagueIds,
+    DateTime? afterMatchDateUtc,
+    int? afterId,
+    CancellationToken cancellationToken = default);
+  Task<IReadOnlySet<int>> GetMatchIdsWithLineupAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default);
+  Task<IReadOnlySet<int>> GetMatchIdsWithOddsAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default);
+  Task<IReadOnlySet<int>> GetMatchIdsWithHeadToHeadAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<MatchAnalysis>> GetNonResearchAnalysesForMatchAsync(
+    int matchId,
+    CancellationToken cancellationToken = default);
 }

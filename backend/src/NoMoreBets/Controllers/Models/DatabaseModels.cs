@@ -10,29 +10,6 @@ public record ClubDto(
   string Slug,
   string LeagueSlug);
 
-public record MatchDto(
-  int Id,
-  DateTime MatchDate,
-  int HomeClubId,
-  int AwayClubId,
-  string HomeClubName,
-  string AwayClubName,
-  string HomeClubSlug,
-  string AwayClubSlug,
-  string LeagueName,
-  string LeagueSlug,
-  int MatchStatusId,
-  string MatchStatusName,
-  int? HomeGoals,
-  int? AwayGoals,
-  string? BetclicUrl,
-  bool IsReadyToPredict = false,
-  bool HasResearch = false,
-  bool HasResearchBet = false,
-  bool HasLineup = false,
-  bool HasOdds = false,
-  bool HasHeadToHead = false);
-
 public record LeagueTableDto(
   long SnapshotId,
   int LeagueId,
@@ -61,35 +38,6 @@ public record LeagueTableRowDto(
   decimal XgaDiff,
   decimal Xpts,
   decimal XptsDiff);
-
-public record StructuredMatchAnalysisDto(
-  string? Context,
-  string? Form,
-  string? Tactics,
-  string? Squad,
-  string? Statistics,
-  string? Market,
-  string? MatchProjection,
-  string? Prediction);
-
-public record MatchAnalysisItemDto(
-  int Id,
-  string Code,
-  string Content,
-  StructuredMatchAnalysisDto? Structured);
-
-public record MatchAnalysisPageDto(
-  int MatchId,
-  string HomeClubName,
-  string AwayClubName,
-  string HomeClubSlug,
-  string AwayClubSlug,
-  int MatchStatusId,
-  int? HomeGoals,
-  int? AwayGoals,
-  DateTime MatchDate,
-  IReadOnlyList<MatchAnalysisItemDto> Analyses,
-  int? ResearchAgentSessionId);
 
 public record BetSelectionItemDto(
   int MatchId,

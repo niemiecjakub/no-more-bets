@@ -25,4 +25,7 @@ public interface IBettingRepository
   Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsAwaitingReflectionAsync(CancellationToken cancellationToken = default);
   Task MarkBetSlipsAgentSessionReflectedAsync(int agentSessionId, IReadOnlyList<int> betSlipIds, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSelection>> GetPendingSelectionsWithBothScoresAsync(CancellationToken cancellationToken = default);
+  Task<IReadOnlySet<int>> GetMatchIdsWithResearchPhaseSelectionsAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default);
 }

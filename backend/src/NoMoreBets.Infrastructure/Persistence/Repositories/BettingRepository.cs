@@ -215,4 +215,24 @@ public class BettingRepository : IBettingRepository
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
   }
+
+  public async Task<IReadOnlySet<int>> GetMatchIdsWithResearchPhaseSelectionsAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return new HashSet<int>();
+
+    var ids = await _db.BetSelection
+      .Where(sel =>
+        matchIds.Contains(sel.MatchId)
+        && sel.BetSlip.AgentSession != null
+        && sel.BetSlip.AgentSession.Phase == AgentSessionPhase.Research)
+      .Select(sel => sel.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return ids.ToHashSet();
+  }
 }

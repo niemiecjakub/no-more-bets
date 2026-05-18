@@ -223,4 +223,117 @@ public class MatchRepository : IMatchRepository
     return ids.ToHashSet();
   }
 
+  public async Task<MatchPage> GetMatchesPageAsync(
+    int limit,
+    int? matchStatusId,
+    IReadOnlyList<int> leagueIds,
+    DateTime? afterMatchDateUtc,
+    int? afterId,
+    CancellationToken cancellationToken = default)
+  {
+    var selectedLeagueIds = leagueIds.Distinct().ToArray();
+    var hasLeagueFilter = selectedLeagueIds.Length > 0;
+
+    var matchesQuery = _db.Match.AsNoTracking().AsQueryable();
+    if (matchStatusId.HasValue)
+      matchesQuery = matchesQuery.Where(m => m.MatchStatusId == matchStatusId.Value);
+    if (hasLeagueFilter)
+      matchesQuery = matchesQuery.Where(m =>
+        m.Stage != null &&
+        selectedLeagueIds.Contains(m.Stage.Season.LeagueId));
+
+    if (afterMatchDateUtc is not null && afterId is not null)
+    {
+      var cursorMatchDate = afterMatchDateUtc.Value;
+      var cursorId = afterId.Value;
+      matchesQuery = matchesQuery.Where(m =>
+        m.MatchDate < cursorMatchDate
+        || (m.MatchDate == cursorMatchDate && m.Id < cursorId));
+    }
+
+    var rows = await matchesQuery
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .Include(m => m.MatchStatusEntity)
+      .Include(m => m.Stage)
+        .ThenInclude(s => s!.Season)
+        .ThenInclude(se => se.League)
+      .OrderByDescending(m => m.MatchDate)
+      .ThenByDescending(m => m.Id)
+      .Take(limit + 1)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var hasMore = rows.Count > limit;
+    if (hasMore)
+      rows.RemoveAt(rows.Count - 1);
+
+    return new MatchPage(rows, hasMore);
+  }
+
+  public async Task<IReadOnlySet<int>> GetMatchIdsWithLineupAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return new HashSet<int>();
+
+    var ids = await _db.Lineup
+      .Where(l => matchIds.Contains(l.MatchId))
+      .Select(l => l.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return ids.ToHashSet();
+  }
+
+  public async Task<IReadOnlySet<int>> GetMatchIdsWithOddsAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return new HashSet<int>();
+
+    var ids = await _db.BettingOddsSnapshot
+      .Where(b => matchIds.Contains(b.MatchId))
+      .Select(b => b.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return ids.ToHashSet();
+  }
+
+  public async Task<IReadOnlySet<int>> GetMatchIdsWithHeadToHeadAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return new HashSet<int>();
+
+    var ids = await _db.Match
+      .Where(m => matchIds.Contains(m.Id) && _db.Head2Head.Any(h =>
+        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
+        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
+      .Select(m => m.Id)
+      .Distinct()
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return ids.ToHashSet();
+  }
+
+  public async Task<IReadOnlyList<MatchAnalysis>> GetNonResearchAnalysesForMatchAsync(
+    int matchId,
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.MatchAnalysis
+      .Where(a => a.MatchId == matchId)
+      .Where(a => a.Code != MatchAnalysis.ResearchCode)
+      .OrderBy(a => a.Id)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
 }
