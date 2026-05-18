@@ -1,6 +1,5 @@
 using MediatR;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Matches.Dto;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 using NoMoreBets.Domain.Matches;
 

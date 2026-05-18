@@ -1,4 +1,4 @@
-namespace NoMoreBets.Application.Matches.Dto;
+namespace NoMoreBets.Application.Matches.GetMatchesPage;
 
 public record MatchDto(
   int Id,

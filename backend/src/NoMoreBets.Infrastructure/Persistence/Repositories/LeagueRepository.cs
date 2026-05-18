@@ -58,6 +58,29 @@ public class LeagueRepository : ILeagueRepository
     return _db.League.ToListAsync();
   }
 
+  public async Task<IReadOnlyList<League>> GetLeaguesOrderedByNameAsync(CancellationToken cancellationToken = default)
+  {
+    return await _db.League
+      .AsNoTracking()
+      .OrderBy(l => l.Name)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+  public Task<LeagueTableSnapshot?> GetLatestLeagueTableSnapshotAsync(
+    int leagueId,
+    CancellationToken cancellationToken = default)
+  {
+    return _db.LeagueTableSnapshot
+      .AsNoTracking()
+      .Where(s => s.LeagueId == leagueId)
+      .Include(s => s.League)
+      .Include(s => s.Rows)
+      .ThenInclude(r => r.Club)
+      .OrderByDescending(s => s.SnapshotDate)
+      .FirstOrDefaultAsync(cancellationToken);
+  }
+
   public Task<League?> GetByIdAsync(int leagueId, CancellationToken cancellationToken = default)
   {
     return _db.League.AsNoTracking().FirstOrDefaultAsync(l => l.Id == leagueId, cancellationToken);

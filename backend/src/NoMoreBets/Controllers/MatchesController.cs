@@ -1,14 +1,13 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Matches.Dto;
 using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchAnalyses;
+using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
 using MatchInjuriesResult = NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult;
 using MatchLineupResult = NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult;
-using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Application.Matches.MatchExists;
 using NoMoreBets.Domain.Matches.Dto;
 

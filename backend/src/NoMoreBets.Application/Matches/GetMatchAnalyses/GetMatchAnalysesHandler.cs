@@ -1,6 +1,5 @@
 using MediatR;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Matches.Dto;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.GetMatchAnalyses;
@@ -34,7 +33,7 @@ public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork)
         a.Id,
         a.Code,
         a.Content,
-        MatchDtoMapper.MapStructured(a.GetAnalysis())))
+        MatchAnalysisDtoMapper.MapStructured(a.GetAnalysis())))
       .ToList();
 
     return new MatchAnalysisPageDto(

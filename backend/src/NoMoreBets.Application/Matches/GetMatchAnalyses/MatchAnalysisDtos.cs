@@ -1,4 +1,4 @@
-namespace NoMoreBets.Application.Matches.Dto;
+namespace NoMoreBets.Application.Matches.GetMatchAnalyses;
 
 public record StructuredMatchAnalysisDto(
   string? Context,
