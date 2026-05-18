@@ -7,7 +7,6 @@ using NoMoreBets.Application.SocialMedia.CreateXPost;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
-[Description("Publishes content to social networks when configured (X/Twitter via OAuth 1.0a).")]
 public sealed class SocialMediaPlugin
 {
   private readonly IXApiService _xApiService;

@@ -14,7 +14,7 @@ using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
-using NoMoreBets.Infrastructure.AI.Provider;
+using NoMoreBets.Infrastructure.AI.Common;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
@@ -27,10 +27,10 @@ public class BettingPlugin
 
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
-  private readonly IAgentSessionContext _agentSessionContext;
+  private readonly AgentSessionContext _agentSessionContext;
   private readonly ILogger<BettingPlugin> _logger;
 
-  public BettingPlugin(IUnitOfWork unitOfWork, IMediator mediator, IAgentSessionContext agentSessionContext, ILogger<BettingPlugin>? logger = null)
+  public BettingPlugin(IUnitOfWork unitOfWork, IMediator mediator, AgentSessionContext agentSessionContext, ILogger<BettingPlugin>? logger = null)
   {
     _unitOfWork = unitOfWork;
     _mediator = mediator;

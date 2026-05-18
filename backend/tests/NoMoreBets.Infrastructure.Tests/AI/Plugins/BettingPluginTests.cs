@@ -10,7 +10,7 @@ using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Plugins;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
-using NoMoreBets.Infrastructure.AI.Provider;
+using NoMoreBets.Infrastructure.AI.Common;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
@@ -21,7 +21,7 @@ public class BettingPluginTests
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly IBankrollRepository _bankroll = Substitute.For<IBankrollRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
-  private readonly IAgentSessionContext _agentSessionContext = Substitute.For<IAgentSessionContext>();
+  private readonly AgentSessionContext _agentSessionContext = new();
   private readonly BettingPlugin _sut;
 
   public BettingPluginTests()

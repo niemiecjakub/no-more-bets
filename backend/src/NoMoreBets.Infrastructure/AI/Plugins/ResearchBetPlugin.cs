@@ -8,7 +8,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
-using NoMoreBets.Infrastructure.AI.Provider;
+using NoMoreBets.Infrastructure.AI.Common;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
@@ -22,14 +22,14 @@ public class ResearchBetPlugin
   };
 
   private readonly IUnitOfWork _unitOfWork;
-  private readonly IAgentSessionContext _agentSessionContext;
+  private readonly AgentSessionContext _agentSessionContext;
   private readonly int _matchId;
   private readonly ILogger<ResearchBetPlugin> _logger;
 
   public ResearchBetPlugin(
     int matchId,
     IUnitOfWork unitOfWork,
-    IAgentSessionContext agentSessionContext,
+    AgentSessionContext agentSessionContext,
     ILogger<ResearchBetPlugin>? logger = null)
   {
     if (matchId <= 0)

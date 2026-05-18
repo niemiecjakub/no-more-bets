@@ -1,4 +1,4 @@
-namespace NoMoreBets.Infrastructure.AI.Provider;
+namespace NoMoreBets.Infrastructure.AI.Common;
 
 public sealed class ThreadProvider
 {

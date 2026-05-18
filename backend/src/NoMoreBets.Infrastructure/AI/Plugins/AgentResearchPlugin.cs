@@ -7,7 +7,7 @@ using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Infrastructure.AI.Plugins.Models;
-using NoMoreBets.Infrastructure.AI.Provider;
+using NoMoreBets.Infrastructure.AI.Common;
 
 namespace NoMoreBets.Infrastructure.AI.Plugins;
 
@@ -15,7 +15,7 @@ public class AgentResearchPlugin : AgentPluginBase
 {
   private readonly MatchPlugin _matchPlugin;
   private readonly IUnitOfWork _unitOfWork;
-  private readonly IAgentSessionContext _agentSessionContext;
+  private readonly AgentSessionContext _agentSessionContext;
   private readonly ILogger<AgentResearchPlugin> _logger;
 
   public AgentResearchPlugin(
@@ -24,7 +24,7 @@ public class AgentResearchPlugin : AgentPluginBase
     MemoriesPlugin memoriesPlugin,
     BankrollPlugin bankrollPlugin,
     IUnitOfWork unitOfWork,
-    IAgentSessionContext agentSessionContext,
+    AgentSessionContext agentSessionContext,
     ILogger<AgentResearchPlugin> logger)
     : base(memoriesPlugin, searchPlugin, bankrollPlugin)
   {

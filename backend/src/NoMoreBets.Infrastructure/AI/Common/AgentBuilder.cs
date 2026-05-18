@@ -4,7 +4,7 @@ using OpenAI;
 using OpenAI.Responses;
 using System.ClientModel;
 
-namespace NoMoreBets.Infrastructure.AI.Provider;
+namespace NoMoreBets.Infrastructure.AI.Common;
 
 public sealed class AgentBuilder
 {

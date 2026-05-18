@@ -6,7 +6,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Infrastructure.AI.Plugins;
-using NoMoreBets.Infrastructure.AI.Provider;
+using NoMoreBets.Infrastructure.AI.Common;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 
@@ -16,7 +16,7 @@ public class PluginFactoryTests
   private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly ISearchService _searchService = Substitute.For<ISearchService>();
   private readonly IXApiService _xApiService = Substitute.For<IXApiService>();
-  private readonly IAgentSessionContext _agentSessionContext = Substitute.For<IAgentSessionContext>();
+  private readonly AgentSessionContext _agentSessionContext = new();
 
   private PluginFactory CreateSut()
   {

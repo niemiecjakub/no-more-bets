@@ -1,9 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Phases.Betting;
+using NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
+using NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
+using NoMoreBets.Infrastructure.AI.Phases.Reflection;
+using NoMoreBets.Infrastructure.AI.Phases.Research;
 using NoMoreBets.Infrastructure.AI.Plugins;
-using NoMoreBets.Infrastructure.AI.Provider;
 
 namespace NoMoreBets.Infrastructure.AI;
+
 public static class SemanticKernelProvider
 {
   public static IServiceCollection AddSemanticKernelServices(this IServiceCollection services)
@@ -20,9 +26,18 @@ public static class SemanticKernelProvider
     services.AddScoped<SocialMediaPlugin>();
     services.AddScoped<ContextBuilder>();
     services.AddScoped<AgentBuilder>();
-    services.AddScoped<IAgentSessionContext, AgentSessionContext>();
-    services.AddScoped<Runner>();
-    services.AddScoped<IAgentPhaseRunner>(sp => sp.GetRequiredService<Runner>());
+    services.AddScoped<AgentSessionContext>();
+    services.AddScoped<AgentPhaseExecutor>();
+    services.AddScoped<InternetResearchPhase>();
+    services.AddScoped<MemoryCleanupPhase>();
+    services.AddScoped<ReflectionPhase>();
+    services.AddScoped<ResearchPhaseRunner>();
+    services.AddScoped<InternetResearchPhaseRunner>();
+    services.AddScoped<MemoryCleanupPhaseRunner>();
+    services.AddScoped<ReflectionPhaseRunner>();
+    services.AddScoped<BettingPhaseRunner>();
+    services.AddScoped<AgentPhaseRunner>();
+    services.AddScoped<IAgentPhaseRunner>(sp => sp.GetRequiredService<AgentPhaseRunner>());
 
     return services;
   }

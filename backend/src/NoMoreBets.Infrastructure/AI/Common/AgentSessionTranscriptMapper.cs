@@ -3,7 +3,7 @@ using System.Text.Json;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Domain.AgentSessions;
 
-namespace NoMoreBets.Infrastructure.AI.Provider;
+namespace NoMoreBets.Infrastructure.AI.Common;
 
 internal static class AgentSessionTranscriptMapper
 {

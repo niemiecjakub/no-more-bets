@@ -1,9 +1,9 @@
-namespace NoMoreBets.Infrastructure.AI.Provider;
+namespace NoMoreBets.Infrastructure.AI.Common;
 
 /// <summary>
 /// Scoped per agent run; plugins read <see cref="SessionId"/> when persisting outcomes linked to the transcript.
 /// </summary>
-public interface IAgentSessionContext
+public sealed class AgentSessionContext
 {
-  int? SessionId { get; set; }
+  public int? SessionId { get; set; }
 }

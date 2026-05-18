@@ -1,4 +1,4 @@
-namespace NoMoreBets.Infrastructure.AI.Provider;
+namespace NoMoreBets.Infrastructure.AI.Common;
 
 public sealed class ContextBuilder
 {
@@ -6,7 +6,7 @@ public sealed class ContextBuilder
 
   public ContextBuilder()
   {
-    var workspace = Path.Combine(AppContext.BaseDirectory, "AI", "Provider");
+    var workspace = Path.Combine(AppContext.BaseDirectory, "AI", "Common");
     var path = Path.Combine(workspace, "SOUL.md");
     _systemMessage = File.Exists(path)
       ? $"# SOUL\n\n{File.ReadAllText(path)}"

@@ -38,7 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="AI\Provider\**\*" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="AI\Common\**\*" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="AI\Plugins\Files\**\*" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
