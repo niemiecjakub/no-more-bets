@@ -1,4 +1,4 @@
-namespace NoMoreBets.Controllers.Models;
+namespace NoMoreBets.Application.Common;
 
 public record PagedResponse<T>(
   IReadOnlyList<T> Items,

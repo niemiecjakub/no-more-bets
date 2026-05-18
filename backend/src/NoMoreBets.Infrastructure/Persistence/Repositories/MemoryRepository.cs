@@ -23,6 +23,46 @@ public class MemoryRepository : IMemoryRepository
       .ConfigureAwait(false);
   }
 
+  public async Task<MemoryPage> GetPageAsync(
+    int limit,
+    DateTime? afterUpdatedAtUtc,
+    int? afterId,
+    CancellationToken cancellationToken = default)
+  {
+    var query = _db.Memory
+      .AsNoTracking()
+      .Where(m => m.DeletedAt == null);
+
+    if (afterUpdatedAtUtc is not null && afterId is not null)
+    {
+      var cursorUpdatedAt = afterUpdatedAtUtc.Value;
+      var cursorId = afterId.Value;
+      query = query.Where(m =>
+        m.UpdatedAt < cursorUpdatedAt
+        || (m.UpdatedAt == cursorUpdatedAt && m.Id < cursorId));
+    }
+
+    var rows = await query
+      .OrderByDescending(m => m.UpdatedAt)
+      .ThenByDescending(m => m.Id)
+      .Take(limit + 1)
+      .Select(m => new MemoryListItem(
+        m.Id,
+        m.Name,
+        m.Description,
+        m.Content,
+        m.CreatedAt,
+        m.UpdatedAt))
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var hasMore = rows.Count > limit;
+    if (hasMore)
+      rows.RemoveAt(rows.Count - 1);
+
+    return new MemoryPage(rows, hasMore);
+  }
+
   public async Task<Memory?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
   {
     return await _db.Memory

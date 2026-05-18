@@ -1,13 +1,5 @@
 namespace NoMoreBets.Controllers.Models;
 
-public record MemoryListItemDto(
-  int Id,
-  string Name,
-  string? Description,
-  string Content,
-  DateTime CreatedAt,
-  DateTime UpdatedAt);
-
 public record LeagueDto(int Id, string Name, string Slug);
 
 public record ClubDto(

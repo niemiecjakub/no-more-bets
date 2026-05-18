@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Controllers.Models;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Betting;

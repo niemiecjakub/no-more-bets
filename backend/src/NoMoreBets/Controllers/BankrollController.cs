@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Application.Bankroll.GetBankrollDashboard;
 using NoMoreBets.Application.Bankroll.GetBankrollEntriesPage;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Controllers.Models;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Enums;
