@@ -155,25 +155,27 @@ export async function fetchMatchesPage(
   filters?: FetchMatchesFilters,
   params: FetchMatchesPageParams = {},
 ): Promise<PagedResponse<MatchListItem>> {
-  const query: Record<string, string | number> = {
-    limit: params.limit ?? MATCHES_PAGE_SIZE,
-  };
+  const queryParams = new URLSearchParams();
+  queryParams.set("limit", String(params.limit ?? MATCHES_PAGE_SIZE));
+
   if (filters?.matchStatusId != null) {
-    query.matchStatusId = filters.matchStatusId;
+    queryParams.set("matchStatusId", String(filters.matchStatusId));
+  }
+  for (const leagueId of filters?.leagueIds ?? []) {
+    if (Number.isInteger(leagueId) && leagueId > 0) {
+      queryParams.append("leagueIds", String(leagueId));
+    }
   }
   if (params.afterMatchDate != null) {
-    query.afterMatchDate = params.afterMatchDate;
+    queryParams.set("afterMatchDate", params.afterMatchDate);
   }
   if (params.afterId != null) {
-    query.afterId = params.afterId;
+    queryParams.set("afterId", String(params.afterId));
   }
 
-  const { data } = await axiosInstance.get<unknown>("/api/matches", {
-    params: {
-      ...query,
-      leagueIds: filters?.leagueIds,
-    },
-  });
+  const { data } = await axiosInstance.get<unknown>(
+    `/api/matches?${queryParams.toString()}`
+  );
   return normalizePagedResponse(data, normalizeMatchListItem);
 }
 
