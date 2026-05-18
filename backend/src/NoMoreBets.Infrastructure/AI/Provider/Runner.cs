@@ -451,6 +451,7 @@ public sealed class Runner : IAgentPhaseRunner
           - Call `GetAvailableMatchesAsync`
 
           4) For each match you seriously consider (not every listed fixture), build a decision picture:
+          - Relevant memories may include an insight for this match; use `ReadMemoryAsync` and factor that in alongside analysis and odds.
           - Call `GetMatchAnalysisAsync` for that match ID
           - Call `GetCurrentOddsAsync` only for matches you still consider. Do not fetch odds for matches you already rule out from analysis alone.
           - If and only if you intend a Handicap or ExactScore selection, call `GetCurrentOddsAsync` again for that match with `includeExoticMarkets` true before placing the slip.

@@ -39,7 +39,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${sixtyfourConvergence.variable} antialiased`}
       >
         <TooltipProvider>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-dvh flex-col pb-[var(--site-footer-height)]">
             <NavigationRefresh />
             <Suspense fallback={null}>
               <Navbar />

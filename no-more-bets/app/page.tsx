@@ -248,7 +248,7 @@ export default function Home() {
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)_320px] lg:items-start">
-          <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-20">
+          <aside className="order-1 flex flex-col gap-4 self-start lg:sticky lg:top-20">
             <h3 className="px-1 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Leagues
             </h3>
@@ -292,7 +292,7 @@ export default function Home() {
               </div>
             </div>
           </aside>
-          <section className="min-w-0">
+          <section className="order-3 min-w-0 lg:order-2">
             {isLoading ? (
               <MatchesFallback />
             ) : error ? (
@@ -310,7 +310,7 @@ export default function Home() {
               />
             )}
           </section>
-          <aside className="flex flex-col gap-3 self-start lg:sticky lg:top-20">
+          <aside className="order-2 flex flex-col gap-3 self-start lg:order-3 lg:sticky lg:top-20">
             <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Research betting
             </h2>
