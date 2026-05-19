@@ -27,6 +27,7 @@ import {
 import type { BetSlipSummaryDto } from "@/features/bets/interfaces";
 import { LazyAgentSessionTranscript } from "@/features/bets/components/lazy-agent-session-transcript";
 import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-slip-summary";
+import { RecentGamesList } from "@/features/matches/components/recent-games-list";
 import {
     fetchMatchAgentResearch,
     fetchMatchBettingOddsHistory,
@@ -186,7 +187,12 @@ export default function MatchPage() {
                 <header className="mb-6 flex flex-col items-center">
                     <h1 className="grid w-full grid-cols-1 items-center gap-3 text-2xl font-semibold tracking-tight text-foreground sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-0">
                         <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-end">
-                            <span className="min-w-0 text-balance text-end">{data.homeClubName}</span>
+                            <Link
+                                href={`/club/${data.homeClubId}`}
+                                className="min-w-0 text-balance text-end hover:underline"
+                            >
+                                {data.homeClubName}
+                            </Link>
                             <SlugIcon kind="club" slug={homeLogoSlug} alt={data.homeClubName} className="h-10 w-10" />
                         </span>
                         <span
@@ -200,7 +206,12 @@ export default function MatchPage() {
                         </span>
                         <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-start">
                             <SlugIcon kind="club" slug={awayLogoSlug} alt={data.awayClubName} className="h-10 w-10" />
-                            <span className="min-w-0 text-balance text-start">{data.awayClubName}</span>
+                            <Link
+                                href={`/club/${data.awayClubId}`}
+                                className="min-w-0 text-balance text-start hover:underline"
+                            >
+                                {data.awayClubName}
+                            </Link>
                         </span>
                     </h1>
                     <p className="mt-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDateFormatted}</p>
@@ -277,8 +288,8 @@ export default function MatchPage() {
                                     awayClubName={data.awayClubName}
                                     homeLogoSlug={homeLogoSlug}
                                     awayLogoSlug={awayLogoSlug}
-                                    home={<RecentGamesList games={insights.recentGames?.home} />}
-                                    away={<RecentGamesList games={insights.recentGames?.away} />}
+                                    home={<RecentGamesList games={insights.recentGames?.home} showLeagueNote />}
+                                    away={<RecentGamesList games={insights.recentGames?.away} showLeagueNote />}
                                 />
                             )}
                         </Card>
@@ -450,62 +461,6 @@ function InjuriesList({ injuries }: { injuries?: TeamInjuriesResult }) {
     );
 }
 
-function RecentGamesList({ games }: { games?: RecentMatch[] | null }) {
-    if (!games || games.length === 0) return <MutedText>No recent games available.</MutedText>;
-    return (
-        <div className="space-y-2">
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">League games only.</p>
-            <ul className="flex flex-col gap-2 text-sm">
-                {games.map((game) => (
-                    <li key={`${game.matchId}-${game.opponent}-${game.date}`}>
-                        {game.matchId > 0 ? (
-                            <Link
-                                href={`/match/${game.matchId}`}
-                                className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white p-2 transition-colors hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950 dark:hover:bg-zinc-900"
-                            >
-                                <div className="flex min-w-0 items-center gap-2.5">
-                                    <SlugIcon kind="club" slug={clubLogoSlugSegment(null, game.opponent)} alt={game.opponent} className="h-7 w-7" />
-                                    <div className="min-w-0">
-                                        <p className="truncate font-medium text-foreground">{game.opponent}</p>
-                                        <p className="text-xs text-zinc-500 dark:text-zinc-400">{game.date}</p>
-                                    </div>
-                                </div>
-                                <div className="flex shrink-0 items-center justify-end gap-2">
-                                    <p className="font-semibold tabular-nums text-foreground">{game.score}</p>
-                                    <ResultBadge result={game.result} />
-                                </div>
-                            </Link>
-                        ) : (
-                            <div className="flex items-center justify-between gap-2 rounded-md border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-                                <div className="flex min-w-0 items-center gap-2.5">
-                                    <SlugIcon kind="club" slug={clubLogoSlugSegment(null, game.opponent)} alt={game.opponent} className="h-7 w-7" />
-                                    <div className="min-w-0">
-                                        <p className="truncate font-medium text-foreground">{game.opponent}</p>
-                                        <p className="text-xs text-zinc-500 dark:text-zinc-400">{game.date}</p>
-                                    </div>
-                                </div>
-                                <div className="flex shrink-0 items-center justify-end gap-2">
-                                    <p className="font-semibold tabular-nums text-foreground">{game.score}</p>
-                                    <ResultBadge result={game.result} />
-                                </div>
-                            </div>
-                        )}
-                    </li>
-                ))}
-            </ul>
-        </div>
-    );
-}
-
-function ResultBadge({ result }: { result: string }) {
-    const className =
-        result === "Win"
-            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300"
-            : result === "Loss"
-              ? "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-              : "bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300";
-    return <span className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${className}`}>{result}</span>;
-}
 
 function LeagueStatsSection({ stats }: { stats?: ClubLeagueStats | null }) {
     if (!stats) return <MutedText>No league statistics.</MutedText>;

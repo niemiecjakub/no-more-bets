@@ -57,6 +57,8 @@ export interface MatchAnalysisItemDto {
 /** Match analysis page payload: match header + analyses list */
 export interface MatchAnalysisPageDto {
   matchId: number;
+  homeClubId: number;
+  awayClubId: number;
   homeClubName: string;
   awayClubName: string;
   homeClubSlug?: string;

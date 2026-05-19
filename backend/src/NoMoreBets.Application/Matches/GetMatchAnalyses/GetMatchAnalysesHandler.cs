@@ -38,6 +38,8 @@ public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork)
 
     return new MatchAnalysisPageDto(
       match.Id,
+      match.HomeClubId,
+      match.AwayClubId,
       match.HomeClub.Name,
       match.AwayClub.Name,
       match.HomeClub.Slug,

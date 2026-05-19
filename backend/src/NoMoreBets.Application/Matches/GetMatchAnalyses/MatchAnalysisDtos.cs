@@ -18,6 +18,8 @@ public record MatchAnalysisItemDto(
 
 public record MatchAnalysisPageDto(
   int MatchId,
+  int HomeClubId,
+  int AwayClubId,
   string HomeClubName,
   string AwayClubName,
   string HomeClubSlug,

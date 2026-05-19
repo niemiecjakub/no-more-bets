@@ -63,8 +63,20 @@ function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
     normalizeMatchDetails(item.matchDetails) ??
     normalizeMatchDetails(r.matchDetails) ??
     normalizeMatchDetails(r.MatchDetails);
+  const homeClubId =
+    optionalInt(item.homeClubId) ??
+    optionalInt(r.homeClubId) ??
+    optionalInt(r.HomeClubId) ??
+    0;
+  const awayClubId =
+    optionalInt(item.awayClubId) ??
+    optionalInt(r.awayClubId) ??
+    optionalInt(r.AwayClubId) ??
+    0;
   return {
     ...item,
+    homeClubId,
+    awayClubId,
     homeClubSlug: homeSlug,
     awayClubSlug: awaySlug,
     matchStatusId,

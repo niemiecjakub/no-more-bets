@@ -43,4 +43,7 @@ public interface IBettingRepository
     IReadOnlyList<int> slipIds,
     CancellationToken cancellationToken = default);
   Task<PendingBetsWidgetData> GetBettingPhasePendingBetsWidgetAsync(CancellationToken cancellationToken = default);
+  Task<ClubBetSelectionStats> GetBettingPhaseSettledSelectionStatsForClubAsync(
+    int clubId,
+    CancellationToken cancellationToken = default);
 }

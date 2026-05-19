@@ -20,6 +20,7 @@ public class ClubRepository : IClubRepository
   public async Task<Club?> GetByIdAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _db.Club
+      .Include(c => c.League)
       .FirstOrDefaultAsync(c => c.Id == clubId, cancellationToken)
       .ConfigureAwait(false);
   }

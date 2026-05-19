@@ -24,3 +24,8 @@ public sealed record PendingBetsWidgetData(
   decimal PendingStakeTotal,
   decimal PendingPotentialPayoutTotal,
   DateTime? LatestPendingCreatedAt);
+
+public sealed record ClubBetSelectionStats(
+  int WonCount,
+  int LostCount,
+  int TotalCount);

@@ -411,4 +411,24 @@ public class BettingRepository : IBettingRepository
       pending.Sum(s => s.PotentialPayout),
       pending.OrderByDescending(s => s.CreatedAt).Select(s => (DateTime?)s.CreatedAt).FirstOrDefault());
   }
+
+  public async Task<ClubBetSelectionStats> GetBettingPhaseSettledSelectionStatsForClubAsync(
+    int clubId,
+    CancellationToken cancellationToken = default)
+  {
+    var settledSelections = _db.BetSelection
+      .AsNoTracking()
+      .Where(sel => sel.BetSlip.AgentSession != null && sel.BetSlip.AgentSession.Phase == AgentSessionPhase.Betting)
+      .Where(sel => sel.StatusId == (int)BetStatus.Won || sel.StatusId == (int)BetStatus.Lost)
+      .Where(sel => sel.Match.HomeClubId == clubId || sel.Match.AwayClubId == clubId);
+
+    var wonCount = await settledSelections
+      .CountAsync(sel => sel.StatusId == (int)BetStatus.Won, cancellationToken)
+      .ConfigureAwait(false);
+    var lostCount = await settledSelections
+      .CountAsync(sel => sel.StatusId == (int)BetStatus.Lost, cancellationToken)
+      .ConfigureAwait(false);
+
+    return new ClubBetSelectionStats(wonCount, lostCount, wonCount + lostCount);
+  }
 }

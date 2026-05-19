@@ -38,8 +38,10 @@ public class GetMatchAnalysesHandlerTests
     {
       Id = 5,
       MatchDate = new DateTime(2026, 5, 10, 15, 0, 0, DateTimeKind.Utc),
-      HomeClub = new ClubEntity { Name = "Arsenal", Slug = "arsenal" },
-      AwayClub = new ClubEntity { Name = "Chelsea", Slug = "chelsea" },
+      HomeClubId = 1,
+      AwayClubId = 2,
+      HomeClub = new ClubEntity { Id = 1, Name = "Arsenal", Slug = "arsenal" },
+      AwayClub = new ClubEntity { Id = 2, Name = "Chelsea", Slug = "chelsea" },
       MatchStatusId = (int)MatchStatus.Upcomming,
       HomeGoals = null,
       AwayGoals = null,
@@ -59,6 +61,8 @@ public class GetMatchAnalysesHandlerTests
 
     result.Should().NotBeNull();
     result!.MatchId.Should().Be(5);
+    result.HomeClubId.Should().Be(1);
+    result.AwayClubId.Should().Be(2);
     result.HomeClubName.Should().Be("Arsenal");
     result.ResearchAgentSessionId.Should().Be(42);
     result.Analyses.Should().ContainSingle();
