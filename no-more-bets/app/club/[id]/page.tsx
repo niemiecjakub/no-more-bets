@@ -8,6 +8,7 @@ import { SlugIcon } from "@/components/slug-icon";
 import { ClubBetSelectionChart } from "@/features/clubs/components/club-bet-selection-chart";
 import { ClubLeagueTable } from "@/features/clubs/components/club-league-table";
 import { ClubNextMatchCard } from "@/features/clubs/components/club-next-match-card";
+import { ClubRecentMatchesPanel } from "@/features/clubs/components/club-recent-matches-panel";
 import type { ClubBetSelectionStats, ClubDetail, ClubNextMatch } from "@/features/clubs/interfaces";
 import {
   fetchClubBetSelectionStats,
@@ -17,7 +18,6 @@ import {
 } from "@/features/clubs/services/club-detail-api";
 import { fetchLeagueTable } from "@/features/leagues/services/leagues-api";
 import type { LeagueTable } from "@/features/leagues/interfaces";
-import { RecentGamesList } from "@/features/matches/components/recent-games-list";
 import type { RecentMatch } from "@/features/matches/interfaces";
 import { handleServiceError } from "@/lib/error-handler";
 
@@ -56,6 +56,18 @@ function SectionCard({
   );
 }
 
+function RecentMatchesSkeleton() {
+  return (
+    <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
+      <div className="space-y-2">
+        {Array.from({ length: 5 }, (_, i) => (
+          <div key={i} className="h-14 animate-pulse rounded-md border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function NextMatchSkeleton() {
   return (
     <div className="flex flex-col gap-3 px-4 py-3">
@@ -66,16 +78,6 @@ function NextMatchSkeleton() {
         <div className="h-6 w-20 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
       </div>
       <div className="mx-auto h-5 w-14 animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-800" />
-    </div>
-  );
-}
-
-function ListSkeleton({ rows = 3 }: { rows?: number }) {
-  return (
-    <div className="space-y-2">
-      {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="h-14 animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-800" />
-      ))}
     </div>
   );
 }
@@ -266,14 +268,14 @@ export default function ClubPage() {
         <HeaderSkeleton />
         <div className="space-y-6">
           <div className="grid gap-6 md:grid-cols-2">
-            <SectionCard title="Recent matches" icon="🕒">
-              <ListSkeleton rows={5} />
+            <SectionCard title="Recent matches" icon="🕒" flush>
+              <RecentMatchesSkeleton />
             </SectionCard>
             <div className="flex flex-col gap-6">
               <SectionCard title="Next match" icon="📅" flush>
                 <NextMatchSkeleton />
               </SectionCard>
-              <SectionCard title="Research bet selections" icon="📊">
+              <SectionCard title="Research bet stats" icon="📊">
                 <ChartSkeleton />
               </SectionCard>
             </div>
@@ -315,13 +317,15 @@ export default function ClubPage() {
 
       <div className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2 md:items-start">
-          <SectionCard title="Recent matches" icon="🕒">
+          <SectionCard title="Recent matches" icon="🕒" flush>
             {sectionErrors.recentGames ? (
-              <SectionError message={sectionErrors.recentGames} />
+              <div className="px-4 py-4">
+                <SectionError message={sectionErrors.recentGames} />
+              </div>
             ) : sectionLoading.recentGames && recentGames === undefined ? (
-              <ListSkeleton rows={5} />
+              <RecentMatchesSkeleton />
             ) : (
-              <RecentGamesList games={recentGames} />
+              <ClubRecentMatchesPanel games={recentGames} />
             )}
           </SectionCard>
 
@@ -344,7 +348,7 @@ export default function ClubPage() {
               )}
             </SectionCard>
 
-            <SectionCard title="Research bet selections" icon="📊">
+            <SectionCard title="Research bet stats" icon="📊">
               {sectionErrors.betStats ? (
                 <SectionError message={sectionErrors.betStats} />
               ) : sectionLoading.betStats && betStats === undefined ? (

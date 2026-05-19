@@ -1,3 +1,5 @@
+using NoMoreBets.Domain.Enums;
+
 namespace NoMoreBets.Application.Leagues.GetLeagueTableDisplay;
 
 public record LeagueTableDto(
@@ -27,4 +29,5 @@ public record LeagueTableRowDto(
   decimal Xga,
   decimal XgaDiff,
   decimal Xpts,
-  decimal XptsDiff);
+  decimal XptsDiff,
+  IReadOnlyList<MatchResult> Form);

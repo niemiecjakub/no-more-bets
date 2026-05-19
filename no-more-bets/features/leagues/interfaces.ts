@@ -2,6 +2,9 @@
  * League list item aligned with backend LeagueDto.
  * GET api/leagues returns an array of these.
  */
+/** Matches backend `MatchResult` (serialized as enum name or 0/1/2). */
+export type MatchResult = "Win" | "Draw" | "Loss";
+
 export interface LeagueListItem {
   id: number;
   name: string;
@@ -27,6 +30,7 @@ export interface LeagueTableRow {
   xgaDiff: number;
   xpts: number;
   xptsDiff: number;
+  form: MatchResult[];
 }
 
 export interface LeagueTable {

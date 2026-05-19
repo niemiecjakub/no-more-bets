@@ -1,5 +1,6 @@
 using MediatR;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.GetLeagueTableDisplay;
@@ -20,10 +21,17 @@ public sealed class GetLeagueTableDisplayHandler(IUnitOfWork unitOfWork)
     if (snapshot == null)
       return null;
 
-    return MapToDto(snapshot);
+    var clubIds = snapshot.Rows.Select(r => r.ClubId).ToList();
+    var formByClub = await unitOfWork.Matches
+      .GetFormForClubsInSeasonAsync(snapshot.SeasonId, clubIds, 5, cancellationToken)
+      .ConfigureAwait(false);
+
+    return MapToDto(snapshot, formByClub);
   }
 
-  private static LeagueTableDto MapToDto(LeagueTableSnapshot snapshot)
+  private static LeagueTableDto MapToDto(
+    LeagueTableSnapshot snapshot,
+    IReadOnlyDictionary<int, IReadOnlyList<MatchResult>> formByClub)
   {
     var rows = snapshot.Rows
       .OrderBy(r => r.Position)
@@ -45,7 +53,8 @@ public sealed class GetLeagueTableDisplayHandler(IUnitOfWork unitOfWork)
         r.Xga,
         r.XgaDiff,
         r.Xpts,
-        r.XptsDiff))
+        r.XptsDiff,
+        formByClub.GetValueOrDefault(r.ClubId, Array.Empty<MatchResult>())))
       .ToList();
 
     return new LeagueTableDto(

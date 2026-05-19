@@ -68,6 +68,63 @@ public class MatchRepository : IMatchRepository
       .ConfigureAwait(false);
   }
 
+  public async Task<IReadOnlyDictionary<int, IReadOnlyList<MatchResult>>> GetFormForClubsInSeasonAsync(
+    int seasonId,
+    IReadOnlyList<int> clubIds,
+    int count = 5,
+    CancellationToken cancellationToken = default)
+  {
+    var ids = clubIds.Distinct().ToList();
+    if (ids.Count == 0)
+      return new Dictionary<int, IReadOnlyList<MatchResult>>();
+
+    var idSet = ids.ToHashSet();
+    var matches = await _db.Match
+      .AsNoTracking()
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Finished)
+      .Where(m => m.StageId != null)
+      .Where(m => m.Stage!.SeasonId == seasonId)
+      .Where(m => idSet.Contains(m.HomeClubId) || idSet.Contains(m.AwayClubId))
+      .OrderByDescending(m => m.MatchDate)
+      .Select(m => new { m.HomeClubId, m.AwayClubId, m.HomeGoals, m.AwayGoals })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var formByClub = ids.ToDictionary(id => id, _ => new List<MatchResult>());
+
+    foreach (var m in matches)
+    {
+      foreach (var clubId in new[] { m.HomeClubId, m.AwayClubId })
+      {
+        if (!idSet.Contains(clubId))
+          continue;
+
+        var list = formByClub[clubId];
+        if (list.Count >= count)
+          continue;
+
+        list.Add(ToMatchResult(clubId, m.HomeClubId, m.AwayClubId, m.HomeGoals, m.AwayGoals));
+      }
+
+      if (formByClub.Values.All(l => l.Count >= count))
+        break;
+    }
+
+    return formByClub.ToDictionary(
+      kv => kv.Key,
+      kv => (IReadOnlyList<MatchResult>)kv.Value.AsEnumerable().Reverse().ToList());
+  }
+
+  private static MatchResult ToMatchResult(int clubId, int homeClubId, int awayClubId, int? homeGoals, int? awayGoals)
+  {
+    var home = homeGoals ?? 0;
+    var away = awayGoals ?? 0;
+    if (clubId == homeClubId)
+      return home > away ? MatchResult.Win : home < away ? MatchResult.Loss : MatchResult.Draw;
+
+    return away > home ? MatchResult.Win : away < home ? MatchResult.Loss : MatchResult.Draw;
+  }
+
   public Task<Match?> GetMatchBySoccerdataId(int soccerdataId)
   {
     return _db.Match.FirstOrDefaultAsync(m => m.SoccerdataId == soccerdataId);

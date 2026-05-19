@@ -1,3 +1,5 @@
+using NoMoreBets.Domain.Enums;
+
 namespace NoMoreBets.Domain.Matches;
 
 public interface IMatchRepository
@@ -17,6 +19,11 @@ public interface IMatchRepository
   /// <param name="upToDate">When set, only finished matches strictly before this calendar day (exclusive upper bound).</param>
   public Task<IReadOnlyList<Match>> GetRecentMatchesForClubAsync(int clubId, int count, DateOnly? upToDate = null, CancellationToken cancellationToken = default);
   public Task<Match?> GetNextUpcomingMatchForClubAsync(int clubId, CancellationToken cancellationToken = default);
+  public Task<IReadOnlyDictionary<int, IReadOnlyList<MatchResult>>> GetFormForClubsInSeasonAsync(
+    int seasonId,
+    IReadOnlyList<int> clubIds,
+    int count = 5,
+    CancellationToken cancellationToken = default);
   public Task AddMatch(Match match, CancellationToken cancellationToken = default);
   public Task AddMatchDetailsAsync(MatchDetails matchDetails, CancellationToken cancellationToken = default);
   public Task AddLineup(Lineup lineup);

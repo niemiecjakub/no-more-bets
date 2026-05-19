@@ -1,3 +1,5 @@
+using NoMoreBets.Domain.Enums;
+
 namespace NoMoreBets.Application.Common.Dto.Leagues;
 
 /// <summary>

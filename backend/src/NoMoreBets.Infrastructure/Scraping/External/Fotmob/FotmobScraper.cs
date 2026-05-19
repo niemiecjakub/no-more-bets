@@ -6,6 +6,7 @@ using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Common.Dto.Leagues;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using System.Globalization;
