@@ -32,14 +32,23 @@ function initialSectionLoading(): Record<SectionKey, boolean> {
   };
 }
 
+function LeagueTableHeader({ leagueName, leagueSlug }: { leagueName: string; leagueSlug: string }) {
+  return (
+    <>
+      <SlugIcon kind="league" slug={leagueSlug} alt={leagueName} className="h-5 w-5 shrink-0" />
+      <span>{leagueName}</span>
+    </>
+  );
+}
+
 function SectionCard({
   title,
   icon,
   children,
   flush = false,
 }: {
-  title: string;
-  icon: string;
+  title: React.ReactNode;
+  icon?: string;
   children: React.ReactNode;
   flush?: boolean;
 }) {
@@ -47,8 +56,8 @@ function SectionCard({
     <section className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
       <div className="border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
         <h2 className="flex items-center gap-2 text-base font-semibold text-foreground">
-          <span aria-hidden>{icon}</span>
-          <span>{title}</span>
+          {icon ? <span aria-hidden>{icon}</span> : null}
+          {typeof title === "string" ? <span>{title}</span> : title}
         </h2>
       </div>
       <div className={flush ? undefined : "px-4 py-4"}>{children}</div>
@@ -362,7 +371,10 @@ export default function ClubPage() {
           </div>
         </div>
 
-        <SectionCard title="League table" icon="🏆" flush>
+        <SectionCard
+          title={<LeagueTableHeader leagueName={club.leagueName} leagueSlug={club.leagueSlug} />}
+          flush
+        >
           {sectionErrors.leagueTable ? (
             <div className="px-4 py-4">
               <SectionError message={sectionErrors.leagueTable} />
