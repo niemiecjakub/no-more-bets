@@ -245,9 +245,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)_320px] lg:items-start">
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.75fr)_minmax(0,1fr)] lg:items-start">
           <aside className="order-1 flex flex-col gap-4 self-start lg:sticky lg:top-20">
             <h3 className="px-1 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Leagues
@@ -270,7 +269,7 @@ export default function Home() {
               <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Match status
               </p>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5">
                 {statusFilters.map((statusFilter) => {
                   const selected = statusFilter.id === selectedStatusId;
                   return (
@@ -279,7 +278,7 @@ export default function Home() {
                       type="button"
                       onClick={() => handleSelectStatus(statusFilter.id)}
                       aria-pressed={selected}
-                      className={`rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                      className={`min-w-0 rounded-md px-1.5 py-2 text-center text-xs font-medium transition-colors ${
                         selected
                           ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
                           : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -358,6 +357,5 @@ export default function Home() {
           </aside>
         </div>
       </main>
-    </div>
   );
 }

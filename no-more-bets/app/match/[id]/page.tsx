@@ -71,8 +71,7 @@ function initialInsightLoading(): Record<InsightKey, boolean> {
 
 function LoadingSkeleton() {
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-            <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+            <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
                 <div className="mb-1 h-7 w-48 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
                 <div className="mb-6 h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
                 <div className="space-y-4">
@@ -84,7 +83,6 @@ function LoadingSkeleton() {
                     ))}
                 </div>
             </main>
-        </div>
     );
 }
 
@@ -168,11 +166,9 @@ export default function MatchPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-                <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+                <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
                     <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">{error}</p>
                 </main>
-            </div>
         );
     }
 
@@ -186,10 +182,9 @@ export default function MatchPage() {
     const showFinishedScore = data.matchStatusId === MATCH_STATUS.Finished && data.homeGoals != null && data.awayGoals != null;
 
     return (
-        <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-            <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+            <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
                 <header className="mb-6 flex flex-col items-center">
-                    <h1 className="grid w-full max-w-3xl grid-cols-1 items-center gap-3 text-2xl font-semibold tracking-tight text-foreground sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-0">
+                    <h1 className="grid w-full grid-cols-1 items-center gap-3 text-2xl font-semibold tracking-tight text-foreground sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-0">
                         <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-end">
                             <span className="min-w-0 text-balance text-end">{data.homeClubName}</span>
                             <SlugIcon kind="club" slug={homeLogoSlug} alt={data.homeClubName} className="h-10 w-10" />
@@ -229,7 +224,7 @@ export default function MatchPage() {
                     </Card>
                 ) : null}
 
-                <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                <section className="grid gap-6 2xl:grid-cols-[1.1fr_0.9fr]">
                     <div className="space-y-6">
                         <Card title="Lineups" icon="📋">
                             {insightErrors.lineups ? (
@@ -348,7 +343,6 @@ export default function MatchPage() {
                     </div>
                 </section>
             </main>
-        </div>
     );
 }
 

@@ -90,7 +90,6 @@ const dataSources = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <section className="mb-14">
           <div>
@@ -225,6 +224,5 @@ export default function AboutPage() {
           </div>
         </section>
       </main>
-    </div>
   );
 }
