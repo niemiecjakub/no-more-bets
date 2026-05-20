@@ -87,7 +87,7 @@ function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
   };
 }
 
-function normalizeMatchListItem(raw: unknown): MatchListItem {
+export function normalizeMatchListItem(raw: unknown): MatchListItem {
   const r = raw as Record<string, unknown>;
   const item = raw as MatchListItem;
   const homeSlug =

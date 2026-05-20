@@ -9,19 +9,24 @@ import { ClubBetSelectionChart } from "@/features/clubs/components/club-bet-sele
 import { ClubLeagueTable } from "@/features/clubs/components/club-league-table";
 import { ClubNextMatchCard } from "@/features/clubs/components/club-next-match-card";
 import { ClubRecentMatchesPanel } from "@/features/clubs/components/club-recent-matches-panel";
+import { MatchList } from "@/features/matches/components/match-list";
 import type { ClubBetSelectionStats, ClubDetail, ClubNextMatch } from "@/features/clubs/interfaces";
 import {
   fetchClubBetSelectionStats,
   fetchClubById,
+  fetchClubMatches,
   fetchClubNextMatch,
   fetchClubRecentGames,
 } from "@/features/clubs/services/club-detail-api";
+import type { MatchListItem } from "@/features/matches/interfaces";
 import { fetchLeagueTable } from "@/features/leagues/services/leagues-api";
 import type { LeagueTable } from "@/features/leagues/interfaces";
 import type { RecentMatch } from "@/features/matches/interfaces";
 import { handleServiceError } from "@/lib/error-handler";
+import { cn } from "@/lib/utils";
 
-type SectionKey = "recentGames" | "leagueTable" | "nextMatch" | "betStats";
+type SectionKey = "recentGames" | "leagueTable" | "nextMatch" | "betStats" | "clubMatches";
+type ClubTab = "general" | "matches";
 
 function initialSectionLoading(): Record<SectionKey, boolean> {
   return {
@@ -29,6 +34,7 @@ function initialSectionLoading(): Record<SectionKey, boolean> {
     leagueTable: true,
     nextMatch: true,
     betStats: true,
+    clubMatches: true,
   };
 }
 
@@ -62,6 +68,39 @@ function SectionCard({
       </div>
       <div className={flush ? undefined : "px-4 py-4"}>{children}</div>
     </section>
+  );
+}
+
+function ClubMatchesSkeleton() {
+  return (
+    <div className="animate-pulse space-y-5">
+      {[1, 2].map((group) => (
+        <section key={group} className="space-y-2">
+          <div className="h-4 w-56 rounded bg-zinc-200 dark:bg-zinc-800" />
+          <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+            {[1, 2, 3].map((row) => (
+              <div
+                key={`${group}-${row}`}
+                className="space-y-2 border-b border-zinc-200 bg-white px-4 py-3 last:border-b-0 dark:border-zinc-800 dark:bg-zinc-950"
+              >
+                <div className="mx-auto h-3 w-28 rounded bg-zinc-200 dark:bg-zinc-800" />
+                <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
+                  <div className="ml-auto flex items-center gap-2">
+                    <div className="h-6 w-20 rounded bg-zinc-200 dark:bg-zinc-800" />
+                    <div className="h-7 w-7 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+                  </div>
+                  <div className="h-6 w-14 rounded bg-zinc-200 dark:bg-zinc-800" />
+                  <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+                    <div className="h-6 w-20 rounded bg-zinc-200 dark:bg-zinc-800" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
   );
 }
 
@@ -117,16 +156,62 @@ function ChartSkeleton() {
   );
 }
 
+const clubHeaderClassName =
+  "mb-6 flex items-center gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950 sm:gap-5 sm:px-5";
+
+function ClubHeaderTabs({
+  active,
+  onChange,
+}: {
+  active: ClubTab;
+  onChange: (tab: ClubTab) => void;
+}) {
+  const tabs: { id: ClubTab; label: string }[] = [
+    { id: "general", label: "General" },
+    { id: "matches", label: "Matches" },
+  ];
+
+  return (
+    <div
+      className="ml-auto flex shrink-0 items-center gap-2 self-center sm:gap-2.5"
+      role="tablist"
+      aria-label="Club view"
+    >
+      {tabs.map(({ id, label }) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          aria-selected={active === id}
+          onClick={() => onChange(id)}
+          className={cn(
+            "min-w-22 rounded-lg border px-4 py-2 text-sm font-semibold tracking-tight transition-all",
+            active === id
+              ? "border-zinc-300 bg-white text-foreground shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:shadow-none"
+              : "border-zinc-200/80 bg-zinc-50 text-zinc-600 hover:border-zinc-300 hover:bg-white hover:text-foreground dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200",
+          )}
+        >
+          {label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function HeaderSkeleton() {
   return (
-    <header className="mb-8 flex gap-3">
+    <header className={clubHeaderClassName}>
       <div className="h-16 w-16 shrink-0 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
-      <div className="flex min-w-0 flex-col justify-center gap-2 py-0.5">
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 py-0.5">
         <div className="h-8 w-56 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
         <div className="flex items-center gap-2">
           <div className="h-5 w-5 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
           <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
         </div>
+      </div>
+      <div className="ml-auto flex shrink-0 gap-2 self-center sm:gap-2.5">
+        <div className="h-9 w-24 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+        <div className="h-9 w-24 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
       </div>
     </header>
   );
@@ -147,12 +232,18 @@ export default function ClubPage() {
   const [clubError, setClubError] = useState<string | null>(null);
 
   const [recentGames, setRecentGames] = useState<RecentMatch[] | undefined>();
+  const [clubMatches, setClubMatches] = useState<MatchListItem[] | undefined>();
   const [leagueTable, setLeagueTable] = useState<LeagueTable | undefined>();
   const [nextMatch, setNextMatch] = useState<ClubNextMatch | null | undefined>();
   const [betStats, setBetStats] = useState<ClubBetSelectionStats | undefined>();
 
+  const [activeTab, setActiveTab] = useState<ClubTab>("general");
   const [sectionLoading, setSectionLoading] = useState(initialSectionLoading);
   const [sectionErrors, setSectionErrors] = useState<Partial<Record<SectionKey, string>>>({});
+
+  useEffect(() => {
+    setActiveTab("general");
+  }, [clubId]);
 
   useEffect(() => {
     if (!isValidId) return;
@@ -162,6 +253,7 @@ export default function ClubPage() {
     setClubLoading(true);
     setClubError(null);
     setRecentGames(undefined);
+    setClubMatches(undefined);
     setLeagueTable(undefined);
     setNextMatch(undefined);
     setBetStats(undefined);
@@ -192,6 +284,7 @@ export default function ClubPage() {
         .then((value) => {
           if (!isMounted) return;
           if (key === "recentGames") setRecentGames(value as RecentMatch[]);
+          if (key === "clubMatches") setClubMatches(value as MatchListItem[]);
           if (key === "leagueTable") setLeagueTable(value as LeagueTable);
           if (key === "nextMatch") setNextMatch(value as ClubNextMatch | null);
           if (key === "betStats") setBetStats(value as ClubBetSelectionStats);
@@ -220,6 +313,7 @@ export default function ClubPage() {
     };
 
     load("recentGames", () => fetchClubRecentGames(clubId));
+    load("clubMatches", () => fetchClubMatches(clubId));
     load("nextMatch", () => fetchClubNextMatch(clubId));
     load("betStats", () => fetchClubBetSelectionStats(clubId));
 
@@ -313,80 +407,93 @@ export default function ClubPage() {
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
-      <header className="mb-8 flex gap-3">
+      <header className={clubHeaderClassName}>
         <SlugIcon kind="club" slug={club.slug} alt={club.name} className="h-16 w-16 shrink-0" />
-        <div className="flex min-w-0 flex-col justify-center gap-2 py-0.5">
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 py-0.5">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">{club.name}</h1>
           <p className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
             <SlugIcon kind="league" slug={club.leagueSlug} alt={club.leagueName} className="h-5 w-5 shrink-0" />
             <span>{club.leagueName}</span>
           </p>
         </div>
+        <ClubHeaderTabs active={activeTab} onChange={setActiveTab} />
       </header>
 
       <div className="space-y-6">
-        <div className="grid gap-6 md:grid-cols-2 md:items-start">
-          <SectionCard title="Recent matches" icon="🕒" flush>
-            {sectionErrors.recentGames ? (
-              <div className="px-4 py-4">
-                <SectionError message={sectionErrors.recentGames} />
+        {activeTab === "general" ? (
+          <>
+            <div className="grid gap-6 md:grid-cols-2 md:items-start">
+              <SectionCard title="Recent matches" icon="🕒" flush>
+                {sectionErrors.recentGames ? (
+                  <div className="px-4 py-4">
+                    <SectionError message={sectionErrors.recentGames} />
+                  </div>
+                ) : sectionLoading.recentGames && recentGames === undefined ? (
+                  <RecentMatchesSkeleton />
+                ) : (
+                  <ClubRecentMatchesPanel games={recentGames} />
+                )}
+              </SectionCard>
+
+              <div className="flex flex-col gap-6">
+                <SectionCard title="Next match" icon="📅" flush>
+                  {sectionErrors.nextMatch ? (
+                    <div className="px-4 py-4">
+                      <SectionError message={sectionErrors.nextMatch} />
+                    </div>
+                  ) : sectionLoading.nextMatch && nextMatch === undefined ? (
+                    <NextMatchSkeleton />
+                  ) : nextMatch ? (
+                    <ClubNextMatchCard
+                      match={nextMatch}
+                      leagueName={club.leagueName}
+                      leagueSlug={club.leagueSlug}
+                    />
+                  ) : (
+                    <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No upcoming match scheduled.</p>
+                  )}
+                </SectionCard>
+
+                <SectionCard title="Research bet stats" icon="📊">
+                  {sectionErrors.betStats ? (
+                    <SectionError message={sectionErrors.betStats} />
+                  ) : sectionLoading.betStats && betStats === undefined ? (
+                    <ChartSkeleton />
+                  ) : betStats ? (
+                    <ClubBetSelectionChart stats={betStats} />
+                  ) : (
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400">No betting stats available.</p>
+                  )}
+                </SectionCard>
               </div>
-            ) : sectionLoading.recentGames && recentGames === undefined ? (
-              <RecentMatchesSkeleton />
-            ) : (
-              <ClubRecentMatchesPanel games={recentGames} />
-            )}
-          </SectionCard>
-
-          <div className="flex flex-col gap-6">
-            <SectionCard title="Next match" icon="📅" flush>
-              {sectionErrors.nextMatch ? (
-                <div className="px-4 py-4">
-                  <SectionError message={sectionErrors.nextMatch} />
-                </div>
-              ) : sectionLoading.nextMatch && nextMatch === undefined ? (
-                <NextMatchSkeleton />
-              ) : nextMatch ? (
-                <ClubNextMatchCard
-                  match={nextMatch}
-                  leagueName={club.leagueName}
-                  leagueSlug={club.leagueSlug}
-                />
-              ) : (
-                <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No upcoming match scheduled.</p>
-              )}
-            </SectionCard>
-
-            <SectionCard title="Research bet stats" icon="📊">
-              {sectionErrors.betStats ? (
-                <SectionError message={sectionErrors.betStats} />
-              ) : sectionLoading.betStats && betStats === undefined ? (
-                <ChartSkeleton />
-              ) : betStats ? (
-                <ClubBetSelectionChart stats={betStats} />
-              ) : (
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">No betting stats available.</p>
-              )}
-            </SectionCard>
-          </div>
-        </div>
-
-        <SectionCard
-          title={<LeagueTableHeader leagueName={club.leagueName} leagueSlug={club.leagueSlug} />}
-          flush
-        >
-          {sectionErrors.leagueTable ? (
-            <div className="px-4 py-4">
-              <SectionError message={sectionErrors.leagueTable} />
             </div>
-          ) : sectionLoading.leagueTable && leagueTable === undefined ? (
-            <TableSkeleton flush />
-          ) : leagueTable ? (
-            <ClubLeagueTable table={leagueTable} highlightClubId={club.id} />
-          ) : (
-            <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No league table data available.</p>
-          )}
-        </SectionCard>
+
+            <SectionCard
+              title={<LeagueTableHeader leagueName={club.leagueName} leagueSlug={club.leagueSlug} />}
+              flush
+            >
+              {sectionErrors.leagueTable ? (
+                <div className="px-4 py-4">
+                  <SectionError message={sectionErrors.leagueTable} />
+                </div>
+              ) : sectionLoading.leagueTable && leagueTable === undefined ? (
+                <TableSkeleton flush />
+              ) : leagueTable ? (
+                <ClubLeagueTable table={leagueTable} highlightClubId={club.id} />
+              ) : (
+                <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No league table data available.</p>
+              )}
+            </SectionCard>
+          </>
+        ) : sectionErrors.clubMatches ? (
+          <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+            {sectionErrors.clubMatches}
+          </p>
+        ) : sectionLoading.clubMatches && clubMatches === undefined ? (
+          <ClubMatchesSkeleton />
+        ) : (
+          <MatchList matches={clubMatches ?? []} />
+        )}
       </div>
     </main>
   );

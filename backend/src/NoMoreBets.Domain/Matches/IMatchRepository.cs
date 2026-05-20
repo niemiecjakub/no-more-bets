@@ -18,6 +18,7 @@ public interface IMatchRepository
   public Task<Lineup?> GetLineup(int matchId);
   /// <param name="upToDate">When set, only finished matches strictly before this calendar day (exclusive upper bound).</param>
   public Task<IReadOnlyList<Match>> GetRecentMatchesForClubAsync(int clubId, int count, DateOnly? upToDate = null, CancellationToken cancellationToken = default);
+  public Task<IReadOnlyList<Match>> GetMatchesForClubAsync(int clubId, CancellationToken cancellationToken = default);
   public Task<Match?> GetNextUpcomingMatchForClubAsync(int clubId, CancellationToken cancellationToken = default);
   public Task<IReadOnlyDictionary<int, IReadOnlyList<MatchResult>>> GetFormForClubsInSeasonAsync(
     int seasonId,

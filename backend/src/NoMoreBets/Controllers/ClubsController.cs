@@ -4,7 +4,9 @@ using NoMoreBets.Application.Clubs.Common;
 using NoMoreBets.Application.Clubs.GetClubBetSelectionStats;
 using NoMoreBets.Application.Clubs.GetClubById;
 using NoMoreBets.Application.Clubs.GetClubNextMatch;
+using NoMoreBets.Application.Clubs.GetClubMatches;
 using NoMoreBets.Application.Clubs.GetClubRecentGames;
+using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Application.Clubs.GetClubsList;
 using NoMoreBets.Application.Clubs.GetClubRollingPerformance;
 using NoMoreBets.Application.Clubs.GetMatchLeagueStatisticsPair;
@@ -34,6 +36,19 @@ public class ClubsController(IMediator mediator) : ControllerBase
     if (club == null)
       return NotFound();
     return Ok(club);
+  }
+
+  [HttpGet("clubs/{clubId:int}/matches")]
+  public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetClubMatches(
+    int clubId,
+    CancellationToken cancellationToken = default)
+  {
+    var matches = await mediator
+      .Send(new GetClubMatchesQuery(clubId), cancellationToken)
+      .ConfigureAwait(false);
+    if (matches == null)
+      return NotFound();
+    return Ok(matches);
   }
 
   [HttpGet("clubs/{clubId:int}/recent-games")]

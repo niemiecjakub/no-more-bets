@@ -1,5 +1,6 @@
 import axiosInstance from "../../../lib/axios";
-import type { RecentMatch } from "@/features/matches/interfaces";
+import type { MatchListItem, RecentMatch } from "@/features/matches/interfaces";
+import { normalizeMatchListItem } from "@/features/matches/services/matches-api";
 import type {
   ClubBetSelectionStats,
   ClubDetail,
@@ -9,6 +10,14 @@ import type {
 export async function fetchClubById(clubId: number): Promise<ClubDetail> {
   const { data } = await axiosInstance.get<ClubDetail>(`/api/clubs/${clubId}`);
   return data;
+}
+
+export async function fetchClubMatches(clubId: number): Promise<MatchListItem[]> {
+  const { data } = await axiosInstance.get<unknown[]>(`/api/clubs/${clubId}/matches`);
+  if (!Array.isArray(data)) {
+    return [];
+  }
+  return data.map(normalizeMatchListItem);
 }
 
 export async function fetchClubRecentGames(clubId: number): Promise<RecentMatch[]> {

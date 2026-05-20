@@ -68,6 +68,23 @@ public class MatchRepository : IMatchRepository
       .ConfigureAwait(false);
   }
 
+  public async Task<IReadOnlyList<Match>> GetMatchesForClubAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _db.Match
+      .AsNoTracking()
+      .Where(m => m.HomeClubId == clubId || m.AwayClubId == clubId)
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .Include(m => m.MatchStatusEntity)
+      .Include(m => m.Stage)
+        .ThenInclude(s => s!.Season)
+        .ThenInclude(se => se.League)
+      .OrderByDescending(m => m.MatchDate)
+      .ThenByDescending(m => m.Id)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task<IReadOnlyDictionary<int, IReadOnlyList<MatchResult>>> GetFormForClubsInSeasonAsync(
     int seasonId,
     IReadOnlyList<int> clubIds,
