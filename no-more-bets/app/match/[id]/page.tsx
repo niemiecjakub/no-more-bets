@@ -189,7 +189,7 @@ export default function MatchPage() {
                         <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-end">
                             <Link
                                 href={`/club/${data.homeClubId}`}
-                                className="min-w-0 text-balance text-end hover:underline"
+                                className="min-w-0 text-balance text-end transition-colors hover:text-red-600 dark:hover:text-red-400"
                             >
                                 {data.homeClubName}
                             </Link>
@@ -208,7 +208,7 @@ export default function MatchPage() {
                             <SlugIcon kind="club" slug={awayLogoSlug} alt={data.awayClubName} className="h-10 w-10" />
                             <Link
                                 href={`/club/${data.awayClubId}`}
-                                className="min-w-0 text-balance text-start hover:underline"
+                                className="min-w-0 text-balance text-start transition-colors hover:text-red-600 dark:hover:text-red-400"
                             >
                                 {data.awayClubName}
                             </Link>

@@ -137,7 +137,7 @@ export function ClubLeagueTable({ table, highlightClubId }: ClubLeagueTableProps
                 <td className="max-w-44 px-2 py-2">
                   <Link
                     href={`/club/${row.clubId}`}
-                    className="flex min-w-0 items-center gap-2 font-medium text-foreground hover:underline"
+                    className="flex min-w-0 items-center gap-2 font-medium text-foreground transition-colors hover:text-red-600 dark:hover:text-red-400"
                     title={row.clubName}
                   >
                     <SlugIcon kind="club" slug={row.clubSlug} alt={row.clubName} className="h-6 w-6 shrink-0" />
