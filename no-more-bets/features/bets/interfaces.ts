@@ -38,6 +38,34 @@ export const BET_STATUS = {
   Canceled: 4,
 } as const;
 
+export type BetStatusId = (typeof BET_STATUS)[keyof typeof BET_STATUS];
+
+/** API may send BetStatus as enum string (JsonStringEnumConverter) or numeric id. */
+export type BetStatusApiValue = BetStatusId | keyof typeof BET_STATUS;
+
+const BET_STATUS_NAME_TO_ID: Record<keyof typeof BET_STATUS, BetStatusId> = {
+  Pending: BET_STATUS.Pending,
+  Won: BET_STATUS.Won,
+  Lost: BET_STATUS.Lost,
+  Canceled: BET_STATUS.Canceled,
+};
+
+/** Maps API status (string enum name or numeric id) to BetStatusId; returns 0 when unrecognized. */
+export function normalizeBetStatus(status: unknown): BetStatusId | 0 {
+  if (typeof status === "number") {
+    return status === BET_STATUS.Pending ||
+      status === BET_STATUS.Won ||
+      status === BET_STATUS.Lost ||
+      status === BET_STATUS.Canceled
+      ? status
+      : 0;
+  }
+  if (typeof status === "string" && status in BET_STATUS_NAME_TO_ID) {
+    return BET_STATUS_NAME_TO_ID[status as keyof typeof BET_STATUS];
+  }
+  return 0;
+}
+
 /**
  * Paper slip from research phase — aligned with backend BetSlipSummary (GET …/research-bet-slip).
  */
@@ -47,7 +75,7 @@ export interface BetSlipSummaryDto {
   stakeAmount: number;
   totalOdds: number;
   potentialPayout: number;
-  status: number;
+  status: BetStatusId | 0;
   selections: BetSelectionSummaryDto[];
 }
 
@@ -58,7 +86,7 @@ export interface BetSelectionSummaryDto {
   eventTypeName: string;
   outcomeKey: string;
   oddsAtPlacement: number;
-  status: number;
+  status: BetStatusId | 0;
 }
 
 /** GET api/Database/bankroll — BankrollRecordDto */
