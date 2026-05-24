@@ -20,7 +20,7 @@ public sealed class GetClubBetSelectionStatsHandler(IUnitOfWork unitOfWork)
       return null;
 
     var stats = await unitOfWork.Betting
-      .GetBettingPhaseSettledSelectionStatsForClubAsync(request.ClubId, cancellationToken)
+      .GetResearchPhaseSettledSelectionStatsForClubAsync(request.ClubId, cancellationToken)
       .ConfigureAwait(false);
 
     return new ClubBetSelectionStatsDto(stats.WonCount, stats.LostCount, stats.TotalCount);

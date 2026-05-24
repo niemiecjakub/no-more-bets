@@ -38,7 +38,7 @@ public class GetClubBetSelectionStatsHandlerTests
     const int clubId = 7;
     _clubs.GetByIdAsync(clubId, Arg.Any<CancellationToken>()).Returns(new ClubEntity { Id = clubId, Name = "Club" });
     _betting
-      .GetBettingPhaseSettledSelectionStatsForClubAsync(clubId, Arg.Any<CancellationToken>())
+      .GetResearchPhaseSettledSelectionStatsForClubAsync(clubId, Arg.Any<CancellationToken>())
       .Returns(new ClubBetSelectionStats(3, 2, 5));
 
     var result = await _sut.Handle(new GetClubBetSelectionStatsQuery(clubId), CancellationToken.None);

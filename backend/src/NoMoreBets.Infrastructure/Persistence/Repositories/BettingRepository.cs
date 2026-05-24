@@ -412,13 +412,13 @@ public class BettingRepository : IBettingRepository
       pending.OrderByDescending(s => s.CreatedAt).Select(s => (DateTime?)s.CreatedAt).FirstOrDefault());
   }
 
-  public async Task<ClubBetSelectionStats> GetBettingPhaseSettledSelectionStatsForClubAsync(
+  public async Task<ClubBetSelectionStats> GetResearchPhaseSettledSelectionStatsForClubAsync(
     int clubId,
     CancellationToken cancellationToken = default)
   {
     var settledSelections = _db.BetSelection
       .AsNoTracking()
-      .Where(sel => sel.BetSlip.AgentSession != null && sel.BetSlip.AgentSession.Phase == AgentSessionPhase.Betting)
+      .Where(sel => sel.BetSlip.AgentSession != null && sel.BetSlip.AgentSession.Phase == AgentSessionPhase.Research)
       .Where(sel => sel.StatusId == (int)BetStatus.Won || sel.StatusId == (int)BetStatus.Lost)
       .Where(sel => sel.Match.HomeClubId == clubId || sel.Match.AwayClubId == clubId);
 
