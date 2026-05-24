@@ -156,7 +156,7 @@ export default function Home() {
     const matchedStatus = statusFilters.find(
       (statusFilter) => statusFilter.id === statusParam
     );
-    const parsedStatusId = matchedStatus?.id ?? MATCH_STATUS.Upcoming;
+    const parsedStatusId = matchedStatus?.id ?? ALL_STATUSES_ID;
 
     const leaguesParam = searchParams.get("leagues");
     const parsedLeagueIds = leaguesParam
