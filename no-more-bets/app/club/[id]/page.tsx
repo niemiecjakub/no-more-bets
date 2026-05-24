@@ -2,8 +2,8 @@
 
 import axios from "axios";
 import { notFound } from "next/navigation";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import { SlugIcon } from "@/components/slug-icon";
 import { ClubBetSelectionChart } from "@/features/clubs/components/club-bet-selection-chart";
 import { ClubLeagueTable } from "@/features/clubs/components/club-league-table";
@@ -27,6 +27,12 @@ import { cn } from "@/lib/utils";
 
 type SectionKey = "recentGames" | "leagueTable" | "nextMatch" | "betStats" | "clubMatches";
 type ClubTab = "general" | "matches";
+
+function resolveRequestedTab(searchParams: URLSearchParams): ClubTab | null {
+  const requestedTab = searchParams.get("tab");
+  if (requestedTab === "general" || requestedTab === "matches") return requestedTab;
+  return null;
+}
 
 function initialSectionLoading(): Record<SectionKey, boolean> {
   return {
@@ -223,6 +229,9 @@ function SectionError({ message }: { message: string }) {
 
 export default function ClubPage() {
   const params = useParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const id = params?.id as string | undefined;
   const clubId = id != null && id !== "" ? Number(id) : NaN;
   const isValidId = !Number.isNaN(clubId) && clubId >= 1;
@@ -237,13 +246,32 @@ export default function ClubPage() {
   const [nextMatch, setNextMatch] = useState<ClubNextMatch | null | undefined>();
   const [betStats, setBetStats] = useState<ClubBetSelectionStats | undefined>();
 
-  const [activeTab, setActiveTab] = useState<ClubTab>("general");
+  const [activeTab, setActiveTab] = useState<ClubTab>(() => {
+    const requestedTab = resolveRequestedTab(new URLSearchParams(searchParams.toString()));
+    return requestedTab ?? "general";
+  });
   const [sectionLoading, setSectionLoading] = useState(initialSectionLoading);
   const [sectionErrors, setSectionErrors] = useState<Partial<Record<SectionKey, string>>>({});
 
   useEffect(() => {
-    setActiveTab("general");
-  }, [clubId]);
+    const requestedTab = resolveRequestedTab(new URLSearchParams(searchParams.toString()));
+    setActiveTab(requestedTab ?? "general");
+  }, [searchParams]);
+
+  const handleTabChange = useCallback(
+    (tab: ClubTab) => {
+      setActiveTab(tab);
+      const params = new URLSearchParams(searchParams.toString());
+      if (tab === "general") {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+      const query = params.toString();
+      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   useEffect(() => {
     if (!isValidId) return;
@@ -416,7 +444,7 @@ export default function ClubPage() {
             <span>{club.leagueName}</span>
           </p>
         </div>
-        <ClubHeaderTabs active={activeTab} onChange={setActiveTab} />
+        <ClubHeaderTabs active={activeTab} onChange={handleTabChange} />
       </header>
 
       <div className="space-y-6">
