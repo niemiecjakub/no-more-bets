@@ -21,6 +21,7 @@ public class AppDbContext : DbContext
   public DbSet<Season> Season { get; set; }
   public DbSet<Stage> Stage { get; set; }
   public DbSet<MatchStatusEntity> MatchStatus { get; set; }
+  public DbSet<MatchEventTypeEntity> MatchEventType { get; set; }
   public DbSet<Match> Match { get; set; }
   public DbSet<Lineup> Lineup { get; set; }
   public DbSet<MatchPreview> MatchPreview { get; set; }
@@ -103,6 +104,21 @@ public class AppDbContext : DbContext
           Id = (int)e,
           Name = e.ToString()
         }));
+    });
+
+    modelBuilder.Entity<MatchEventTypeEntity>(entity =>
+    {
+      entity.ToTable(MatchEventTypeEntity.TABLE_NAME);
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+      entity.HasData(
+        Enum.GetValues(typeof(MatchEventType))
+          .Cast<MatchEventType>()
+          .Select(e => new MatchEventTypeEntity()
+          {
+            Id = (int)e,
+            Name = e.ToString()
+          }));
     });
 
     modelBuilder.Entity<Match>(entity =>
