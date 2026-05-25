@@ -19,7 +19,17 @@ export function MatchClubEventsList({ events, isLoading, error, align }: MatchCl
   }
 
   if (isLoading) {
-    return <p className={`w-full text-xs text-zinc-500 dark:text-zinc-400 ${alignClass}`}>Loading events…</p>;
+    return (
+      <ul className={`flex w-full min-w-0 flex-col gap-1 ${alignClass}`} aria-hidden>
+        {[1, 2].map((i) => (
+          <li key={i}>
+            <div
+              className={`h-3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800 ${i === 1 ? "w-24" : "w-20"}`}
+            />
+          </li>
+        ))}
+      </ul>
+    );
   }
 
   if (goalEvents.length === 0) {
