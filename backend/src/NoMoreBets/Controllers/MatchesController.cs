@@ -10,7 +10,6 @@ using NoMoreBets.Application.Matches.GetMatchLineups;
 using MatchInjuriesResult = NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult;
 using MatchLineupResult = NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult;
 using NoMoreBets.Application.Matches.MatchExists;
-using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Controllers;
 

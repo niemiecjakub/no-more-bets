@@ -19,24 +19,25 @@ public sealed class FinishedMatchScoreJobService(
   public async Task FillMissingFinishedMatchScoresFromSoccerData()
   {
     logger.LogInformation(
-      "Starting job {JobName} to fill missing scores for finished matches",
+      "Starting job {JobName} to fill missing scores and events for finished matches",
       nameof(FillMissingFinishedMatchScoresFromSoccerData));
 
     var dbMatchesWithLeague = await db.Match
       .Where(m => m.MatchStatusId == (int)MatchStatus.Finished)
-      .Where(m => m.HomeGoals == null || m.AwayGoals == null)
       .Where(m => m.SoccerdataId.HasValue)
+      .Where(m => m.HomeGoals == null || m.AwayGoals == null || !m.MatchEvents.Any())
       .Select(m => new
       {
         Match = m,
-        LeagueSoccerdataId = m.Stage != null ? (int?)m.Stage.Season.League.SoccerdataId : null
+        LeagueSoccerdataId = m.Stage != null ? (int?)m.Stage.Season.League.SoccerdataId : null,
+        HasEvents = m.MatchEvents.Any()
       })
       .ToListAsync();
 
     if (dbMatchesWithLeague.Count == 0)
     {
       logger.LogInformation(
-        "Job {JobName} found no finished matches with missing scores",
+        "Job {JobName} found no finished matches with missing scores or events",
         nameof(FillMissingFinishedMatchScoresFromSoccerData));
       return;
     }
@@ -50,7 +51,8 @@ public sealed class FinishedMatchScoreJobService(
         missingLeagueContextCount);
     }
 
-    var updatedCount = 0;
+    var updatedScoreCount = 0;
+    var addedEventCount = 0;
     var matchesByLeague = dbMatchesWithLeague
       .Where(x => x.LeagueSoccerdataId.HasValue)
       .GroupBy(x => x.LeagueSoccerdataId!.Value);
@@ -70,24 +72,41 @@ public sealed class FinishedMatchScoreJobService(
         if (!soccerDataMatchesById.TryGetValue(soccerdataId, out var soccerDataMatch))
           continue;
 
-        item.Match.HomeGoals = soccerDataMatch.Goals.HomeFtGoals;
-        item.Match.AwayGoals = soccerDataMatch.Goals.AwayFtGoals;
-        updatedCount++;
+        if (item.Match.HomeGoals is null || item.Match.AwayGoals is null)
+        {
+          item.Match.HomeGoals = soccerDataMatch.Goals.HomeFtGoals;
+          item.Match.AwayGoals = soccerDataMatch.Goals.AwayFtGoals;
+          updatedScoreCount++;
+        }
+
+        if (!item.HasEvents)
+        {
+          addedEventCount += await SoccerDataMatchEventSync.AddMissingEventsAsync(
+            db,
+            item.Match,
+            soccerDataMatch.Events,
+            logger);
+        }
       }
     }
 
-    if (updatedCount > 0)
+    if (updatedScoreCount > 0 || addedEventCount > 0)
     {
       await db.SaveChangesAsync();
-      await mediator.Send(new SettlePendingBetSelectionsCommand(), CancellationToken.None);
-      logger.LogInformation(
-        "Job {JobName} ran pending bet settlement after score updates",
-        nameof(FillMissingFinishedMatchScoresFromSoccerData));
+
+      if (updatedScoreCount > 0)
+      {
+        await mediator.Send(new SettlePendingBetSelectionsCommand(), CancellationToken.None);
+        logger.LogInformation(
+          "Job {JobName} ran pending bet settlement after score updates",
+          nameof(FillMissingFinishedMatchScoresFromSoccerData));
+      }
     }
 
     logger.LogInformation(
-      "Job {JobName} updated scores for {UpdatedCount} matches",
+      "Job {JobName} updated scores for {UpdatedScoreCount} matches and added {AddedEventCount} match events",
       nameof(FillMissingFinishedMatchScoresFromSoccerData),
-      updatedCount);
+      updatedScoreCount,
+      addedEventCount);
   }
 }
