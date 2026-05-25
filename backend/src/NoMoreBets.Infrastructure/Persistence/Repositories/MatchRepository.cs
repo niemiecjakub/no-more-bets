@@ -38,6 +38,21 @@ public class MatchRepository : IMatchRepository
     return _db.Lineup.SingleOrDefaultAsync(l => l.MatchId == matchId);
   }
 
+  public async Task<IReadOnlyList<MatchEvent>> GetMatchEventsForMatchAsync(
+    int matchId,
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.MatchEvent
+      .AsNoTracking()
+      .Where(e => e.MatchId == matchId)
+      .Include(e => e.Player)
+      .Include(e => e.EventTypeEntity)
+      .OrderBy(e => e.Minute)
+      .ThenBy(e => e.Id)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task<Match?> GetNextUpcomingMatchForClubAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _db.Match

@@ -5,6 +5,7 @@ using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchAnalyses;
 using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
+using NoMoreBets.Application.Matches.GetMatchEvents;
 using NoMoreBets.Application.Matches.GetMatchLineups;
 using MatchInjuriesResult = NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult;
 using MatchLineupResult = NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult;
@@ -79,6 +80,16 @@ public class MatchesController(IMediator mediator) : ControllerBase
       return NotFound();
 
     var result = await mediator.Send(new GetMatchInjuriesQuery(matchId), cancellationToken).ConfigureAwait(false);
+    return Ok(result);
+  }
+
+  [HttpGet("matchinsights/matches/{matchId:int}/events")]
+  public async Task<ActionResult<IReadOnlyList<MatchEventDto>>> GetMatchEvents(int matchId, CancellationToken cancellationToken = default)
+  {
+    if (!await MatchExists(matchId, cancellationToken).ConfigureAwait(false))
+      return NotFound();
+
+    var result = await mediator.Send(new GetMatchEventsQuery(matchId), cancellationToken).ConfigureAwait(false);
     return Ok(result);
   }
 
