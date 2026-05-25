@@ -7,6 +7,7 @@ using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Players;
 
 namespace NoMoreBets.Infrastructure.Persistence;
 
@@ -18,6 +19,7 @@ public class AppDbContext : DbContext
 
   public DbSet<League> League { get; set; }
   public DbSet<Club> Club { get; set; }
+  public DbSet<Player> Player { get; set; }
   public DbSet<Season> Season { get; set; }
   public DbSet<Stage> Stage { get; set; }
   public DbSet<MatchStatusEntity> MatchStatus { get; set; }
@@ -69,6 +71,16 @@ public class AppDbContext : DbContext
       entity.HasIndex(e => e.SoccerdataId).IsUnique();
       entity.HasIndex(e => e.Slug).IsUnique();
       entity.HasOne(e => e.League).WithMany(e => e.Clubs).HasForeignKey(e => e.LeagueId);
+    });
+
+    modelBuilder.Entity<Player>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+      entity.Property(e => e.SoccerdataId).IsRequired();
+      entity.HasIndex(e => e.SoccerdataId).IsUnique();
+      entity.HasIndex(e => e.Name);
     });
 
     modelBuilder.Entity<Season>(entity =>

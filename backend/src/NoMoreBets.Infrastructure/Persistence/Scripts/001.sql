@@ -40,6 +40,16 @@ CREATE INDEX idx_club_league ON public."Club" USING btree ("LeagueId");
 CREATE INDEX idx_club_name ON public."Club" USING btree ("Name");
 
 
+CREATE TABLE "Player" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"Name" varchar(200) NOT NULL,
+	"SoccerdataId" int4 NOT NULL,
+	CONSTRAINT "Player_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT uq_player_soccerdata UNIQUE ("SoccerdataId")
+);
+CREATE INDEX idx_player_name ON public."Player" USING btree ("Name");
+
+
 CREATE TABLE "ClubDailySummary" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"ClubId" int4 NOT NULL,
