@@ -18,6 +18,7 @@ CREATE TABLE "MatchStatus" (
 );
 
 
+-- MatchEventType: 1=Goal, 2=Assist, 3=OwnGoal, 4=PenaltyGoal, 5=RedCard, 6=YellowCard, 7=YellowRedCard, 8=SubstitutionIn, 9=SubstitutionOut (matches NoMoreBets.Domain.Enums.MatchEventType)
 CREATE TABLE "MatchEventType" (
 	"Id" int4 NOT NULL,
 	"Name" varchar(50) NOT NULL,

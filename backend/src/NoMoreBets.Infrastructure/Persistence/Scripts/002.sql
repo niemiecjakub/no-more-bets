@@ -74,13 +74,14 @@ ON CONFLICT ("Id") DO NOTHING;
 
 INSERT INTO "MatchEventType" ("Id", "Name") VALUES
     (1, 'Goal'),
-    (2, 'OwnGoal'),
-    (3, 'PenaltyGoal'),
-    (4, 'RedCard'),
-    (5, 'YellowCard'),
-    (6, 'YellowRedCard'),
-    (7, 'SubstitutionIn'),
-    (8, 'SubstitutionOut')
+    (2, 'Assist'),
+    (3, 'OwnGoal'),
+    (4, 'PenaltyGoal'),
+    (5, 'RedCard'),
+    (6, 'YellowCard'),
+    (7, 'YellowRedCard'),
+    (8, 'SubstitutionIn'),
+    (9, 'SubstitutionOut')
 ON CONFLICT ("Id") DO NOTHING;
 
 INSERT INTO "BettingEventType" ("Id", "Name") VALUES
