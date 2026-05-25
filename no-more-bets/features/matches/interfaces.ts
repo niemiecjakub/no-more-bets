@@ -106,6 +106,15 @@ export interface MatchInjuriesResult {
   away: TeamInjuriesResult;
 }
 
+/** Timeline event from GET api/matchinsights/matches/:id/events */
+export interface MatchEventDto {
+  playerName: string;
+  clubId: number;
+  eventTypeId: number;
+  eventType: string;
+  minute: number;
+}
+
 export interface RecentMatch {
   matchId: number;
   opponent: string;

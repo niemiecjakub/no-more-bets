@@ -9,6 +9,7 @@ import type {
   ClubPair,
   HeadToHead,
   MarketPriceHistory,
+  MatchEventDto,
   MatchInjuriesResult,
   MatchLineupResult,
   RecentMatch,
@@ -25,6 +26,13 @@ export async function fetchMatchLineups(matchId: number): Promise<MatchLineupRes
 export async function fetchMatchInjuries(matchId: number): Promise<MatchInjuriesResult | null> {
   const { data } = await axiosInstance.get<MatchInjuriesResult | null>(
     `/api/matchinsights/matches/${matchId}/injuries`
+  );
+  return data;
+}
+
+export async function fetchMatchEvents(matchId: number): Promise<MatchEventDto[]> {
+  const { data } = await axiosInstance.get<MatchEventDto[]>(
+    `/api/matchinsights/matches/${matchId}/events`
   );
   return data;
 }

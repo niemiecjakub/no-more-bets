@@ -23,14 +23,17 @@ import {
     type TeamPerformanceResult,
     type TeamMetrics,
     type MatchDetailsSummary,
+    type MatchEventDto,
 } from "@/features/matches/interfaces";
 import type { BetSlipSummaryDto } from "@/features/bets/interfaces";
 import { LazyAgentSessionTranscript } from "@/features/bets/components/lazy-agent-session-transcript";
 import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-slip-summary";
+import { MatchClubEventsList } from "@/features/matches/components/match-club-events-list";
 import { RecentGamesList } from "@/features/matches/components/recent-games-list";
 import {
     fetchMatchAgentResearch,
     fetchMatchBettingOddsHistory,
+    fetchMatchEvents,
     fetchMatchHeadToHead,
     fetchMatchInjuries,
     fetchMatchLeagueStatistics,
@@ -50,6 +53,7 @@ interface MatchInsights {
     headToHead: HeadToHead | null;
     bettingOddsHistory: MarketPriceHistory[] | null;
     rollingPerformance: ClubPair<TeamPerformanceResult | null>;
+    matchEvents: MatchEventDto[];
 }
 
 const insightKeys = [
@@ -62,6 +66,7 @@ const insightKeys = [
     "headToHead",
     "bettingOddsHistory",
     "rollingPerformance",
+    "matchEvents",
 ] as const satisfies readonly (keyof MatchInsights)[];
 
 type InsightKey = (typeof insightKeys)[number];
@@ -147,6 +152,7 @@ export default function MatchPage() {
         load("headToHead", () => fetchMatchHeadToHead(matchId));
         load("bettingOddsHistory", () => fetchMatchBettingOddsHistory(matchId));
         load("rollingPerformance", () => fetchMatchRollingPerformance(matchId));
+        load("matchEvents", () => fetchMatchEvents(matchId));
 
         return () => {
             isMounted = false;
@@ -181,40 +187,65 @@ export default function MatchPage() {
     const homeLogoSlug = clubLogoSlugSegment(data.homeClubSlug, data.homeClubName);
     const awayLogoSlug = clubLogoSlugSegment(data.awayClubSlug, data.awayClubName);
     const showFinishedScore = data.matchStatusId === MATCH_STATUS.Finished && data.homeGoals != null && data.awayGoals != null;
+    const homeEvents = insights.matchEvents?.filter((e) => e.clubId === data.homeClubId) ?? [];
+    const awayEvents = insights.matchEvents?.filter((e) => e.clubId === data.awayClubId) ?? [];
+    const matchEventsLoading = insightLoading.matchEvents && insights.matchEvents === undefined;
+    const matchEventsError = insightErrors.matchEvents;
 
     return (
             <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
                 <header className="mb-6 flex flex-col items-center">
-                    <h1 className="grid w-full grid-cols-1 items-center gap-3 text-2xl font-semibold tracking-tight text-foreground sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-x-3 sm:gap-y-0">
-                        <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-end">
-                            <Link
-                                href={`/club/${data.homeClubId}`}
-                                className="min-w-0 text-balance text-end transition-colors hover:text-red-600 dark:hover:text-red-400"
+                    <p className="mb-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDateFormatted}</p>
+                    <h1 className="w-full text-2xl font-semibold tracking-tight text-foreground">
+                        <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
+                            <div className="flex min-w-0 items-center justify-end gap-2.5">
+                                <Link
+                                    href={`/club/${data.homeClubId}`}
+                                    className="min-w-0 text-balance text-end transition-colors hover:text-red-600 dark:hover:text-red-400"
+                                >
+                                    {data.homeClubName}
+                                </Link>
+                                <SlugIcon kind="club" slug={homeLogoSlug} alt={data.homeClubName} className="h-10 w-10 shrink-0" />
+                            </div>
+                            <span
+                                className={
+                                    showFinishedScore
+                                        ? "inline-block min-w-[5.5rem] shrink-0 text-center text-2xl font-bold tabular-nums tracking-tight sm:text-3xl"
+                                        : "shrink-0 text-center text-lg font-medium text-zinc-500 dark:text-zinc-400 sm:text-2xl sm:font-semibold"
+                                }
                             >
-                                {data.homeClubName}
-                            </Link>
-                            <SlugIcon kind="club" slug={homeLogoSlug} alt={data.homeClubName} className="h-10 w-10" />
-                        </span>
-                        <span
-                            className={
-                                showFinishedScore
-                                    ? "inline-block min-w-[5.5rem] shrink-0 text-center text-2xl font-bold tabular-nums tracking-tight text-foreground sm:text-3xl"
-                                    : "shrink-0 text-center text-lg font-medium text-zinc-500 dark:text-zinc-400 sm:text-2xl sm:font-semibold"
-                            }
-                        >
-                            {showFinishedScore ? `${data.homeGoals} - ${data.awayGoals}` : "vs"}
-                        </span>
-                        <span className="flex min-w-0 items-center justify-center gap-2.5 sm:justify-start">
-                            <SlugIcon kind="club" slug={awayLogoSlug} alt={data.awayClubName} className="h-10 w-10" />
-                            <Link
-                                href={`/club/${data.awayClubId}`}
-                                className="min-w-0 text-balance text-start transition-colors hover:text-red-600 dark:hover:text-red-400"
-                            >
-                                {data.awayClubName}
-                            </Link>
-                        </span>
+                                {showFinishedScore ? `${data.homeGoals} - ${data.awayGoals}` : "vs"}
+                            </span>
+                            <div className="flex min-w-0 items-center justify-start gap-2.5">
+                                <SlugIcon kind="club" slug={awayLogoSlug} alt={data.awayClubName} className="h-10 w-10 shrink-0" />
+                                <Link
+                                    href={`/club/${data.awayClubId}`}
+                                    className="min-w-0 text-balance text-start transition-colors hover:text-red-600 dark:hover:text-red-400"
+                                >
+                                    {data.awayClubName}
+                                </Link>
+                            </div>
+                        </div>
+                        <div className="mt-2 grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-3">
+                            <div className="col-start-1 min-w-0">
+                                <MatchClubEventsList
+                                    events={homeEvents}
+                                    isLoading={matchEventsLoading}
+                                    error={matchEventsError}
+                                    align="end"
+                                />
+                            </div>
+                            <span className="col-start-2 min-w-[5.5rem] shrink-0" aria-hidden />
+                            <div className="col-start-3 min-w-0">
+                                <MatchClubEventsList
+                                    events={awayEvents}
+                                    isLoading={matchEventsLoading}
+                                    error={matchEventsError}
+                                    align="start"
+                                />
+                            </div>
+                        </div>
                     </h1>
-                    <p className="mt-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDateFormatted}</p>
                 </header>
 
                 <Card title="Agent Research" icon="🔬" className="mb-6">
