@@ -114,6 +114,22 @@ CREATE INDEX idx_game_matchstatus_date ON public."Match" USING btree ("MatchStat
 CREATE INDEX idx_game_stage ON public."Match" USING btree ("StageId");
 
 
+CREATE TABLE "MatchEvent" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"EventTypeId" int4 NOT NULL,
+	"PlayerId" int4 NOT NULL,
+	"MatchId" int4 NOT NULL,
+	"ClubId" int4 NOT NULL,
+	"Minute" int4 NOT NULL,
+	CONSTRAINT "MatchEvent_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT fk_matchevent_eventtype FOREIGN KEY ("EventTypeId") REFERENCES "MatchEventType"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_matchevent_player FOREIGN KEY ("PlayerId") REFERENCES "Player"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_matchevent_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE CASCADE,
+	CONSTRAINT fk_matchevent_club FOREIGN KEY ("ClubId") REFERENCES "Club"("Id") ON DELETE RESTRICT
+);
+CREATE INDEX idx_matchevent_match ON public."MatchEvent" USING btree ("MatchId");
+
+
 CREATE TABLE "Lineup" (
 	"MatchId" int4 NOT NULL,
 	"HomeTeamJson" jsonb NOT NULL,

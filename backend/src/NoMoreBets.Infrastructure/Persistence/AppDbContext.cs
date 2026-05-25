@@ -25,6 +25,7 @@ public class AppDbContext : DbContext
   public DbSet<MatchStatusEntity> MatchStatus { get; set; }
   public DbSet<MatchEventTypeEntity> MatchEventType { get; set; }
   public DbSet<Match> Match { get; set; }
+  public DbSet<MatchEvent> MatchEvent { get; set; }
   public DbSet<Lineup> Lineup { get; set; }
   public DbSet<MatchPreview> MatchPreview { get; set; }
   public DbSet<Head2Head> Head2Head { get; set; }
@@ -147,6 +148,34 @@ public class AppDbContext : DbContext
       entity.HasOne(e => e.MatchStatusEntity)
         .WithMany()
         .HasForeignKey(e => e.MatchStatusId)
+        .OnDelete(DeleteBehavior.Restrict);
+    });
+
+    modelBuilder.Entity<MatchEvent>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.EventTypeId).IsRequired();
+      entity.Property(e => e.PlayerId).IsRequired();
+      entity.Property(e => e.MatchId).IsRequired();
+      entity.Property(e => e.ClubId).IsRequired();
+      entity.Property(e => e.Minute).IsRequired();
+      entity.HasIndex(e => e.MatchId);
+      entity.HasOne(e => e.EventTypeEntity)
+        .WithMany()
+        .HasForeignKey(e => e.EventTypeId)
+        .OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.Player)
+        .WithMany()
+        .HasForeignKey(e => e.PlayerId)
+        .OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.Match)
+        .WithMany(m => m.MatchEvents)
+        .HasForeignKey(e => e.MatchId)
+        .OnDelete(DeleteBehavior.Cascade);
+      entity.HasOne(e => e.Club)
+        .WithMany()
+        .HasForeignKey(e => e.ClubId)
         .OnDelete(DeleteBehavior.Restrict);
     });
 

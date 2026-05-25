@@ -6,7 +6,8 @@ public enum MatchEventType
   OwnGoal = 2,
   PenaltyGoal = 3,
   RedCard = 4,
-  Substitution = 5,
-  YellowCard = 6,
-  YellowRedCard = 7
+  YellowCard = 5,
+  YellowRedCard = 6,
+  SubstitutionIn = 7,
+  SubstitutionOut = 8
 }
