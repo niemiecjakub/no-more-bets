@@ -51,6 +51,7 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
     DateTime? afterStartedAtUtc,
     int? afterId,
     int? includeSessionId,
+    IReadOnlyCollection<AgentSessionPhase>? phaseIds = null,
     CancellationToken cancellationToken = default)
   {
     var isFirstPage = afterStartedAtUtc is null && afterId is null;
@@ -58,6 +59,9 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
       includeSessionId = null;
 
     var query = db.AgentSession.AsNoTracking();
+    if (phaseIds is { Count: > 0 })
+      query = query.Where(s => phaseIds.Contains(s.Phase));
+
     if (afterStartedAtUtc is not null && afterId is not null)
     {
       var cursorStartedAt = afterStartedAtUtc.Value;

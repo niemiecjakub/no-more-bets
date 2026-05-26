@@ -15,6 +15,7 @@ public interface IAgentSessionRepository
     DateTime? afterStartedAtUtc,
     int? afterId,
     int? includeSessionId,
+    IReadOnlyCollection<AgentSessionPhase>? phaseIds = null,
     CancellationToken cancellationToken = default);
   Task<IReadOnlyDictionary<int, int>> GetMatchIdsBySessionIdsAsync(
     IReadOnlyCollection<int> sessionIds,

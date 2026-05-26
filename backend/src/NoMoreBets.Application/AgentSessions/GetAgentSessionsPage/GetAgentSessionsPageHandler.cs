@@ -1,5 +1,6 @@
 using MediatR;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.AgentSessions;
 
 namespace NoMoreBets.Application.AgentSessions.GetAgentSessionsPage;
 
@@ -7,7 +8,8 @@ public record GetAgentSessionsPageQuery(
   int Limit,
   DateTime? AfterStartedAtUtc,
   int? AfterId,
-  int? IncludeSessionId) : IRequest<Paged<AgentSessionListItemDto>>;
+  int? IncludeSessionId,
+  IReadOnlyCollection<AgentSessionPhase>? PhaseIds = null) : IRequest<Paged<AgentSessionListItemDto>>;
 
 public sealed class GetAgentSessionsPageHandler(IUnitOfWork unitOfWork)
   : IRequestHandler<GetAgentSessionsPageQuery, Paged<AgentSessionListItemDto>>
@@ -22,6 +24,7 @@ public sealed class GetAgentSessionsPageHandler(IUnitOfWork unitOfWork)
         request.AfterStartedAtUtc,
         request.AfterId,
         request.IncludeSessionId,
+        request.PhaseIds,
         cancellationToken)
       .ConfigureAwait(false);
 

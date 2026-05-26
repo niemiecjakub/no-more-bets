@@ -9,6 +9,7 @@ export interface FetchAgentSessionsPageParams {
   afterStartedAt?: string;
   afterId?: number;
   includeSessionId?: number;
+  phaseIds?: number[];
 }
 
 /**
@@ -17,13 +18,26 @@ export interface FetchAgentSessionsPageParams {
 export async function fetchAgentSessionsPage(
   params: FetchAgentSessionsPageParams = {},
 ): Promise<PagedResponse<AgentSessionListItem>> {
-  const { data } = await axiosInstance.get<unknown>("/api/agent-sessions", {
-    params: {
-      limit: params.limit ?? AGENT_SESSIONS_PAGE_SIZE,
-      afterStartedAt: params.afterStartedAt,
-      afterId: params.afterId,
-      includeSessionId: params.includeSessionId,
-    },
-  });
+  const queryParams = new URLSearchParams();
+  queryParams.set("limit", String(params.limit ?? AGENT_SESSIONS_PAGE_SIZE));
+
+  if (params.afterStartedAt != null) {
+    queryParams.set("afterStartedAt", params.afterStartedAt);
+  }
+  if (params.afterId != null) {
+    queryParams.set("afterId", String(params.afterId));
+  }
+  if (params.includeSessionId != null) {
+    queryParams.set("includeSessionId", String(params.includeSessionId));
+  }
+  for (const phaseId of params.phaseIds ?? []) {
+    if (Number.isInteger(phaseId)) {
+      queryParams.append("phaseIds", String(phaseId));
+    }
+  }
+
+  const { data } = await axiosInstance.get<unknown>(
+    `/api/agent-sessions?${queryParams.toString()}`,
+  );
   return normalizePagedResponse(data, (item) => item as AgentSessionListItem);
 }
