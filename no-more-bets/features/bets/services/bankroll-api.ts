@@ -13,6 +13,7 @@ export interface FetchBankrollEntriesPageParams {
   limit?: number;
   afterCreatedAt?: string;
   afterId?: number;
+  entryNames?: string[];
 }
 
 export async function fetchBankrollDashboard(): Promise<BankrollDashboard> {
@@ -32,13 +33,24 @@ export async function fetchBankrollBettingBalance(): Promise<BankrollBettingBala
 export async function fetchBankrollEntriesPage(
   params: FetchBankrollEntriesPageParams = {},
 ): Promise<PagedResponse<BankrollEntryListItemDto>> {
-  const { data } = await axiosInstance.get<PagedResponse<BankrollEntryListItemDto>>("/api/bankroll/entries", {
-    params: {
-      limit: params.limit ?? BANKROLL_ENTRIES_PAGE_SIZE,
-      afterCreatedAt: params.afterCreatedAt,
-      afterId: params.afterId,
-    },
-  });
+  const queryParams = new URLSearchParams();
+  queryParams.set("limit", String(params.limit ?? BANKROLL_ENTRIES_PAGE_SIZE));
+
+  if (params.afterCreatedAt != null) {
+    queryParams.set("afterCreatedAt", params.afterCreatedAt);
+  }
+  if (params.afterId != null) {
+    queryParams.set("afterId", String(params.afterId));
+  }
+  for (const entryName of params.entryNames ?? []) {
+    if (entryName.trim().length > 0) {
+      queryParams.append("entryNames", entryName);
+    }
+  }
+
+  const { data } = await axiosInstance.get<PagedResponse<BankrollEntryListItemDto>>(
+    `/api/bankroll/entries?${queryParams.toString()}`,
+  );
   return data;
 }
 

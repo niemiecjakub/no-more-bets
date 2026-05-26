@@ -5,6 +5,7 @@ using NoMoreBets.Application.Bankroll.GetBankrollDashboard;
 using NoMoreBets.Application.Bankroll.GetBankrollEntriesPage;
 using NoMoreBets.Application.Bankroll.GetBankrollEntryBetDetails;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Bankrolls;
 
 namespace NoMoreBets.Controllers;
 
@@ -33,6 +34,7 @@ public class BankrollController(IMediator mediator) : ControllerBase
     [FromQuery] int limit = 15,
     [FromQuery] DateTime? afterCreatedAt = null,
     [FromQuery] int? afterId = null,
+    [FromQuery] string[]? entryNames = null,
     CancellationToken cancellationToken = default)
   {
     limit = Math.Clamp(limit, 1, 100);
@@ -42,12 +44,27 @@ public class BankrollController(IMediator mediator) : ControllerBase
       return BadRequest("afterCreatedAt and afterId must both be provided or omitted.");
     }
 
+    IReadOnlyCollection<string>? entryNameFilter = null;
+    if (entryNames is { Length: > 0 })
+    {
+      var parsedNames = new List<string>(entryNames.Length);
+      foreach (var entryName in entryNames)
+      {
+        if (!BankrollEntryNames.All.Contains(entryName))
+          return BadRequest($"Invalid entryNames value: {entryName}.");
+
+        parsedNames.Add(entryName);
+      }
+
+      entryNameFilter = parsedNames;
+    }
+
     DateTime? afterCreatedAtUtc = afterCreatedAt is not null
       ? DateTimeQueryExtensions.ToUtc(afterCreatedAt.Value)
       : null;
 
     var result = await mediator.Send(
-      new GetBankrollEntriesPageQuery(limit, afterCreatedAtUtc, afterId),
+      new GetBankrollEntriesPageQuery(limit, afterCreatedAtUtc, afterId, entryNameFilter),
       cancellationToken);
 
     return Ok(result);

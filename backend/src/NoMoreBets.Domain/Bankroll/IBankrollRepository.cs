@@ -16,6 +16,7 @@ public interface IBankrollRepository
     int limit,
     DateTime? afterCreatedAtUtc,
     int? afterId,
+    IReadOnlyCollection<string>? entryNames = null,
     CancellationToken cancellationToken = default);
   Task<BetSlip?> GetBettingPhaseBetSlipForEntryAsync(int entryId, CancellationToken cancellationToken = default);
 }

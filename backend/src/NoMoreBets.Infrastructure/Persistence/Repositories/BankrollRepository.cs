@@ -69,9 +69,13 @@ public class BankrollRepository : IBankrollRepository
     int limit,
     DateTime? afterCreatedAtUtc,
     int? afterId,
+    IReadOnlyCollection<string>? entryNames = null,
     CancellationToken cancellationToken = default)
   {
     var query = _db.Bankroll.AsNoTracking();
+    if (entryNames is { Count: > 0 })
+      query = query.Where(row => entryNames.Contains(row.Name));
+
     if (afterCreatedAtUtc is not null && afterId is not null)
     {
       var cursorCreatedAt = afterCreatedAtUtc.Value;

@@ -6,7 +6,8 @@ namespace NoMoreBets.Application.Bankroll.GetBankrollEntriesPage;
 public record GetBankrollEntriesPageQuery(
   int Limit,
   DateTime? AfterCreatedAtUtc,
-  int? AfterId) : IRequest<Paged<BankrollEntryListItemDto>>;
+  int? AfterId,
+  IReadOnlyCollection<string>? EntryNames = null) : IRequest<Paged<BankrollEntryListItemDto>>;
 
 public sealed class GetBankrollEntriesPageHandler(IUnitOfWork unitOfWork)
   : IRequestHandler<GetBankrollEntriesPageQuery, Paged<BankrollEntryListItemDto>>
@@ -16,7 +17,12 @@ public sealed class GetBankrollEntriesPageHandler(IUnitOfWork unitOfWork)
     CancellationToken cancellationToken)
   {
     var page = await unitOfWork.Bankroll
-      .GetEntriesPageAsync(request.Limit, request.AfterCreatedAtUtc, request.AfterId, cancellationToken)
+      .GetEntriesPageAsync(
+        request.Limit,
+        request.AfterCreatedAtUtc,
+        request.AfterId,
+        request.EntryNames,
+        cancellationToken)
       .ConfigureAwait(false);
 
     var items = BankrollEntriesPagination.MapRows(page.Items)

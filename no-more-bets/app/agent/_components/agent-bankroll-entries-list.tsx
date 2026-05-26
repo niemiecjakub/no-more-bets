@@ -14,6 +14,7 @@ interface AgentBankrollEntriesListProps {
   onLoadMore: () => void;
   loadMoreError: string | null;
   onRetryLoadMore: () => void;
+  emptyMessage?: string;
 }
 
 function formatDateTime(value: string) {
@@ -36,6 +37,7 @@ export function AgentBankrollEntriesList({
   onLoadMore,
   loadMoreError,
   onRetryLoadMore,
+  emptyMessage = "No bankroll entries found.",
 }: AgentBankrollEntriesListProps) {
   const scrollRootRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -70,8 +72,8 @@ export function AgentBankrollEntriesList({
 
   if (entries.length === 0) {
     return (
-      <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">
-        No bankroll entries found.
+      <div className="min-h-[min(78vh,44rem)] p-4 text-sm text-zinc-500 dark:text-zinc-400">
+        {emptyMessage}
       </div>
     );
   }
