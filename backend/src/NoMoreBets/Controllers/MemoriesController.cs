@@ -15,6 +15,7 @@ public class MemoriesController(IMediator mediator) : ControllerBase
     [FromQuery] int limit = 15,
     [FromQuery] DateTime? afterUpdatedAt = null,
     [FromQuery] int? afterId = null,
+    [FromQuery] bool includeDeleted = false,
     CancellationToken cancellationToken = default)
   {
     limit = Math.Clamp(limit, 1, 100);
@@ -29,7 +30,7 @@ public class MemoriesController(IMediator mediator) : ControllerBase
       : null;
 
     var result = await mediator.Send(
-      new GetMemoriesPageQuery(limit, afterUpdatedAtUtc, afterId),
+      new GetMemoriesPageQuery(limit, afterUpdatedAtUtc, afterId, includeDeleted),
       cancellationToken).ConfigureAwait(false);
 
     return Ok(result);

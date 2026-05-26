@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { MemoryListItem } from "@/features/memories/interfaces";
 import { fetchMemoriesPage } from "@/features/memories/services/memories-api";
 import { handleServiceError } from "@/lib/error-handler";
+import { cn } from "@/lib/utils";
 import { AgentMemoriesList } from "./agent-memories-list";
 
 function formatDate(iso: string) {
@@ -16,6 +17,10 @@ function formatDate(iso: string) {
   } catch {
     return iso;
   }
+}
+
+function isMemoryDeleted(memory: MemoryListItem): boolean {
+  return memory.deletedAt != null;
 }
 
 function mergeMemories(existing: MemoryListItem[], incoming: MemoryListItem[]): MemoryListItem[] {
@@ -58,8 +63,10 @@ function MemoriesFallback() {
 }
 
 export function AgentMemoriesDetailsPanel() {
+  const showDeletedCheckboxId = useId();
   const [memories, setMemories] = useState<MemoryListItem[]>([]);
   const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
+  const [showDeleted, setShowDeleted] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<{ at: string; id: number } | null>(null);
   const [isLoadingMemories, setIsLoadingMemories] = useState(true);
@@ -86,8 +93,11 @@ export function AgentMemoriesDetailsPanel() {
     setIsLoadingMemories(true);
     setMemoriesError(null);
     setLoadMoreError(null);
+    setMemories([]);
+    setHasMore(false);
+    setNextCursor(null);
 
-    fetchMemoriesPage()
+    fetchMemoriesPage({ includeDeleted: showDeleted })
       .then((page) => {
         if (!cancelled) applyMemoriesPage(page, false);
       })
@@ -103,7 +113,7 @@ export function AgentMemoriesDetailsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [applyMemoriesPage]);
+  }, [applyMemoriesPage, showDeleted]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
@@ -115,6 +125,7 @@ export function AgentMemoriesDetailsPanel() {
     fetchMemoriesPage({
       afterUpdatedAt: nextCursor.at,
       afterId: nextCursor.id,
+      includeDeleted: showDeleted,
     })
       .then((page) => {
         applyMemoriesPage(page, true);
@@ -126,7 +137,7 @@ export function AgentMemoriesDetailsPanel() {
         isLoadingMoreRef.current = false;
         setIsLoadingMore(false);
       });
-  }, [applyMemoriesPage, hasMore, nextCursor]);
+  }, [applyMemoriesPage, hasMore, nextCursor, showDeleted]);
 
   useEffect(() => {
     setSelectedMemoryId((previous) => {
@@ -137,6 +148,7 @@ export function AgentMemoriesDetailsPanel() {
   }, [memories]);
 
   const selectedMemory = selectedMemoryId != null ? memories.find((memory) => memory.id === selectedMemoryId) : undefined;
+  const selectedMemoryIsDeleted = selectedMemory != null && isMemoryDeleted(selectedMemory);
 
   if (isLoadingMemories && memories.length === 0) {
     return <MemoriesFallback />;
@@ -150,17 +162,24 @@ export function AgentMemoriesDetailsPanel() {
     );
   }
 
-  if (memories.length === 0) {
-    return (
-      <p className="rounded-lg border border-zinc-200 bg-white px-4 py-6 text-center text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-        No memories saved yet.
-      </p>
-    );
-  }
-
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
       <div className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start lg:w-full">
+        <div className="border-b border-zinc-100 px-3 py-3 dark:border-zinc-800">
+          <label
+            htmlFor={showDeletedCheckboxId}
+            className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"
+          >
+            <input
+              id={showDeletedCheckboxId}
+              type="checkbox"
+              checked={showDeleted}
+              onChange={(event) => setShowDeleted(event.target.checked)}
+              className="size-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:focus:ring-zinc-500"
+            />
+            Show deleted memories
+          </label>
+        </div>
         <AgentMemoriesList
           memories={memories}
           selectedMemoryId={selectedMemoryId}
@@ -171,6 +190,7 @@ export function AgentMemoriesDetailsPanel() {
           onLoadMore={loadMore}
           loadMoreError={loadMoreError}
           onRetryLoadMore={loadMore}
+          emptyMessage={showDeleted ? "No memories found." : "No memories saved yet."}
         />
       </div>
       <div className="flex min-h-[min(78vh,44rem)] min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -178,14 +198,33 @@ export function AgentMemoriesDetailsPanel() {
           <>
             <div className="flex min-w-0 shrink-0 items-center border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
               <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
-                <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-foreground">{selectedMemory.name}</h2>
+                <h2
+                  className={cn(
+                    "min-w-0 flex-1 truncate text-lg font-semibold text-foreground",
+                    selectedMemoryIsDeleted && "text-zinc-500 line-through dark:text-zinc-400",
+                  )}
+                >
+                  {selectedMemory.name}
+                </h2>
                 <span className="shrink-0 whitespace-nowrap text-right text-xs font-normal text-zinc-500 dark:text-zinc-500">
-                  Updated {formatDate(selectedMemory.updatedAt)}
+                  {selectedMemoryIsDeleted && selectedMemory.deletedAt
+                    ? `Deleted ${formatDate(selectedMemory.deletedAt)}`
+                    : `Updated ${formatDate(selectedMemory.updatedAt)}`}
                 </span>
               </div>
             </div>
+            {selectedMemoryIsDeleted ? (
+              <div className="border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+                This memory was deleted and is no longer used by the agent.
+              </div>
+            ) : null}
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-              <pre className="wrap-break-word whitespace-pre-wrap font-mono text-sm text-zinc-800 dark:text-zinc-200">
+              <pre
+                className={cn(
+                  "wrap-break-word whitespace-pre-wrap font-mono text-sm text-zinc-800 dark:text-zinc-200",
+                  selectedMemoryIsDeleted && "opacity-70 text-zinc-500 dark:text-zinc-400",
+                )}
+              >
                 {selectedMemory.content || "—"}
               </pre>
             </div>

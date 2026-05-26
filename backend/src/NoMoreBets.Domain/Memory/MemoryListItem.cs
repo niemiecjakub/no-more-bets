@@ -6,4 +6,5 @@ public sealed record MemoryListItem(
   string? Description,
   string Content,
   DateTime CreatedAt,
-  DateTime UpdatedAt);
+  DateTime UpdatedAt,
+  DateTime? DeletedAt);

@@ -27,11 +27,15 @@ public class MemoryRepository : IMemoryRepository
     int limit,
     DateTime? afterUpdatedAtUtc,
     int? afterId,
+    bool includeDeleted = false,
     CancellationToken cancellationToken = default)
   {
-    var query = _db.Memory
-      .AsNoTracking()
-      .Where(m => m.DeletedAt == null);
+    var query = _db.Memory.AsNoTracking();
+
+    if (!includeDeleted)
+    {
+      query = query.Where(m => m.DeletedAt == null);
+    }
 
     if (afterUpdatedAtUtc is not null && afterId is not null)
     {
@@ -52,7 +56,8 @@ public class MemoryRepository : IMemoryRepository
         m.Description,
         m.Content,
         m.CreatedAt,
-        m.UpdatedAt))
+        m.UpdatedAt,
+        m.DeletedAt))
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
 

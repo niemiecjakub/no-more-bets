@@ -7,6 +7,7 @@ public interface IMemoryRepository
     int limit,
     DateTime? afterUpdatedAtUtc,
     int? afterId,
+    bool includeDeleted = false,
     CancellationToken cancellationToken = default);
   Task<Memory?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
   Task AddAsync(Memory memory, CancellationToken cancellationToken = default);

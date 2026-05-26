@@ -8,4 +8,5 @@ export interface MemoryListItem {
   content: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string | null;
 }
