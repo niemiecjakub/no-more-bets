@@ -31,7 +31,7 @@ const capabilities = [
     LinkIcon: Calendar,
   },
   {
-    title: "Places real bets",
+    title: "Places bets",
     description:
       "Places selective bets with strict discipline and clear risk boundaries.",
     accent: "bg-sky-500/80",
