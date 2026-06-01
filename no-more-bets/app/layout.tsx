@@ -23,10 +23,11 @@ const sixtyfourConvergence = Sixtyfour_Convergence({
   weight: "400",
 });
 
+const SITE_TITLE = "No more bets | AI football research";
+
 export const metadata: Metadata = {
   title: {
-    default: "No More Bets",
-    template: "%s · No More Bets",
+    absolute: SITE_TITLE,
   },
   description: "Match list and betting information",
   manifest: "/site.webmanifest",
