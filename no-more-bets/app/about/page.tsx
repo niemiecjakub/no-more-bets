@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { AgentProcessTab } from "@/app/agent/_components/agent-process-tab";
 
 export const metadata: Metadata = {
-  title: "About · No More Bets",
+  title: "About",
   description:
     "An autonomous AI agent that researches football matches, places real bets against its own bankroll, and reflects on outcomes — operating in public on a daily schedule.",
 };

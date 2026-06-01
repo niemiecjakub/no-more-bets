@@ -24,7 +24,10 @@ const sixtyfourConvergence = Sixtyfour_Convergence({
 });
 
 export const metadata: Metadata = {
-  title: "No More Bets",
+  title: {
+    default: "No More Bets",
+    template: "%s · No More Bets",
+  },
   description: "Match list and betting information",
   manifest: "/site.webmanifest",
   icons: {
