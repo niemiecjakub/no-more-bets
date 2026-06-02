@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Feedback;
 using NoMoreBets.Domain.Memories;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
@@ -45,6 +46,7 @@ public class AppDbContext : DbContext
   public DbSet<Bankroll> Bankroll { get; set; }
   public DbSet<AgentSession> AgentSession { get; set; }
   public DbSet<AgentSessionMessage> AgentSessionMessage { get; set; }
+  public DbSet<Feedback> Feedback { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -477,6 +479,18 @@ public class AppDbContext : DbContext
         .WithMany(s => s.Messages)
         .HasForeignKey(e => e.SessionId)
         .OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<Feedback>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.Message).IsRequired();
+      entity.Property(e => e.Name).IsRequired(false).HasMaxLength(NoMoreBets.Domain.Feedback.Feedback.MaxNameLength);
+      entity.Property(e => e.Email).IsRequired(false).HasMaxLength(NoMoreBets.Domain.Feedback.Feedback.MaxEmailLength);
+      entity.Property(e => e.CreatedAt).IsRequired();
+      entity.HasIndex(e => e.CreatedAt)
+        .HasDatabaseName("idx_feedback_createdat");
     });
   }
 }

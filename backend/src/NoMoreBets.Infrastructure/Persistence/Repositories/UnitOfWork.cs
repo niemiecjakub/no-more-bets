@@ -5,6 +5,7 @@ using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Feedback;
 using NoMoreBets.Domain.Memories;
 
 namespace NoMoreBets.Infrastructure.Persistence.Repositories;
@@ -20,7 +21,8 @@ public class UnitOfWork : IUnitOfWork
     IClubRepository clubRepository,
     IMemoryRepository memoryRepository,
     IBankrollRepository bankrollRepository,
-    IAgentSessionRepository agentSessionRepository)
+    IAgentSessionRepository agentSessionRepository,
+    IFeedbackRepository feedbackRepository)
   {
     _db = db;
     Betting = bettingRepository;
@@ -30,6 +32,7 @@ public class UnitOfWork : IUnitOfWork
     Memories = memoryRepository;
     Bankroll = bankrollRepository;
     AgentSessions = agentSessionRepository;
+    Feedback = feedbackRepository;
   }
 
   public IBettingRepository Betting { get; }
@@ -40,6 +43,7 @@ public class UnitOfWork : IUnitOfWork
   public IMemoryRepository Memories { get; }
   public IBankrollRepository Bankroll { get; }
   public IAgentSessionRepository AgentSessions { get; }
+  public IFeedbackRepository Feedback { get; }
 
   public async Task SaveChangesAsync(CancellationToken cancellationToken)
   {
