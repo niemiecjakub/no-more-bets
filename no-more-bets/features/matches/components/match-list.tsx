@@ -156,7 +156,7 @@ export function MatchList({
                 match.awayClubName
               );
               const centerCell = showScore ? (
-                <span className="inline-block min-w-22 text-center text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                <span className="inline-block text-center text-2xl font-bold tabular-nums tracking-tight text-foreground">
                   {center}
                 </span>
               ) : (
@@ -196,48 +196,50 @@ export function MatchList({
                         ) : null}
                       </Link>
                     ) : null}
-                    <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 gap-y-1.5">
-                      <Link
-                        href={`/match/${match.id}`}
-                        className="col-start-1 row-start-1 flex min-w-0 items-center justify-end gap-2"
-                      >
-                        <span className="min-w-0 truncate text-end font-medium text-foreground">
-                          {match.homeClubName}
-                        </span>
-                        <SlugIcon
-                          kind="club"
-                          slug={homeLogoSlug}
-                          alt={match.homeClubName}
-                          className="h-7 w-7"
-                        />
-                      </Link>
-                      <Link
-                        href={`/match/${match.id}`}
-                        className="col-start-2 row-start-1 flex justify-center px-1"
-                      >
-                        {centerCell}
-                      </Link>
-                      <Link
-                        href={`/match/${match.id}`}
-                        className="col-start-3 row-start-1 flex min-w-0 items-center justify-start gap-2"
-                      >
-                        <SlugIcon
-                          kind="club"
-                          slug={awayLogoSlug}
-                          alt={match.awayClubName}
-                          className="h-7 w-7"
-                        />
-                        <span className="min-w-0 truncate font-medium text-foreground">
-                          {match.awayClubName}
-                        </span>
-                      </Link>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-4">
+                        <Link
+                          href={`/match/${match.id}`}
+                          className="flex min-w-0 items-center justify-end gap-2"
+                        >
+                          <span className="min-w-0 truncate text-end font-medium text-foreground">
+                            {match.homeClubName}
+                          </span>
+                          <SlugIcon
+                            kind="club"
+                            slug={homeLogoSlug}
+                            alt={match.homeClubName}
+                            className="h-7 w-7"
+                          />
+                        </Link>
+                        <Link
+                          href={`/match/${match.id}`}
+                          className="justify-self-center px-3"
+                        >
+                          {centerCell}
+                        </Link>
+                        <Link
+                          href={`/match/${match.id}`}
+                          className="flex min-w-0 items-center justify-start gap-2"
+                        >
+                          <SlugIcon
+                            kind="club"
+                            slug={awayLogoSlug}
+                            alt={match.awayClubName}
+                            className="h-7 w-7"
+                          />
+                          <span className="min-w-0 truncate font-medium text-foreground">
+                            {match.awayClubName}
+                          </span>
+                        </Link>
+                      </div>
                       {hasAgentResearch ? (
                         <button
                           type="button"
                           aria-expanded={isExpanded}
                           aria-label={isExpanded ? "Collapse agent research" : "Expand agent research"}
                           onClick={() => toggleExpanded(match.id)}
-                          className="col-start-2 row-start-2 inline-flex items-center gap-1 justify-self-center rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-900 ring-1 ring-inset ring-sky-600/25 transition-colors hover:bg-sky-200/80 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-500/35 dark:hover:bg-sky-900/70"
+                          className="mx-auto inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-900 ring-1 ring-inset ring-sky-600/25 transition-colors hover:bg-sky-200/80 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-500/35 dark:hover:bg-sky-900/70"
                         >
                           <span aria-hidden>🔬</span>
                           <span>Agent Research</span>
@@ -247,7 +249,7 @@ export function MatchList({
                           />
                         </button>
                       ) : (
-                        <div className="col-start-2 row-start-2 flex flex-wrap items-center justify-center gap-1.5 justify-self-center">
+                        <div className="flex flex-wrap items-center justify-center gap-1.5">
                           {readinessChips.map((chip) => (
                             <span
                               key={chip.key}
