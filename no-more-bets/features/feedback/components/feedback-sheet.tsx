@@ -239,7 +239,7 @@ export function FeedbackSheet({ open, onOpenChange }: FeedbackSheetProps) {
                       id="feedback-message"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      placeholder="What would you like me to know?"
+                      placeholder="What's on your mind?"
                       rows={8}
                       maxLength={FEEDBACK_MAX_MESSAGE_LENGTH}
                       disabled={isSubmitting}
