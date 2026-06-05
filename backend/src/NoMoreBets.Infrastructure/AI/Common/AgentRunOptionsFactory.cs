@@ -5,7 +5,7 @@ namespace NoMoreBets.Infrastructure.AI.Common;
 
 internal static class AgentRunOptionsFactory
 {
-  public static ChatClientAgentRunOptions CreateDefault(bool enableReasoningEffort = false)
+  public static ChatClientAgentRunOptions CreateDefault()
   {
     var chatOptions = new ChatOptions
     {

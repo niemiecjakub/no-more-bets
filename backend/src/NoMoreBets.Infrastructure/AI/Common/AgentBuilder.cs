@@ -39,7 +39,7 @@ public sealed class AgentBuilder
     });
 
     var session = await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
-    var defaultRunOptions = AgentRunOptionsFactory.CreateDefault(enableReasoningEffort: true);
+    var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
     return new AgentConfig(agent, session, defaultRunOptions);
   }
 
