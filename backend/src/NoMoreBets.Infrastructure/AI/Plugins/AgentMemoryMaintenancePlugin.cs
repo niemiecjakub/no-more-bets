@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Memories;
 
@@ -27,7 +26,7 @@ public sealed class AgentMemoryMaintenancePlugin : AgentPluginBase
     _logger = logger ?? NullLogger<AgentMemoryMaintenancePlugin>.Instance;
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Permanently deletes a named memory record. Use only when the entire record is obsolete.")]
   public async Task<string> DeleteMemoryAsync(
     [Description("Name of the memory record to delete (same naming as other memory tools).")]

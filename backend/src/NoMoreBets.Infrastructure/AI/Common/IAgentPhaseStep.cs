@@ -1,4 +1,4 @@
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Infrastructure.AI.Common;
@@ -6,5 +6,5 @@ namespace NoMoreBets.Infrastructure.AI.Common;
 public interface IAgentPhaseStep
 {
   string BuildPrompt();
-  void ConfigureKernel(Kernel kernel, IPluginFactory pluginFactory);
+  IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory);
 }

@@ -1,4 +1,4 @@
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
@@ -47,9 +47,6 @@ public sealed class InternetResearchPhase : IAgentPhaseDefinition, IAgentPhaseSt
           - Be evidence-driven and explicit about missing data
           """;
 
-  public void ConfigureKernel(Kernel kernel, IPluginFactory pluginFactory)
-  {
-    kernel.Plugins.AddFromObject(pluginFactory.CreateAgentInternetResearchPlugin());
-    kernel.Data.Add("phase", "InternetResearch");
-  }
+  public IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory) =>
+    AgentToolFactory.CreateFromObject(pluginFactory.CreateAgentInternetResearchPlugin());
 }

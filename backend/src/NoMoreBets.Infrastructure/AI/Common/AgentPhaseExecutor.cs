@@ -36,7 +36,7 @@ public sealed class AgentPhaseExecutor
       throw new InvalidOperationException($"Agent phase {definition.Phase} has no steps configured.");
     }
 
-    var config = _agentBuilder.BuildForScheduledJob();
+    var config = await _agentBuilder.BuildForScheduledJobAsync(cancellationToken).ConfigureAwait(false);
     var phaseName = definition.Phase.ToString();
     _logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
 
@@ -52,9 +52,10 @@ public sealed class AgentPhaseExecutor
     {
       foreach (var step in definition.Steps)
       {
-        step.Implementation.ConfigureKernel(config.Agent.Kernel, _pluginFactory);
+        var tools = step.Implementation.GetTools(_pluginFactory);
+        var prompt = step.Implementation.BuildPrompt();
         var stepMessages = await AgentPhaseTranscriptCollector
-          .CollectAsync(config, step.Implementation.BuildPrompt(), cancellationToken)
+          .CollectAsync(config, prompt, tools, cancellationToken)
           .ConfigureAwait(false);
 
         if (step.PersistTranscript)

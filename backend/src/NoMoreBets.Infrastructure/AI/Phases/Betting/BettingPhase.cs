@@ -1,6 +1,6 @@
 using System.Globalization;
 using MediatR;
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
@@ -120,11 +120,8 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
           - In your final narrative to the user, do not mention internal process, tool names, or plugin mechanics.
           """;
 
-    public void ConfigureKernel(Kernel kernel, IPluginFactory plugins)
-    {
-      kernel.Plugins.AddFromObject(plugins.CreateAgentBettingPlugin());
-      kernel.Data.Add("phase", "Betting");
-    }
+    public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
+      AgentToolFactory.CreateFromObject(plugins.CreateAgentBettingPlugin());
   }
 
   private sealed class XPostFollowUpStep : IAgentPhaseStep
@@ -136,10 +133,7 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
         Always include hashtags for the league involved, derived from that league's name (e.g. Premier League as #PremierLeague, Serie A as #SerieA).
         """;
 
-    public void ConfigureKernel(Kernel kernel, IPluginFactory plugins)
-    {
-      kernel.Plugins.Clear();
-      kernel.Plugins.AddFromObject(plugins.CreateSocialMediaPlugin());
-    }
+    public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
+      AgentToolFactory.CreateFromObject(plugins.CreateSocialMediaPlugin());
   }
 }

@@ -4,7 +4,6 @@ using System.Text.Json.Serialization;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.CancelBetSlip;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
@@ -38,7 +37,7 @@ public class BettingPlugin
     _logger = logger ?? NullLogger<BettingPlugin>.Instance;
   }
 
-  [KernelFunction("GetAvailableMatches")]
+  [AgentTool("GetAvailableMatches")]
   [Description("Retrieves matches for which bets can currently be placed.")]
   public async Task<IReadOnlyList<AvailableMatch>> GetAvailableMatchesAsync(CancellationToken cancellationToken = default)
   {
@@ -50,7 +49,7 @@ public class BettingPlugin
       .ToList();
   }
 
-  [KernelFunction("GetCurrentOdds")]
+  [AgentTool("GetCurrentOdds")]
   [Description("Returns current odds for the match. By default returns compact markets (1X2, BTTS, double chance, O/U goals). Set includeExoticMarkets true only when you need handicap or exact-score lines.")]
   public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(
     int matchId,
@@ -108,7 +107,7 @@ public class BettingPlugin
       .ToList();
   }
 
-  [KernelFunction("GetMatchAnalysis")]
+  [AgentTool("GetMatchAnalysis")]
   [Description("Returns structured match analysis for the given match.")]
   public async Task<StructuredMatchAnalysis?> GetMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
   {
@@ -116,7 +115,7 @@ public class BettingPlugin
     return analysis?.GetAnalysis();
   }
 
-  [KernelFunction("PlaceBetSlip")]
+  [AgentTool("PlaceBetSlip")]
   [Description("Places one bet slip per call. One selection is a single bet; multiple selections combine as a parlay on that slip. Call once per slip; you may call multiple times for multiple separate slips.")]
   public async Task<string> PlaceBetSlip(
     [Description("Stake in currency units. Required; must not exceed GetCurrentBalance (call GetCurrentBalance first).")]
@@ -205,7 +204,7 @@ public class BettingPlugin
     return "Bet slip placed successfully.";
   }
 
-  [KernelFunction("CancelBetSlip")]
+  [AgentTool("CancelBetSlip")]
   [Description("Cancels a pending bet slip and refunds its stake. A slip can be canceled only when all of its selections are still pending.")]
   public async Task CancelBetSlipAsync(
     [Description("Identifier of the bet slip to cancel.")]
@@ -234,7 +233,7 @@ public class BettingPlugin
     }
   }
 
-  [KernelFunction("GetBetSlips")]
+  [AgentTool("GetBetSlips")]
   [Description("Returns bet slips, newest first. Optional status: Pending, Won, Lost — omit the argument to return slips in every status.")]
   public async Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(
     [Description("Filter by slip status, or omit for all statuses.")] BetStatus? status = null,
@@ -243,7 +242,7 @@ public class BettingPlugin
     return await _mediator.Send(new GetBetSlipsQuery(status), cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Returns settled bet slips (Won, Lost) created within the last N days, newest first.")]
   public async Task<IReadOnlyList<BetSlipSummary>> GetNonPendingBetSlipsFromLastDaysAsync(
     [Description("Number of days to look back from now; must be greater than zero.")]

@@ -3,7 +3,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
@@ -43,7 +42,7 @@ public class ResearchBetPlugin
     _logger = logger ?? NullLogger<ResearchBetPlugin>.Instance;
   }
 
-  [KernelFunction("PlaceBetSlip")]
+  [AgentTool("PlaceBetSlip")]
   [Description("Paper / Research slip only: records a fictional prediction for this match. One selection is a single; multiple selections on one slip combine as a parlay.")]
   public async Task<string> PlaceBetSlip(
     [Description("JSON object with property betSelections: an array of selection objects. Each object must have: eventType (string, from GetCurrentOdds eventTypeName), option (string, from GetCurrentOdds option label). Example: {\"betSelections\":[{\"eventType\":\"bothTeamsToScore\",\"option\":\"bothTeamsToScore_Yes\"}]}")]
@@ -122,7 +121,7 @@ public class ResearchBetPlugin
     return "Research bet slip placed successfully.";
   }
 
-  [KernelFunction("GetMatchEvents")]
+  [AgentTool("GetMatchEvents")]
   [Description("Lists available markets and outcome option names for this match.")]
   public async Task<IReadOnlyList<MatchEventMarket>> GetMatchEventsAsync(CancellationToken cancellationToken = default)
   {
@@ -161,7 +160,7 @@ public class ResearchBetPlugin
       .ToList();
   }
 
-  [KernelFunction("GetMatchBasicInfo")]
+  [AgentTool("GetMatchBasicInfo")]
   [Description("Returns basic information for this match: home/away club ids and names.")]
   public async Task<MatchBasicInfo> GetMatchBasicInfoAsync(CancellationToken cancellationToken = default)
   {

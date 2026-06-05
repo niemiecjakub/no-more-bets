@@ -10,11 +10,10 @@ using NoMoreBets.Infrastructure.AI.Plugins;
 
 namespace NoMoreBets.Infrastructure.AI;
 
-public static class SemanticKernelProvider
+public static class AgentFrameworkProvider
 {
-  public static IServiceCollection AddSemanticKernelServices(this IServiceCollection services)
+  public static IServiceCollection AddAgentFrameworkServices(this IServiceCollection services)
   {
-    services.AddSingleton<ThreadProvider>();
     services.AddScoped<IPluginFactory, PluginFactory>();
     services.AddScoped<MatchPlugin>();
     services.AddScoped<BettingPlugin>();
@@ -24,7 +23,6 @@ public static class SemanticKernelProvider
     services.AddScoped<AgentResearchPlugin>();
     services.AddScoped<BankrollPlugin>();
     services.AddScoped<SocialMediaPlugin>();
-    services.AddScoped<ContextBuilder>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<AgentSessionContext>();
     services.AddScoped<AgentPhaseExecutor>();

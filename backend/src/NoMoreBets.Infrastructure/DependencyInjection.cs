@@ -81,7 +81,7 @@ public static class DependencyInjection
     services.AddScoped<IFeedbackRepository, FeedbackRepository>();
     services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-    services.AddSemanticKernelServices();
+    services.AddAgentFrameworkServices();
 
     // Browser automation
     services.AddSingleton<PlaywrightBrowserService>();

@@ -1,4 +1,5 @@
-using Microsoft.SemanticKernel;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Common.Dto;
 
 namespace NoMoreBets.Infrastructure.AI.Common;
@@ -8,33 +9,48 @@ internal static class AgentPhaseTranscriptCollector
   public static async Task<List<IMessage>> CollectAsync(
     AgentConfig config,
     string prompt,
+    IReadOnlyList<AITool> tools,
     CancellationToken cancellationToken)
   {
+    var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
+    var response = await config.Agent
+      .RunAsync(prompt, config.Session, runOptions, cancellationToken)
+      .ConfigureAwait(false);
+
+    return MapResponse(response);
+  }
+
+  private static List<IMessage> MapResponse(AgentResponse response)
+  {
     var messages = new List<IMessage>();
-    await foreach (var message in config.Agent.InvokeAsync(prompt, config.Thread, config.Options, cancellationToken)
-                     .ConfigureAwait(false))
+
+    foreach (var chatMessage in response.Messages)
     {
-#pragma warning disable SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-      foreach (var item in message.Message.Items)
+      foreach (var item in chatMessage.Contents)
       {
-        if (item is ReasoningContent reasoning)
+        switch (item)
         {
-          messages.Add(new ReasoningMessage(reasoning.Text));
-        }
+          case TextReasoningContent reasoning when !string.IsNullOrEmpty(reasoning.Text):
+            messages.Add(new ReasoningMessage(reasoning.Text));
+            break;
 
-        if (item is FunctionCallContent functionCall)
-        {
-          var functionName = functionCall.FunctionName;
-          var arguments = functionCall.Arguments?.Select(a => new FunctionArgument(a.Key.ToString(), a.Value?.ToString())).ToList();
-          messages.Add(new FunctionMessage(functionName, arguments));
+          case FunctionCallContent functionCall:
+            var arguments = functionCall.Arguments?
+              .Select(a => new FunctionArgument(a.Key, a.Value?.ToString()))
+              .ToList();
+            messages.Add(new FunctionMessage(functionCall.Name, arguments));
+            break;
+
+          case TextContent text when !string.IsNullOrEmpty(text.Text):
+            messages.Add(new Message(text.Text));
+            break;
         }
       }
+    }
 
-#pragma warning restore SKEXP0110 // Type is for evaluation purposes only and is subject to change or removal in future updates. Suppress this diagnostic to proceed.
-      if (!string.IsNullOrEmpty(message.Message.Content))
-      {
-        messages.Add(new Message(message.Message.Content));
-      }
+    if (messages.Count == 0 && !string.IsNullOrEmpty(response.Text))
+    {
+      messages.Add(new Message(response.Text));
     }
 
     return messages;

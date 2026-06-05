@@ -2,7 +2,6 @@ using System.ComponentModel;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
 
@@ -21,14 +20,14 @@ public class BankrollPlugin
     _logger = logger ?? NullLogger<BankrollPlugin>.Instance;
   }
 
-  [KernelFunction("GetCurrentBalance")]
+  [AgentTool("GetCurrentBalance")]
   [Description("Returns bank account balance")]
   public async Task<decimal> GetCurrentBalanceAsync(CancellationToken cancellationToken = default)
   {
     return await _unitOfWork.Bankroll.GetCurrentBalanceAsync(cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction("GetDaysUntilPayday")]
+  [AgentTool("GetDaysUntilPayday")]
   [Description("Returns number of days untill next payday.")]
   public async Task<int> GetDaysUntilPaydayAsync(CancellationToken cancellationToken = default)
   {

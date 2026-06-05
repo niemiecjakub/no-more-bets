@@ -1,4 +1,4 @@
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches;
@@ -94,12 +94,8 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           - Focus on delivering the research output as if for a human analyst, not on describing your own process.
           """;
 
-    public void ConfigureKernel(Kernel kernel, IPluginFactory plugins)
-    {
-      kernel.Plugins.AddFromObject(plugins.CreateAgentResearchPlugin());
-      kernel.Data.Add("matchId", match.Id);
-      kernel.Data.Add("phase", "Research");
-    }
+    public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
+      AgentToolFactory.CreateFromObject(plugins.CreateAgentResearchPlugin());
   }
 
   private sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
@@ -128,10 +124,7 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           - You cannot select multiple options from the same market.
           """;
 
-    public void ConfigureKernel(Kernel kernel, IPluginFactory plugins)
-    {
-      kernel.Plugins.Clear();
-      kernel.Plugins.AddFromObject(plugins.CreateResearchBetPlugin(matchId));
-    }
+    public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
+      AgentToolFactory.CreateFromObject(plugins.CreateResearchBetPlugin(matchId));
   }
 }

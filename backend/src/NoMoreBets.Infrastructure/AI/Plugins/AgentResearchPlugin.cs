@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Clubs;
@@ -34,7 +33,7 @@ public class AgentResearchPlugin : AgentPluginBase
     _logger = logger;
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Retrieves the starting lineups for both the home and away teams for the match.")]
   public async Task<AgentMatchLineup?> GetLineupsAsync(int matchId, CancellationToken cancellationToken = default)
   {
@@ -49,70 +48,70 @@ public class AgentResearchPlugin : AgentPluginBase
       new AgentTeamLineup(lineup.Away.Players.Select(p => new Player(p.Name, p.Position)).ToList()));
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Gets a list of injured or unavailable players for both teams involved in the match.")]
   public async Task<NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult?> GetInjuriesAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetInjuriesAsync(matchId, cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Provides historical head-to-head statistics between the two clubs for the match.")]
   public async Task<NoMoreBets.Application.Matches.GetHeadToHeadStats.H2H?> GetHead2HeadStatsAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetHead2HeadStatsAsync(matchId, cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Gets the daily summary for a club.")]
   public async Task<string?> GetClubDailySummaryAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetClubDailySummaryAsync(clubId, cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Retrieves the results from the last 5 league matches for a specific club.")]
   public async Task<IReadOnlyList<NoMoreBets.Application.Clubs.GetClubRecentGames.RecentMatch>?> GetClubRecentGamesAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetClubRecentGamesAsync(clubId, cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Retrieves league table standing and advanced metrics (xG, xGA, xPts) for a club.")]
   public async Task<ClubLeagueStats?> GetClubStatistics(int clubId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetClubStatistics(clubId, cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Returns the full league table for the league of the match.")]
   public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetLeagueTableAsync(matchId, cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Provides the movement of betting odds for this match, showing how prices have changed over time across different event types.")]
   public async Task<IReadOnlyList<NoMoreBets.Application.Betting.GetMatchBettingOddsHistory.MarketPriceHistory>?> GetMatchBettingOddsHistoryAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetMatchBettingOddsHistoryAsync(matchId, cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Gets performance data for a club from its latest 5 finished games.")]
   public async Task<NoMoreBets.Application.Clubs.GetClubRollingPerformance.TeamPerformanceResult?> GetClubRollingPerformanceAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetClubRollingPerformanceAsync(clubId, cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Returns a list with upcomming matches.")]
   public async Task<IReadOnlyList<AvailableMatch>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default)
   {
     return await _matchPlugin.GetUpcomingMatchesAsync(cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Stores research text.")]
   public async Task<string> SaveMatchAnalysisAsync(
     [Description("The match identifier.")]

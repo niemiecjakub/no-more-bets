@@ -1,8 +1,9 @@
 using FluentAssertions;
-using Microsoft.SemanticKernel;
 using NSubstitute;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.SocialMedia.CreateXPost;
+using Microsoft.Extensions.AI;
+using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Plugins;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
@@ -34,16 +35,12 @@ public class SocialMediaPluginTests
   }
 
   [Fact]
-  public void KernelRegistersCreateXPostFunction()
+  public void AgentTools_RegistersCreateXPostFunction()
   {
-    var kernel = new Kernel();
-    kernel.Plugins.AddFromObject(_sut);
+    var tools = AgentToolFactory.CreateFromObject(_sut);
 
-    var functionNames = kernel.Plugins
-      .SelectMany(p => p)
-      .Select(f => f.Name)
-      .ToArray();
-
-    functionNames.Should().ContainSingle().Which.Should().Be("CreateXPost");
+    tools.Should().ContainSingle();
+    tools[0].Should().BeAssignableTo<AIFunction>();
+    ((AIFunction)tools[0]).Name.Should().Be("CreateXPost");
   }
 }

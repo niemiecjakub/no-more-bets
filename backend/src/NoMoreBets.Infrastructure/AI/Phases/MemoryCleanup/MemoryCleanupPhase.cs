@@ -1,4 +1,4 @@
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
@@ -54,9 +54,6 @@ public sealed class MemoryCleanupPhase : IAgentPhaseDefinition, IAgentPhaseStep
           """;
   }
 
-  public void ConfigureKernel(Kernel kernel, IPluginFactory pluginFactory)
-  {
-    kernel.Plugins.AddFromObject(pluginFactory.CreateAgentMemoryMaintenancePlugin());
-    kernel.Data.Add("phase", "MemoryCleanup");
-  }
+  public IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory) =>
+    AgentToolFactory.CreateFromObject(pluginFactory.CreateAgentMemoryMaintenancePlugin());
 }

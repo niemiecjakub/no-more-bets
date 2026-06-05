@@ -1,4 +1,4 @@
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
@@ -101,9 +101,6 @@ public sealed class ReflectionPhase : IAgentPhaseDefinition, IAgentPhaseStep
           - If no strong lessons exist → store nothing
           """;
 
-  public void ConfigureKernel(Kernel kernel, IPluginFactory pluginFactory)
-  {
-    kernel.Plugins.AddFromObject(pluginFactory.CreateAgentReflectionPlugin());
-    kernel.Data.Add("phase", "Reflection");
-  }
+  public IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory) =>
+    AgentToolFactory.CreateFromObject(pluginFactory.CreateAgentReflectionPlugin());
 }

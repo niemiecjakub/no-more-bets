@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
 using NoMoreBets.Application.Common;
@@ -27,7 +26,7 @@ public class AgentReflectionPlugin : AgentPluginBase
     _logger = logger;
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Returns settled bet slips that still need reflection. Call this first to determine which slips to analyze.")]
   public async Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAwaitingReflectionAsync(
     CancellationToken cancellationToken = default)
@@ -35,7 +34,7 @@ public class AgentReflectionPlugin : AgentPluginBase
     return await _bettingPlugin.GetBetSlipsAwaitingReflectionAsync(cancellationToken).ConfigureAwait(false);
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Returns the latest stored research analysis text for the match (same source used before betting). Use to compare pre-match thesis to how the bet resolved.")]
   public async Task<string?> GetMatchResearchTextAsync(int matchId, CancellationToken cancellationToken = default)
   {

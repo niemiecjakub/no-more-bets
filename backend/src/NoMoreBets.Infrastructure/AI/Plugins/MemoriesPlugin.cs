@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.SemanticKernel;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Memories;
 
@@ -24,7 +23,7 @@ public class MemoriesPlugin
     return name;
   }
 
-  [KernelFunction]
+  [AgentTool]
   [Description("Lists all saved memory records.")]
   public async Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default)
   {
@@ -32,7 +31,7 @@ public class MemoriesPlugin
     return records.ToList();
   }
 
-  [KernelFunction("Read")]
+  [AgentTool("Read")]
   [Description("Loads the full content of a saved memory record.")]
   public async Task<string> ReadAsync(
     [Description("Name of the memory record to read.")]
@@ -50,7 +49,7 @@ public class MemoriesPlugin
     return string.IsNullOrEmpty(memory.Content) ? "*This memory is currently empty*" : memory.Content;
   }
 
-  [KernelFunction("Write")]
+  [AgentTool("Write")]
   [Description("Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.")]
   public async Task<string> WriteAsync(
     [Description("Name of the memory record to update.")]
@@ -83,7 +82,7 @@ public class MemoriesPlugin
     return "*Memory updated successfully*";
   }
 
-  [KernelFunction("Append")]
+  [AgentTool("Append")]
   [Description("Adds text to the end of an existing memory record")]
   public async Task<string> AppendAsync(
         [Description("Name of the memory record to update.")]
@@ -105,7 +104,7 @@ public class MemoriesPlugin
     return "*Text appended successfully*";
   }
 
-  [KernelFunction("Replace")]
+  [AgentTool("Replace")]
   [Description("Finds an exact substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.")]
   public async Task<string> ReplaceAsync(
     [Description("Name of the memory record to update.")]
