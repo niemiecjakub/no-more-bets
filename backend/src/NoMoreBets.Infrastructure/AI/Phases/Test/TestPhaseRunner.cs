@@ -2,7 +2,6 @@ using MediatR;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Infrastructure.AI.Providers;
@@ -15,7 +14,6 @@ namespace NoMoreBets.Infrastructure.AI.Phases.Test;
 public sealed class TestPhaseRunner(
   IOptions<OpenAIOptions> openAiOptions,
   IMediator mediator,
-  IUnitOfWork unitOfWork,
   ISearchService searchService)
 {
   public async Task<IReadOnlyList<IMessage>> RunAsync(CancellationToken cancellationToken = default)
@@ -40,7 +38,6 @@ public sealed class TestPhaseRunner(
       },
       AIContextProviders = [
         new BankrollProvider(mediator),
-        new MemoriesProvider(unitOfWork),
         new WebSearchProvider(searchService)
       ],
     });

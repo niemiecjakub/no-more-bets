@@ -11,15 +11,11 @@ internal static class ReflectionPhaseTools
   {
     var betting = (BettingPlugin)factory.CreateBettingPlugin();
     var match = (MatchPlugin)factory.CreateMatchPlugin();
-    var memories = (MemoriesPlugin)factory.CreateMemoriesPlugin();
-    var search = (InternetSearchPlugin)factory.CreateInternetSearchPlugin();
 
     return
     [
       AgentAiTools.Create(betting.GetBetSlipsAwaitingReflectionAsync, "GetBetSlipsAwaitingReflectionAsync"),
       AgentAiTools.Create(match.GetMatchResearchTextAsync, "GetMatchResearchTextAsync"),
-      .. AgentAiTools.MemoryTools(memories),
-      .. AgentAiTools.SearchTools(search),
     ];
   }
 }

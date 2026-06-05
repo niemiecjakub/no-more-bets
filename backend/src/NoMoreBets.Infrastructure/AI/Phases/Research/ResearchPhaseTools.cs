@@ -10,9 +10,6 @@ internal static class ResearchPhaseTools
   public static IReadOnlyList<AITool> CreatePrimaryStepTools(IPluginFactory factory)
   {
     var match = (MatchPlugin)factory.CreateMatchPlugin();
-    var memories = (MemoriesPlugin)factory.CreateMemoriesPlugin();
-    var search = (InternetSearchPlugin)factory.CreateInternetSearchPlugin();
-    var bankroll = (BankrollPlugin)factory.CreateBankrollPlugin();
 
     return
     [
@@ -26,9 +23,6 @@ internal static class ResearchPhaseTools
       AgentAiTools.Create(match.GetMatchBettingOddsHistoryAsync, "GetMatchBettingOddsHistory"),
       AgentAiTools.Create(match.GetClubRollingPerformanceAsync, "GetClubRollingPerformance"),
       AgentAiTools.Create(match.SaveMatchAnalysisAsync, "SaveMatchAnalysisAsync"),
-      .. AgentAiTools.MemoryTools(memories),
-      .. AgentAiTools.SearchTools(search),
-      .. AgentAiTools.BankrollTools(bankroll),
     ];
   }
 

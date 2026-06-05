@@ -4,7 +4,6 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Search;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Phases.Betting;
@@ -24,19 +23,14 @@ public class PhaseToolsTests
   {
     var unitOfWork = Substitute.For<IUnitOfWork>();
     var mediator = Substitute.For<IMediator>();
-    var searchService = Substitute.For<ISearchService>();
     var xApiService = Substitute.For<IXApiService>();
     var agentSessionContext = new AgentSessionContext();
 
     var sp = new ServiceCollection()
       .AddSingleton(unitOfWork)
       .AddSingleton(mediator)
-      .AddSingleton(searchService)
       .AddSingleton(xApiService)
       .AddSingleton(agentSessionContext)
-      .AddSingleton(sp => new MemoriesPlugin(sp.GetRequiredService<IUnitOfWork>()))
-      .AddSingleton(sp => new InternetSearchPlugin(sp.GetRequiredService<ISearchService>()))
-      .AddSingleton(sp => new BankrollPlugin(sp.GetRequiredService<IUnitOfWork>(), sp.GetRequiredService<IMediator>()))
       .BuildServiceProvider();
 
     _pluginFactory = new PluginFactory(sp);
@@ -47,14 +41,11 @@ public class PhaseToolsTests
   {
     var tools = ResearchPhaseTools.CreatePrimaryStepTools(_pluginFactory);
 
-    tools.Should().HaveCount(19);
+    tools.Should().HaveCount(10);
     ToolNames(tools).Should().Contain(
     [
       "GetLineups",
       "SaveMatchAnalysisAsync",
-      "ReadMemoryAsync",
-      "SearchNewsAsync",
-      "GetCurrentBalance",
     ]);
   }
 
@@ -72,7 +63,7 @@ public class PhaseToolsTests
   {
     var tools = BettingPhaseTools.CreatePrimaryStepTools(_pluginFactory);
 
-    tools.Should().HaveCount(14);
+    tools.Should().HaveCount(5);
     ToolNames(tools).Should().Contain(["GetAvailableMatches", "PlaceBetSlip", "GetBetSlips"]);
   }
 
@@ -90,17 +81,16 @@ public class PhaseToolsTests
   {
     var tools = ReflectionPhaseTools.CreateStepTools(_pluginFactory);
 
-    tools.Should().HaveCount(9);
+    tools.Should().HaveCount(2);
     ToolNames(tools).Should().Contain(["GetBetSlipsAwaitingReflectionAsync", "GetMatchResearchTextAsync"]);
   }
 
   [Fact]
-  public void MemoryCleanupStepTools_RegistersDeleteMemory()
+  public void MemoryCleanupStepTools_RegistersNoTools()
   {
     var tools = MemoryCleanupPhaseTools.CreateStepTools(_pluginFactory);
 
-    tools.Should().HaveCount(10);
-    ToolNames(tools).Should().Contain("DeleteMemoryAsync");
+    tools.Should().BeEmpty();
   }
 
   [Fact]
@@ -108,8 +98,8 @@ public class PhaseToolsTests
   {
     var tools = InternetResearchPhaseTools.CreateStepTools(_pluginFactory);
 
-    tools.Should().HaveCount(10);
-    ToolNames(tools).Should().Contain(["GetAvailableMatchesAsync", "SearchNewsAsync"]);
+    tools.Should().ContainSingle();
+    ToolNames(tools).Should().ContainSingle("GetAvailableMatchesAsync");
   }
 
   private static IEnumerable<string> ToolNames(IReadOnlyList<AITool> tools) =>

@@ -18,26 +18,14 @@ public class PluginFactory : IPluginFactory
   public BettingPlugin CreateBettingPlugin() =>
     ActivatorUtilities.CreateInstance<BettingPlugin>(_sp);
 
-  public InternetSearchPlugin CreateInternetSearchPlugin() =>
-    ActivatorUtilities.CreateInstance<InternetSearchPlugin>(_sp);
-
-  public MemoriesPlugin CreateMemoriesPlugin() =>
-    ActivatorUtilities.CreateInstance<MemoriesPlugin>(_sp);
-
   public ResearchBetPlugin CreateResearchBetPlugin(int matchId) =>
     ActivatorUtilities.CreateInstance<ResearchBetPlugin>(_sp, matchId);
-
-  public BankrollPlugin CreateBankrollPlugin() =>
-    ActivatorUtilities.CreateInstance<BankrollPlugin>(_sp);
 
   public SocialMediaPlugin CreateSocialMediaPlugin() =>
     ActivatorUtilities.CreateInstance<SocialMediaPlugin>(_sp);
 
   object IPluginFactory.CreateMatchPlugin() => CreateMatchPlugin();
   object IPluginFactory.CreateBettingPlugin() => CreateBettingPlugin();
-  object IPluginFactory.CreateInternetSearchPlugin() => CreateInternetSearchPlugin();
-  object IPluginFactory.CreateMemoriesPlugin() => CreateMemoriesPlugin();
   object IPluginFactory.CreateResearchBetPlugin(int matchId) => CreateResearchBetPlugin(matchId);
-  object IPluginFactory.CreateBankrollPlugin() => CreateBankrollPlugin();
   object IPluginFactory.CreateSocialMediaPlugin() => CreateSocialMediaPlugin();
 }
