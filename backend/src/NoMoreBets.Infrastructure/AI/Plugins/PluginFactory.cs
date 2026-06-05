@@ -6,68 +6,38 @@ namespace NoMoreBets.Infrastructure.AI.Plugins;
 public class PluginFactory : IPluginFactory
 {
   private readonly IServiceProvider _sp;
+
   public PluginFactory(IServiceProvider sp)
   {
     _sp = sp;
   }
 
-  public object CreateMatchPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<MatchPlugin>(_sp);
-  }
+  public MatchPlugin CreateMatchPlugin() =>
+    ActivatorUtilities.CreateInstance<MatchPlugin>(_sp);
 
-  public object CreateBettingPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<BettingPlugin>(_sp);
-  }
+  public BettingPlugin CreateBettingPlugin() =>
+    ActivatorUtilities.CreateInstance<BettingPlugin>(_sp);
 
-  public object CreateAgentBettingPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<AgentBettingPlugin>(_sp);
-  }
+  public InternetSearchPlugin CreateInternetSearchPlugin() =>
+    ActivatorUtilities.CreateInstance<InternetSearchPlugin>(_sp);
 
-  public object CreateInternetSearchPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<InternetSearchPlugin>(_sp);
-  }
+  public MemoriesPlugin CreateMemoriesPlugin() =>
+    ActivatorUtilities.CreateInstance<MemoriesPlugin>(_sp);
 
-  public object CreateMemoriesPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<MemoriesPlugin>(_sp);
-  }
+  public ResearchBetPlugin CreateResearchBetPlugin(int matchId) =>
+    ActivatorUtilities.CreateInstance<ResearchBetPlugin>(_sp, matchId);
 
-  public object CreateAgentInternetResearchPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<AgentInternetResearchPlugin>(_sp);
-  }
+  public BankrollPlugin CreateBankrollPlugin() =>
+    ActivatorUtilities.CreateInstance<BankrollPlugin>(_sp);
 
-  public object CreateAgentResearchPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<AgentResearchPlugin>(_sp);
-  }
+  public SocialMediaPlugin CreateSocialMediaPlugin() =>
+    ActivatorUtilities.CreateInstance<SocialMediaPlugin>(_sp);
 
-  public object CreateResearchBetPlugin(int matchId)
-  {
-    return ActivatorUtilities.CreateInstance<ResearchBetPlugin>(_sp, matchId);
-  }
-
-  public object CreateAgentReflectionPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<AgentReflectionPlugin>(_sp);
-  }
-
-  public object CreateAgentMemoryMaintenancePlugin()
-  {
-    return ActivatorUtilities.CreateInstance<AgentMemoryMaintenancePlugin>(_sp);
-  }
-
-  public object CreateBankrollPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<BankrollPlugin>(_sp);
-  }
-
-  public object CreateSocialMediaPlugin()
-  {
-    return ActivatorUtilities.CreateInstance<SocialMediaPlugin>(_sp);
-  }
+  object IPluginFactory.CreateMatchPlugin() => CreateMatchPlugin();
+  object IPluginFactory.CreateBettingPlugin() => CreateBettingPlugin();
+  object IPluginFactory.CreateInternetSearchPlugin() => CreateInternetSearchPlugin();
+  object IPluginFactory.CreateMemoriesPlugin() => CreateMemoriesPlugin();
+  object IPluginFactory.CreateResearchBetPlugin(int matchId) => CreateResearchBetPlugin(matchId);
+  object IPluginFactory.CreateBankrollPlugin() => CreateBankrollPlugin();
+  object IPluginFactory.CreateSocialMediaPlugin() => CreateSocialMediaPlugin();
 }

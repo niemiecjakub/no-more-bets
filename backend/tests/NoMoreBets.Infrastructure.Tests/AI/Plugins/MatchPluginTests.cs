@@ -14,6 +14,7 @@ using NoMoreBets.Application.Matches.GetMatchLineups;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Plugins;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
@@ -29,7 +30,7 @@ public class MatchPluginTests
   public MatchPluginTests()
   {
     _unitOfWork.Matches.Returns(_matchRepository);
-    _sut = new MatchPlugin(_unitOfWork, _mediator);
+    _sut = new MatchPlugin(_unitOfWork, _mediator, new AgentSessionContext());
   }
 
   [Fact]

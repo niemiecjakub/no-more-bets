@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.SocialMedia;
@@ -17,7 +17,6 @@ public sealed class SocialMediaPlugin
     _logger = logger ?? NullLogger<SocialMediaPlugin>.Instance;
   }
 
-  [AgentTool("CreateXPost")]
   [Description("Creates a public post on X (Twitter). Text must be non-empty and at most 280 characters.")]
   public async Task<CreateXPostResult> CreateXPostAsync(
     [Description("The full post body to publish on X.")]

@@ -55,5 +55,5 @@ public sealed class MemoryCleanupPhase : IAgentPhaseDefinition, IAgentPhaseStep
   }
 
   public IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory) =>
-    AgentToolFactory.CreateFromObject(pluginFactory.CreateAgentMemoryMaintenancePlugin());
+    MemoryCleanupPhaseTools.CreateStepTools(pluginFactory);
 }

@@ -23,7 +23,6 @@ public class MemoriesPlugin
     return name;
   }
 
-  [AgentTool]
   [Description("Lists all saved memory records.")]
   public async Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default)
   {
@@ -31,7 +30,6 @@ public class MemoriesPlugin
     return records.ToList();
   }
 
-  [AgentTool("Read")]
   [Description("Loads the full content of a saved memory record.")]
   public async Task<string> ReadAsync(
     [Description("Name of the memory record to read.")]
@@ -49,7 +47,6 @@ public class MemoriesPlugin
     return string.IsNullOrEmpty(memory.Content) ? "*This memory is currently empty*" : memory.Content;
   }
 
-  [AgentTool("Write")]
   [Description("Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.")]
   public async Task<string> WriteAsync(
     [Description("Name of the memory record to update.")]
@@ -82,12 +79,11 @@ public class MemoriesPlugin
     return "*Memory updated successfully*";
   }
 
-  [AgentTool("Append")]
   [Description("Adds text to the end of an existing memory record")]
   public async Task<string> AppendAsync(
-        [Description("Name of the memory record to update.")]
+    [Description("Name of the memory record to update.")]
     string name,
-        [Description("Text to add to the end of the memory record.")]
+    [Description("Text to add to the end of the memory record.")]
     string text,
     CancellationToken cancellationToken = default)
   {
@@ -104,7 +100,6 @@ public class MemoriesPlugin
     return "*Text appended successfully*";
   }
 
-  [AgentTool("Replace")]
   [Description("Finds an exact substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.")]
   public async Task<string> ReplaceAsync(
     [Description("Name of the memory record to update.")]
@@ -128,5 +123,23 @@ public class MemoriesPlugin
     memory.ReplaceSubstring(oldText, newText, replaceAll);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return "*Replacement applied successfully*";
+  }
+
+  [Description("Permanently deletes a named memory record. Use only when the entire record is obsolete.")]
+  public async Task<string> DeleteMemoryAsync(
+    [Description("Name of the memory record to delete (same naming as other memory tools).")]
+    string name,
+    CancellationToken cancellationToken = default)
+  {
+    Memory.ValidateName(name);
+    var removed = await _unitOfWork.Memories.SoftDeleteByNameAsync(name, cancellationToken).ConfigureAwait(false);
+    if (!removed)
+    {
+      _logger.LogWarning("Memory record {MemoryName} not found for delete operation.", name);
+      throw new KeyNotFoundException($"Memory '{name}' does not exist.");
+    }
+
+    await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    return "*Memory record deleted*";
   }
 }

@@ -121,7 +121,7 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
           """;
 
     public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      AgentToolFactory.CreateFromObject(plugins.CreateAgentBettingPlugin());
+      BettingPhaseTools.CreatePrimaryStepTools(plugins);
   }
 
   private sealed class XPostFollowUpStep : IAgentPhaseStep
@@ -134,6 +134,6 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
         """;
 
     public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      AgentToolFactory.CreateFromObject(plugins.CreateSocialMediaPlugin());
+      BettingPhaseTools.CreateXPostStepTools(plugins);
   }
 }

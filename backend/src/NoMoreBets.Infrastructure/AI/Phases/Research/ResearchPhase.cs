@@ -43,7 +43,7 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           Create complete, decision-oriented research for this specific match that you will later use in your own betting phase.
           This is your personal prep work: your future self in the betting phase should be able to read this and decide whether to bet or pass.
           
-          You must use the available AgentResearchPlugin functions explicitly.
+          You must use the available plugin functions explicitly.
 
           ## Required workflow (execute in order)
 
@@ -95,7 +95,7 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           """;
 
     public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      AgentToolFactory.CreateFromObject(plugins.CreateAgentResearchPlugin());
+      ResearchPhaseTools.CreatePrimaryStepTools(plugins);
   }
 
   private sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
@@ -125,6 +125,6 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           """;
 
     public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      AgentToolFactory.CreateFromObject(plugins.CreateResearchBetPlugin(matchId));
+      ResearchPhaseTools.CreatePaperBetStepTools(plugins, matchId);
   }
 }

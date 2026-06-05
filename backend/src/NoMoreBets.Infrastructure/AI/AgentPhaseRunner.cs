@@ -6,7 +6,6 @@ using NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
 using NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
 using NoMoreBets.Infrastructure.AI.Phases.Reflection;
 using NoMoreBets.Infrastructure.AI.Phases.Research;
-
 namespace NoMoreBets.Infrastructure.AI;
 
 public sealed class AgentPhaseRunner(

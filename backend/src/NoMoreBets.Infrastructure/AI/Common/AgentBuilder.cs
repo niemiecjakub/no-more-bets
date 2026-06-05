@@ -1,5 +1,7 @@
+using MediatR;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.Options;
+using NoMoreBets.Infrastructure.AI.Providers;
 using OpenAI;
 using OpenAI.Responses;
 using System.ClientModel;
@@ -9,9 +11,11 @@ namespace NoMoreBets.Infrastructure.AI.Common;
 public sealed class AgentBuilder
 {
   private readonly OpenAIOptions _openAi;
+  private readonly IMediator _mediator;
 
-  public AgentBuilder(IOptions<OpenAIOptions> openAiOptions)
+  public AgentBuilder(IOptions<OpenAIOptions> openAiOptions, IMediator mediator)
   {
+    _mediator = mediator;
     _openAi = openAiOptions.Value;
   }
 
@@ -21,6 +25,12 @@ public sealed class AgentBuilder
     var agent = responsesClient.AsAIAgent(
       instructions: LoadInstructions(),
       name: "BettingAgent");
+
+
+    responsesClient.AsAIAgent(new ChatClientAgentOptions()
+    {
+      AIContextProviders = [new BankrollProvider(_mediator)]
+    });
 
     var session = await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
     var defaultRunOptions = AgentRunOptionsFactory.CreateDefault(enableReasoningEffort: true);

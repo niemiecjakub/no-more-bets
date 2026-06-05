@@ -15,7 +15,7 @@ public sealed class ReflectionPhase : IAgentPhaseDefinition, IAgentPhaseStep
           You are a long-running betting agent with persistent memory.
 
           You are running your reflection phase: learn from recent settled outcomes and store only durable, reusable decision rules that improve future performance.
-          You must use the available AgentReflectionPlugin functions explicitly.
+          You must use the available plugin functions explicitly.
 
           ## Goal
           Improve future decision quality (edge identification, discipline, sizing, structure) without overfitting to short-term results.
@@ -102,5 +102,5 @@ public sealed class ReflectionPhase : IAgentPhaseDefinition, IAgentPhaseStep
           """;
 
   public IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory) =>
-    AgentToolFactory.CreateFromObject(pluginFactory.CreateAgentReflectionPlugin());
+    ReflectionPhaseTools.CreateStepTools(pluginFactory);
 }

@@ -1,8 +1,8 @@
 using FluentAssertions;
+using Microsoft.Extensions.AI;
 using NSubstitute;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.SocialMedia.CreateXPost;
-using Microsoft.Extensions.AI;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Plugins;
 
@@ -35,12 +35,11 @@ public class SocialMediaPluginTests
   }
 
   [Fact]
-  public void AgentTools_RegistersCreateXPostFunction()
+  public void CreateXPost_RegistersNamedFunction()
   {
-    var tools = AgentToolFactory.CreateFromObject(_sut);
+    var tool = AgentAiTools.Create(_sut.CreateXPostAsync, "CreateXPost");
 
-    tools.Should().ContainSingle();
-    tools[0].Should().BeAssignableTo<AIFunction>();
-    ((AIFunction)tools[0]).Name.Should().Be("CreateXPost");
+    tool.Should().BeAssignableTo<AIFunction>();
+    ((AIFunction)tool).Name.Should().Be("CreateXPost");
   }
 }

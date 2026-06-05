@@ -5,8 +5,8 @@ using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Application.SocialMedia;
-using NoMoreBets.Infrastructure.AI.Plugins;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Plugins;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 
@@ -46,52 +46,40 @@ public class PluginFactoryTests
   [Fact]
   public void CreateBettingPlugin_ReturnsInstance()
   {
-    // Arrange
     var sut = CreateSut();
 
-    // Act
     var plugin = sut.CreateBettingPlugin();
 
-    // Assert
     plugin.Should().BeOfType<BettingPlugin>();
   }
 
   [Fact]
   public void CreateInternetSearchPlugin_ReturnsInstance()
   {
-    // Arrange
     var sut = CreateSut();
 
-    // Act
     var plugin = sut.CreateInternetSearchPlugin();
 
-    // Assert
     plugin.Should().BeOfType<InternetSearchPlugin>();
   }
 
   [Fact]
   public void CreateMemoriesPlugin_ReturnsInstance()
   {
-    // Arrange
     var sut = CreateSut();
 
-    // Act
     var plugin = sut.CreateMemoriesPlugin();
 
-    // Assert
     plugin.Should().BeOfType<MemoriesPlugin>();
   }
 
   [Fact]
   public void CreateBankrollPlugin_ReturnsInstance()
   {
-    // Arrange
     var sut = CreateSut();
 
-    // Act
     var plugin = sut.CreateBankrollPlugin();
 
-    // Assert
     plugin.Should().BeOfType<BankrollPlugin>();
   }
 
@@ -106,12 +94,12 @@ public class PluginFactoryTests
   }
 
   [Fact]
-  public void CreateAgentMemoryMaintenancePlugin_ReturnsInstance()
+  public void CreateResearchBetPlugin_ReturnsInstance()
   {
     var sut = CreateSut();
 
-    var plugin = sut.CreateAgentMemoryMaintenancePlugin();
+    var plugin = sut.CreateResearchBetPlugin(42);
 
-    plugin.Should().BeOfType<AgentMemoryMaintenancePlugin>();
+    plugin.Should().BeOfType<ResearchBetPlugin>();
   }
 }

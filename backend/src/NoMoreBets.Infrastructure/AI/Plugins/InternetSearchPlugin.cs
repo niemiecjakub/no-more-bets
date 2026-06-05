@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Search;
@@ -19,7 +19,6 @@ public class InternetSearchPlugin
     _logger = logger ?? NullLogger<InternetSearchPlugin>.Instance;
   }
 
-  [AgentTool("SearchNews")]
   [Description("Search for recent news articles and current events.")]
   public async Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
     [Description("The specific news topic or keywords to search for.")]
@@ -57,7 +56,6 @@ public class InternetSearchPlugin
     }
   }
 
-  [AgentTool("GetWebGrounding")]
   [Description("Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.")]
   public async Task<SearchLlmContextItemDto> GetWebGroundingAsync(
     [Description("The detailed search query or question to gather context for.")]
