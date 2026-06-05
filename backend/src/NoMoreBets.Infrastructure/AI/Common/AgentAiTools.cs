@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using NoMoreBets.Infrastructure.AI.Plugins;
 
 namespace NoMoreBets.Infrastructure.AI.Common;
 
@@ -15,4 +16,10 @@ internal static class AgentAiTools
       Name = name,
       SerializerOptions = SerializerOptions,
     });
+
+  internal static IEnumerable<AITool> SearchTools(InternetSearchPlugin search) =>
+  [
+    Create(search.SearchNewsAsync, "SearchNewsAsync"),
+    Create(search.GetWebGroundingAsync, "GetWebGroundingAsync"),
+  ];
 }

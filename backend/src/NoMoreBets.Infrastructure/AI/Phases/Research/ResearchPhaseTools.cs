@@ -10,6 +10,7 @@ internal static class ResearchPhaseTools
   public static IReadOnlyList<AITool> CreatePrimaryStepTools(IPluginFactory factory)
   {
     var match = (MatchPlugin)factory.CreateMatchPlugin();
+    var search = (InternetSearchPlugin)factory.CreateInternetSearchPlugin();
 
     return
     [
@@ -23,6 +24,7 @@ internal static class ResearchPhaseTools
       AgentAiTools.Create(match.GetMatchBettingOddsHistoryAsync, "GetMatchBettingOddsHistory"),
       AgentAiTools.Create(match.GetClubRollingPerformanceAsync, "GetClubRollingPerformance"),
       AgentAiTools.Create(match.SaveMatchAnalysisAsync, "SaveMatchAnalysisAsync"),
+      .. AgentAiTools.SearchTools(search),
     ];
   }
 

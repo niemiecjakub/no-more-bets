@@ -10,6 +10,7 @@ internal static class BettingPhaseTools
   public static IReadOnlyList<AITool> CreatePrimaryStepTools(IPluginFactory factory)
   {
     var betting = (BettingPlugin)factory.CreateBettingPlugin();
+    var search = (InternetSearchPlugin)factory.CreateInternetSearchPlugin();
 
     return
     [
@@ -18,6 +19,7 @@ internal static class BettingPhaseTools
       AgentAiTools.Create(betting.GetMatchAnalysisAsync, "GetMatchAnalysis"),
       AgentAiTools.Create(betting.PlaceBetSlip, "PlaceBetSlip"),
       AgentAiTools.Create(betting.GetBetSlipsAsync, "GetBetSlips"),
+      .. AgentAiTools.SearchTools(search),
     ];
   }
 

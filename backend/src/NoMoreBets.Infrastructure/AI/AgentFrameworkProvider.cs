@@ -18,6 +18,7 @@ public static class AgentFrameworkProvider
     services.AddScoped<IPluginFactory, PluginFactory>();
     services.AddScoped<MatchPlugin>();
     services.AddScoped<BettingPlugin>();
+    services.AddScoped<InternetSearchPlugin>();
     services.AddScoped<SocialMediaPlugin>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<AgentSessionContext>();

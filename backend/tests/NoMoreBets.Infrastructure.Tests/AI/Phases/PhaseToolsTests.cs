@@ -4,6 +4,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Search;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Phases.Betting;
@@ -23,14 +24,17 @@ public class PhaseToolsTests
   {
     var unitOfWork = Substitute.For<IUnitOfWork>();
     var mediator = Substitute.For<IMediator>();
+    var searchService = Substitute.For<ISearchService>();
     var xApiService = Substitute.For<IXApiService>();
     var agentSessionContext = new AgentSessionContext();
 
     var sp = new ServiceCollection()
       .AddSingleton(unitOfWork)
       .AddSingleton(mediator)
+      .AddSingleton(searchService)
       .AddSingleton(xApiService)
       .AddSingleton(agentSessionContext)
+      .AddSingleton(sp => new InternetSearchPlugin(sp.GetRequiredService<ISearchService>()))
       .BuildServiceProvider();
 
     _pluginFactory = new PluginFactory(sp);
@@ -41,11 +45,12 @@ public class PhaseToolsTests
   {
     var tools = ResearchPhaseTools.CreatePrimaryStepTools(_pluginFactory);
 
-    tools.Should().HaveCount(10);
+    tools.Should().HaveCount(12);
     ToolNames(tools).Should().Contain(
     [
       "GetLineups",
       "SaveMatchAnalysisAsync",
+      "SearchNewsAsync",
     ]);
   }
 
@@ -63,7 +68,7 @@ public class PhaseToolsTests
   {
     var tools = BettingPhaseTools.CreatePrimaryStepTools(_pluginFactory);
 
-    tools.Should().HaveCount(5);
+    tools.Should().HaveCount(7);
     ToolNames(tools).Should().Contain(["GetAvailableMatches", "PlaceBetSlip", "GetBetSlips"]);
   }
 
@@ -81,16 +86,17 @@ public class PhaseToolsTests
   {
     var tools = ReflectionPhaseTools.CreateStepTools(_pluginFactory);
 
-    tools.Should().HaveCount(2);
+    tools.Should().HaveCount(9);
     ToolNames(tools).Should().Contain(["GetBetSlipsAwaitingReflectionAsync", "GetMatchResearchTextAsync"]);
   }
 
   [Fact]
-  public void MemoryCleanupStepTools_RegistersNoTools()
+  public void MemoryCleanupStepTools_RegistersSearchTools()
   {
     var tools = MemoryCleanupPhaseTools.CreateStepTools(_pluginFactory);
 
-    tools.Should().BeEmpty();
+    tools.Should().HaveCount(2);
+    ToolNames(tools).Should().Contain(["SearchNewsAsync", "GetWebGroundingAsync"]);
   }
 
   [Fact]
@@ -98,8 +104,8 @@ public class PhaseToolsTests
   {
     var tools = InternetResearchPhaseTools.CreateStepTools(_pluginFactory);
 
-    tools.Should().ContainSingle();
-    ToolNames(tools).Should().ContainSingle("GetAvailableMatchesAsync");
+    tools.Should().HaveCount(3);
+    ToolNames(tools).Should().Contain(["GetAvailableMatchesAsync", "SearchNewsAsync"]);
   }
 
   private static IEnumerable<string> ToolNames(IReadOnlyList<AITool> tools) =>

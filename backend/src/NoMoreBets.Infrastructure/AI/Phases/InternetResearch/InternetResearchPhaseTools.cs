@@ -10,10 +10,12 @@ internal static class InternetResearchPhaseTools
   public static IReadOnlyList<AITool> CreateStepTools(IPluginFactory factory)
   {
     var match = (MatchPlugin)factory.CreateMatchPlugin();
+    var search = (InternetSearchPlugin)factory.CreateInternetSearchPlugin();
 
     return
     [
       AgentAiTools.Create(match.GetUpcomingMatchesAsync, "GetAvailableMatchesAsync"),
+      .. AgentAiTools.SearchTools(search),
     ];
   }
 }
