@@ -95,7 +95,18 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           """;
 
     public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      ResearchPhaseTools.CreatePrimaryStepTools(plugins);
+      plugins.ResolveTools([
+        Tools.Match.GetLineups,
+        Tools.Match.GetInjuries,
+        Tools.Match.GetHead2HeadStats,
+        Tools.Match.GetClubDailySummary,
+        Tools.Match.GetClubRecentGames,
+        Tools.Match.GetClubLeagueStatistics,
+        Tools.Match.GetLeagueTable,
+        Tools.Match.GetMatchBettingOddsHistory,
+        Tools.Match.GetClubRollingPerformance,
+        Tools.Match.SaveMatchAnalysis,
+      ]);
   }
 
   private sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
@@ -125,6 +136,10 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           """;
 
     public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      ResearchPhaseTools.CreatePaperBetStepTools(plugins, matchId);
+      plugins.ResolveTools([
+        Tools.ResearchBet.GetMatchBasicInfo(matchId),
+        Tools.ResearchBet.GetMatchEvents(matchId),
+        Tools.ResearchBet.PlaceBetSlip(matchId),
+      ]);
   }
 }

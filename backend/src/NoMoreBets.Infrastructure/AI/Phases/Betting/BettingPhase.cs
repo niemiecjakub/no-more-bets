@@ -121,7 +121,13 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
           """;
 
     public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      BettingPhaseTools.CreatePrimaryStepTools(plugins);
+      plugins.ResolveTools([
+        Tools.Betting.GetAvailableMatches,
+        Tools.Betting.GetCurrentOdds,
+        Tools.Betting.GetMatchAnalysis,
+        Tools.Betting.PlaceBetSlip,
+        Tools.Betting.GetBetSlips,
+      ]);
   }
 
   private sealed class XPostFollowUpStep : IAgentPhaseStep
@@ -134,6 +140,6 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
         """;
 
     public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      BettingPhaseTools.CreateXPostStepTools(plugins);
+      plugins.ResolveTools([Tools.SocialMedia.CreateXPost]);
   }
 }

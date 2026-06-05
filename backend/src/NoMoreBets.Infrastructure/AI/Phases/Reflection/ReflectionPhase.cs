@@ -102,5 +102,8 @@ public sealed class ReflectionPhase : IAgentPhaseDefinition, IAgentPhaseStep
           """;
 
   public IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory) =>
-    ReflectionPhaseTools.CreateStepTools(pluginFactory);
+    pluginFactory.ResolveTools([
+      Tools.Betting.GetBetSlipsAwaitingReflection,
+      Tools.Match.GetMatchResearchText,
+    ]);
 }

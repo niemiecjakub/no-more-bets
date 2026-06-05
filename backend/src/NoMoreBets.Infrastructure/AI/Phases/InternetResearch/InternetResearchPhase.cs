@@ -48,5 +48,7 @@ public sealed class InternetResearchPhase : IAgentPhaseDefinition, IAgentPhaseSt
           """;
 
   public IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory) =>
-    InternetResearchPhaseTools.CreateStepTools(pluginFactory);
+    pluginFactory.ResolveTools([
+      Tools.Match.GetUpcomingMatches,
+    ]);
 }

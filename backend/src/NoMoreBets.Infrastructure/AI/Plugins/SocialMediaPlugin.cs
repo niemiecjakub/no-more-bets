@@ -17,9 +17,9 @@ public sealed class SocialMediaPlugin
     _logger = logger ?? NullLogger<SocialMediaPlugin>.Instance;
   }
 
-  [Description("Creates a public post on X (Twitter). Text must be non-empty and at most 280 characters.")]
+  [Description("Creates a public post on X (Twitter).")]
   public async Task<CreateXPostResult> CreateXPostAsync(
-    [Description("The full post body to publish on X.")]
+    [Description("The full post body to publish on X. Text must be non-empty and at most 280 characters.")]
     string text,
     CancellationToken cancellationToken = default)
   {
