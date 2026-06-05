@@ -1,10 +1,10 @@
 using Microsoft.Extensions.AI;
-using NoMoreBets.Application.Common;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace NoMoreBets.Infrastructure.AI.Common;
 
 public interface IAgentPhaseStep
 {
   string BuildPrompt();
-  IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory);
+  IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider);
 }

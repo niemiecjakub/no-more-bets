@@ -8,28 +8,28 @@ using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Infrastructure.AI.Plugins;
-using NoMoreBets.Infrastructure.AI.Plugins.Models;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using NoMoreBets.Infrastructure.AI.Common;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 
-public class BettingPluginTests
+public class BettingToolTests
 {
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly IBankrollRepository _bankroll = Substitute.For<IBankrollRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly AgentSessionContext _agentSessionContext = new();
-  private readonly BettingPlugin _sut;
+  private readonly BettingTool _sut;
 
-  public BettingPluginTests()
+  public BettingToolTests()
   {
     _unitOfWork.Betting.Returns(_betting);
     _unitOfWork.Bankroll.Returns(_bankroll);
     _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
-    _sut = new BettingPlugin(_unitOfWork, _mediator, _agentSessionContext);
+    _sut = new BettingTool(_unitOfWork, _mediator, _agentSessionContext);
   }
 
   [Fact]

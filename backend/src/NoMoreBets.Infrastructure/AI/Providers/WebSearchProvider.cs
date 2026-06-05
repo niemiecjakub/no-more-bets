@@ -4,7 +4,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Search;
-using NoMoreBets.Infrastructure.AI.Plugins.Models;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using SearchLlmContextOptions = NoMoreBets.Application.Search.SearchLlmContext.SearchLlmContextOptions;
 using SearchNewsOptions = NoMoreBets.Application.Search.SearchNews.SearchNewsOptions;
 

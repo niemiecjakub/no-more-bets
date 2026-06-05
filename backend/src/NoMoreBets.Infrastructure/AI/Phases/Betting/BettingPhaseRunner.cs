@@ -9,7 +9,6 @@ namespace NoMoreBets.Infrastructure.AI.Phases.Betting;
 
 public sealed class BettingPhaseRunner(
   AgentPhaseExecutor executor,
-  IPluginFactory pluginFactory,
   IUnitOfWork unitOfWork,
   IMediator mediator,
   IOptions<XApiOptions> xApiOptions)
@@ -20,7 +19,6 @@ public sealed class BettingPhaseRunner(
       .CreateAsync(
         unitOfWork,
         mediator,
-        pluginFactory,
         xApiOptions.Value.IsOAuthConfigured,
         cancellationToken)
       .ConfigureAwait(false);

@@ -1,8 +1,10 @@
-using NoMoreBets.Infrastructure.AI.Plugins;
+using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
-namespace NoMoreBets.Infrastructure.AI.Common;
+namespace NoMoreBets.Infrastructure.AI.Tools;
 
-public static class Tools
+public static class ToolRegistry
 {
   public static class Match
   {
@@ -73,21 +75,28 @@ public static class Tools
   public static class ResearchBet
   {
     public static AgentTool GetMatchBasicInfo(int matchId) =>
-      new(ctx => AgentAiTools.Create(ctx.ResearchBet(matchId).GetMatchBasicInfoAsync, "GetMatchBasicInfo"));
+      new(ctx => Create(ctx.ResearchBet(matchId).GetMatchBasicInfoAsync, "GetMatchBasicInfo"));
 
     public static AgentTool GetMatchEvents(int matchId) =>
-      new(ctx => AgentAiTools.Create(ctx.ResearchBet(matchId).GetMatchEventsAsync, "GetMatchEvents"));
+      new(ctx => Create(ctx.ResearchBet(matchId).GetMatchEventsAsync, "GetMatchEvents"));
 
     public static AgentTool PlaceBetSlip(int matchId) =>
-      new(ctx => AgentAiTools.Create(ctx.ResearchBet(matchId).PlaceBetSlip, "PlaceBetSlip"));
+      new(ctx => Create(ctx.ResearchBet(matchId).PlaceBetSlip, "PlaceBetSlip"));
   }
 
-  private static AgentTool FromMatch(string name, Func<MatchPlugin, Delegate> method) =>
-    new(ctx => AgentAiTools.Create(method(ctx.Match), name));
+  private static AgentTool FromMatch(string name, Func<MatchTool, Delegate> method) =>
+    new(ctx => Create(method(ctx.Match), name));
 
-  private static AgentTool FromBetting(string name, Func<BettingPlugin, Delegate> method) =>
-    new(ctx => AgentAiTools.Create(method(ctx.Betting), name));
+  private static AgentTool FromBetting(string name, Func<BettingTool, Delegate> method) =>
+    new(ctx => Create(method(ctx.Betting), name));
 
-  private static AgentTool FromSocialMedia(string name, Func<SocialMediaPlugin, Delegate> method) =>
-    new(ctx => AgentAiTools.Create(method(ctx.SocialMedia), name));
+  private static AgentTool FromSocialMedia(string name, Func<SocialMediaTool, Delegate> method) =>
+    new(ctx => Create(method(ctx.SocialMedia), name));
+
+  internal static AITool Create(Delegate method, string name) =>
+    AIFunctionFactory.Create(method, new AIFunctionFactoryOptions
+    {
+      Name = name,
+      SerializerOptions = AgentAbstractionsJsonUtilities.DefaultOptions,
+    });
 }

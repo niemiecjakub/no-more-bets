@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MediatR;
@@ -12,12 +12,12 @@ using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches.Dto;
-using NoMoreBets.Infrastructure.AI.Plugins.Models;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using NoMoreBets.Infrastructure.AI.Common;
 
-namespace NoMoreBets.Infrastructure.AI.Plugins;
+namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
-public class BettingPlugin
+public class BettingTool
 {
   private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
   {
@@ -27,14 +27,14 @@ public class BettingPlugin
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
   private readonly AgentSessionContext _agentSessionContext;
-  private readonly ILogger<BettingPlugin> _logger;
+  private readonly ILogger<BettingTool> _logger;
 
-  public BettingPlugin(IUnitOfWork unitOfWork, IMediator mediator, AgentSessionContext agentSessionContext, ILogger<BettingPlugin>? logger = null)
+  public BettingTool(IUnitOfWork unitOfWork, IMediator mediator, AgentSessionContext agentSessionContext, ILogger<BettingTool>? logger = null)
   {
     _unitOfWork = unitOfWork;
     _mediator = mediator;
     _agentSessionContext = agentSessionContext;
-    _logger = logger ?? NullLogger<BettingPlugin>.Instance;
+    _logger = logger ?? NullLogger<BettingTool>.Instance;
   }
 
   [Description("Retrieves matches for which bets can currently be placed.")]
@@ -228,7 +228,7 @@ public class BettingPlugin
     }
   }
 
-  [Description("Returns bet slips, newest first. Optional status: Pending, Won, Lost â€” omit the argument to return slips in every status.")]
+  [Description("Returns bet slips, newest first. Optional status: Pending, Won, Lost — omit the argument to return slips in every status.")]
   public async Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAsync(
     [Description("Filter by slip status, or omit for all statuses.")] BetStatus? status = null,
     CancellationToken cancellationToken = default)

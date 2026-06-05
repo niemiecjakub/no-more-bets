@@ -7,7 +7,7 @@ using NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
 using NoMoreBets.Infrastructure.AI.Phases.Reflection;
 using NoMoreBets.Infrastructure.AI.Phases.Research;
 using NoMoreBets.Infrastructure.AI.Phases.Test;
-using NoMoreBets.Infrastructure.AI.Plugins;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.AI;
 
@@ -15,10 +15,9 @@ public static class AgentFrameworkProvider
 {
   public static IServiceCollection AddAgentFrameworkServices(this IServiceCollection services)
   {
-    services.AddScoped<IPluginFactory, PluginFactory>();
-    services.AddScoped<MatchPlugin>();
-    services.AddScoped<BettingPlugin>();
-    services.AddScoped<SocialMediaPlugin>();
+    services.AddScoped<MatchTool>();
+    services.AddScoped<BettingTool>();
+    services.AddScoped<SocialMediaTool>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<AgentSessionContext>();
     services.AddScoped<AgentPhaseExecutor>();

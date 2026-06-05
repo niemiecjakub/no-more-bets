@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace NoMoreBets.Infrastructure.AI.Plugins.Models;
+namespace NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 
 public record SearchNewsArticleDto(
     [Description("The headline or title of the news article.")] string Title,

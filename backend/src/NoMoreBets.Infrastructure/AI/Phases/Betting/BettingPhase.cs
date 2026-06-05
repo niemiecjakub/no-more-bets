@@ -1,10 +1,12 @@
 using System.Globalization;
 using MediatR;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Betting;
 
@@ -32,7 +34,6 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
   public static async Task<BettingPhaseDefinition> CreateAsync(
     IUnitOfWork unitOfWork,
     IMediator mediator,
-    IPluginFactory pluginFactory,
     bool includeXPostFollowUp,
     CancellationToken cancellationToken)
   {
@@ -120,13 +121,13 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
           - In your final narrative to the user, do not mention internal process, tool names, or plugin mechanics.
           """;
 
-    public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      plugins.ResolveTools([
-        Tools.Betting.GetAvailableMatches,
-        Tools.Betting.GetCurrentOdds,
-        Tools.Betting.GetMatchAnalysis,
-        Tools.Betting.PlaceBetSlip,
-        Tools.Betting.GetBetSlips,
+    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
+      serviceProvider.ResolveTools([
+        ToolRegistry.Betting.GetAvailableMatches,
+        ToolRegistry.Betting.GetCurrentOdds,
+        ToolRegistry.Betting.GetMatchAnalysis,
+        ToolRegistry.Betting.PlaceBetSlip,
+        ToolRegistry.Betting.GetBetSlips,
       ]);
   }
 
@@ -139,7 +140,7 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
         Always include hashtags for the league involved, derived from that league's name (e.g. Premier League as #PremierLeague, Serie A as #SerieA).
         """;
 
-    public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      plugins.ResolveTools([Tools.SocialMedia.CreateXPost]);
+    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
+      serviceProvider.ResolveTools([ToolRegistry.SocialMedia.CreateXPost]);
   }
 }

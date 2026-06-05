@@ -1,5 +1,5 @@
 using Microsoft.Extensions.AI;
-using NoMoreBets.Application.Common;
+using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Domain.AgentSessions;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Test;
@@ -13,5 +13,5 @@ public sealed class TestPhase : IAgentPhaseDefinition, IAgentPhaseStep
           How much money do you have and when will you be paid next?
           """;
 
-  public IReadOnlyList<AITool> GetTools(IPluginFactory pluginFactory) => [];
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) => [];
 }

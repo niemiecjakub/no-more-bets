@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Infrastructure.AI.Plugins.Models;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using NoMoreBets.Infrastructure.AI.Common;
 
-namespace NoMoreBets.Infrastructure.AI.Plugins;
+namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
-public class ResearchBetPlugin
+public class ResearchBetTool
 {
   private const decimal ResearchStakeAmount = 10m;
 
@@ -23,13 +23,13 @@ public class ResearchBetPlugin
   private readonly IUnitOfWork _unitOfWork;
   private readonly AgentSessionContext _agentSessionContext;
   private readonly int _matchId;
-  private readonly ILogger<ResearchBetPlugin> _logger;
+  private readonly ILogger<ResearchBetTool> _logger;
 
-  public ResearchBetPlugin(
+  public ResearchBetTool(
     int matchId,
     IUnitOfWork unitOfWork,
     AgentSessionContext agentSessionContext,
-    ILogger<ResearchBetPlugin>? logger = null)
+    ILogger<ResearchBetTool>? logger = null)
   {
     if (matchId <= 0)
     {
@@ -39,7 +39,7 @@ public class ResearchBetPlugin
     _unitOfWork = unitOfWork;
     _matchId = matchId;
     _agentSessionContext = agentSessionContext;
-    _logger = logger ?? NullLogger<ResearchBetPlugin>.Instance;
+    _logger = logger ?? NullLogger<ResearchBetTool>.Instance;
   }
 
   [Description("Paper / Research slip only: records a fictional prediction for this match. One selection is a single; multiple selections on one slip combine as a parlay.")]

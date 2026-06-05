@@ -1,8 +1,10 @@
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Research;
 
@@ -94,18 +96,18 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           - Focus on delivering the research output as if for a human analyst, not on describing your own process.
           """;
 
-    public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      plugins.ResolveTools([
-        Tools.Match.GetLineups,
-        Tools.Match.GetInjuries,
-        Tools.Match.GetHead2HeadStats,
-        Tools.Match.GetClubDailySummary,
-        Tools.Match.GetClubRecentGames,
-        Tools.Match.GetClubLeagueStatistics,
-        Tools.Match.GetLeagueTable,
-        Tools.Match.GetMatchBettingOddsHistory,
-        Tools.Match.GetClubRollingPerformance,
-        Tools.Match.SaveMatchAnalysis,
+    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
+      serviceProvider.ResolveTools([
+        ToolRegistry.Match.GetLineups,
+        ToolRegistry.Match.GetInjuries,
+        ToolRegistry.Match.GetHead2HeadStats,
+        ToolRegistry.Match.GetClubDailySummary,
+        ToolRegistry.Match.GetClubRecentGames,
+        ToolRegistry.Match.GetClubLeagueStatistics,
+        ToolRegistry.Match.GetLeagueTable,
+        ToolRegistry.Match.GetMatchBettingOddsHistory,
+        ToolRegistry.Match.GetClubRollingPerformance,
+        ToolRegistry.Match.SaveMatchAnalysis,
       ]);
   }
 
@@ -135,11 +137,11 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           - You cannot select multiple options from the same market.
           """;
 
-    public IReadOnlyList<AITool> GetTools(IPluginFactory plugins) =>
-      plugins.ResolveTools([
-        Tools.ResearchBet.GetMatchBasicInfo(matchId),
-        Tools.ResearchBet.GetMatchEvents(matchId),
-        Tools.ResearchBet.PlaceBetSlip(matchId),
+    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
+      serviceProvider.ResolveTools([
+        ToolRegistry.ResearchBet.GetMatchBasicInfo(matchId),
+        ToolRegistry.ResearchBet.GetMatchEvents(matchId),
+        ToolRegistry.ResearchBet.PlaceBetSlip(matchId),
       ]);
   }
 }

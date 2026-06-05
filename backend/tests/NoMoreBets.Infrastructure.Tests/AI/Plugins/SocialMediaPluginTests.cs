@@ -3,19 +3,19 @@ using Microsoft.Extensions.AI;
 using NSubstitute;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.SocialMedia.CreateXPost;
-using NoMoreBets.Infrastructure.AI.Common;
-using NoMoreBets.Infrastructure.AI.Plugins;
+using NoMoreBets.Infrastructure.AI.Tools;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 
-public class SocialMediaPluginTests
+public class SocialMediaToolTests
 {
   private readonly IXApiService _xApiService = Substitute.For<IXApiService>();
-  private readonly SocialMediaPlugin _sut;
+  private readonly SocialMediaTool _sut;
 
-  public SocialMediaPluginTests()
+  public SocialMediaToolTests()
   {
-    _sut = new SocialMediaPlugin(_xApiService);
+    _sut = new SocialMediaTool(_xApiService);
   }
 
   [Fact]
@@ -37,7 +37,7 @@ public class SocialMediaPluginTests
   [Fact]
   public void CreateXPost_RegistersNamedFunction()
   {
-    var tool = AgentAiTools.Create(_sut.CreateXPostAsync, "CreateXPost");
+    var tool = ToolRegistry.Create(_sut.CreateXPostAsync, "CreateXPost");
 
     tool.Should().BeAssignableTo<AIFunction>();
     ((AIFunction)tool).Name.Should().Be("CreateXPost");

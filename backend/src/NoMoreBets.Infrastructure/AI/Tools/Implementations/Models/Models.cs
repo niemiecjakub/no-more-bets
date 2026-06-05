@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace NoMoreBets.Infrastructure.AI.Plugins.Models;
+namespace NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 
 public record Player(string Name, string Position);
 

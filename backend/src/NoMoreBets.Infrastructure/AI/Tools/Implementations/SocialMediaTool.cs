@@ -1,20 +1,20 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.SocialMedia.CreateXPost;
 
-namespace NoMoreBets.Infrastructure.AI.Plugins;
+namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
-public sealed class SocialMediaPlugin
+public sealed class SocialMediaTool
 {
   private readonly IXApiService _xApiService;
-  private readonly ILogger<SocialMediaPlugin> _logger;
+  private readonly ILogger<SocialMediaTool> _logger;
 
-  public SocialMediaPlugin(IXApiService xApiService, ILogger<SocialMediaPlugin>? logger = null)
+  public SocialMediaTool(IXApiService xApiService, ILogger<SocialMediaTool>? logger = null)
   {
     _xApiService = xApiService;
-    _logger = logger ?? NullLogger<SocialMediaPlugin>.Instance;
+    _logger = logger ?? NullLogger<SocialMediaTool>.Instance;
   }
 
   [Description("Creates a public post on X (Twitter).")]

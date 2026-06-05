@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
@@ -10,20 +11,20 @@ public sealed class AgentPhaseExecutor
   private readonly AgentBuilder _agentBuilder;
   private readonly AgentSessionContext _agentSessionContext;
   private readonly ILogger<AgentPhaseExecutor> _logger;
-  private readonly IPluginFactory _pluginFactory;
+  private readonly IServiceProvider _serviceProvider;
   private readonly IUnitOfWork _unitOfWork;
 
   public AgentPhaseExecutor(
     AgentBuilder agentBuilder,
     IUnitOfWork unitOfWork,
     AgentSessionContext agentSessionContext,
-    IPluginFactory pluginFactory,
+    IServiceProvider serviceProvider,
     ILogger<AgentPhaseExecutor> logger)
   {
     _agentBuilder = agentBuilder;
     _agentSessionContext = agentSessionContext;
     _logger = logger;
-    _pluginFactory = pluginFactory;
+    _serviceProvider = serviceProvider;
     _unitOfWork = unitOfWork;
   }
 
@@ -52,7 +53,7 @@ public sealed class AgentPhaseExecutor
     {
       foreach (var step in definition.Steps)
       {
-        var tools = step.Implementation.GetTools(_pluginFactory);
+        var tools = step.Implementation.GetTools(_serviceProvider);
         var prompt = step.Implementation.BuildPrompt();
         var stepMessages = await AgentPhaseTranscriptCollector
           .CollectAsync(config, prompt, tools, cancellationToken)

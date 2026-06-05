@@ -18,27 +18,27 @@ using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Common;
-using AvailableMatch = NoMoreBets.Infrastructure.AI.Plugins.Models.AvailableMatch;
+using AvailableMatch = NoMoreBets.Infrastructure.AI.Tools.Implementations.Models.AvailableMatch;
 
-namespace NoMoreBets.Infrastructure.AI.Plugins;
+namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
-public class MatchPlugin
+public class MatchTool
 {
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
   private readonly AgentSessionContext _agentSessionContext;
-  private readonly ILogger<MatchPlugin> _logger;
+  private readonly ILogger<MatchTool> _logger;
 
-  public MatchPlugin(
+  public MatchTool(
     IUnitOfWork unitOfWork,
     IMediator mediator,
     AgentSessionContext agentSessionContext,
-    ILogger<MatchPlugin>? logger = null)
+    ILogger<MatchTool>? logger = null)
   {
     _unitOfWork = unitOfWork;
     _mediator = mediator;
     _agentSessionContext = agentSessionContext;
-    _logger = logger ?? NullLogger<MatchPlugin>.Instance;
+    _logger = logger ?? NullLogger<MatchTool>.Instance;
   }
 
   [Description("Retrieves the starting lineups for both the home and away teams for the match.")]
