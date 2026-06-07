@@ -24,7 +24,6 @@ public static class AgentFrameworkProvider
     services.AddScoped<InternetResearchPhase>();
     services.AddScoped<MemoryCleanupPhase>();
     services.AddScoped<ReflectionPhase>();
-    services.AddScoped<TestPhase>();
     services.AddScoped<ResearchPhaseRunner>();
     services.AddScoped<InternetResearchPhaseRunner>();
     services.AddScoped<MemoryCleanupPhaseRunner>();

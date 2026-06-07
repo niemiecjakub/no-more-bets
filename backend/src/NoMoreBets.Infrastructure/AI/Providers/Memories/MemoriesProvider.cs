@@ -6,10 +6,31 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Memories;
 
-namespace NoMoreBets.Infrastructure.AI.Providers;
+namespace NoMoreBets.Infrastructure.AI.Providers.Memories;
 
-public class MemoriesProvider : AIContextProvider
+public sealed class MemoriesProvider : AIContextProvider
 {
+  private const string GetRecordsToolName = "Memories_GetRecords";
+  private const string ReadToolName = "Memories_Read";
+  private const string WriteToolName = "Memories_Write";
+  private const string AppendToolName = "Memories_Append";
+  private const string ReplaceToolName = "Memories_Replace";
+  private const string DeleteToolName = "Memories_Delete";
+
+  private static readonly string Instructions =
+      $$"""
+        ## Memories
+        You have access to persistent memory records.
+
+        Use these tools to manage memories:
+        - Use {{GetRecordsToolName}} to list all saved memory records.
+        - Use {{ReadToolName}} to load the full content of a saved memory record.
+        - Use {{WriteToolName}} to replace an entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.
+        - Use {{AppendToolName}} to add text to the end of an existing memory record.
+        - Use {{ReplaceToolName}} to find an exact substring in a memory record and substitute new text. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.
+        - Use {{DeleteToolName}} to permanently delete a named memory record. Use only when the entire record is obsolete.
+        """;
+
   private readonly IUnitOfWork _unitOfWork;
   private readonly ILogger<MemoriesProvider> _logger;
 
@@ -23,11 +44,8 @@ public class MemoriesProvider : AIContextProvider
   {
     var aiContext = new AIContext
     {
-      Instructions = """
-        ## Memories
-        You have access to persistent memory records via the `Memories_*` tools.
-        """,
-      Tools = CreateTools()
+      Instructions = Instructions,
+      Tools = CreateTools(),
     };
 
     return ValueTask.FromResult(aiContext);
@@ -36,14 +54,62 @@ public class MemoriesProvider : AIContextProvider
   private AITool[] CreateTools()
   {
     var serializerOptions = AgentAbstractionsJsonUtilities.DefaultOptions;
+
     return
     [
-      AIFunctionFactory.Create(this.GetMemoryRecordsAsync, new AIFunctionFactoryOptions { Name = "Memories_GetRecords", SerializerOptions = serializerOptions }),
-      AIFunctionFactory.Create(this.ReadAsync, new AIFunctionFactoryOptions { Name = "Memories_Read", SerializerOptions = serializerOptions }),
-      AIFunctionFactory.Create(this.WriteAsync, new AIFunctionFactoryOptions { Name = "Memories_Write", SerializerOptions = serializerOptions }),
-      AIFunctionFactory.Create(this.AppendAsync, new AIFunctionFactoryOptions { Name = "Memories_Append", SerializerOptions = serializerOptions }),
-      AIFunctionFactory.Create(this.ReplaceAsync, new AIFunctionFactoryOptions { Name = "Memories_Replace", SerializerOptions = serializerOptions }),
-      AIFunctionFactory.Create(this.DeleteMemoryAsync, new AIFunctionFactoryOptions { Name = "Memories_Delete", SerializerOptions = serializerOptions }),
+      AIFunctionFactory.Create(
+        GetMemoryRecordsAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = GetRecordsToolName,
+          Description = "Lists all saved memory records.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        ReadAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = ReadToolName,
+          Description = "Loads the full content of a saved memory record.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        WriteAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = WriteToolName,
+          Description = "Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        AppendAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = AppendToolName,
+          Description = "Adds text to the end of an existing memory record.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        ReplaceAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = ReplaceToolName,
+          Description = "Finds an exact substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        DeleteMemoryAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = DeleteToolName,
+          Description = "Permanently deletes a named memory record. Use only when the entire record is obsolete.",
+          SerializerOptions = serializerOptions,
+        }),
     ];
   }
 
@@ -53,15 +119,13 @@ public class MemoriesProvider : AIContextProvider
     return name;
   }
 
-  [Description("Lists all saved memory records.")]
-  public async Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default)
+  private async Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default)
   {
     var records = await _unitOfWork.Memories.GetRecordsAsync(cancellationToken).ConfigureAwait(false);
     return records.ToList();
   }
 
-  [Description("Loads the full content of a saved memory record.")]
-  public async Task<string> ReadAsync(
+  private async Task<string> ReadAsync(
     [Description("Name of the memory record to read.")]
     string name,
     CancellationToken cancellationToken = default)
@@ -77,8 +141,7 @@ public class MemoriesProvider : AIContextProvider
     return string.IsNullOrEmpty(memory.Content) ? "*This memory is currently empty*" : memory.Content;
   }
 
-  [Description("Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.")]
-  public async Task<string> WriteAsync(
+  private async Task<string> WriteAsync(
     [Description("Name of the memory record to update.")]
     string name,
     [Description("Complete new body to persist (overwrites everything previously stored).")]
@@ -109,8 +172,7 @@ public class MemoriesProvider : AIContextProvider
     return "*Memory updated successfully*";
   }
 
-  [Description("Adds text to the end of an existing memory record")]
-  public async Task<string> AppendAsync(
+  private async Task<string> AppendAsync(
     [Description("Name of the memory record to update.")]
     string name,
     [Description("Text to add to the end of the memory record.")]
@@ -130,8 +192,7 @@ public class MemoriesProvider : AIContextProvider
     return "*Text appended successfully*";
   }
 
-  [Description("Finds an exact substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.")]
-  public async Task<string> ReplaceAsync(
+  private async Task<string> ReplaceAsync(
     [Description("Name of the memory record to update.")]
     string name,
     [Description("Literal text to find; copy from Read output so spacing and casing match.")]
@@ -155,8 +216,7 @@ public class MemoriesProvider : AIContextProvider
     return "*Replacement applied successfully*";
   }
 
-  [Description("Permanently deletes a named memory record. Use only when the entire record is obsolete.")]
-  public async Task<string> DeleteMemoryAsync(
+  private async Task<string> DeleteMemoryAsync(
     [Description("Name of the memory record to delete (same naming as other memory tools).")]
     string name,
     CancellationToken cancellationToken = default)

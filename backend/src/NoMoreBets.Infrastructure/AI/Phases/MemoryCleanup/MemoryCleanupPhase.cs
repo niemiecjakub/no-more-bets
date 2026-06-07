@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
-using NoMoreBets.Infrastructure.AI.Providers;
+using NoMoreBets.Infrastructure.AI.Providers.Memories;
 using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;

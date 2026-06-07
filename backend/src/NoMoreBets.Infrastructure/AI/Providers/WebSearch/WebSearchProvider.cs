@@ -8,10 +8,23 @@ using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using SearchLlmContextOptions = NoMoreBets.Application.Search.SearchLlmContext.SearchLlmContextOptions;
 using SearchNewsOptions = NoMoreBets.Application.Search.SearchNews.SearchNewsOptions;
 
-namespace NoMoreBets.Infrastructure.AI.Providers;
+namespace NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 
-public class WebSearchProvider : AIContextProvider
+public sealed class WebSearchProvider : AIContextProvider
 {
+  private const string SearchNewsToolName = "WebSearch_SearchNews";
+  private const string GetWebGroundingToolName = "WebSearch_GetWebGrounding";
+
+  private static readonly string Instructions =
+      $$"""
+        ## Web Search
+        You have access to web search.
+
+        Use these tools to search the web:
+        - Use {{SearchNewsToolName}} to search for recent news articles and current events.
+        - Use {{GetWebGroundingToolName}} to retrieve high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.
+        """;
+
   private readonly ISearchService _searchService;
   private readonly ILogger<WebSearchProvider> _logger;
 
@@ -25,11 +38,8 @@ public class WebSearchProvider : AIContextProvider
   {
     var aiContext = new AIContext
     {
-      Instructions = """
-        ## Web Search
-        You have access to web search via the `WebSearch_*` tools.
-        """,
-      Tools = CreateTools()
+      Instructions = Instructions,
+      Tools = CreateTools(),
     };
 
     return ValueTask.FromResult(aiContext);
@@ -38,15 +48,30 @@ public class WebSearchProvider : AIContextProvider
   private AITool[] CreateTools()
   {
     var serializerOptions = AgentAbstractionsJsonUtilities.DefaultOptions;
+
     return
     [
-      AIFunctionFactory.Create(this.SearchNewsAsync, new AIFunctionFactoryOptions { Name = "WebSearch_SearchNews", SerializerOptions = serializerOptions }),
-      AIFunctionFactory.Create(this.GetWebGroundingAsync, new AIFunctionFactoryOptions { Name = "WebSearch_GetWebGrounding", SerializerOptions = serializerOptions }),
+      AIFunctionFactory.Create(
+        SearchNewsAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = SearchNewsToolName,
+          Description = "Search for recent news articles and current events.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        GetWebGroundingAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = GetWebGroundingToolName,
+          Description = "Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.",
+          SerializerOptions = serializerOptions,
+        }),
     ];
   }
 
-  [Description("Search for recent news articles and current events.")]
-  public async Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
+  private async Task<IReadOnlyList<SearchNewsArticleDto>> SearchNewsAsync(
     [Description("The specific news topic or keywords to search for.")]
     string query,
     [Description("Optional time window: pd (last 24 hours), pw (last 7 days), pm (last 31 days), py (last year). Omit or null for no freshness filter.")]
@@ -82,8 +107,7 @@ public class WebSearchProvider : AIContextProvider
     }
   }
 
-  [Description("Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.")]
-  public async Task<SearchLlmContextItemDto> GetWebGroundingAsync(
+  private async Task<SearchLlmContextItemDto> GetWebGroundingAsync(
     [Description("The detailed search query or question to gather context for.")]
     string query,
     [Description("Optional time window: pd (last 24 hours), pw (last 7 days), pm (last 31 days), py (last year). Omit or null for no freshness filter.")]

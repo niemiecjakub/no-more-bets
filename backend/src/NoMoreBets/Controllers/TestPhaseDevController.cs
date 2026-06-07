@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Infrastructure.AI.Phases.Test;
 
@@ -11,15 +12,25 @@ namespace NoMoreBets.Controllers;
 [Route("api/dev/test-phase")]
 public sealed class TestPhaseDevController(
   TestPhaseRunner testPhaseRunner,
+  IUnitOfWork unitOfWork,
   IWebHostEnvironment environment) : ControllerBase
 {
   [HttpPost("run")]
-  public async Task<ActionResult<AgentPhaseRunResponseDto>> Run(CancellationToken cancellationToken)
+  public async Task<ActionResult<AgentPhaseRunResponseDto>> Run(
+    [FromQuery] int matchId,
+    CancellationToken cancellationToken)
   {
     if (!environment.IsDevelopment())
       return NotFound();
 
-    var messages = await testPhaseRunner.RunAsync(cancellationToken).ConfigureAwait(false);
+    var match = await unitOfWork.Matches
+      .GetMatchByIdAsync(matchId, cancellationToken)
+      .ConfigureAwait(false);
+
+    if (match is null)
+      return NotFound($"Match {matchId} was not found.");
+
+    var messages = await testPhaseRunner.RunAsync(match, cancellationToken).ConfigureAwait(false);
 
     return Ok(new AgentPhaseRunResponseDto(
       "Test",

@@ -1,7 +1,6 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Infrastructure.AI.Providers;
 using OpenAI;
 using OpenAI.Responses;
 using System.ClientModel;
