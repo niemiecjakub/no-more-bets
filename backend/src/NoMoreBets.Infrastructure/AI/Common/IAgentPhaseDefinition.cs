@@ -1,3 +1,4 @@
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common.Dto;
@@ -14,7 +15,8 @@ public interface IAgentPhaseDefinition
 public interface IAgentPhaseStep
 {
   string BuildPrompt();
-  IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider);
+  IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) => [];
+  IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) => [];
 }
 
 public sealed record AgentPhaseStep(IAgentPhaseStep Implementation, bool PersistTranscript);

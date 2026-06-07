@@ -1,7 +1,6 @@
-using MediatR;
 using Microsoft.Agents.AI;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Infrastructure.AI.Providers;
 using OpenAI;
 using OpenAI.Responses;
@@ -12,34 +11,32 @@ namespace NoMoreBets.Infrastructure.AI.Common;
 public sealed class AgentBuilder
 {
   private readonly OpenAIOptions _openAi;
-  private readonly IMediator _mediator;
-  private readonly IUnitOfWork _unitOfWork;
 
-  public AgentBuilder(IOptions<OpenAIOptions> openAiOptions, IMediator mediator, IUnitOfWork unitOfWork)
+  public AgentBuilder(IOptions<OpenAIOptions> openAiOptions)
   {
-    _mediator = mediator;
-    _unitOfWork = unitOfWork;
     _openAi = openAiOptions.Value;
   }
 
-  public async Task<AgentConfig> BuildForScheduledJobAsync(CancellationToken cancellationToken = default)
+  public async Task<AgentConfig> BuildForScheduledJobAsync(
+    IReadOnlyList<AIContextProvider> contextProviders,
+    AgentSession? existingSession = null,
+    CancellationToken cancellationToken = default)
   {
-    var responsesClient = CreateResponsesClient();
-    var agent = responsesClient.AsAIAgent(
-      instructions: LoadInstructions(),
-      name: "BettingAgent");
+    var credential = new ApiKeyCredential(_openAi.ApiKey);
+    var responsesClient = new OpenAIClient(credential).GetResponsesClient(_openAi.ModelId);
+    var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
+    var chatOptions = defaultRunOptions.ChatOptions?.Clone() ?? new ChatOptions();
+    chatOptions.Instructions = LoadInstructions();
 
-
-    responsesClient.AsAIAgent(new ChatClientAgentOptions()
+    var agent = responsesClient.AsAIAgent(new ChatClientAgentOptions
     {
-      AIContextProviders = [
-        new BankrollProvider(_mediator),
-        new MemoriesProvider(_unitOfWork),
-      ]
+      Name = "BettingAgent",
+      ChatOptions = chatOptions,
+      AIContextProviders = contextProviders as IList<AIContextProvider> ?? contextProviders.ToList(),
     });
 
-    var session = await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
-    var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
+    var session = existingSession
+      ?? await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
     return new AgentConfig(agent, session, defaultRunOptions);
   }
 
@@ -51,16 +48,9 @@ public sealed class AgentBuilder
       ? $"# SOUL\n\n{File.ReadAllText(path)}"
       : string.Empty;
   }
-
-  private ResponsesClient CreateResponsesClient()
-  {
-    var credential = new ApiKeyCredential(_openAi.ApiKey);
-    var openAiClient = new OpenAIClient(credential);
-    return openAiClient.GetResponsesClient(_openAi.ModelId);
-  }
 }
 
 public sealed record AgentConfig(
-  AIAgent Agent,
+  ChatClientAgent Agent,
   AgentSession Session,
   ChatClientAgentRunOptions DefaultRunOptions);

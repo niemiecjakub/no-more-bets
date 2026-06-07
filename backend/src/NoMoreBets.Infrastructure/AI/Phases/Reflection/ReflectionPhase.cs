@@ -1,8 +1,11 @@
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Providers;
 using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Reflection;
@@ -108,4 +111,10 @@ public sealed class ReflectionPhase : IAgentPhaseDefinition, IAgentPhaseStep
       ToolRegistry.Betting.GetBetSlipsAwaitingReflection,
       ToolRegistry.Match.GetMatchResearchText,
     ]);
+
+  public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+  [
+    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+  ];
 }

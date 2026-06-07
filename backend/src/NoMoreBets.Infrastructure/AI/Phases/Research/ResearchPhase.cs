@@ -1,9 +1,12 @@
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Providers;
 using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Research;
@@ -24,6 +27,12 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
 
   public static ResearchPhaseDefinition ForMatch(Match match)
     => new(match);
+
+  private static IReadOnlyList<AIContextProvider> GetResearchContextProviders(IServiceProvider serviceProvider) =>
+  [
+    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+  ];
 
   private sealed class ResearchPrimaryStep(Match match) : IAgentPhaseStep
   {
@@ -109,6 +118,9 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
         ToolRegistry.Match.GetClubRollingPerformance,
         ToolRegistry.Match.SaveMatchAnalysis,
       ]);
+
+    public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+      GetResearchContextProviders(serviceProvider);
   }
 
   private sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
@@ -143,5 +155,8 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
         ToolRegistry.ResearchBet.GetMatchEvents(matchId),
         ToolRegistry.ResearchBet.PlaceBetSlip(matchId),
       ]);
+
+    public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+      GetResearchContextProviders(serviceProvider);
   }
 }

@@ -1,11 +1,14 @@
 using System.Globalization;
 using MediatR;
+using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Providers;
 using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Betting;
@@ -56,6 +59,13 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
     var balanceText = currentBalance.ToString("F2", CultureInfo.InvariantCulture);
     return new BettingPhaseContext(balanceText, daysUntilPayday);
   }
+
+  private static IReadOnlyList<AIContextProvider> GetBettingContextProviders(IServiceProvider serviceProvider) =>
+  [
+    new BankrollProvider(serviceProvider.GetRequiredService<IMediator>()),
+    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+  ];
 
   private sealed class BettingPrimaryStep(BettingPhaseContext context) : IAgentPhaseStep
   {
@@ -129,6 +139,9 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
         ToolRegistry.Betting.PlaceBetSlip,
         ToolRegistry.Betting.GetBetSlips,
       ]);
+
+    public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+      GetBettingContextProviders(serviceProvider);
   }
 
   private sealed class XPostFollowUpStep : IAgentPhaseStep
@@ -142,5 +155,8 @@ public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
 
     public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
       serviceProvider.ResolveTools([ToolRegistry.SocialMedia.CreateXPost]);
+
+    public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+      GetBettingContextProviders(serviceProvider);
   }
 }
