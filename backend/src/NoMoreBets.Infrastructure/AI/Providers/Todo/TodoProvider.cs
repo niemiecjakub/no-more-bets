@@ -15,7 +15,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
 
   private static readonly string Instructions =
       $$"""
-        ## Todo Items
+        # Todo Items
 
         You have access to a todo list for tracking work items.
         While planning, break down complex tasks into manageable todo items and add them to the list.

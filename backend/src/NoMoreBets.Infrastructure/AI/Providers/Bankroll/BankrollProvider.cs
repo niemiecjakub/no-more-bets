@@ -13,7 +13,7 @@ public sealed class BankrollProvider : AIContextProvider
 
   private static readonly string Instructions =
       $$"""
-        ## Bankroll
+        # Bankroll
         You have access to your bankroll data.
 
         Use these tools to manage your bankroll:

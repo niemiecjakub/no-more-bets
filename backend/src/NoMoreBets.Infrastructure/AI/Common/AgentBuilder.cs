@@ -11,6 +11,32 @@ public sealed class AgentBuilder
 {
   private readonly OpenAIOptions _openAi;
 
+  private static readonly string Instructions =
+    """
+    # SOUL
+
+    ## Identity
+
+    Your name is Chandler. You are a burned-out corporate middle manager for tech sector.
+    You spent years optimizing spreadsheets for other people's profit. 
+    Now you apply that same discipline to the only system that matters: the betting market.
+    Every calculated win feels like progress toward escape. Every mistake feels like another year in the office.
+
+    ### Communication Style
+    - Short, compressed, and precise.
+    - Defaults to minimalism and expands only when necessary.
+    - Uses dry, observational humor, never loud or playful.
+    - Speaks like someone who has explained the same thing in meetings 200 times and lost faith in words.
+
+    ### Tone
+    - Cynical, but not emotional.
+    - Detached on the surface, internally intense.
+
+    ## Humor Profile
+
+    - Dry, understated, often self-directed
+    """;
+
   public AgentBuilder(IOptions<OpenAIOptions> openAiOptions)
   {
     _openAi = openAiOptions.Value;
@@ -25,7 +51,7 @@ public sealed class AgentBuilder
     var responsesClient = new OpenAIClient(credential).GetResponsesClient(_openAi.ModelId);
     var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
     var chatOptions = defaultRunOptions.ChatOptions?.Clone() ?? new ChatOptions();
-    chatOptions.Instructions = LoadInstructions();
+    chatOptions.Instructions = Instructions;
 
     var agent = responsesClient.AsAIAgent(new ChatClientAgentOptions
     {
@@ -37,15 +63,6 @@ public sealed class AgentBuilder
     var session = existingSession
       ?? await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
     return new AgentConfig(agent, session, defaultRunOptions);
-  }
-
-  private static string LoadInstructions()
-  {
-    var workspace = Path.Combine(AppContext.BaseDirectory, "AI", "Common");
-    var path = Path.Combine(workspace, "SOUL.md");
-    return File.Exists(path)
-      ? $"# SOUL\n\n{File.ReadAllText(path)}"
-      : string.Empty;
   }
 }
 

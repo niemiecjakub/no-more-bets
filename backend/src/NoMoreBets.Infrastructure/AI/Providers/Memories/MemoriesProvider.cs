@@ -19,16 +19,16 @@ public sealed class MemoriesProvider : AIContextProvider
 
   private static readonly string Instructions =
       $$"""
-        ## Memories
+        # Memories
         You have access to persistent memory records.
 
         Use these tools to manage memories:
         - Use {{GetRecordsToolName}} to list all saved memory records.
         - Use {{ReadToolName}} to load the full content of a saved memory record.
-        - Use {{WriteToolName}} to replace an entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.
+        - Use {{WriteToolName}} to replace an entire memory record with new contentor creates the record if it does not exist.
         - Use {{AppendToolName}} to add text to the end of an existing memory record.
-        - Use {{ReplaceToolName}} to find an exact substring in a memory record and substitute new text. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.
-        - Use {{DeleteToolName}} to permanently delete a named memory record. Use only when the entire record is obsolete.
+        - Use {{ReplaceToolName}} to find an exact substring in a memory record and substitute new text.
+        - Use {{DeleteToolName}} to permanently delete a named memory record.
         """;
 
   private readonly IUnitOfWork _unitOfWork;

@@ -13,7 +13,7 @@ public sealed class AgentModeProvider : AIContextProvider
 
   private static readonly string Instructions =
       $$"""
-        ## Agent Mode
+        # Agent Mode
 
         - You can operate in different modes. Depending on the mode you are in, you will be required to follow different processes.
         - You must check the current mode after any user input, since the user may have changed the mode themselves,

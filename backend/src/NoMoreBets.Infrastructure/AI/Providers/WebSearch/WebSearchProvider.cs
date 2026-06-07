@@ -17,7 +17,7 @@ public sealed class WebSearchProvider : AIContextProvider
 
   private static readonly string Instructions =
       $$"""
-        ## Web Search
+        # Web Search
         You have access to web search.
 
         Use these tools to search the web:
