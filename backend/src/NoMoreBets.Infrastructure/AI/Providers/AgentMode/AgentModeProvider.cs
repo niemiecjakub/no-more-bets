@@ -80,7 +80,7 @@ public sealed class AgentModeProvider : AIContextProvider
 
     _validModeNames = new HashSet<string>(_modes.Select(m => m.Name), StringComparer.Ordinal);
     _modeNamesDisplay = string.Join("\", \"", _modes.Select(m => m.Name));
-    _defaultMode = options?.DefaultMode ?? _modes[0].Name;
+    _defaultMode = options?.DefaultMode ?? ExecuteMode;
 
     if (!_validModeNames.Contains(_defaultMode))
     {
