@@ -3,66 +3,79 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
-using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
+using NoMoreBets.Infrastructure.AI.Providers.Date;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
+using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
 
-public sealed class MemoryCleanupPhase : IAgentPhaseDefinition, IAgentPhaseStep
+public sealed class MemoryCleanupPhaseDefinition : IAgentPhaseDefinition
 {
   private const int DaysCutoff = 2;
 
-  public AgentSessionPhase Phase => AgentSessionPhase.MemoryCleanup;
-  public IReadOnlyList<AgentPhaseStep> Steps => [new AgentPhaseStep(this, PersistTranscript: true)];
-
-  public string BuildPrompt()
+  private MemoryCleanupPhaseDefinition()
   {
-    var today = DateOnly.FromDateTime(DateTime.UtcNow);
-    var utcCutoff = DateTime.UtcNow.AddDays(-DaysCutoff);
-
-    return $"""
-          Today is {today} (UTC calendar date).
-          You are a long-running betting agent with persistent memory.
-
-          You are running a maintenance pass: review saved memories and remove or trim content that will no longer be useful.
-
-          Retention rule for match-specific material:
-          - Fixture or match-specific content whose **match date / kickoff (interpret as UTC unless clearly local)** was **more than {DaysCutoff} days before today** is outside retention for ephemeral notes (e.g. lineups, injury snapshots, narrow “this fixture” narratives, stale pre-match hype, post-mortems that only mattered for that one game).
-          - Cutoff instant for comparisons: strictly before {utcCutoff:yyyy-MM-dd HH:mm} UTC.
-          - **Primary signal:** names usually embed the fixture or date; each listing row includes a **description** when present. Decide stale vs keep from name and description first; call `ReadMemoryAsync` only when that is not enough to judge safely. Match IDs and club names in the body (after you read) are secondary cues.
-
-          **Preserve** durable knowledge unless it is purely redundant with discarded fixture noise:
-          - STRATEGY, BANKROLL_MANAGEMENT, REFLECTIONS, GENERAL_KNOWLEDGE, and other cross-cutting process lessons should stay; only remove or shorten passages that are exclusively about old fixtures and no longer aid future research or betting.
-
-          You must use the available plugin functions explicitly for reads, edits, and deletes as needed.
-
-          ## Required workflow (execute in order)
-
-          1) Inventory:
-          - Call `GetMemoryRecordsAsync`.
-
-          2) For each record from the inventory, infer from **name** and **description** whether it may hold match-specific or time-bound content.
-          - Call `ReadMemoryAsync` only when name and description are not enough to decide—then use the full body before editing or deleting.
-
-          3) Cleanup:
-          - Prefer `ReplaceMemoryAsync` for surgical removals (verbatim `oldText` from the read output; `newText` empty removes the span).
-          - Use `WriteMemoryAsync` when replacing the entire body is clearer and safe (still keeps the same record name).
-          - You may **merge** several related memories into one: create or overwrite a target record with `WriteMemoryAsync` (distilled combined content), then trim or `DeleteMemoryAsync` the redundant source records when the merge is complete.
-          - Use `DeleteMemoryAsync` when the **entire named record is obsolete**; same naming rules as other memory tools. Do not use it for durable records listed above.
-
-          4) Finish with a short summary.
-
-          ## Guardrails
-          - Do not remove or wipe durable strategy, bankroll, or calibration lessons unless they are clearly obsolete duplicate fixture chatter; never `DeleteMemoryAsync` those wholesale by mistake.
-          """;
+    Steps =
+    [
+      new AgentPhaseStep(new MemoryCleanupExecuteStep(), PersistTranscript: true),
+    ];
   }
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([]);
+  public AgentSessionPhase Phase => AgentSessionPhase.MemoryCleanup;
+  public IReadOnlyList<AgentPhaseStep> Steps { get; }
 
-  public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
-  [
-    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-  ];
+  public static MemoryCleanupPhaseDefinition Create()
+    => new();
+
+  private sealed class MemoryCleanupExecuteStep : IAgentPhaseStep
+  {
+    public string BuildPrompt()
+    {
+      var today = DateOnly.FromDateTime(DateTime.UtcNow);
+      var utcCutoff = DateTime.UtcNow.AddDays(-DaysCutoff);
+
+      return $"""
+            You are running a maintenance pass: review saved memories and remove content that will no longer be useful.
+            Today is {today} (UTC calendar date).
+
+            Retention rule for match-specific material:
+            - Fixture or match-specific content whose **match date / kickoff (interpret as UTC unless clearly local)** was **more than {DaysCutoff} days before today** is outside retention for ephemeral notes (e.g. lineups, injury snapshots, narrow "this fixture" narratives, stale pre-match hype, post-mortems that only mattered for that one game).
+            - Cutoff instant for comparisons: strictly before {utcCutoff:yyyy-MM-dd HH:mm} UTC.
+            - **Primary signal:** names usually embed the fixture or date; each listing row includes a **description** when present. Decide stale vs keep from name and description first; read full content only when that is not enough to judge safely. Match IDs and club names in the body are secondary cues.
+
+            **Preserve** durable knowledge unless it is purely redundant with discarded fixture noise:
+            - STRATEGY, BANKROLL_MANAGEMENT, REFLECTIONS, GENERAL_KNOWLEDGE, and other cross-cutting process lessons should stay; only remove or shorten passages that are exclusively about old fixtures and no longer aid future research or betting.
+
+            Goal:
+            Safely trim or remove obsolete match-specific memory content while preserving durable knowledge.
+
+            Completion criteria:
+            All candidate memories have been reviewed against the retention rule.
+            Stale fixture-specific content has been surgically removed, trimmed, merged, or deleted as appropriate.
+            Durable strategy, bankroll, reflection, and general knowledge records remain intact.
+
+            Break the work into todos at the start, then work through them marking items complete as you finish.
+
+            Inventory saved memories and identify records that may hold match-specific or time-bound content. For each candidate, infer from name and description whether cleanup is warranted before reading full content.
+
+            For records that need cleanup, read full content only when name and description are not enough to decide safely. Prefer surgical removals over wiping entire records when only part of the content is obsolete. Replace entire bodies when that is clearer and safe. Merge related memories into one distilled record when appropriate, then remove redundant sources. Delete entire records only when the whole named record is obsolete — never wholesale-delete durable strategy or bankroll records by mistake.
+
+            ## Quality constraints
+            - Do not remove or wipe durable strategy, bankroll, or calibration lessons unless they are clearly obsolete duplicate fixture chatter
+            """;
+    }
+
+    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
+      serviceProvider.ResolveTools([]);
+
+    public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+    [
+      new DateProvider(),
+      new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+      new AgentModeProvider(new AgentModeProviderOptions { DefaultMode = "execute" }),
+      new TodoProvider(),
+    ];
+  }
 }

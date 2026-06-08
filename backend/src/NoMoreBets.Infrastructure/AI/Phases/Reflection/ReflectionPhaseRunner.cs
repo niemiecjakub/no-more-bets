@@ -7,7 +7,6 @@ namespace NoMoreBets.Infrastructure.AI.Phases.Reflection;
 
 public sealed class ReflectionPhaseRunner(
   AgentPhaseExecutor executor,
-  ReflectionPhase phase,
   IUnitOfWork unitOfWork,
   ILogger<ReflectionPhaseRunner> logger)
 {
@@ -25,7 +24,8 @@ public sealed class ReflectionPhaseRunner(
 
     var reflectionBetSlipIds = slips.Select(s => s.Id).ToList();
 
-    var result = await executor.ExecuteAsync(phase, cancellationToken).ConfigureAwait(false);
+    var definition = ReflectionPhaseDefinition.Create();
+    var result = await executor.ExecuteAsync(definition, cancellationToken).ConfigureAwait(false);
 
     if (reflectionBetSlipIds.Count > 0 && result.SessionId is int reflectionSessionId)
     {

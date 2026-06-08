@@ -4,118 +4,82 @@ using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
-using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
+using NoMoreBets.Infrastructure.AI.Providers.Date;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
+using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Reflection;
 
-public sealed class ReflectionPhase : IAgentPhaseDefinition, IAgentPhaseStep
+public sealed class ReflectionPhaseDefinition : IAgentPhaseDefinition
 {
+  private ReflectionPhaseDefinition()
+  {
+    Steps =
+    [
+      new AgentPhaseStep(new ReflectionExecuteStep(), PersistTranscript: true),
+    ];
+  }
+
   public AgentSessionPhase Phase => AgentSessionPhase.Reflection;
-  public IReadOnlyList<AgentPhaseStep> Steps => [new AgentPhaseStep(this, PersistTranscript: true)];
+  public IReadOnlyList<AgentPhaseStep> Steps { get; }
 
-  public string BuildPrompt() => $"""
-          Today is {DateOnly.FromDateTime(DateTime.UtcNow)}.
-          You are a long-running betting agent with persistent memory.
+  public static ReflectionPhaseDefinition Create()
+    => new();
 
-          You are running your reflection phase: learn from recent settled outcomes and store only durable, reusable decision rules that improve future performance.
-          You must use the available plugin functions explicitly.
-
-          ## Goal
+  private sealed class ReflectionExecuteStep : IAgentPhaseStep
+  {
+    public string BuildPrompt() => """
+          Learn from recent settled outcomes and identify durable, reusable decision rules that could improve future performance.
+          Treat single outcomes as weak evidence unless they clearly expose a process failure.
+          Only extract insights that will change how you bet across many future matches.
           Improve future decision quality (edge identification, discipline, sizing, structure) without overfitting to short-term results.
-          Treat single outcomes as weak evidence unless they clearly expose a **process failure**.
-          Only extract lessons that will change how you bet across many future matches.
 
-          ## Core Rule (CRITICAL)
+          Goal:
+          Extract and store only high-signal, generalizable decision rules from settled bet slips.
 
-          Only store insights that meet ALL of the following:
-          1. Generalizable across matches (no team-, date-, or match-specific context)
-          2. Actionable (changes a future decision: bet, pass, size, structure)
-          3. Concise and rule-like (not descriptive, not narrative)
+          Completion criteria:
+          All settled bet slips awaiting reflection have been analyzed from a process perspective.
+          High-signal rules are persisted to memory, or it is explicitly determined that no strong lessons exist and nothing is stored.
 
-          ## Required workflow (execute in order)
+          Break the work into todos at the start, then work through them marking items complete as you finish.
 
-          ### 1) Get bet slips awaiting reflection
-          - Call `GetBetSlipsAwaitingReflectionAsync`
+          Core rule — only store insights that meet ALL of the following:
+          - Generalizable across matches (no team-, date-, or match-specific context)
+          - Actionable (changes a future decision: bet, pass, size, structure)
+          - Concise and rule-like (not descriptive, not narrative)
 
-          ### 2) Read memory context
-          - Call `GetMemoryRecordsAsync`
-          - Call `ReadMemoryAsync` for: STRATEGY, REFLECTIONS, GENERAL_KNOWLEDGE (and others if needed)
+          Identify settled bet slips awaiting reflection. Review memory for strategy, reflections, and general knowledge.
 
-          ### 3) Analyze outcomes (strictly process-focused)
-          For each settled slip:
-          - Compare **pre-bet logic vs actual outcome**
-          - Identify:
-            - Clear process errors (violating your own rules)
-            - Valid decisions that lost due to variance
-            - Repeated mistakes (overstacking, forcing bets, weak edges, etc.)
+          For each settled slip in scope, analyze outcomes strictly from a process perspective: compare pre-bet logic versus actual outcome, separate clear process errors from valid decisions that lost due to variance, and note repeated mistakes such as overstacking, forcing bets, or weak edges.
 
-          Optional:
-          - Use match research or external data ONLY to clarify reasoning errors
-          - Do NOT store match-specific findings
+          Convert findings into strict decision rules — short, match-agnostic, and focused on future behavior. Persist only high-signal rules to memory with no duplication or minor rewording of existing rules, no match names, dates, or narratives. Think constraint system, not notes.
 
-          ### 4) Extract lessons (THIS IS THE CORE STEP)
-
-          Convert findings into **strict decision rules**:
-
-          Rules must:
-          - Be short (1–2 lines max)
-          - Remove all match-specific references
-          - Focus on future behavior
-
-          ### 5) Persist lessons (strict filtering)
-
-          When saving to memory:
-
-          - Store ONLY high-signal rules
-          - No duplication or minor rewording of existing rules
-          - No match names, dates, or narratives
-          - No explanations longer than necessary
-
-          Think: **constraint system, not notes**
-
-          ### 6) Research vs Betting improvements
-
-          Explicitly separate:
-
-          **Future Research**
-          - What to check differently (e.g. scoring paths, lineup dependency, downside cases)
-
-          **Future Betting**
-          - What to do differently (e.g. pass more, reduce stake, avoid certain parlays, cap exposure)
-
-          Only include items that change behavior.
-
-          ## Hard Guardrails
-
-          - DO NOT store:
-            - Match summaries
-            - Team-specific insights
-            - One-off tactical observations
-
-          - DO NOT upgrade an edge because it won
-          - DO NOT justify bets after the fact
-
-          - ALWAYS prefer fewer, stronger rules over many weak ones
+          Explicitly separate future research improvements from future betting behavior changes where relevant. Only include items that change behavior.
 
           ## Quality constraints
-
-          - Avoid overfitting to small samples
-          - Cross-check against STRATEGY and BANKROLL rules
-          - If no strong lessons exist → store nothing
+          - Do not store match summaries, team-specific insights, or one-off tactical observations
+          - Do not upgrade an edge because it won or justify bets after the fact
+          - Cross-check against strategy and bankroll rules
+          - Prefer fewer, stronger rules over many weak ones
+          - If no strong lessons exist, store nothing
           """;
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([
-      ToolRegistry.Betting.GetBetSlipsAwaitingReflection,
-      ToolRegistry.Match.GetMatchResearchText,
-    ]);
+    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
+      serviceProvider.ResolveTools([
+        ToolRegistry.Betting.GetBetSlipsAwaitingReflection,
+        ToolRegistry.Match.GetMatchResearchText,
+      ]);
 
-  public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
-  [
-    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
-  ];
+    public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+    [
+      new DateProvider(),
+      new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+      new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+      new AgentModeProvider(new AgentModeProviderOptions { DefaultMode = "execute" }),
+      new TodoProvider(),
+    ];
+  }
 }
