@@ -1,6 +1,7 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
+using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using OpenAI;
 using OpenAI.Responses;
 using System.ClientModel;
@@ -9,6 +10,7 @@ namespace NoMoreBets.Infrastructure.AI.Common;
 
 public sealed class AgentBuilder
 {
+  private readonly AgentResponseMappingMiddleware _mappingMiddleware;
   private readonly OpenAIOptions _openAi;
 
   private static readonly string Instructions =
@@ -32,14 +34,17 @@ public sealed class AgentBuilder
     - Cynical, but not emotional.
     - Detached on the surface, internally intense.
 
-    ## Humor Profile
+    ### Humor Profile
 
     - Dry, understated, often self-directed
     """;
 
-  public AgentBuilder(IOptions<OpenAIOptions> openAiOptions)
+  public AgentBuilder(
+    IOptions<OpenAIOptions> openAiOptions,
+    AgentResponseMappingMiddleware mappingMiddleware)
   {
     _openAi = openAiOptions.Value;
+    _mappingMiddleware = mappingMiddleware;
   }
 
   public async Task<AgentConfig> BuildForScheduledJobAsync(
@@ -53,12 +58,17 @@ public sealed class AgentBuilder
     var chatOptions = defaultRunOptions.ChatOptions?.Clone() ?? new ChatOptions();
     chatOptions.Instructions = Instructions;
 
-    var agent = responsesClient.AsAIAgent(new ChatClientAgentOptions
+    var baseAgent = responsesClient.AsAIAgent(new ChatClientAgentOptions
     {
       Name = "BettingAgent",
       ChatOptions = chatOptions,
       AIContextProviders = contextProviders as IList<AIContextProvider> ?? contextProviders.ToList(),
     });
+
+    var agent = baseAgent
+      .AsBuilder()
+      .Use(runFunc: _mappingMiddleware.InvokeAsync, runStreamingFunc: null)
+      .Build();
 
     var session = existingSession
       ?? await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
@@ -67,6 +77,6 @@ public sealed class AgentBuilder
 }
 
 public sealed record AgentConfig(
-  ChatClientAgent Agent,
+  AIAgent Agent,
   AgentSession Session,
   ChatClientAgentRunOptions DefaultRunOptions);

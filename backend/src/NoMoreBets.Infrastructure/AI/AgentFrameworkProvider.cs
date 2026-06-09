@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Phases.Betting;
 using NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
 using NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
@@ -18,6 +19,8 @@ public static class AgentFrameworkProvider
     services.AddScoped<MatchTool>();
     services.AddScoped<BettingTool>();
     services.AddScoped<SocialMediaTool>();
+    services.AddScoped<AgentRunMessageCollector>();
+    services.AddScoped<AgentResponseMappingMiddleware>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<AgentSessionContext>();
     services.AddScoped<AgentPhaseExecutor>();

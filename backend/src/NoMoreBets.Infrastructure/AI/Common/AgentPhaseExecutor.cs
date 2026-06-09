@@ -5,12 +5,14 @@ using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Domain.AgentSessions;
+using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 
 namespace NoMoreBets.Infrastructure.AI.Common;
 
 public sealed class AgentPhaseExecutor
 {
   private readonly AgentBuilder _agentBuilder;
+  private readonly AgentRunMessageCollector _messageCollector;
   private readonly AgentSessionContext _agentSessionContext;
   private readonly ILogger<AgentPhaseExecutor> _logger;
   private readonly IServiceProvider _serviceProvider;
@@ -18,12 +20,14 @@ public sealed class AgentPhaseExecutor
 
   public AgentPhaseExecutor(
     AgentBuilder agentBuilder,
+    AgentRunMessageCollector messageCollector,
     IUnitOfWork unitOfWork,
     AgentSessionContext agentSessionContext,
     IServiceProvider serviceProvider,
     ILogger<AgentPhaseExecutor> logger)
   {
     _agentBuilder = agentBuilder;
+    _messageCollector = messageCollector;
     _agentSessionContext = agentSessionContext;
     _logger = logger;
     _serviceProvider = serviceProvider;
@@ -62,8 +66,11 @@ public sealed class AgentPhaseExecutor
           .BuildForScheduledJobAsync(contextProviders, agentSession, cancellationToken)
           .ConfigureAwait(false);
         agentSession ??= config.Session;
-        var stepMessages = await CollectAsync(config, prompt, tools, cancellationToken)
+        var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
+        await config.Agent
+          .RunAsync([new ChatMessage(ChatRole.User, prompt)], config.Session, runOptions, cancellationToken)
           .ConfigureAwait(false);
+        var stepMessages = _messageCollector.TakeMessages();
 
         if (step.PersistTranscript)
         {
@@ -111,55 +118,5 @@ public sealed class AgentPhaseExecutor
       messages.Count);
 
     return new AgentPhaseRunResult(messages, persistedSessionId);
-  }
-
-  private static async Task<List<IMessage>> CollectAsync(
-    AgentConfig config,
-    string prompt,
-    IReadOnlyList<AITool> tools,
-    CancellationToken cancellationToken)
-  {
-    var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
-    var response = await config.Agent
-      .RunAsync(prompt, config.Session, runOptions, cancellationToken)
-      .ConfigureAwait(false);
-
-    return MapResponse(response);
-  }
-
-  private static List<IMessage> MapResponse(AgentResponse response)
-  {
-    var messages = new List<IMessage>();
-
-    foreach (var chatMessage in response.Messages)
-    {
-      foreach (var item in chatMessage.Contents)
-      {
-        switch (item)
-        {
-          case TextReasoningContent reasoning when !string.IsNullOrEmpty(reasoning.Text):
-            messages.Add(new ReasoningMessage(reasoning.Text));
-            break;
-
-          case FunctionCallContent functionCall:
-            var arguments = functionCall.Arguments?
-              .Select(a => new FunctionArgument(a.Key, a.Value?.ToString()))
-              .ToList();
-            messages.Add(new FunctionMessage(functionCall.Name, arguments));
-            break;
-
-          case TextContent text when !string.IsNullOrEmpty(text.Text):
-            messages.Add(new Message(text.Text));
-            break;
-        }
-      }
-    }
-
-    if (messages.Count == 0 && !string.IsNullOrEmpty(response.Text))
-    {
-      messages.Add(new Message(response.Text));
-    }
-
-    return messages;
   }
 }
