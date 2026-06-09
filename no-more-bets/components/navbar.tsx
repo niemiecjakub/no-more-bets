@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import * as NavigationMenu from "@radix-ui/react-navigation-menu";
 import { cn } from "@/lib/utils";
+import { FeedbackSheetTrigger } from "@/features/feedback/components/feedback-sheet";
 
 const tabs = [
   { href: "/", label: "Matches" },
@@ -175,6 +176,7 @@ export function Navbar() {
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-1">
+          <FeedbackSheetTrigger className="rounded-md p-2 text-zinc-700 transition-colors hover:bg-zinc-100 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 dark:text-zinc-200 dark:hover:bg-zinc-800 [&_svg]:size-7" />
           <SocialLinks />
         </div>
       </div>

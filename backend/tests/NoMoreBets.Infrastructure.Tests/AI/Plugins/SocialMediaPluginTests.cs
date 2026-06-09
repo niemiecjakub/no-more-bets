@@ -1,20 +1,21 @@
 using FluentAssertions;
-using Microsoft.SemanticKernel;
+using Microsoft.Extensions.AI;
 using NSubstitute;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.SocialMedia.CreateXPost;
-using NoMoreBets.Infrastructure.AI.Plugins;
+using NoMoreBets.Infrastructure.AI.Tools;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 
-public class SocialMediaPluginTests
+public class SocialMediaToolTests
 {
   private readonly IXApiService _xApiService = Substitute.For<IXApiService>();
-  private readonly SocialMediaPlugin _sut;
+  private readonly SocialMediaTool _sut;
 
-  public SocialMediaPluginTests()
+  public SocialMediaToolTests()
   {
-    _sut = new SocialMediaPlugin(_xApiService);
+    _sut = new SocialMediaTool(_xApiService);
   }
 
   [Fact]
@@ -34,16 +35,11 @@ public class SocialMediaPluginTests
   }
 
   [Fact]
-  public void KernelRegistersCreateXPostFunction()
+  public void CreateXPost_RegistersNamedFunction()
   {
-    var kernel = new Kernel();
-    kernel.Plugins.AddFromObject(_sut);
+    var tool = ToolRegistry.Create(_sut.CreateXPostAsync, "CreateXPost");
 
-    var functionNames = kernel.Plugins
-      .SelectMany(p => p)
-      .Select(f => f.Name)
-      .ToArray();
-
-    functionNames.Should().ContainSingle().Which.Should().Be("CreateXPost");
+    tool.Should().BeAssignableTo<AIFunction>();
+    ((AIFunction)tool).Name.Should().Be("CreateXPost");
   }
 }

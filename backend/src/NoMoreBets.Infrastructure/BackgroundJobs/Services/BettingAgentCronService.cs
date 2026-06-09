@@ -4,15 +4,13 @@ using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
-using NoMoreBets.Infrastructure.AI.Provider;
-
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
 /// <summary>
 /// Hangfire entry points for the betting agent: research scheduling, execution, and reflection phases.
 /// </summary>
 public sealed class BettingAgentCronService(
-  Runner runner,
+  IAgentPhaseRunner agentPhaseRunner,
   IMediator mediator,
   IUnitOfWork unitOfWork,
   ILogger<BettingAgentCronService> logger)
@@ -46,7 +44,7 @@ public sealed class BettingAgentCronService(
       return;
     }
 
-    await runner.RunResearchPhaseAsync(match, CancellationToken.None).ConfigureAwait(false);
+    await agentPhaseRunner.RunResearchPhaseAsync(match, CancellationToken.None).ConfigureAwait(false);
   }
 
   [AutomaticRetry(Attempts = 1)]
@@ -62,7 +60,7 @@ public sealed class BettingAgentCronService(
     }
 
     logger.LogInformation("Starting scheduled betting execution agent phase");
-    await runner.RunBettingExecutionPhaseAsync(CancellationToken.None).ConfigureAwait(false);
+    await agentPhaseRunner.RunBettingExecutionPhaseAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled betting execution agent phase");
   }
 
@@ -70,7 +68,7 @@ public sealed class BettingAgentCronService(
   public async Task RunReflectionAsync()
   {
     logger.LogInformation("Starting scheduled reflection agent phase");
-    await runner.RunReflectionPhaseAsync(CancellationToken.None).ConfigureAwait(false);
+    await agentPhaseRunner.RunReflectionPhaseAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled reflection agent phase");
   }
 }

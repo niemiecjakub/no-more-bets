@@ -1,0 +1,35 @@
+using System.ComponentModel;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using NoMoreBets.Application.SocialMedia;
+using NoMoreBets.Application.SocialMedia.CreateXPost;
+
+namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
+
+public sealed class SocialMediaTool
+{
+  private readonly IXApiService _xApiService;
+  private readonly ILogger<SocialMediaTool> _logger;
+
+  public SocialMediaTool(IXApiService xApiService, ILogger<SocialMediaTool>? logger = null)
+  {
+    _xApiService = xApiService;
+    _logger = logger ?? NullLogger<SocialMediaTool>.Instance;
+  }
+
+  [Description("Creates a public post on X (Twitter).")]
+  public async Task<CreateXPostResult> CreateXPostAsync(
+    [Description("The full post body to publish on X. Text must be non-empty and at most 280 characters.")]
+    string text,
+    CancellationToken cancellationToken = default)
+  {
+    if (string.IsNullOrWhiteSpace(text))
+    {
+      _logger.LogError("Attempted to create X post with empty text.");
+    }
+
+    return await _xApiService
+      .CreateXPostAsync(new CreateXPostRequest { Text = text }, cancellationToken)
+      .ConfigureAwait(false);
+  }
+}

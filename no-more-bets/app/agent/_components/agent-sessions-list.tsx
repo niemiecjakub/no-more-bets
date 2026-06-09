@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Bot, Globe, Lightbulb, Search, Ticket, Trash2 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import type { AgentSessionListItem } from "@/features/sessions/interfaces";
+import { sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
 
 interface AgentSessionsListProps {
   sessions: AgentSessionListItem[];
@@ -15,6 +14,7 @@ interface AgentSessionsListProps {
   onLoadMore: () => void;
   loadMoreError: string | null;
   onRetryLoadMore: () => void;
+  emptyMessage?: string;
 }
 
 function formatDate(iso: string) {
@@ -29,23 +29,6 @@ function formatDate(iso: string) {
   }
 }
 
-function sessionPhaseIcon(phaseId: number): LucideIcon {
-  switch (phaseId) {
-    case 1:
-      return Search;
-    case 2:
-      return Ticket;
-    case 3:
-      return Lightbulb;
-    case 4:
-      return Globe;
-    case 5:
-      return Trash2;
-    default:
-      return Bot;
-  }
-}
-
 export function AgentSessionsList({
   sessions,
   selectedSessionId,
@@ -56,6 +39,7 @@ export function AgentSessionsList({
   onLoadMore,
   loadMoreError,
   onRetryLoadMore,
+  emptyMessage = "No agent sessions recorded yet.",
 }: AgentSessionsListProps) {
   const scrollRootRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -95,7 +79,7 @@ export function AgentSessionsList({
   if (sessions.length === 0) {
     return (
       <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">
-        No agent sessions recorded yet.
+        {emptyMessage}
       </div>
     );
   }

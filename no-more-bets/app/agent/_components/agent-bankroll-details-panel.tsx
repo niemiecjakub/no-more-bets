@@ -11,6 +11,7 @@ import {
 } from "@/features/bets/services/bankroll-api";
 import { handleServiceError } from "@/lib/error-handler";
 import { AgentBankrollEntriesList } from "./agent-bankroll-entries-list";
+import { AgentBankrollEntryTypeFilter } from "./agent-bankroll-entry-type-filter";
 import { AgentBankrollRelatedBet } from "./agent-bankroll-related-bet";
 
 function mergeEntries(
@@ -27,10 +28,20 @@ function mergeEntries(
   return merged;
 }
 
+function pickDefaultEntry(
+  entries: BankrollEntryListItemDto[],
+  current: BankrollEntryListItemDto | null,
+): BankrollEntryListItemDto | null {
+  if (entries.length === 0) return null;
+  if (current != null && entries.some((entry) => entry.id === current.id)) return current;
+  return entries.find((entry) => entry.betId !== null) ?? entries[0] ?? null;
+}
+
 export function AgentBankrollDetailsPanel() {
   const [entries, setEntries] = useState<BankrollEntryListItemDto[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<BankrollEntryListItemDto | null>(null);
   const [selectedBetDetails, setSelectedBetDetails] = useState<BankrollEntryBetDetailsDto | null>(null);
+  const [selectedEntryNames, setSelectedEntryNames] = useState<string[]>([]);
 
   const [hasMore, setHasMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<{ at: string; id: number } | null>(null);
@@ -44,6 +55,12 @@ export function AgentBankrollDetailsPanel() {
   const [betDetailsError, setBetDetailsError] = useState<string | null>(null);
 
   const isLoadingMoreRef = useRef(false);
+  const selectedEntryRef = useRef<BankrollEntryListItemDto | null>(null);
+
+  const hasActiveEntryTypeFilter = selectedEntryNames.length > 0;
+  const entryNamesForRequest = hasActiveEntryTypeFilter ? selectedEntryNames : undefined;
+
+  selectedEntryRef.current = selectedEntry;
 
   const loadBetDetailsForEntry = useCallback((entry: BankrollEntryListItemDto | null) => {
     setSelectedEntry(entry);
@@ -85,13 +102,16 @@ export function AgentBankrollDetailsPanel() {
     setIsInitialLoading(true);
     setEntriesError(null);
     setLoadMoreError(null);
+    setEntries([]);
+    setHasMore(false);
+    setNextCursor(null);
 
-    fetchBankrollEntriesPage()
+    fetchBankrollEntriesPage({ entryNames: entryNamesForRequest })
       .then((page) => {
         if (cancelled) return;
         applyPage(page, false);
-        const firstWithBet = page.items.find((entry) => entry.betId !== null) ?? page.items[0] ?? null;
-        loadBetDetailsForEntry(firstWithBet);
+        const nextSelected = pickDefaultEntry(page.items, selectedEntryRef.current);
+        loadBetDetailsForEntry(nextSelected);
       })
       .catch((caughtError) => {
         if (!cancelled) {
@@ -105,7 +125,7 @@ export function AgentBankrollDetailsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [applyPage, loadBetDetailsForEntry]);
+  }, [applyPage, entryNamesForRequest, loadBetDetailsForEntry]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
@@ -117,6 +137,7 @@ export function AgentBankrollDetailsPanel() {
     fetchBankrollEntriesPage({
       afterCreatedAt: nextCursor.at,
       afterId: nextCursor.id,
+      entryNames: entryNamesForRequest,
     })
       .then((page) => {
         applyPage(page, true);
@@ -128,28 +149,39 @@ export function AgentBankrollDetailsPanel() {
         isLoadingMoreRef.current = false;
         setIsLoadingMore(false);
       });
-  }, [applyPage, hasMore, nextCursor]);
+  }, [applyPage, entryNamesForRequest, hasMore, nextCursor]);
 
   return (
     <section className="flex flex-col gap-4">
       <div className="grid min-h-[min(78vh,44rem)] grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
-        <section className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
+        <section className="relative z-10 flex min-w-0 flex-col overflow-visible rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
           {entriesError ? (
             <p className="m-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
               {entriesError}
             </p>
           ) : (
-            <AgentBankrollEntriesList
-              entries={entries}
-              selectedEntryId={selectedEntry?.id ?? null}
-              onSelectEntry={loadBetDetailsForEntry}
-              isLoading={isInitialLoading}
-              hasMore={hasMore}
-              isLoadingMore={isLoadingMore}
-              onLoadMore={loadMore}
-              loadMoreError={loadMoreError}
-              onRetryLoadMore={loadMore}
-            />
+            <>
+              <AgentBankrollEntryTypeFilter
+                selectedEntryNames={selectedEntryNames}
+                onSelectedEntryNamesChange={setSelectedEntryNames}
+              />
+              <AgentBankrollEntriesList
+                entries={entries}
+                selectedEntryId={selectedEntry?.id ?? null}
+                onSelectEntry={loadBetDetailsForEntry}
+                isLoading={isInitialLoading}
+                hasMore={hasMore}
+                isLoadingMore={isLoadingMore}
+                onLoadMore={loadMore}
+                loadMoreError={loadMoreError}
+                onRetryLoadMore={loadMore}
+                emptyMessage={
+                  hasActiveEntryTypeFilter
+                    ? "No entries match the selected types."
+                    : undefined
+                }
+              />
+            </>
           )}
         </section>
 

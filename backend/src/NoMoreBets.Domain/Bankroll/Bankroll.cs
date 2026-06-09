@@ -8,10 +8,7 @@ public class Bankroll
 {
   public const int MaxNameLength = 200;
 
-  private const string SalaryName = "Salary";
   private const decimal SalaryAmount = 8000m;
-  private const string BetWinName = "Bet win";
-  private const string BetCancellationRefundName = "Bet cancellation refund";
 
   private Bankroll()
   {
@@ -29,13 +26,13 @@ public class Bankroll
   [NotMapped]
   public BankrollFlow Direction => BankrollFlowExtensions.FromStorageCode(Flow);
 
-  public static Bankroll CreateSalary() => Create(SalaryName, SalaryAmount, BankrollFlow.In);
+  public static Bankroll CreateSalary() => Create(BankrollEntryNames.Salary, SalaryAmount, BankrollFlow.In);
 
   public static Bankroll CreateBetWin(decimal potentialPayout, int betSlipId) =>
-    Create(BetWinName, potentialPayout, BankrollFlow.In, betSlipId);
+    Create(BankrollEntryNames.BetWin, potentialPayout, BankrollFlow.In, betSlipId);
 
   public static Bankroll CreateBetCancellationRefund(BetSlip betSlip) =>
-    Create(BetCancellationRefundName, betSlip.StakeAmount, BankrollFlow.In, betSlip.Id);
+    Create(BankrollEntryNames.BetCancellationRefund, betSlip.StakeAmount, BankrollFlow.In, betSlip.Id);
 
   public static Bankroll Create(string name, decimal amount, BankrollFlow flow, int? betId = null)
   {

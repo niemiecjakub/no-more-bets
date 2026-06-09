@@ -18,6 +18,14 @@ CREATE TABLE "MatchStatus" (
 );
 
 
+-- MatchEventType: 1=Goal, 2=Assist, 3=OwnGoal, 4=PenaltyGoal, 5=RedCard, 6=YellowCard, 7=YellowRedCard, 8=SubstitutionIn, 9=SubstitutionOut (matches NoMoreBets.Domain.Enums.MatchEventType)
+CREATE TABLE "MatchEventType" (
+	"Id" int4 NOT NULL,
+	"Name" varchar(50) NOT NULL,
+	CONSTRAINT "MatchEventType_pkey" PRIMARY KEY ("Id")
+);
+
+
 CREATE TABLE "Club" (
 	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
 	"Name" varchar(200) NOT NULL,
@@ -31,6 +39,16 @@ CREATE TABLE "Club" (
 );
 CREATE INDEX idx_club_league ON public."Club" USING btree ("LeagueId");
 CREATE INDEX idx_club_name ON public."Club" USING btree ("Name");
+
+
+CREATE TABLE "Player" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"Name" varchar(200) NOT NULL,
+	"SoccerdataId" int4 NOT NULL,
+	CONSTRAINT "Player_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT uq_player_soccerdata UNIQUE ("SoccerdataId")
+);
+CREATE INDEX idx_player_name ON public."Player" USING btree ("Name");
 
 
 CREATE TABLE "ClubDailySummary" (
@@ -95,6 +113,22 @@ CREATE INDEX idx_game_homeclub_date ON public."Match" USING btree ("HomeClubId",
 CREATE INDEX idx_game_matchdate ON public."Match" USING btree ("MatchDate");
 CREATE INDEX idx_game_matchstatus_date ON public."Match" USING btree ("MatchStatusId", "MatchDate");
 CREATE INDEX idx_game_stage ON public."Match" USING btree ("StageId");
+
+
+CREATE TABLE "MatchEvent" (
+	"Id" int4 GENERATED ALWAYS AS IDENTITY( INCREMENT BY 1 MINVALUE 1 MAXVALUE 2147483647 START 1 CACHE 1 NO CYCLE) NOT NULL,
+	"EventTypeId" int4 NOT NULL,
+	"PlayerId" int4 NOT NULL,
+	"MatchId" int4 NOT NULL,
+	"ClubId" int4 NOT NULL,
+	"Minute" int4 NOT NULL,
+	CONSTRAINT "MatchEvent_pkey" PRIMARY KEY ("Id"),
+	CONSTRAINT fk_matchevent_eventtype FOREIGN KEY ("EventTypeId") REFERENCES "MatchEventType"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_matchevent_player FOREIGN KEY ("PlayerId") REFERENCES "Player"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_matchevent_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE CASCADE,
+	CONSTRAINT fk_matchevent_club FOREIGN KEY ("ClubId") REFERENCES "Club"("Id") ON DELETE RESTRICT
+);
+CREATE INDEX idx_matchevent_match ON public."MatchEvent" USING btree ("MatchId");
 
 
 CREATE TABLE "Lineup" (

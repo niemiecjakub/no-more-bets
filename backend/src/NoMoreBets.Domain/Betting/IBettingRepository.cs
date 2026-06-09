@@ -15,6 +15,7 @@ public interface IBettingRepository
   /// Bet slips from betting (and similar) sessions; excludes slips tied to <see cref="AgentSessionPhase.Research"/>.
   /// </summary>
   Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsAsync(CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Latest research-phase bet slip that includes a selection on <paramref name="matchId"/>, if any.
@@ -25,4 +26,24 @@ public interface IBettingRepository
   Task<IReadOnlyList<BetSlip>> GetNonPendingBetSlipsAwaitingReflectionAsync(CancellationToken cancellationToken = default);
   Task MarkBetSlipsAgentSessionReflectedAsync(int agentSessionId, IReadOnlyList<int> betSlipIds, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSelection>> GetPendingSelectionsWithBothScoresAsync(CancellationToken cancellationToken = default);
+  Task<IReadOnlySet<int>> GetMatchIdsWithResearchPhaseSelectionsAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default);
+  Task<BettingPhaseSummaryStats> GetBettingPhaseSettledSummaryAsync(CancellationToken cancellationToken = default);
+  Task<ResearchPhaseSummaryStats> GetResearchPhaseSettledSummaryAsync(
+    IReadOnlyList<int> leagueIds,
+    CancellationToken cancellationToken = default);
+  Task<BettingPhaseDetailCounts> GetBettingPhaseSettledDetailCountsAsync(CancellationToken cancellationToken = default);
+  Task<BetSlipIdPage> GetSettledBettingSlipIdsPageAsync(
+    int limit,
+    DateTime? afterCreatedAtUtc,
+    int? afterId,
+    CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsByIdsAsync(
+    IReadOnlyList<int> slipIds,
+    CancellationToken cancellationToken = default);
+  Task<PendingBetsWidgetData> GetBettingPhasePendingBetsWidgetAsync(CancellationToken cancellationToken = default);
+  Task<ClubBetSelectionStats> GetResearchPhaseSettledSelectionStatsForClubAsync(
+    int clubId,
+    CancellationToken cancellationToken = default);
 }

@@ -14,7 +14,6 @@ import { cn } from "@/lib/utils";
 import { AgentProcessTab } from "@/app/agent/_components/agent-process-tab";
 
 export const metadata: Metadata = {
-  title: "About · No More Bets",
   description:
     "An autonomous AI agent that researches football matches, places real bets against its own bankroll, and reflects on outcomes — operating in public on a daily schedule.",
 };
@@ -31,7 +30,7 @@ const capabilities = [
     LinkIcon: Calendar,
   },
   {
-    title: "Places real bets",
+    title: "Places bets",
     description:
       "Places selective bets with strict discipline and clear risk boundaries.",
     accent: "bg-sky-500/80",
@@ -90,7 +89,6 @@ const dataSources = [
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
       <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
         <section className="mb-14">
           <div>
@@ -225,6 +223,5 @@ export default function AboutPage() {
           </div>
         </section>
       </main>
-    </div>
   );
 }

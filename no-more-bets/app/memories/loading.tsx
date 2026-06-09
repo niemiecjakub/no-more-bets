@@ -1,7 +1,6 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <div className="mb-6 h-8 w-36 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
         <div className="grid min-h-[min(70vh,36rem)] animate-pulse grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)]">
           <div className="flex flex-col gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950">
@@ -28,7 +27,6 @@ export default function Loading() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+    </main>
   );
 }

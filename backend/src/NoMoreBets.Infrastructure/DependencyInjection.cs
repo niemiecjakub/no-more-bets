@@ -6,7 +6,6 @@ using Microsoft.Extensions.Options;
 using NoMoreBets.Application.Betting;
 using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Application.Common.Fotmob;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.SocialMedia;
@@ -17,6 +16,7 @@ using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Feedback;
 using NoMoreBets.Domain.Memories;
 using NoMoreBets.Infrastructure.AI;
 using NoMoreBets.Infrastructure.BackgroundJobs;
@@ -78,9 +78,10 @@ public static class DependencyInjection
     services.AddScoped<IMemoryRepository, MemoryRepository>();
     services.AddScoped<IBankrollRepository, BankrollRepository>();
     services.AddScoped<IAgentSessionRepository, AgentSessionRepository>();
+    services.AddScoped<IFeedbackRepository, FeedbackRepository>();
     services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-    services.AddSemanticKernelServices();
+    services.AddAgentFrameworkServices();
 
     // Browser automation
     services.AddSingleton<PlaywrightBrowserService>();
@@ -114,7 +115,6 @@ public static class DependencyInjection
 
     // Scrapers
     services.AddSingleton<IFotmobConstants, FotmobConstants>();
-    services.AddSingleton<IFotmobTeamLookup>(sp => (IFotmobTeamLookup)sp.GetRequiredService<IFotmobConstants>());
     services.AddSingleton<RotowireScraper>();
     services.AddSingleton<BetclicScraper>();
     services.AddSingleton<FotmobScraper>();

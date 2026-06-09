@@ -20,6 +20,7 @@ public class ClubRepository : IClubRepository
   public async Task<Club?> GetByIdAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _db.Club
+      .Include(c => c.League)
       .FirstOrDefaultAsync(c => c.Id == clubId, cancellationToken)
       .ConfigureAwait(false);
   }
@@ -63,6 +64,16 @@ public class ClubRepository : IClubRepository
     return _db.Club
       .Where(c => soccerdataIds.Contains(c.SoccerdataId))
       .ToListAsync();
+  }
+
+  public async Task<IReadOnlyList<Club>> GetClubsWithLeagueOrderedByNameAsync(CancellationToken cancellationToken = default)
+  {
+    return await _db.Club
+      .AsNoTracking()
+      .Include(c => c.League)
+      .OrderBy(c => c.Name)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
   }
 
   public Task<List<Club>> GetClubs(int? leagueId = null)

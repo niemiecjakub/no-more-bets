@@ -1,5 +1,6 @@
 using FluentAssertions;
 using NoMoreBets.Application.Bankroll.GetBankrollEntriesPage;
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Application.Tests.Bankroll.GetBankrollEntriesPage;

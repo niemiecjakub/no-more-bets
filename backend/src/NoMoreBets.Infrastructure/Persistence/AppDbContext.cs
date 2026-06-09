@@ -2,11 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Feedback;
 using NoMoreBets.Domain.Memories;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Players;
 
 namespace NoMoreBets.Infrastructure.Persistence;
 
@@ -18,10 +20,13 @@ public class AppDbContext : DbContext
 
   public DbSet<League> League { get; set; }
   public DbSet<Club> Club { get; set; }
+  public DbSet<Player> Player { get; set; }
   public DbSet<Season> Season { get; set; }
   public DbSet<Stage> Stage { get; set; }
   public DbSet<MatchStatusEntity> MatchStatus { get; set; }
+  public DbSet<MatchEventTypeEntity> MatchEventType { get; set; }
   public DbSet<Match> Match { get; set; }
+  public DbSet<MatchEvent> MatchEvent { get; set; }
   public DbSet<Lineup> Lineup { get; set; }
   public DbSet<MatchPreview> MatchPreview { get; set; }
   public DbSet<Head2Head> Head2Head { get; set; }
@@ -41,6 +46,7 @@ public class AppDbContext : DbContext
   public DbSet<Bankroll> Bankroll { get; set; }
   public DbSet<AgentSession> AgentSession { get; set; }
   public DbSet<AgentSessionMessage> AgentSessionMessage { get; set; }
+  public DbSet<Feedback> Feedback { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
@@ -68,6 +74,16 @@ public class AppDbContext : DbContext
       entity.HasIndex(e => e.SoccerdataId).IsUnique();
       entity.HasIndex(e => e.Slug).IsUnique();
       entity.HasOne(e => e.League).WithMany(e => e.Clubs).HasForeignKey(e => e.LeagueId);
+    });
+
+    modelBuilder.Entity<Player>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
+      entity.Property(e => e.SoccerdataId).IsRequired();
+      entity.HasIndex(e => e.SoccerdataId).IsUnique();
+      entity.HasIndex(e => e.Name);
     });
 
     modelBuilder.Entity<Season>(entity =>
@@ -105,6 +121,21 @@ public class AppDbContext : DbContext
         }));
     });
 
+    modelBuilder.Entity<MatchEventTypeEntity>(entity =>
+    {
+      entity.ToTable(MatchEventTypeEntity.TABLE_NAME);
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+      entity.HasData(
+        Enum.GetValues(typeof(MatchEventType))
+          .Cast<MatchEventType>()
+          .Select(e => new MatchEventTypeEntity()
+          {
+            Id = (int)e,
+            Name = e.ToString()
+          }));
+    });
+
     modelBuilder.Entity<Match>(entity =>
     {
       entity.HasKey(e => e.Id);
@@ -119,6 +150,34 @@ public class AppDbContext : DbContext
       entity.HasOne(e => e.MatchStatusEntity)
         .WithMany()
         .HasForeignKey(e => e.MatchStatusId)
+        .OnDelete(DeleteBehavior.Restrict);
+    });
+
+    modelBuilder.Entity<MatchEvent>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.EventTypeId).IsRequired();
+      entity.Property(e => e.PlayerId).IsRequired();
+      entity.Property(e => e.MatchId).IsRequired();
+      entity.Property(e => e.ClubId).IsRequired();
+      entity.Property(e => e.Minute).IsRequired();
+      entity.HasIndex(e => e.MatchId);
+      entity.HasOne(e => e.EventTypeEntity)
+        .WithMany()
+        .HasForeignKey(e => e.EventTypeId)
+        .OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.Player)
+        .WithMany()
+        .HasForeignKey(e => e.PlayerId)
+        .OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.Match)
+        .WithMany(m => m.MatchEvents)
+        .HasForeignKey(e => e.MatchId)
+        .OnDelete(DeleteBehavior.Cascade);
+      entity.HasOne(e => e.Club)
+        .WithMany()
+        .HasForeignKey(e => e.ClubId)
         .OnDelete(DeleteBehavior.Restrict);
     });
 
@@ -420,6 +479,18 @@ public class AppDbContext : DbContext
         .WithMany(s => s.Messages)
         .HasForeignKey(e => e.SessionId)
         .OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<Feedback>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.Message).IsRequired();
+      entity.Property(e => e.Name).IsRequired(false).HasMaxLength(NoMoreBets.Domain.Feedback.Feedback.MaxNameLength);
+      entity.Property(e => e.Email).IsRequired(false).HasMaxLength(NoMoreBets.Domain.Feedback.Feedback.MaxEmailLength);
+      entity.Property(e => e.CreatedAt).IsRequired();
+      entity.HasIndex(e => e.CreatedAt)
+        .HasDatabaseName("idx_feedback_createdat");
     });
   }
 }

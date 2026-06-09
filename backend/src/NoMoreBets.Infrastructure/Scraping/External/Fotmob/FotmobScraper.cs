@@ -6,6 +6,7 @@ using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Common.Dto.Leagues;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using System.Globalization;
@@ -742,8 +743,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     var teamShortnameElem = teamLink.QuerySelector("span[class*='TeamShortname']");
     var teamShortname = teamShortnameElem?.TextContent.Trim() ?? "";
 
+    // Live standings: 10 cells (no next-opponent column) or 11 when FotMob shows upcoming fixture.
     var allCells = row.Children.Where(c => c.TagName.Equals("DIV", StringComparison.OrdinalIgnoreCase)).ToArray();
-    if (allCells.Length < 11)
+    if (allCells.Length < 10)
       return null;
 
     var matchesPlayed = ExtractInt(allCells[2]);
@@ -765,7 +767,12 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     var points = ExtractInt(allCells[8]);
 
     var form = ParseForm(allCells[9]);
-    ParseNextOpponent(allCells[10], out var nextOpponentId, out var nextOpponentName, out var nextOpponentLogoUrl);
+
+    int? nextOpponentId = null;
+    string? nextOpponentName = null;
+    string? nextOpponentLogoUrl = null;
+    if (allCells.Length >= 11)
+      ParseNextOpponent(allCells[10], out nextOpponentId, out nextOpponentName, out nextOpponentLogoUrl);
 
     return new TableEntry
     {

@@ -8,7 +8,7 @@ import { formatCurrency } from "@/utils/format-currency";
 import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
 import { formatMatchDate } from "../../../utils/format-date";
 
-function getStatusBadgeClass(status: number): string {
+function getStatusBadgeClass(status: BetSlipSummaryDto["status"]): string {
   switch (status) {
     case BET_STATUS.Pending:
       return "bg-amber-100 text-amber-800 ring-amber-600/20 dark:bg-amber-900/40 dark:text-amber-400 dark:ring-amber-500/30";
@@ -23,7 +23,7 @@ function getStatusBadgeClass(status: number): string {
   }
 }
 
-function betStatusLabel(status: number): string {
+function betStatusLabel(status: BetSlipSummaryDto["status"]): string {
   switch (status) {
     case BET_STATUS.Pending:
       return "Pending";

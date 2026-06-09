@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using NoMoreBets.Application.Common.Dto.Leagues;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;

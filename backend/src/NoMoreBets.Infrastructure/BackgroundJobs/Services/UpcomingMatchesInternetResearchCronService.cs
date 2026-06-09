@@ -1,12 +1,10 @@
 using Hangfire;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Infrastructure.AI.Provider;
-
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
 public sealed class UpcomingMatchesInternetResearchCronService(
-  Runner runner,
+  IAgentPhaseRunner agentPhaseRunner,
   IUnitOfWork unitOfWork,
   ILogger<UpcomingMatchesInternetResearchCronService> logger)
 {
@@ -24,7 +22,7 @@ public sealed class UpcomingMatchesInternetResearchCronService(
     }
 
     logger.LogInformation("Starting scheduled upcoming matches internet research agent phase");
-    await runner.RunUpcomingMatchesInternetResearchAsync(CancellationToken.None).ConfigureAwait(false);
+    await agentPhaseRunner.RunUpcomingMatchesInternetResearchAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled upcoming matches internet research agent phase");
   }
 }

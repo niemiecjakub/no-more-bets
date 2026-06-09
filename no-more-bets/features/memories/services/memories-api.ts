@@ -8,6 +8,7 @@ export interface FetchMemoriesPageParams {
   limit?: number;
   afterUpdatedAt?: string;
   afterId?: number;
+  includeDeleted?: boolean;
 }
 
 /**
@@ -21,6 +22,7 @@ export async function fetchMemoriesPage(
       limit: params.limit ?? MEMORIES_PAGE_SIZE,
       afterUpdatedAt: params.afterUpdatedAt,
       afterId: params.afterId,
+      includeDeleted: params.includeDeleted,
     },
   });
   return normalizePagedResponse(data, (item) => item as MemoryListItem);

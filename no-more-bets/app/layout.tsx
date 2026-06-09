@@ -23,9 +23,20 @@ const sixtyfourConvergence = Sixtyfour_Convergence({
   weight: "400",
 });
 
+const SITE_TITLE = "No more bets | AI football research";
+
 export const metadata: Metadata = {
-  title: "No More Bets",
+  title: {
+    absolute: SITE_TITLE,
+  },
   description: "Match list and betting information",
+  manifest: "/site.webmanifest",
+  icons: {
+    icon: [
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -39,12 +50,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${sixtyfourConvergence.variable} antialiased`}
       >
         <TooltipProvider>
-          <div className="flex min-h-screen flex-col">
+          <div className="flex min-h-dvh flex-col pb-[var(--site-footer-height)]">
             <NavigationRefresh />
             <Suspense fallback={null}>
               <Navbar />
             </Suspense>
-            <div className="flex-1">{children}</div>
+            <div className="flex min-h-0 flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
+              {children}
+            </div>
             <SiteFooter />
           </div>
         </TooltipProvider>

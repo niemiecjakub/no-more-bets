@@ -1,11 +1,15 @@
 import axios from "axios";
 import axiosInstance from "../../../lib/axios";
-import type { BetSlipSummaryDto } from "../../bets/interfaces";
+import {
+  normalizeBetStatus,
+  type BetSlipSummaryDto,
+} from "../../bets/interfaces";
 import type {
   ClubLeagueStats,
   ClubPair,
   HeadToHead,
   MarketPriceHistory,
+  MatchEventDto,
   MatchInjuriesResult,
   MatchLineupResult,
   RecentMatch,
@@ -26,6 +30,13 @@ export async function fetchMatchInjuries(matchId: number): Promise<MatchInjuries
   return data;
 }
 
+export async function fetchMatchEvents(matchId: number): Promise<MatchEventDto[]> {
+  const { data } = await axiosInstance.get<MatchEventDto[]>(
+    `/api/matchinsights/matches/${matchId}/events`
+  );
+  return data;
+}
+
 export async function fetchMatchAgentResearch(matchId: number): Promise<string | null> {
   const { data } = await axiosInstance.get<string | null>(
     `/api/matchinsights/matches/${matchId}/agent-research`
@@ -33,13 +44,29 @@ export async function fetchMatchAgentResearch(matchId: number): Promise<string |
   return data;
 }
 
+type BetSlipSummaryApiDto = Omit<BetSlipSummaryDto, "status" | "selections"> & {
+  status: unknown;
+  selections: Array<Omit<BetSlipSummaryDto["selections"][number], "status"> & { status: unknown }>;
+};
+
+function mapBetSlipSummaryFromApi(raw: BetSlipSummaryApiDto): BetSlipSummaryDto {
+  return {
+    ...raw,
+    status: normalizeBetStatus(raw.status),
+    selections: raw.selections.map((sel) => ({
+      ...sel,
+      status: normalizeBetStatus(sel.status),
+    })),
+  };
+}
+
 /** Latest research-phase paper slip for the match, or null when none exists (404). */
 export async function fetchMatchResearchBetSlip(matchId: number): Promise<BetSlipSummaryDto | null> {
   try {
-    const { data } = await axiosInstance.get<BetSlipSummaryDto>(
+    const { data } = await axiosInstance.get<BetSlipSummaryApiDto>(
       `/api/matchinsights/matches/${matchId}/research-bet-slip`
     );
-    return data;
+    return mapBetSlipSummaryFromApi(data);
   } catch (err) {
     if (axios.isAxiosError(err) && err.response?.status === 404) {
       return null;

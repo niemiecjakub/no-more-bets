@@ -57,6 +57,8 @@ export interface MatchAnalysisItemDto {
 /** Match analysis page payload: match header + analyses list */
 export interface MatchAnalysisPageDto {
   matchId: number;
+  homeClubId: number;
+  awayClubId: number;
   homeClubName: string;
   awayClubName: string;
   homeClubSlug?: string;
@@ -102,6 +104,15 @@ export interface TeamInjuriesResult {
 export interface MatchInjuriesResult {
   home: TeamInjuriesResult;
   away: TeamInjuriesResult;
+}
+
+/** Timeline event from GET api/matchinsights/matches/:id/events */
+export interface MatchEventDto {
+  playerName: string;
+  clubId: number;
+  eventTypeId: number;
+  eventType: string;
+  minute: number;
 }
 
 export interface RecentMatch {

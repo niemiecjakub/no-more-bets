@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bot, ChevronRight, Globe, Lightbulb, Search, Ticket, Trash2, WalletCards } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Bot, ChevronRight, WalletCards } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BetSlipList } from "@/features/bets/components/bet-slip-list";
 import type { BetSlipListItem } from "@/features/bets/interfaces";
 import { fetchBetSlips } from "@/features/bets/services/bets-api";
 import { AgentSessionTranscript } from "@/features/bets/components/agent-session-transcript";
 import { fetchAgentSessionMessages, type AgentSessionMessage } from "@/features/bets/services/agent-session-api";
+import { isBettingSessionPhase, sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
 import type { AgentSessionListItem } from "@/features/sessions/interfaces";
 import { fetchAgentSessionsPage } from "@/features/sessions/services/sessions-api";
 import { handleServiceError } from "@/lib/error-handler";
+import { AgentSessionPhaseFilter } from "./agent-session-phase-filter";
 import { AgentSessionsList } from "./agent-sessions-list";
 
 function mergeSessions(
@@ -39,27 +40,6 @@ function formatDate(iso: string) {
     } catch {
         return iso;
     }
-}
-
-function sessionPhaseIcon(phaseId: number): LucideIcon {
-    switch (phaseId) {
-        case 1:
-            return Search;
-        case 2:
-            return Ticket;
-        case 3:
-            return Lightbulb;
-        case 4:
-            return Globe;
-        case 5:
-            return Trash2;
-        default:
-            return Bot;
-    }
-}
-
-function isBettingSession(phaseId: number) {
-    return phaseId === 2;
 }
 
 function SessionsFallback() {
@@ -112,6 +92,9 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     const [transcriptMessages, setTranscriptMessages] = useState<AgentSessionMessage[] | null>(null);
     const [isLoadingTranscript, setIsLoadingTranscript] = useState(false);
     const [transcriptError, setTranscriptError] = useState<string | null>(null);
+    const [selectedPhaseIds, setSelectedPhaseIds] = useState<number[]>([]);
+    const hasActivePhaseFilter = selectedPhaseIds.length > 0;
+    const phaseIdsForRequest = hasActivePhaseFilter ? selectedPhaseIds : undefined;
 
     const applySessionsPage = useCallback(
         (page: Awaited<ReturnType<typeof fetchAgentSessionsPage>>, append: boolean) => {
@@ -131,9 +114,13 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         setIsLoadingSessions(true);
         setSessionsError(null);
         setLoadMoreError(null);
+        setSessions([]);
+        setHasMore(false);
+        setNextCursor(null);
 
         fetchAgentSessionsPage({
             includeSessionId: initialSelectedSessionId ?? undefined,
+            phaseIds: phaseIdsForRequest,
         })
             .then((page) => {
                 if (!cancelled) applySessionsPage(page, false);
@@ -150,7 +137,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         return () => {
             cancelled = true;
         };
-    }, [applySessionsPage, initialSelectedSessionId]);
+    }, [applySessionsPage, initialSelectedSessionId, selectedPhaseIds]);
 
     const loadMore = useCallback(() => {
         if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
@@ -162,6 +149,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         fetchAgentSessionsPage({
             afterStartedAt: nextCursor.at,
             afterId: nextCursor.id,
+            phaseIds: phaseIdsForRequest,
         })
             .then((page) => {
                 applySessionsPage(page, true);
@@ -173,7 +161,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
                 isLoadingMoreRef.current = false;
                 setIsLoadingMore(false);
             });
-    }, [applySessionsPage, hasMore, nextCursor]);
+    }, [applySessionsPage, hasMore, nextCursor, phaseIdsForRequest]);
 
     useEffect(() => {
         let cancelled = false;
@@ -251,6 +239,10 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         return allBetSlips.filter((slip) => slip.agentSessionId === selectedSessionId);
     }, [allBetSlips, selectedSessionId]);
 
+    function handleSelectedPhaseIdsChange(phaseIds: number[]) {
+        setSelectedPhaseIds(phaseIds);
+    }
+
     function selectSession(sessionId: number) {
         setSelectedSessionId(sessionId);
         const params = new URLSearchParams(searchParams.toString());
@@ -267,7 +259,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         return <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">{sessionsError}</p>;
     }
 
-    if (sessions.length === 0) {
+    if (sessions.length === 0 && !hasActivePhaseFilter && !isLoadingSessions) {
         return (
             <p className="rounded-lg border border-zinc-200 bg-white px-4 py-6 text-center text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">No agent sessions recorded yet.</p>
         );
@@ -276,6 +268,10 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     return (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
             <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
+                <AgentSessionPhaseFilter
+                    selectedPhaseIds={selectedPhaseIds}
+                    onSelectedPhaseIdsChange={handleSelectedPhaseIdsChange}
+                />
                 <AgentSessionsList
                     sessions={sessions}
                     selectedSessionId={selectedSessionId}
@@ -286,6 +282,9 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
                     onLoadMore={loadMore}
                     loadMoreError={loadMoreError}
                     onRetryLoadMore={loadMore}
+                    emptyMessage={
+                        hasActivePhaseFilter ? "No sessions match the selected types." : undefined
+                    }
                 />
             </div>
             <div className="flex min-h-[min(78vh,44rem)] min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -312,7 +311,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
                             ) : null}
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-                            {isBettingSession(selectedSession.phaseId) ? (
+                            {isBettingSessionPhase(selectedSession.phaseId) ? (
                                 <details className="group border-b border-violet-200 bg-violet-50/80 dark:border-violet-900/60 dark:bg-violet-950/30">
                                     <summary className="cursor-pointer list-none px-4 py-3 transition-colors hover:bg-zinc-100/90 dark:hover:bg-zinc-800/80">
                                         <span className="inline-flex w-full items-center justify-between gap-3">

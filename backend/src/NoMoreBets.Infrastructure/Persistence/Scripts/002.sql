@@ -72,6 +72,18 @@ INSERT INTO "MatchStatus" ("Id", "Name") VALUES
     (2, 'Finished')
 ON CONFLICT ("Id") DO NOTHING;
 
+INSERT INTO "MatchEventType" ("Id", "Name") VALUES
+    (1, 'Goal'),
+    (2, 'Assist'),
+    (3, 'OwnGoal'),
+    (4, 'PenaltyGoal'),
+    (5, 'RedCard'),
+    (6, 'YellowCard'),
+    (7, 'YellowRedCard'),
+    (8, 'SubstitutionIn'),
+    (9, 'SubstitutionOut')
+ON CONFLICT ("Id") DO NOTHING;
+
 INSERT INTO "BettingEventType" ("Id", "Name") VALUES
     (1, 'OverUnderGoals'),
     (3, 'DoubleChance'),

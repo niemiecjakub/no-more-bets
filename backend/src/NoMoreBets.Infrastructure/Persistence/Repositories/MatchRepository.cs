@@ -38,6 +38,33 @@ public class MatchRepository : IMatchRepository
     return _db.Lineup.SingleOrDefaultAsync(l => l.MatchId == matchId);
   }
 
+  public async Task<IReadOnlyList<MatchEvent>> GetMatchEventsForMatchAsync(
+    int matchId,
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.MatchEvent
+      .AsNoTracking()
+      .Where(e => e.MatchId == matchId)
+      .Include(e => e.Player)
+      .Include(e => e.EventTypeEntity)
+      .OrderBy(e => e.Minute)
+      .ThenBy(e => e.Id)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+  public async Task<Match?> GetNextUpcomingMatchForClubAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _db.Match
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
+      .Where(m => m.HomeClubId == clubId || m.AwayClubId == clubId)
+      .OrderBy(m => m.MatchDate)
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .FirstOrDefaultAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task<IReadOnlyList<Match>> GetRecentMatchesForClubAsync(int clubId, int count, DateOnly? upToDate = null, CancellationToken cancellationToken = default)
   {
     var query = _db.Match
@@ -54,6 +81,80 @@ public class MatchRepository : IMatchRepository
       .Include(m => m.AwayClub)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
+  }
+
+  public async Task<IReadOnlyList<Match>> GetMatchesForClubAsync(int clubId, CancellationToken cancellationToken = default)
+  {
+    return await _db.Match
+      .AsNoTracking()
+      .Where(m => m.HomeClubId == clubId || m.AwayClubId == clubId)
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .Include(m => m.MatchStatusEntity)
+      .Include(m => m.Stage)
+        .ThenInclude(s => s!.Season)
+        .ThenInclude(se => se.League)
+      .OrderByDescending(m => m.MatchDate)
+      .ThenByDescending(m => m.Id)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+  public async Task<IReadOnlyDictionary<int, IReadOnlyList<MatchResult>>> GetFormForClubsInSeasonAsync(
+    int seasonId,
+    IReadOnlyList<int> clubIds,
+    int count = 5,
+    CancellationToken cancellationToken = default)
+  {
+    var ids = clubIds.Distinct().ToList();
+    if (ids.Count == 0)
+      return new Dictionary<int, IReadOnlyList<MatchResult>>();
+
+    var idSet = ids.ToHashSet();
+    var matches = await _db.Match
+      .AsNoTracking()
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Finished)
+      .Where(m => m.StageId != null)
+      .Where(m => m.Stage!.SeasonId == seasonId)
+      .Where(m => idSet.Contains(m.HomeClubId) || idSet.Contains(m.AwayClubId))
+      .OrderByDescending(m => m.MatchDate)
+      .Select(m => new { m.HomeClubId, m.AwayClubId, m.HomeGoals, m.AwayGoals })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var formByClub = ids.ToDictionary(id => id, _ => new List<MatchResult>());
+
+    foreach (var m in matches)
+    {
+      foreach (var clubId in new[] { m.HomeClubId, m.AwayClubId })
+      {
+        if (!idSet.Contains(clubId))
+          continue;
+
+        var list = formByClub[clubId];
+        if (list.Count >= count)
+          continue;
+
+        list.Add(ToMatchResult(clubId, m.HomeClubId, m.AwayClubId, m.HomeGoals, m.AwayGoals));
+      }
+
+      if (formByClub.Values.All(l => l.Count >= count))
+        break;
+    }
+
+    return formByClub.ToDictionary(
+      kv => kv.Key,
+      kv => (IReadOnlyList<MatchResult>)kv.Value.AsEnumerable().Reverse().ToList());
+  }
+
+  private static MatchResult ToMatchResult(int clubId, int homeClubId, int awayClubId, int? homeGoals, int? awayGoals)
+  {
+    var home = homeGoals ?? 0;
+    var away = awayGoals ?? 0;
+    if (clubId == homeClubId)
+      return home > away ? MatchResult.Win : home < away ? MatchResult.Loss : MatchResult.Draw;
+
+    return away > home ? MatchResult.Win : away < home ? MatchResult.Loss : MatchResult.Draw;
   }
 
   public Task<Match?> GetMatchBySoccerdataId(int soccerdataId)
@@ -221,6 +322,119 @@ public class MatchRepository : IMatchRepository
       .ConfigureAwait(false);
 
     return ids.ToHashSet();
+  }
+
+  public async Task<MatchPage> GetMatchesPageAsync(
+    int limit,
+    int? matchStatusId,
+    IReadOnlyList<int> leagueIds,
+    DateTime? afterMatchDateUtc,
+    int? afterId,
+    CancellationToken cancellationToken = default)
+  {
+    var selectedLeagueIds = leagueIds.Distinct().ToArray();
+    var hasLeagueFilter = selectedLeagueIds.Length > 0;
+
+    var matchesQuery = _db.Match.AsNoTracking().AsQueryable();
+    if (matchStatusId.HasValue)
+      matchesQuery = matchesQuery.Where(m => m.MatchStatusId == matchStatusId.Value);
+    if (hasLeagueFilter)
+      matchesQuery = matchesQuery.Where(m =>
+        m.Stage != null &&
+        selectedLeagueIds.Contains(m.Stage.Season.LeagueId));
+
+    if (afterMatchDateUtc is not null && afterId is not null)
+    {
+      var cursorMatchDate = afterMatchDateUtc.Value;
+      var cursorId = afterId.Value;
+      matchesQuery = matchesQuery.Where(m =>
+        m.MatchDate < cursorMatchDate
+        || (m.MatchDate == cursorMatchDate && m.Id < cursorId));
+    }
+
+    var rows = await matchesQuery
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .Include(m => m.MatchStatusEntity)
+      .Include(m => m.Stage)
+        .ThenInclude(s => s!.Season)
+        .ThenInclude(se => se.League)
+      .OrderByDescending(m => m.MatchDate)
+      .ThenByDescending(m => m.Id)
+      .Take(limit + 1)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var hasMore = rows.Count > limit;
+    if (hasMore)
+      rows.RemoveAt(rows.Count - 1);
+
+    return new MatchPage(rows, hasMore);
+  }
+
+  public async Task<IReadOnlySet<int>> GetMatchIdsWithLineupAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return new HashSet<int>();
+
+    var ids = await _db.Lineup
+      .Where(l => matchIds.Contains(l.MatchId))
+      .Select(l => l.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return ids.ToHashSet();
+  }
+
+  public async Task<IReadOnlySet<int>> GetMatchIdsWithOddsAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return new HashSet<int>();
+
+    var ids = await _db.BettingOddsSnapshot
+      .Where(b => matchIds.Contains(b.MatchId))
+      .Select(b => b.MatchId)
+      .Distinct()
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return ids.ToHashSet();
+  }
+
+  public async Task<IReadOnlySet<int>> GetMatchIdsWithHeadToHeadAsync(
+    IReadOnlyCollection<int> matchIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return new HashSet<int>();
+
+    var ids = await _db.Match
+      .Where(m => matchIds.Contains(m.Id) && _db.Head2Head.Any(h =>
+        (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
+        (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
+      .Select(m => m.Id)
+      .Distinct()
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return ids.ToHashSet();
+  }
+
+  public async Task<IReadOnlyList<MatchAnalysis>> GetNonResearchAnalysesForMatchAsync(
+    int matchId,
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.MatchAnalysis
+      .Where(a => a.MatchId == matchId)
+      .Where(a => a.Code != MatchAnalysis.ResearchCode)
+      .OrderBy(a => a.Id)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
   }
 
 }
