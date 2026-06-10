@@ -40,9 +40,13 @@ public abstract class BaseScraper
   /// </summary>
   /// <param name="url">URL to fetch.</param>
   /// <param name="cancellationToken">Cancellation token.</param>
+  /// <param name="waitForSelectorBeforeContent">If set, waits for this selector to be attached before reading the DOM (wait timeout is retried).</param>
   /// <returns>HTML content of the page.</returns>
   /// <exception cref="PermanentScraperException">Permanent failure (403, 404, 410) – not retried.</exception>
-  protected async Task<string> GetPageHtmlAsync(string url, CancellationToken cancellationToken = default)
+  protected async Task<string> GetPageHtmlAsync(
+      string url,
+      CancellationToken cancellationToken = default,
+      string? waitForSelectorBeforeContent = null)
   {
     _currentFetchUrl.Value = url;
     try
@@ -52,7 +56,9 @@ public abstract class BaseScraper
       {
         return await _fetchPipeline.ExecuteAsync(async ct =>
         {
-          var content = await _pageFetcher.GetHtmlAsync(url, timeout, ct).ConfigureAwait(false);
+          var content = await _pageFetcher.GetHtmlAsync(
+              url, timeout, ct,
+              waitForSelectorBeforeContent: waitForSelectorBeforeContent).ConfigureAwait(false);
           return content;
         }, cancellationToken).ConfigureAwait(false);
       }

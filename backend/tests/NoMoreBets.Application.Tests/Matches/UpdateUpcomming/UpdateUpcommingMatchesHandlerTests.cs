@@ -151,6 +151,84 @@ public class UpdateUpcommingMatchesHandlerTests
   }
 
   [Fact]
+  public async Task Handle_WhenValidPreviewAndClubsExist_StoresKickoffTwoHoursAheadInUtc()
+  {
+    var previews = new List<LeagueMatchPreviews>
+    {
+      new()
+      {
+        LeagueId = 228,
+        LeagueName = "Premier League",
+        MatchPreviews =
+        [
+          new UpcomingMatchPreview
+          {
+            Id = 100,
+            Date = "15/01/2026",
+            Time = "15:00",
+            ExcitementRating = 7.5,
+            Teams = new Teams { Home = new TeamInfo { Id = 1, Name = "Arsenal" }, Away = new TeamInfo { Id = 2, Name = "Chelsea" } }
+          }
+        ]
+      }
+    };
+    _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
+
+    var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
+    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    var homeClub = new ClubEntity { Id = 10, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 20, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    _unitOfWork.Leagues.GetCurrentStage(228).Returns(Task.FromResult(new DomainStage { Id = 5 }));
+    _matchRepository.GetMatches(Arg.Any<DateTime>()).Returns(_ => Task.FromResult(new List<DomainMatch>()));
+    _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, DomainMatch Value)>>()).Returns((DomainMatch?)null);
+
+    var result = await _sut.Handle(new UpdateUpcommingMatchesCommand(228), CancellationToken.None);
+
+    result.Should().ContainSingle();
+    result[0].MatchDate.Should().Be(new DateTime(2026, 1, 15, 17, 0, 0, DateTimeKind.Utc));
+  }
+
+  [Fact]
+  public async Task Handle_WhenLateSoccerdataKickoff_AddsTwoHoursAndRollsToNextUtcDay()
+  {
+    var previews = new List<LeagueMatchPreviews>
+    {
+      new()
+      {
+        LeagueId = 228,
+        LeagueName = "Premier League",
+        MatchPreviews =
+        [
+          new UpcomingMatchPreview
+          {
+            Id = 101,
+            Date = "15/01/2026",
+            Time = "23:00",
+            ExcitementRating = 7.5,
+            Teams = new Teams { Home = new TeamInfo { Id = 1, Name = "Arsenal" }, Away = new TeamInfo { Id = 2, Name = "Chelsea" } }
+          }
+        ]
+      }
+    };
+    _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
+
+    var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
+    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    var homeClub = new ClubEntity { Id = 10, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 20, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    _unitOfWork.Leagues.GetCurrentStage(228).Returns(Task.FromResult(new DomainStage { Id = 5 }));
+    _matchRepository.GetMatches(Arg.Any<DateTime>()).Returns(_ => Task.FromResult(new List<DomainMatch>()));
+    _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, DomainMatch Value)>>()).Returns((DomainMatch?)null);
+
+    var result = await _sut.Handle(new UpdateUpcommingMatchesCommand(228), CancellationToken.None);
+
+    result.Should().ContainSingle();
+    result[0].MatchDate.Should().Be(new DateTime(2026, 1, 16, 1, 0, 0, DateTimeKind.Utc));
+  }
+
+  [Fact]
   public async Task Handle_WhenValidPreviewAndClubsExist_AddsMatchAndCallsSaveChanges()
   {
     // Arrange

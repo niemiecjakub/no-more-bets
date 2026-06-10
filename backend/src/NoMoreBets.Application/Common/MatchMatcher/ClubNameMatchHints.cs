@@ -54,7 +54,7 @@ internal static class ClubNameMatchHints
       ["Bayern Monachium"] = "Bayern Munich",
     };
 
-    // FIFA World Cup (004.sql): Betclic PL + FotMob/Soccerdata naming variants per club.
+    // FIFA World Cup (004.sql): Betclic PL, FotMob/Soccerdata, and RotoWire lineups.php naming variants.
     AddClubAlternatives(aliases, "Algeria", "Algieria");
     AddClubAlternatives(aliases, "Argentina", "Argentyna");
     AddClubAlternatives(aliases, "Belgium", "Belgia");
@@ -64,9 +64,9 @@ internal static class ClubNameMatchHints
     AddClubAlternatives(aliases, "Canada", "Kanada");
     AddClubAlternatives(aliases, "Colombia", "Kolumbia");
     AddClubAlternatives(aliases, "Congo DR", "DR Congo", "DR Konga");
-    AddClubAlternatives(aliases, "Cote d'Ivoire", "Ivory Coast", "Wybrzeże Kości Słoniowej");
+    AddClubAlternatives(aliases, "Cote d'Ivoire", "Ivory Coast", "Wybrzeże Kości Słoniowej", "Cote D'ivoire");
     AddClubAlternatives(aliases, "Croatia", "Chorwacja");
-    AddClubAlternatives(aliases, "Czechia", "Czechy");
+    AddClubAlternatives(aliases, "Czechia", "Czechy", "Czech Republic");
     AddClubAlternatives(aliases, "Ecuador", "Ekwador");
     AddClubAlternatives(aliases, "Egypt", "Egipt");
     AddClubAlternatives(aliases, "England", "Anglia");
@@ -92,7 +92,7 @@ internal static class ClubNameMatchHints
     AddClubAlternatives(aliases, "Sweden", "Szwecja");
     AddClubAlternatives(aliases, "Switzerland", "Szwajcaria");
     AddClubAlternatives(aliases, "Tunisia", "Tunezja");
-    AddClubAlternatives(aliases, "Turkiye", "Turcja");
+    AddClubAlternatives(aliases, "Turkiye", "Turcja", "Turkey");
     AddClubAlternatives(aliases, "United States", "USA");
     AddClubAlternatives(aliases, "Uruguay", "Urugwaj");
 

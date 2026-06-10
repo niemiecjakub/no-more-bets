@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -108,9 +109,9 @@ public class BetclicScraperTests
     result.Should().HaveCount(1);
     result[0].HomeTeam.Should().Be("Meksyk");
     result[0].AwayTeam.Should().Be("RPA");
+    result[0].Date.Should().Be(new DateTime(DateTime.Today.Year, 6, 14));
     result[0].Time.Should().Be("21:00");
     result[0].Url.Should().Contain("betclic.pl").And.Contain("meksyk-rpa");
-    result[0].Date.Should().Be(new DateTime(DateTime.Today.Year, 6, 14));
   }
 
   [Fact]
@@ -151,6 +152,7 @@ public class BetclicScraperTests
     result.Should().HaveCount(1);
     result[0].HomeTeam.Should().BeEmpty();
     result[0].AwayTeam.Should().BeEmpty();
+    result[0].Date.Should().Be(new DateTime(DateTime.Today.Year, 1, 17));
     result[0].Time.Should().Be("14:00");
   }
 
@@ -320,4 +322,5 @@ public class BetclicScraperTests
             Arg.Any<bool>(),
             Arg.Any<bool>());
   }
+
 }

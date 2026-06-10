@@ -16,6 +16,7 @@ namespace NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 public class RotowireScraper : BaseScraper, ILineupProvider
 {
   private const string BaseUrl = "https://www.rotowire.com";
+  private const string LineupSectionSelector = "div.lineup.is-soccer";
 
   /// <summary>
   /// Per-league lineup page URLs (slugs align with <c>BetclicScraper</c> league keys).
@@ -31,7 +32,9 @@ public class RotowireScraper : BaseScraper, ILineupProvider
   };
 
   private static readonly Regex DateRegex = new(@"(\w+\s+\d+)", RegexOptions.Compiled);
-  private static readonly Regex TimeRegex = new(@"(\d+:\d+\s+(?:AM|PM)\s+ET)", RegexOptions.Compiled);
+  private static readonly Regex TimeRegex = new(@"(\d{1,2}:\d{2}\s+(?:AM|PM))\s+ET", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+  /// <summary>Rotowire ET kickoffs are shifted when matching against DB match dates.</summary>
+  private static readonly TimeSpan RotowireKickoffOffset = TimeSpan.FromHours(6);
 
   private readonly ILogger<RotowireScraper> _logger;
 
@@ -67,7 +70,7 @@ public class RotowireScraper : BaseScraper, ILineupProvider
       return [];
     }
 
-    var html = await GetPageHtmlAsync(url, cancellationToken).ConfigureAwait(false);
+    var html = await GetPageHtmlAsync(url, cancellationToken, waitForSelectorBeforeContent: LineupSectionSelector).ConfigureAwait(false);
     var games = (await ParseLineupsAsync(html).ConfigureAwait(false)).ToList();
     if (games.Count == 0)
     {
@@ -86,7 +89,7 @@ public class RotowireScraper : BaseScraper, ILineupProvider
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
     var games = new List<GameLineup>();
 
-    foreach (var lineupDiv in doc.QuerySelectorAll("div.lineup.is-soccer"))
+    foreach (var lineupDiv in doc.QuerySelectorAll(LineupSectionSelector))
     {
       try
       {
@@ -107,16 +110,17 @@ public class RotowireScraper : BaseScraper, ILineupProvider
   {
     var date = (string?)null;
     var time = (string?)null;
+    string? timeText = null;
     var timeElem = section.QuerySelector("div.lineup__time");
     if (timeElem is not null)
     {
-      var timeText = timeElem.TextContent.Trim();
+      timeText = timeElem.TextContent.Trim();
       var dateMatch = DateRegex.Match(timeText);
       if (dateMatch.Success)
         date = dateMatch.Groups[1].Value;
       var timeMatch = TimeRegex.Match(timeText);
       if (timeMatch.Success)
-        time = timeMatch.Groups[1].Value;
+        time = timeMatch.Value.Trim();
     }
 
     var teamAbbrs = section.QuerySelectorAll("div.lineup__abbr").ToList();
@@ -149,10 +153,10 @@ public class RotowireScraper : BaseScraper, ILineupProvider
     var awayName = awayTeamName ?? $"Team {awayCode}";
     ValiiadteLineupPlayers(homeLineup, awayLineup, homeName, awayName);
 
-    var parsedDate = ParseRotowireDate(date);
+    var kickoff = ParseRotowireKickoff(date, timeText);
     return new GameLineup
     {
-      Date = parsedDate,
+      Date = kickoff,
       Time = time,
       HomeTeamName = homeName,
       HomeTeamCode = homeCode,
@@ -161,6 +165,43 @@ public class RotowireScraper : BaseScraper, ILineupProvider
       AwayTeamCode = awayCode,
       AwayTeam = awayLineup
     };
+  }
+
+  private static DateTime ParseRotowireKickoff(string? dateStr, string? timeStr)
+  {
+    var dateOnly = ParseRotowireDate(dateStr);
+    if (!TryParseRotowireTime(timeStr, out var hour, out var minute))
+    {
+      return DateTime.SpecifyKind(dateOnly.Date.Add(RotowireKickoffOffset), DateTimeKind.Utc);
+    }
+
+    var kickoff = new DateTime(dateOnly.Year, dateOnly.Month, dateOnly.Day, hour, minute, 0, DateTimeKind.Unspecified);
+    return DateTime.SpecifyKind(kickoff.Add(RotowireKickoffOffset), DateTimeKind.Utc);
+  }
+
+  private static bool TryParseRotowireTime(string? timeStr, out int hour, out int minute)
+  {
+    hour = 0;
+    minute = 0;
+    if (string.IsNullOrWhiteSpace(timeStr))
+    {
+      return false;
+    }
+
+    var timeMatch = TimeRegex.Match(timeStr);
+    if (!timeMatch.Success)
+    {
+      return false;
+    }
+
+    if (!DateTime.TryParse(timeMatch.Groups[1].Value, CultureInfo.GetCultureInfo("en-US"), DateTimeStyles.None, out var parsed))
+    {
+      return false;
+    }
+
+    hour = parsed.Hour;
+    minute = parsed.Minute;
+    return true;
   }
 
   private static DateTime ParseRotowireDate(string? dateStr)

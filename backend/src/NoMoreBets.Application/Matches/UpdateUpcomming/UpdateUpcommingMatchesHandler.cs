@@ -20,6 +20,8 @@ public class UpdateUpcommingMatchesHandler(
   ILogger<UpdateUpcommingMatchesHandler> logger)
   : IRequestHandler<UpdateUpcommingMatchesCommand, List<Match>>
 {
+  /// <summary>Soccerdata kickoff times are stored in UTC but run 2 hours behind our match calendar.</summary>
+  private static readonly TimeSpan SoccerdataKickoffOffset = TimeSpan.FromHours(2);
   public async Task<List<Match>> Handle(UpdateUpcommingMatchesCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation(
@@ -126,7 +128,7 @@ public class UpdateUpcommingMatchesHandler(
       return false;
     }
 
-    gameDayUtc = DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
+    gameDayUtc = DateTime.SpecifyKind(parsed.Add(SoccerdataKickoffOffset), DateTimeKind.Utc);
     return true;
   }
 }

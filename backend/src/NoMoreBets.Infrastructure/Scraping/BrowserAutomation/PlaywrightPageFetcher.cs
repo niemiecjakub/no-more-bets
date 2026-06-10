@@ -29,11 +29,18 @@ public class PlaywrightPageFetcher
   }
 
   /// <summary>Navigates to the URL, waits for page load, and returns the HTML content.</summary>
+  /// <param name="url">URL to load.</param>
+  /// <param name="timeout">Navigation and wait timeout budget.</param>
+  /// <param name="cancellationToken">Cancellation token.</param>
+  /// <param name="blockResources">When false, do not intercept routes.</param>
+  /// <param name="waitForSelectorBeforeContent">If set, waits for this selector to be attached before reading the DOM.
+  /// Throws on wait timeout so the caller's retry pipeline can re-fetch instead of silently returning a partial page.</param>
   public virtual async Task<string> GetHtmlAsync(
     string url,
     TimeSpan? timeout = null,
     CancellationToken cancellationToken = default,
-    bool blockResources = true)
+    bool blockResources = true,
+    string? waitForSelectorBeforeContent = null)
   {
     var timeoutMs = timeout.HasValue
       ? (int)timeout.Value.TotalMilliseconds
@@ -53,6 +60,16 @@ public class PlaywrightPageFetcher
         {
           var response = await NavigateAsync(page, url, cappedTimeoutMs).ConfigureAwait(false);
           ThrowIfPermanentStatus(response, url);
+
+          if (!string.IsNullOrWhiteSpace(waitForSelectorBeforeContent))
+          {
+            var waitMs = Math.Max(5000, Math.Min(cappedTimeoutMs, 32_000));
+            await page.WaitForSelectorAsync(waitForSelectorBeforeContent.Trim(), new PageWaitForSelectorOptions
+            {
+              Timeout = waitMs,
+              State = WaitForSelectorState.Attached
+            }).ConfigureAwait(false);
+          }
 
           var html = await page.ContentAsync().ConfigureAwait(false);
           return html ?? string.Empty;

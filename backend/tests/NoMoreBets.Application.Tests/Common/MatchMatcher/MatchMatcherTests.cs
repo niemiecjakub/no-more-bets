@@ -438,6 +438,9 @@ public class MatchMatcherTests
   [InlineData("Iran", "IR Iran")]
   [InlineData("South Korea", "Korea Republic")]
   [InlineData("USA", "United States")]
+  [InlineData("Czech Republic", "Czechia")]
+  [InlineData("Turkey", "Turkiye")]
+  [InlineData("Cote D'ivoire", "Cote d'Ivoire")]
   public void FindClub_FotmobWorldCupAlias_ReturnsDbClubName(string fotmobName, string dbName)
   {
     var club = new ClubEntity { Id = 1, Name = dbName, LeagueId = 7, SoccerdataId = 1 };
@@ -741,6 +744,93 @@ public class MatchMatcherTests
     var result = _sut.FindBestMatch("Espanyol", "Levante", candidates);
 
     result.Should().Be(25);
+  }
+
+  /// <summary>All team names from lineups.html (RotoWire FIFA World Cup fixture).</summary>
+  public static TheoryData<string, string> RotowireLineupNames => new()
+  {
+    { "Algeria", "Algeria" },
+    { "Argentina", "Argentina" },
+    { "Australia", "Australia" },
+    { "Austria", "Austria" },
+    { "Belgium", "Belgium" },
+    { "Bosnia and Herzegovina", "Bosnia-Herzegovina" },
+    { "Brazil", "Brazil" },
+    { "Cape Verde", "Cabo Verde" },
+    { "Canada", "Canada" },
+    { "Colombia", "Colombia" },
+    { "Cote D'ivoire", "Cote d'Ivoire" },
+    { "Croatia", "Croatia" },
+    { "Curacao", "Curacao" },
+    { "Czech Republic", "Czechia" },
+    { "DR Congo", "Congo DR" },
+    { "Ecuador", "Ecuador" },
+    { "Egypt", "Egypt" },
+    { "England", "England" },
+    { "France", "France" },
+    { "Germany", "Germany" },
+    { "Ghana", "Ghana" },
+    { "Haiti", "Haiti" },
+    { "Iran", "IR Iran" },
+    { "Iraq", "Iraq" },
+    { "Japan", "Japan" },
+    { "Jordan", "Jordan" },
+    { "Mexico", "Mexico" },
+    { "Morocco", "Morocco" },
+    { "Netherlands", "Netherlands" },
+    { "New Zealand", "New Zealand" },
+    { "Norway", "Norway" },
+    { "Panama", "Panama" },
+    { "Paraguay", "Paraguay" },
+    { "Portugal", "Portugal" },
+    { "Qatar", "Qatar" },
+    { "Saudi Arabia", "Saudi Arabia" },
+    { "Scotland", "Scotland" },
+    { "Senegal", "Senegal" },
+    { "South Africa", "South Africa" },
+    { "South Korea", "Korea Republic" },
+    { "Spain", "Spain" },
+    { "Sweden", "Sweden" },
+    { "Switzerland", "Switzerland" },
+    { "Tunisia", "Tunisia" },
+    { "Turkey", "Turkiye" },
+    { "USA", "United States" },
+    { "Uruguay", "Uruguay" },
+    { "Uzbekistan", "Uzbekistan" },
+  };
+
+  [Theory]
+  [MemberData(nameof(RotowireLineupNames))]
+  public void FindClub_RotowireLineupName_ResolvesToDbClub(string rotowireName, string dbName)
+  {
+    var club = new ClubEntity { Id = 1, Name = dbName, LeagueId = 7, SoccerdataId = 1 };
+    var clubs = new List<ClubEntity> { club };
+
+    var result = _sut.FindClub(rotowireName, clubs);
+
+    result.Should().BeSameAs(club);
+    result.Name.Should().Be(dbName);
+  }
+
+  [Theory]
+  [InlineData("South Korea", "Czech Republic", "Korea Republic", "Czechia")]
+  [InlineData("USA", "Paraguay", "United States", "Paraguay")]
+  [InlineData("Brazil", "Morocco", "Brazil", "Morocco")]
+  [InlineData("Haiti", "Scotland", "Haiti", "Scotland")]
+  public void FindBestMatch_RotowireWorldCupNames_MatchDbClubs(
+    string rotowireHome,
+    string rotowireAway,
+    string dbHome,
+    string dbAway)
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      (dbHome, dbAway, 42)
+    };
+
+    var result = _sut.FindBestMatch(rotowireHome, rotowireAway, candidates);
+
+    result.Should().Be(42);
   }
 
   [Fact]
