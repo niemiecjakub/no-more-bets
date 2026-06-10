@@ -303,7 +303,7 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
         continue;
       for (var i = 0; i < marketItems.Length && i < subMarketItems.Count; i++)
       {
-        var oddsElem = marketItems[i].QuerySelector("span.btn_label, bcdk-bet-button-label.btn_label");
+        var oddsElem = marketItems[i].QuerySelector("span.btn_label, bcdk-bet-button-label.btn_label, bcdk-bet-button-odds-animated.btn_label");
         if (oddsElem is null)
           continue;
         var odds = ParseOdds(oddsElem.TextContent.Trim());
@@ -341,7 +341,7 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
       var label = labelElem.TextContent.Trim();
 
       IElement? oddsElem = null;
-      foreach (var elem in lineSelection.QuerySelectorAll("span.btn_label, bcdk-bet-button-label.btn_label"))
+      foreach (var elem in lineSelection.QuerySelectorAll("span.btn_label, bcdk-bet-button-label.btn_label, bcdk-bet-button-odds-animated.btn_label"))
       {
         if (!elem.ClassList.Contains("is-top"))
         {
