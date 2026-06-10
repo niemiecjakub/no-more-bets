@@ -47,7 +47,6 @@ public class UnitOfWork : IUnitOfWork
 
   public async Task SaveChangesAsync(CancellationToken cancellationToken)
   {
-    return;
-    //await _db.SaveChangesAsync(cancellationToken);
+    await _db.SaveChangesAsync(cancellationToken);
   }
 }
