@@ -430,6 +430,25 @@ public class MatchMatcherTests
     result.Name.Should().Be("PSG");
   }
 
+  [Theory]
+  [InlineData("Bosnia and Herzegovina", "Bosnia-Herzegovina")]
+  [InlineData("Cape Verde", "Cabo Verde")]
+  [InlineData("DR Congo", "Congo DR")]
+  [InlineData("Ivory Coast", "Cote d'Ivoire")]
+  [InlineData("Iran", "IR Iran")]
+  [InlineData("South Korea", "Korea Republic")]
+  [InlineData("USA", "United States")]
+  public void FindClub_FotmobWorldCupAlias_ReturnsDbClubName(string fotmobName, string dbName)
+  {
+    var club = new ClubEntity { Id = 1, Name = dbName, LeagueId = 7, SoccerdataId = 1 };
+    var clubs = new List<ClubEntity> { club };
+
+    var result = _sut.FindClub(fotmobName, clubs);
+
+    result.Should().BeSameAs(club);
+    result.Name.Should().Be(dbName);
+  }
+
   [Fact]
   public void FindClub_ParisFcAndPsgInLeague_Disambiguates()
   {

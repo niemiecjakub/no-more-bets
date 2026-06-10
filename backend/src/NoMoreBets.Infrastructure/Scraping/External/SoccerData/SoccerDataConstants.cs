@@ -13,4 +13,5 @@ public static class SoccerDataConstants
   public const int BundesligaId = 241;
   public const int SerieAId = 253;
   public const int Ligue1Id = 235;
+  public const int WorldCupId = 313;
 }

@@ -150,6 +150,7 @@ public class BetclicScraperTests
   [InlineData("bundesliga", "https://www.betclic.pl/football-sfootball/bundesliga-c5")]
   [InlineData("serie-a", "https://www.betclic.pl/football-sfootball/serie-a-c6")]
   [InlineData("ligue-1", "https://www.betclic.pl/football-sfootball/ligue-1-c4")]
+  [InlineData("fifa-world-cup", "https://www.betclic.pl/football-sfootball/ms-c1")]
   public async Task GetUpcomingGamesAsync_ForLeagueSlug_RequestsConfiguredListingUrl(string leagueSlug, string expectedListingUrl)
   {
     var html = MinimalUpcomingGamesHtml();

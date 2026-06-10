@@ -22,7 +22,8 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
     ["laliga"] = BaseUrl + "/football-sfootball/la-liga-c7",
     ["bundesliga"] = BaseUrl + "/football-sfootball/bundesliga-c5",
     ["serie-a"] = BaseUrl + "/football-sfootball/serie-a-c6",
-    ["ligue-1"] = BaseUrl + "/football-sfootball/ligue-1-c4"
+    ["ligue-1"] = BaseUrl + "/football-sfootball/ligue-1-c4",
+    ["fifa-world-cup"] = BaseUrl + "/football-sfootball/ms-c1"
   };
 
   private readonly BetclicScraperOptions _betclicOptions;

@@ -48,6 +48,14 @@ internal static class ClubNameMatchHints
     ["RKS Radomiak"] = "Radomiak Radom",
     ["Real Madryt"] = "Real Madrid",
     ["Bayern Monachium"] = "Bayern Munich",
+    // FIFA World Cup: FotMob names vs Soccerdata/DB seed (004.sql).
+    ["Bosnia and Herzegovina"] = "Bosnia-Herzegovina",
+    ["Cape Verde"] = "Cabo Verde",
+    ["DR Congo"] = "Congo DR",
+    ["Ivory Coast"] = "Cote d'Ivoire",
+    ["Iran"] = "IR Iran",
+    ["South Korea"] = "Korea Republic",
+    ["USA"] = "United States",
   };
 
   public static string ResolveEffectiveName(string trimmed)

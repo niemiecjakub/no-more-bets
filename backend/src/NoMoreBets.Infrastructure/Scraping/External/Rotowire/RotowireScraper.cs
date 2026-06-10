@@ -26,7 +26,8 @@ public class RotowireScraper : BaseScraper, ILineupProvider
     ["laliga"] = BaseUrl + "/soccer/lineups.php?league=LIGA",
     ["bundesliga"] = BaseUrl + "/soccer/lineups.php?league=BUND",
     ["serie-a"] = BaseUrl + "/soccer/lineups.php?league=SERI",
-    ["ligue-1"] = BaseUrl + "/soccer/lineups.php?league=FRAN"
+    ["ligue-1"] = BaseUrl + "/soccer/lineups.php?league=FRAN",
+    ["fifa-world-cup"] = BaseUrl + "/soccer/lineups.php?league=WOC"
   };
 
   private static readonly Regex DateRegex = new(@"(\w+\s+\d+)", RegexOptions.Compiled);

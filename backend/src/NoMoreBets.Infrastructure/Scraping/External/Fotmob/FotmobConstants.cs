@@ -11,6 +11,7 @@ public class FotmobConstants : IFotmobConstants
   public FotmobLeague LaLiga { get; } = new(87, "LaLiga", "laliga");
   public FotmobLeague SerieA { get; } = new(55, "Serie A", "serie");
   public FotmobLeague Ligue1 { get; } = new(53, "Ligue 1", "ligue-1");
+  public FotmobLeague WorldCup { get; } = new(77, "FIFA World Cup", "world-cup");
 
   // Premier League
   public FotmobTeam Liverpool { get; } = new(8650, "Liverpool");
@@ -138,6 +139,56 @@ public class FotmobConstants : IFotmobConstants
   public FotmobTeam Strasbourg { get; } = new(9848, "Strasbourg");
   public FotmobTeam Toulouse { get; } = new(9941, "Toulouse");
 
+  // FIFA World Cup
+  public FotmobTeam Algeria { get; } = new(6317, "Algeria");
+  public FotmobTeam Argentina { get; } = new(6706, "Argentina");
+  public FotmobTeam Australia { get; } = new(6716, "Australia");
+  public FotmobTeam Austria { get; } = new(8255, "Austria");
+  public FotmobTeam Belgium { get; } = new(8263, "Belgium");
+  public FotmobTeam BosniaHerzegovina { get; } = new(10106, "Bosnia-Herzegovina");
+  public FotmobTeam Brazil { get; } = new(8256, "Brazil");
+  public FotmobTeam CaboVerde { get; } = new(5888, "Cabo Verde");
+  public FotmobTeam Canada { get; } = new(5810, "Canada");
+  public FotmobTeam Colombia { get; } = new(8258, "Colombia");
+  public FotmobTeam CongoDR { get; } = new(6321, "Congo DR");
+  public FotmobTeam CoteDIvoire { get; } = new(6709, "Cote d'Ivoire");
+  public FotmobTeam Croatia { get; } = new(10155, "Croatia");
+  public FotmobTeam Curacao { get; } = new(287981, "Curacao");
+  public FotmobTeam Czechia { get; } = new(8496, "Czechia");
+  public FotmobTeam Ecuador { get; } = new(6707, "Ecuador");
+  public FotmobTeam Egypt { get; } = new(10255, "Egypt");
+  public FotmobTeam England { get; } = new(8491, "England");
+  public FotmobTeam France { get; } = new(6723, "France");
+  public FotmobTeam Germany { get; } = new(8570, "Germany");
+  public FotmobTeam Ghana { get; } = new(6714, "Ghana");
+  public FotmobTeam Haiti { get; } = new(5934, "Haiti");
+  public FotmobTeam IRIran { get; } = new(6711, "IR Iran");
+  public FotmobTeam Iraq { get; } = new(5819, "Iraq");
+  public FotmobTeam Japan { get; } = new(6715, "Japan");
+  public FotmobTeam Jordan { get; } = new(5816, "Jordan");
+  public FotmobTeam KoreaRepublic { get; } = new(7804, "Korea Republic");
+  public FotmobTeam Mexico { get; } = new(6710, "Mexico");
+  public FotmobTeam Morocco { get; } = new(6262, "Morocco");
+  public FotmobTeam Netherlands { get; } = new(6708, "Netherlands");
+  public FotmobTeam NewZealand { get; } = new(5820, "New Zealand");
+  public FotmobTeam Norway { get; } = new(8492, "Norway");
+  public FotmobTeam Panama { get; } = new(5922, "Panama");
+  public FotmobTeam Paraguay { get; } = new(6724, "Paraguay");
+  public FotmobTeam Portugal { get; } = new(8361, "Portugal");
+  public FotmobTeam Qatar { get; } = new(5902, "Qatar");
+  public FotmobTeam SaudiArabia { get; } = new(7795, "Saudi Arabia");
+  public FotmobTeam Scotland { get; } = new(8498, "Scotland");
+  public FotmobTeam Senegal { get; } = new(6395, "Senegal");
+  public FotmobTeam SouthAfrica { get; } = new(6316, "South Africa");
+  public FotmobTeam Spain { get; } = new(6720, "Spain");
+  public FotmobTeam Sweden { get; } = new(8520, "Sweden");
+  public FotmobTeam Switzerland { get; } = new(6717, "Switzerland");
+  public FotmobTeam Tunisia { get; } = new(6719, "Tunisia");
+  public FotmobTeam Turkiye { get; } = new(6595, "Turkiye");
+  public FotmobTeam UnitedStates { get; } = new(6713, "United States");
+  public FotmobTeam Uruguay { get; } = new(5796, "Uruguay");
+  public FotmobTeam Uzbekistan { get; } = new(8700, "Uzbekistan");
+
   private readonly FotmobTeam[] _allTeams;
   private readonly Dictionary<string, FotmobLeague> _leaguesBySlug;
 
@@ -151,9 +202,11 @@ public class FotmobConstants : IFotmobConstants
       [LaLiga.Slug] = LaLiga,
       [SerieA.Slug] = SerieA,
       [Ligue1.Slug] = Ligue1,
+      [WorldCup.Slug] = WorldCup,
 
-      // League.Slug in DB (002 seed) where it differs from FotMob path slugs.
-      ["serie-a"] = SerieA
+      // League.Slug in DB seed where it differs from FotMob path slugs.
+      ["serie-a"] = SerieA,
+      ["fifa-world-cup"] = WorldCup
     };
 
     _allTeams =
@@ -193,7 +246,19 @@ public class FotmobConstants : IFotmobConstants
       Angers, Auxerre, Brest, LeHavre, Lens,
       Lille, Lorient, Lyon, Marseille, Metz,
       Monaco, Nantes, Nice, ParisFC, PSG,
-      Rennes, Strasbourg, Toulouse
+      Rennes, Strasbourg, Toulouse,
+
+      // FIFA World Cup
+      Algeria, Argentina, Australia, Austria, Belgium,
+      BosniaHerzegovina, Brazil, CaboVerde, Canada, Colombia,
+      CongoDR, CoteDIvoire, Croatia, Curacao, Czechia,
+      Ecuador, Egypt, England, France, Germany,
+      Ghana, Haiti, IRIran, Iraq, Japan,
+      Jordan, KoreaRepublic, Mexico, Morocco, Netherlands,
+      NewZealand, Norway, Panama, Paraguay, Portugal,
+      Qatar, SaudiArabia, Scotland, Senegal, SouthAfrica,
+      Spain, Sweden, Switzerland, Tunisia, Turkiye,
+      UnitedStates, Uruguay, Uzbekistan
     ];
   }
 
