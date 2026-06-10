@@ -1,6 +1,7 @@
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Leagues;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NoMoreBets.Domain.Matches;
@@ -36,6 +37,9 @@ public class Match
     get => (MatchStatus)MatchStatusId;
     set => MatchStatusId = (int)value;
   }
+
+  [NotMapped]
+  public bool IsFifaWorldCup => Stage?.Season?.League?.Slug == League.FifaWorldCupSlug;
 
   public static Match CreateUpcomming(DateTime matchDate, int stageId, int homeClubId, int awayClubId)
   {

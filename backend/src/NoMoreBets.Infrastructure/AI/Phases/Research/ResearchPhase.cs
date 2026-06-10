@@ -55,7 +55,9 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
 
           Break the work into todos at the start, then work through them marking items complete as you finish.
 
-          Review memory for relevant context before starting new analysis. Build core match intelligence covering lineups, injuries, head-to-head history, odds history, and league table. Build team-level context for both clubs including league statistics, recent form, rolling performance, and daily summaries.
+          Review memory for relevant context before starting new analysis. {(match.IsFifaWorldCup
+            ? "Build core match intelligence covering lineups, injuries, head-to-head history, and odds history. Build team-level context for both national teams including recent form and rolling performance."
+            : "Build core match intelligence covering lineups, injuries, head-to-head history, odds history, and league table. Build team-level context for both clubs including league statistics, recent form, rolling performance, and daily summaries.")}
 
           Gather news and sentiment for both clubs where needed, separating meaningful signals from noise and assessing source reliability. Cross-check important claims when deeper validation is warranted.
 
@@ -67,19 +69,30 @@ public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
           - If data is missing, state it explicitly and continue with best-effort reasoning
           """;
 
-    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-      serviceProvider.ResolveTools([
+    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
+    {
+      var tools = new List<AgentTool>
+      {
         ToolRegistry.Match.GetLineups,
         ToolRegistry.Match.GetInjuries,
         ToolRegistry.Match.GetHead2HeadStats,
-        ToolRegistry.Match.GetClubDailySummary,
         ToolRegistry.Match.GetClubRecentGames,
-        ToolRegistry.Match.GetClubLeagueStatistics,
-        ToolRegistry.Match.GetLeagueTable,
         ToolRegistry.Match.GetMatchBettingOddsHistory,
         ToolRegistry.Match.GetClubRollingPerformance,
         ToolRegistry.Match.SaveMatchAnalysis,
-      ]);
+      };
+
+      // National teams have no club daily summary, and a tournament has no
+      // league statistics or league table, so skip those tools for World Cup matches.
+      if (!match.IsFifaWorldCup)
+      {
+        tools.Add(ToolRegistry.Match.GetClubDailySummary);
+        tools.Add(ToolRegistry.Match.GetClubLeagueStatistics);
+        tools.Add(ToolRegistry.Match.GetLeagueTable);
+      }
+
+      return serviceProvider.ResolveTools(tools.ToArray());
+    }
 
     public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
     [

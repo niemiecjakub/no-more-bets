@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Clubs.UpdateDailySummary;
 
@@ -31,6 +32,15 @@ public class UpdateDailySummaryHandler(
       return Unit.Value;
     }
 
+    if (club.League?.Slug == League.FifaWorldCupSlug)
+    {
+      logger.LogInformation(
+        "Handler {HandlerName} skipping daily summary for national team ClubId={ClubId} ({ClubName})",
+        nameof(UpdateDailySummaryHandler),
+        club.Id,
+        club.Name);
+      return Unit.Value;
+    }
 
     var latest = await unitOfWork.Clubs.GetDailySummaryAsync(club.Id, null, cancellationToken).ConfigureAwait(false);
 

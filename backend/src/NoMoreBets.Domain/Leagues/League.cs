@@ -4,6 +4,8 @@ namespace NoMoreBets.Domain.Leagues;
 
 public class League
 {
+  public const string FifaWorldCupSlug = "fifa-world-cup";
+
   public int Id { get; set; }
   public string Name { get; set; } = null!;
   public string Slug { get; set; } = null!;
