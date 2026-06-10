@@ -1,5 +1,6 @@
 using FluentAssertions;
 using MediatR;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NoMoreBets.Application.Betting;
 using NoMoreBets.Application.Betting.UpdateMatches;
@@ -25,7 +26,7 @@ public class UpdateMatchesHandlerTests
     _bookmakerMatchesProvider = Substitute.For<IBookmakerMatchesProvider>();
     _unitOfWork = Substitute.For<IUnitOfWork>();
     _matchMatcher = Substitute.For<IMatchMatcher>();
-    _sut = new UpdateMatchesHandler(_bookmakerMatchesProvider, _unitOfWork, _matchMatcher);
+    _sut = new UpdateMatchesHandler(_bookmakerMatchesProvider, _unitOfWork, _matchMatcher, NullLogger<UpdateMatchesHandler>.Instance);
 
     _unitOfWork.Leagues.GetLeagues().Returns(new List<League>
     {
@@ -106,6 +107,40 @@ public class UpdateMatchesHandlerTests
 
     // Assert
     await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("*No matching club found*");
+  }
+
+  [Fact]
+  public async Task Handle_WhenClubMatchNotFound_SkipsGameAndProcessesNext()
+  {
+    // Arrange: first game has an unmatchable club, second game is valid
+    var gameDate = new DateTime(2026, 1, 15);
+    var games = new List<UpcomingGame>
+    {
+      new() { Date = gameDate, Time = "15:00", HomeTeam = "Unknown Team", AwayTeam = "Chelsea", Url = "https://betclic.pl/unknown-chelsea" },
+      new() { Date = gameDate, Time = "17:00", HomeTeam = "Arsenal", AwayTeam = "Chelsea", Url = "https://betclic.pl/arsenal-chelsea" }
+    };
+    _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
+
+    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(Task.FromResult(new List<Match>()));
+
+    _matchMatcher.FindBestMatch(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>())
+      .Returns((Match?)null);
+    _matchMatcher.FindClub("Unknown Team", Arg.Any<IReadOnlyList<ClubEntity>>())
+      .Returns(_ => throw new ClubMatchNotFoundException("Unknown Team", "No matching club found for 'Unknown Team'"));
+    _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(homeClub);
+    _matchMatcher.FindClub("Chelsea", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(awayClub);
+
+    // Act
+    var result = await _sut.Handle(new UpdateMatchesCommand(1), CancellationToken.None);
+
+    // Assert: first game skipped, second game added
+    result.Should().HaveCount(1);
+    result[0].BetclicUrl.Should().Be("https://betclic.pl/arsenal-chelsea");
+    await _unitOfWork.Matches.Received(1).AddMatch(Arg.Any<Match>());
+    await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
   [Fact]

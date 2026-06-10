@@ -5,14 +5,14 @@ using Microsoft.Playwright;
 namespace NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 
 /// <summary>
-/// Fetches page HTML using Playwright with WaitUntilState.Load (avoids timeout on sites that never reach networkidle).
-/// Throws <see cref="PermanentScraperException"/> for HTTP 403, 404, 410.
+/// Fetches page HTML using Playwright with WaitUntilState.Commit (then optional CSR waits).
+/// Throws <see cref="PermanentScraperException"/> for HTTP 403, 404, 410 when navigation succeeds.
 /// Supports both simple fetch and interactive fetch (clicks before capture) for consent/modals.
-/// Uses a shared persistent browser and context pool (max 3). By default blocks image, media, font, stylesheet. Navigation timeout capped at 35s.
+/// Uses a shared persistent browser and context pool (max 3). By default blocks image, media, font, stylesheet. Navigation timeout capped at 60s.
 /// </summary>
 public class PlaywrightPageFetcher
 {
-  private const int MaxNavigationTimeoutMs = 35_000;
+  private const int MaxNavigationTimeoutMs = 60_000;
 
   private readonly ILogger<PlaywrightPageFetcher> _logger;
   private readonly PlaywrightBrowserService _browserService;
@@ -28,65 +28,12 @@ public class PlaywrightPageFetcher
     _options = options.Value;
   }
 
-  private Proxy? GetProxy()
-  {
-    if (!_options.IsValid())
-      return null;
-
-    return new Proxy
-    {
-      Server = _options.ProxyServer,
-      Username = _options.ProxyUser,
-      Password = _options.ProxyPassword
-    };
-  }
-
-  private static BrowserNewContextOptions BuildContextOptions(Proxy? proxy) => new()
-  {
-    Proxy = proxy,
-    IgnoreHTTPSErrors = true,
-    UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
-               "AppleWebKit/537.36 (KHTML, like Gecko) " +
-               "Chrome/131.0.0.0 Safari/537.36",
-    ViewportSize = new ViewportSize { Width = 1366, Height = 768 },
-    Locale = "pl-PL",
-    TimezoneId = "Europe/Warsaw",
-    ScreenSize = new ScreenSize { Width = 1366, Height = 768 }
-  };
-
-  private static readonly HashSet<string> AlwaysBlockedResourceTypes = new(StringComparer.OrdinalIgnoreCase)
-  {
-    "image", "media", "font"
-  };
-
-  /// <param name="blockStylesheets">When false, stylesheets are allowed (some CSR sites need CSS before the table mounts).</param>
-  private static async Task ApplyResourceBlockingAsync(IPage page, bool blockStylesheets)
-  {
-    await page.RouteAsync("**/*", async route =>
-    {
-      var resourceType = route.Request.ResourceType;
-      if (AlwaysBlockedResourceTypes.Contains(resourceType))
-      {
-        await route.AbortAsync().ConfigureAwait(false);
-        return;
-      }
-
-      if (blockStylesheets &&
-          string.Equals(resourceType, "stylesheet", StringComparison.OrdinalIgnoreCase))
-      {
-        await route.AbortAsync().ConfigureAwait(false);
-        return;
-      }
-
-      await route.ContinueAsync().ConfigureAwait(false);
-    }).ConfigureAwait(false);
-  }
-
   /// <summary>Navigates to the URL, waits for page load, and returns the HTML content.</summary>
   public virtual async Task<string> GetHtmlAsync(
     string url,
     TimeSpan? timeout = null,
-    CancellationToken cancellationToken = default)
+    CancellationToken cancellationToken = default,
+    bool blockResources = true)
   {
     var timeoutMs = timeout.HasValue
       ? (int)timeout.Value.TotalMilliseconds
@@ -99,31 +46,13 @@ public class PlaywrightPageFetcher
       try
       {
         var page = await context.NewPageAsync().ConfigureAwait(false);
-        await ApplyResourceBlockingAsync(page, blockStylesheets: true).ConfigureAwait(false);
+        if (blockResources)
+          await ApplyResourceBlockingAsync(page, blockStylesheets: true).ConfigureAwait(false);
 
         try
         {
-          IResponse? response = null;
-          try
-          {
-            response = await page.GotoAsync(url, new PageGotoOptions
-            {
-              WaitUntil = WaitUntilState.Load,
-              Timeout = cappedTimeoutMs
-            }).ConfigureAwait(false);
-          }
-          catch (Exception ex)
-          {
-            _logger.LogWarning(ex, "Playwright navigation failed for {Url}", url);
-            throw;
-          }
-
-          if (response is not null)
-          {
-            var status = response.Status;
-            if (status is 403 or 404 or 410)
-              throw new PermanentScraperException($"Permanent failure ({status}) for {url}", status);
-          }
+          var response = await NavigateAsync(page, url, cappedTimeoutMs).ConfigureAwait(false);
+          ThrowIfPermanentStatus(response, url);
 
           var html = await page.ContentAsync().ConfigureAwait(false);
           return html ?? string.Empty;
@@ -148,6 +77,7 @@ public class PlaywrightPageFetcher
   /// <param name="waitForSelectorBeforeContent">If set (and no function wait), waits for this selector to be attached before reading DOM.</param>
   /// <param name="waitForFunctionBeforeContent">If set, waits for this browser function to return true (preferred for fragile class names). Example: <c>() =&gt; document.querySelectorAll("div").length &gt; 0</c>.</param>
   /// <param name="blockStylesheets">When false, allow stylesheets during this session (FotMob table CSR).</param>
+  /// <param name="blockResources">When false, do not intercept routes (Betclic CSR needs fonts/scripts unblocked).</param>
   public virtual async Task<string> GetHtmlAfterInteractionsAsync(
     string url,
     IReadOnlyList<InteractionStep> steps,
@@ -155,7 +85,8 @@ public class PlaywrightPageFetcher
     CancellationToken cancellationToken = default,
     string? waitForSelectorBeforeContent = null,
     string? waitForFunctionBeforeContent = null,
-    bool blockStylesheets = true)
+    bool blockStylesheets = true,
+    bool blockResources = true)
   {
     var timeoutMs = timeout.HasValue
       ? (int)timeout.Value.TotalMilliseconds
@@ -168,31 +99,13 @@ public class PlaywrightPageFetcher
       try
       {
         var page = await context.NewPageAsync().ConfigureAwait(false);
-        await ApplyResourceBlockingAsync(page, blockStylesheets).ConfigureAwait(false);
+        if (blockResources)
+          await ApplyResourceBlockingAsync(page, blockStylesheets).ConfigureAwait(false);
 
         try
         {
-          IResponse? response = null;
-          try
-          {
-            response = await page.GotoAsync(url, new PageGotoOptions
-            {
-              WaitUntil = WaitUntilState.Load,
-              Timeout = cappedTimeoutMs
-            }).ConfigureAwait(false);
-          }
-          catch (Exception ex)
-          {
-            _logger.LogWarning(ex, "Playwright navigation failed for {Url}", url);
-            throw;
-          }
-
-          if (response is not null)
-          {
-            var status = response.Status;
-            if (status is 403 or 404 or 410)
-              throw new PermanentScraperException($"Permanent failure ({status}) for {url}", status);
-          }
+          var response = await NavigateAsync(page, url, cappedTimeoutMs).ConfigureAwait(false);
+          ThrowIfPermanentStatus(response, url);
 
           await Task.Delay(Random.Shared.Next(1500, 3000), cancellationToken).ConfigureAwait(false);
 
@@ -273,5 +186,109 @@ public class PlaywrightPageFetcher
         await context.DisposeAsync().ConfigureAwait(false);
       }
     }, cancellationToken).ConfigureAwait(false);
+  }
+
+  private static readonly HashSet<string> AlwaysBlockedResourceTypes = new(StringComparer.OrdinalIgnoreCase)
+  {
+    "image", "media", "font"
+  };
+
+  private Proxy? GetProxy()
+  {
+    if (!_options.IsValid())
+      return null;
+
+    return new Proxy
+    {
+      Server = _options.ProxyServer,
+      Username = _options.ProxyUser,
+      Password = _options.ProxyPassword
+    };
+  }
+
+  private static BrowserNewContextOptions BuildContextOptions(Proxy? proxy) => new()
+  {
+    Proxy = proxy,
+    IgnoreHTTPSErrors = true,
+    UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) " +
+               "AppleWebKit/537.36 (KHTML, like Gecko) " +
+               "Chrome/131.0.0.0 Safari/537.36",
+    ViewportSize = new ViewportSize { Width = 1366, Height = 768 },
+    Locale = "pl-PL",
+    TimezoneId = "Europe/Warsaw",
+    ScreenSize = new ScreenSize { Width = 1366, Height = 768 },
+    ExtraHTTPHeaders = new Dictionary<string, string>
+    {
+      ["Accept-Language"] = "pl-PL,pl;q=0.9,en-US;q=0.8,en;q=0.7",
+      ["Accept"] = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
+    }
+  };
+
+  private static bool IsNavigationTimeout(Exception ex) =>
+    ex is TimeoutException ||
+    (ex is PlaywrightException && ex.Message.Contains("Timeout", StringComparison.OrdinalIgnoreCase));
+
+  private static bool IsRecoverableNavigationFailure(Exception ex) =>
+    IsNavigationTimeout(ex) ||
+    (ex is PlaywrightException playwrightEx &&
+     (playwrightEx.Message.Contains("ERR_HTTP_RESPONSE_CODE_FAILURE", StringComparison.OrdinalIgnoreCase) ||
+      playwrightEx.Message.Contains("net::ERR_", StringComparison.OrdinalIgnoreCase)));
+
+  private async Task<IResponse?> NavigateAsync(IPage page, string url, int timeoutMs)
+  {
+    try
+    {
+      return await page.GotoAsync(url, new PageGotoOptions
+      {
+        WaitUntil = WaitUntilState.Commit,
+        Timeout = timeoutMs
+      }).ConfigureAwait(false);
+    }
+    catch (Exception ex) when (IsRecoverableNavigationFailure(ex))
+    {
+      _logger.LogWarning(ex,
+        "Playwright navigation issue for {Url}; continuing with current page state at {CurrentUrl}",
+        url,
+        page.Url);
+      return null;
+    }
+    catch (Exception ex)
+    {
+      _logger.LogWarning(ex, "Playwright navigation failed for {Url}", url);
+      throw;
+    }
+  }
+
+  /// <param name="blockStylesheets">When false, stylesheets are allowed (some CSR sites need CSS before the table mounts).</param>
+  private static async Task ApplyResourceBlockingAsync(IPage page, bool blockStylesheets)
+  {
+    await page.RouteAsync("**/*", async route =>
+    {
+      var resourceType = route.Request.ResourceType;
+      if (AlwaysBlockedResourceTypes.Contains(resourceType))
+      {
+        await route.AbortAsync().ConfigureAwait(false);
+        return;
+      }
+
+      if (blockStylesheets &&
+          string.Equals(resourceType, "stylesheet", StringComparison.OrdinalIgnoreCase))
+      {
+        await route.AbortAsync().ConfigureAwait(false);
+        return;
+      }
+
+      await route.ContinueAsync().ConfigureAwait(false);
+    }).ConfigureAwait(false);
+  }
+
+  private static void ThrowIfPermanentStatus(IResponse? response, string url)
+  {
+    if (response is null)
+      return;
+
+    var status = response.Status;
+    if (status is 403 or 404 or 410)
+      throw new PermanentScraperException($"Permanent failure ({status}) for {url}", status);
   }
 }

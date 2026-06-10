@@ -29,11 +29,13 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
   private readonly BetclicScraperOptions _betclicOptions;
   private readonly ILogger<BetclicScraper> _logger;
 
+  private static readonly TimeSpan BetclicInteractiveTimeout = TimeSpan.FromSeconds(45);
+
   private static readonly IReadOnlyList<InteractionStep> ExpandSteps =
   [
       new InteractionStep("#popin_tc_privacy_container_button button:nth-of-type(2)", InteractionAction.Click, 500),
-        new InteractionStep("div.modal button", InteractionAction.Click, 500),
-        new InteractionStep("button.is-seeMore, button[class*='seeMore'], button[class*='see-more']", InteractionAction.Click, 500)
+      new InteractionStep("div.modal button", InteractionAction.Click, 500),
+      new InteractionStep("button.is-seeMore, button[class*='seeMore'], button[class*='see-more']", InteractionAction.Click, 500)
   ];
 
   public BetclicScraper(
@@ -93,7 +95,13 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
     {
       string html;
       if (expand)
-        html = await GetHtmlAfterInteractionsAsync(gameUrl, ExpandSteps, TimeSpan.FromSeconds(15), cancellationToken).ConfigureAwait(false);
+        html = await GetHtmlAfterInteractionsAsync(
+            gameUrl,
+            ExpandSteps,
+            BetclicInteractiveTimeout,
+            cancellationToken,
+            blockStylesheets: false,
+            blockResources: false).ConfigureAwait(false);
       else
         html = await GetPageHtmlAsync(gameUrl, cancellationToken).ConfigureAwait(false);
 
@@ -145,11 +153,12 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
         continue;
       }
 
-      foreach (var card in groupEvents.QuerySelectorAll("sports-events-event-card.groupEvents_card"))
+      foreach (var card in groupEvents.QuerySelectorAll(".groupEvents_card"))
       {
         try
         {
-          var link = card.QuerySelector("a.cardEvent");
+          // The card is either a wrapper containing a.cardEvent or the anchor itself.
+          var link = card.QuerySelector("a.cardEvent") ?? (card.Matches("a.cardEvent") ? card : null);
           var href = link?.GetAttribute("href");
           var cardUrl = string.IsNullOrEmpty(href) ? "" : BaseUrl + href;
 

@@ -87,7 +87,8 @@ public abstract class BaseScraper
       CancellationToken cancellationToken = default,
       string? waitForSelectorBeforeContent = null,
       string? waitForFunctionBeforeContent = null,
-      bool blockStylesheets = true)
+      bool blockStylesheets = true,
+      bool blockResources = true)
   {
     var effectiveTimeout = timeout ?? TimeSpan.FromSeconds(_options.TimeoutSeconds);
     return await _interactiveFetchPipeline.ExecuteAsync(async ct =>
@@ -98,7 +99,8 @@ public abstract class BaseScraper
           ct,
           waitForSelectorBeforeContent,
           waitForFunctionBeforeContent,
-          blockStylesheets).ConfigureAwait(false),
+          blockStylesheets,
+          blockResources).ConfigureAwait(false),
       cancellationToken).ConfigureAwait(false);
   }
 

@@ -853,6 +853,7 @@ public class FotmobScraperTests
                 Arg.Any<CancellationToken>(),
                 Arg.Any<string?>(),
                 Arg.Any<string?>(),
+                Arg.Any<bool>(),
                 Arg.Any<bool>())
             .Returns(Task.FromResult(minimalHtml), Task.FromResult(playerStatsHtml));
         var sut = CreateScraper(fetcher);

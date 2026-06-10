@@ -1,6 +1,8 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Betting.UpdateMatches;
@@ -17,7 +19,8 @@ public record UpdateMatchesCommand(int LeagueId) : IRequest<IReadOnlyList<Match>
 public class UpdateMatchesHandler(
   IBookmakerMatchesProvider bookmakerMatchesProvider,
   IUnitOfWork unitOfWork,
-  IMatchMatcher matchMatcher) : IRequestHandler<UpdateMatchesCommand, IReadOnlyList<Match>>
+  IMatchMatcher matchMatcher,
+  ILogger<UpdateMatchesHandler> logger) : IRequestHandler<UpdateMatchesCommand, IReadOnlyList<Match>>
 {
   /// <inheritdoc />
   public async Task<IReadOnlyList<Match>> Handle(UpdateMatchesCommand request, CancellationToken cancellationToken)
@@ -59,8 +62,23 @@ public class UpdateMatchesHandler(
         continue;
       }
 
-      var homeClub = matchMatcher.FindClub(game.HomeTeam, allClubs);
-      var awayClub = matchMatcher.FindClub(game.AwayTeam, allClubs);
+      Club homeClub;
+      Club awayClub;
+      try
+      {
+        homeClub = matchMatcher.FindClub(game.HomeTeam, allClubs);
+        awayClub = matchMatcher.FindClub(game.AwayTeam, allClubs);
+      }
+      catch (ClubMatchNotFoundException ex)
+      {
+        logger.LogWarning(ex,
+          "Skipping Betclic game {HomeTeam} vs {AwayTeam} for league {LeagueId}: club '{TeamName}' could not be matched.",
+          game.HomeTeam,
+          game.AwayTeam,
+          request.LeagueId,
+          ex.TeamName);
+        continue;
+      }
       if (homeClub.LeagueId != awayClub.LeagueId)
       {
         throw new InvalidOperationException(

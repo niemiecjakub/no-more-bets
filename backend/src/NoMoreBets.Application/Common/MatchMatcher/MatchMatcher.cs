@@ -219,7 +219,8 @@ public sealed class MatchMatcher : IMatchMatcher
       return DisambiguateParisClubs(trimmed, effectiveName, clubs[best.Index], clubs);
     }
 
-    throw new InvalidOperationException(
+    throw new ClubMatchNotFoundException(
+      trimmed,
       $"No matching club found for '{trimmed}' among {clubs.Count} clubs. Ensure the team exists in the league.");
   }
 

@@ -299,7 +299,7 @@ public class MatchMatcherTests
   }
 
   [Fact]
-  public void FindClub_WhenNoMatchAmongClubs_ThrowsInvalidOperationException()
+  public void FindClub_WhenNoMatchAmongClubs_ThrowsClubMatchNotFoundException()
   {
     // Arrange: club names that will not match "XYZ Unknown"
     var clubs = new List<ClubEntity>
@@ -312,7 +312,7 @@ public class MatchMatcherTests
     var act = () => _sut.FindClub("XYZ Unknown", clubs);
 
     // Assert
-    act.Should().Throw<InvalidOperationException>()
+    act.Should().Throw<ClubMatchNotFoundException>()
       .WithMessage("*No matching club found*");
   }
 
@@ -444,6 +444,25 @@ public class MatchMatcherTests
     var clubs = new List<ClubEntity> { club };
 
     var result = _sut.FindClub(fotmobName, clubs);
+
+    result.Should().BeSameAs(club);
+    result.Name.Should().Be(dbName);
+  }
+
+  [Theory]
+  [InlineData("Niemcy", "Germany")]
+  [InlineData("Paragwaj", "Paraguay")]
+  [InlineData("Wyspy Ziel. Przyl.", "Cabo Verde")]
+  [InlineData("Bośnia i H.", "Bosnia-Herzegovina")]
+  [InlineData("RPA", "South Africa")]
+  [InlineData("Korea Południowa", "Korea Republic")]
+  [InlineData("Wybrzeże Kości Słoniowej", "Cote d'Ivoire")]
+  public void FindClub_BetclicPolishWorldCupAlias_ReturnsDbClubName(string betclicName, string dbName)
+  {
+    var club = new ClubEntity { Id = 1, Name = dbName, LeagueId = 7, SoccerdataId = 1 };
+    var clubs = new List<ClubEntity> { club };
+
+    var result = _sut.FindClub(betclicName, clubs);
 
     result.Should().BeSameAs(club);
     result.Name.Should().Be(dbName);

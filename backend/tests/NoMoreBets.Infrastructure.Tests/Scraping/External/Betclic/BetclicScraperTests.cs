@@ -83,6 +83,37 @@ public class BetclicScraperTests
   }
 
   [Fact]
+  public async Task ParseUpcomingGamesAsync_WithAnchorCardMarkup_ParsesOneGame()
+  {
+    // Arrange: newer Betclic markup where the card is the anchor itself
+    // (<a sports-events-event-card class="cardEvent groupEvents_card">), as seen on the World Cup listing
+    var html = """
+            <html><body>
+            <div class="groupEvents">
+                <h2 class="groupEvents_headTitle">Niedz. 14/06</h2>
+                <a sports-events-event-card class="cardEvent groupEvents_card" href="/pilka-nozna-sfootball/ms-c1/meksyk-rpa-m969329474007040">
+                    <div data-qa="contestant-1-label">Meksyk</div>
+                    <div data-qa="contestant-2-label">RPA</div>
+                    <div class="scoreboard_hour">21:00</div>
+                </a>
+            </div>
+            </body></html>
+            """;
+    var sut = CreateScraper();
+
+    // Act
+    var result = await sut.ParseUpcomingGamesAsync(html);
+
+    // Assert
+    result.Should().HaveCount(1);
+    result[0].HomeTeam.Should().Be("Meksyk");
+    result[0].AwayTeam.Should().Be("RPA");
+    result[0].Time.Should().Be("21:00");
+    result[0].Url.Should().Contain("betclic.pl").And.Contain("meksyk-rpa");
+    result[0].Date.Should().Be(new DateTime(DateTime.Today.Year, 6, 14));
+  }
+
+  [Fact]
   public async Task ParseUpcomingGamesAsync_WithNoGroupEvents_ReturnsEmpty()
   {
     // Arrange
@@ -129,7 +160,17 @@ public class BetclicScraperTests
     // Arrange
     var html = MinimalUpcomingGamesHtml();
     var pageFetcher = PlaywrightPageFetcherMockHelper.CreateMock();
-    pageFetcher.GetHtmlAsync(PremierLeagueUrl, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult(html));
+    pageFetcher
+        .GetHtmlAfterInteractionsAsync(
+            PremierLeagueUrl,
+            Arg.Any<IReadOnlyList<InteractionStep>>(),
+            Arg.Any<TimeSpan?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<bool>(),
+            Arg.Any<bool>())
+        .Returns(Task.FromResult(html));
     var sut = CreateScraper(pageFetcher);
 
     // Act
@@ -140,7 +181,16 @@ public class BetclicScraperTests
     result[0].HomeTeam.Should().Be("Arsenal");
     result[0].AwayTeam.Should().Be("Chelsea");
     result[0].Url.Should().NotBeNullOrEmpty();
-    await pageFetcher.Received(1).GetHtmlAsync(PremierLeagueUrl, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+    await pageFetcher.Received(1)
+        .GetHtmlAfterInteractionsAsync(
+            PremierLeagueUrl,
+            Arg.Any<IReadOnlyList<InteractionStep>>(),
+            Arg.Any<TimeSpan?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<bool>(),
+            Arg.Any<bool>());
   }
 
   [Theory]
@@ -155,13 +205,31 @@ public class BetclicScraperTests
   {
     var html = MinimalUpcomingGamesHtml();
     var pageFetcher = PlaywrightPageFetcherMockHelper.CreateMock();
-    pageFetcher.GetHtmlAsync(expectedListingUrl, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
-      .Returns(Task.FromResult(html));
+    pageFetcher
+        .GetHtmlAfterInteractionsAsync(
+            expectedListingUrl,
+            Arg.Any<IReadOnlyList<InteractionStep>>(),
+            Arg.Any<TimeSpan?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<bool>(),
+            Arg.Any<bool>())
+        .Returns(Task.FromResult(html));
     var sut = CreateScraper(pageFetcher);
 
     await sut.GetUpcomingGamesAsync(leagueSlug);
 
-    await pageFetcher.Received(1).GetHtmlAsync(expectedListingUrl, Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>());
+    await pageFetcher.Received(1)
+        .GetHtmlAfterInteractionsAsync(
+            expectedListingUrl,
+            Arg.Any<IReadOnlyList<InteractionStep>>(),
+            Arg.Any<TimeSpan?>(),
+            Arg.Any<CancellationToken>(),
+            Arg.Any<string?>(),
+            Arg.Any<string?>(),
+            Arg.Any<bool>(),
+            Arg.Any<bool>());
   }
 
   [Fact]
@@ -231,6 +299,7 @@ public class BetclicScraperTests
             Arg.Any<CancellationToken>(),
             Arg.Any<string?>(),
             Arg.Any<string?>(),
+            Arg.Any<bool>(),
             Arg.Any<bool>())
         .Returns(Task.FromResult(html!));
     var sut = CreateScraper(pageFetcher);
@@ -248,6 +317,7 @@ public class BetclicScraperTests
             Arg.Any<CancellationToken>(),
             Arg.Any<string?>(),
             Arg.Any<string?>(),
+            Arg.Any<bool>(),
             Arg.Any<bool>());
   }
 }
