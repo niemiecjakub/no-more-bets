@@ -80,19 +80,22 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
 
 internal sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
 {
-  public string BuildPrompt() => """
-    Create a fictional prediction slip for this match as a research validation artifact.
-    This is not a real bet and has no financial implications.
+   public string BuildPrompt() => """
+          Goal:
+          Create a paper (fictional) prediction slip for this match as a research artifact that tests the quality of your prior research.
 
-    The purpose is to test whether your prior research produces internally consistent and logically supported predictions when forced into explicit outcomes.
-    Use only information derived from your prior research. Do not introduce new facts, assumptions, or external knowledge.
-    Selections must be strictly consistent with your prior analysis.
-    Do not consider odds, market pricing, or value. These are irrelevant for this task.
+          Completion criteria:
+          A paper bet slip is placed with valid, non-contradictory selections based strictly on your prior research.
+          Selections maximize correctness of predictions — odds are unavailable and must be ignored entirely.
 
-    Each selection should represent a distinct, logically independent implication of your prior research.
+          This is not a real bet and does not affect bankroll in any way.
+          Single selections are acceptable but multiple selections (parlays) are preferred.
+          Do not include contradictory or overlapping selections.
+          Avoid combining markets that express the same dimension in conflicting ways.
+          You cannot select multiple options from the same market.
 
-    Before finalizing the slip, validate that all selections are mutually consistent with each other and with the conclusions of your prior research.
-    """;
+          Confirm match and club context from your prior research, review available markets and outcome options for this fixture, then place the paper slip.
+          """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
     serviceProvider.ResolveTools([
