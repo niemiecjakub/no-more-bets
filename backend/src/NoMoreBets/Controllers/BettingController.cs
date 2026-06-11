@@ -23,7 +23,7 @@ public class BettingController(IMediator mediator) : ControllerBase
   }
 
   [HttpGet("matchinsights/matches/{matchId:int}/agent-research")]
-  public async Task<ActionResult<string?>> GetAgentResearch(int matchId, CancellationToken cancellationToken = default)
+  public async Task<ActionResult<MatchResearchOutputDto?>> GetAgentResearch(int matchId, CancellationToken cancellationToken = default)
   {
     if (!await mediator.Send(new MatchExistsQuery(matchId), cancellationToken).ConfigureAwait(false))
       return NotFound();

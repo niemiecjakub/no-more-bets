@@ -76,7 +76,7 @@ public sealed class GetUpcomingMatchesReadyForPredictionHandler(IUnitOfWork unit
 
     var soonKickoffIds = soonKickoff.Select(m => m.Id).ToArray();
     var researchedMatchIds = await unitOfWork.Matches
-      .GetMatchIdsWithAnalysisCodeAsync(soonKickoffIds, MatchAnalysis.ResearchCode, cancellationToken)
+      .GetMatchIdsWithAnalysisCodeAsync(soonKickoffIds, MatchAnalysis.StructuredResearchCode, cancellationToken)
       .ConfigureAwait(false);
 
     return soonKickoff

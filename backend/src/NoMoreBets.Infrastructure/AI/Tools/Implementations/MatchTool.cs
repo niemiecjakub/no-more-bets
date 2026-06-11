@@ -17,6 +17,7 @@ using NoMoreBets.Application.Matches.GetMatchLineups;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.AI.Common;
 using AvailableMatch = NoMoreBets.Infrastructure.AI.Tools.Implementations.Models.AvailableMatch;
 
@@ -144,17 +145,22 @@ public class MatchTool
   [Description("Returns the latest stored research analysis text for the match (same source used before betting). Use to compare pre-match thesis to how the bet resolved.")]
   public async Task<string?> GetMatchResearchTextAsync(int matchId, CancellationToken cancellationToken = default)
   {
-    var analysis = await _mediator
+    var research = await _mediator
       .Send(new GetMatchAgentResearchQuery(matchId), cancellationToken)
       .ConfigureAwait(false);
 
-    if (analysis is null)
+    if (research is null)
     {
       _logger.LogError("No reflection research text found for match {MatchId}.", matchId);
       return "Match analysis is not available.";
     }
 
-    return analysis;
+    return MatchAnalysis.FormatResearchOutput(new MatchResearchOutput
+    {
+      MatchOverview = research.MatchOverview,
+      KeyPoints = research.KeyPoints.ToList(),
+      RisksAndUnknowns = research.RisksAndUnknowns.ToList(),
+    });
   }
 
   private static string SerializeResearchText(string content)

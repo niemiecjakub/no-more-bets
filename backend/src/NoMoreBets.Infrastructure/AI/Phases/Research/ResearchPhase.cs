@@ -38,8 +38,7 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
         Completion criteria:
         Core match intelligence and team-level context have been gathered and synthesized.
         Distilled learnings are persisted to memory.
-        A brief, scannable final report (under 500 words) is saved as the official match analysis for this fixture via SaveMatchAnalysis.
-        Do not finish until the analysis is saved.
+        End with a structured JSON summary: match overview, key points, and risks/unknowns.
 
         Break the work into todos at the start, then work through them marking items complete as you finish.
 
@@ -67,7 +66,6 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
       ToolRegistry.Match.GetClubRecentGames,
       ToolRegistry.Match.GetMatchBettingOddsHistory,
       ToolRegistry.Match.GetClubRollingPerformance,
-      ToolRegistry.Match.SaveMatchAnalysis,
     };
 
     // National teams have no club daily summary, and a tournament has no

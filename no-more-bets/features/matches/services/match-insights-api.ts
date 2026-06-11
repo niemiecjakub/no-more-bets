@@ -12,6 +12,7 @@ import type {
   MatchEventDto,
   MatchInjuriesResult,
   MatchLineupResult,
+  MatchResearchOutput,
   RecentMatch,
   TeamPerformanceResult,
 } from "../interfaces";
@@ -37,11 +38,36 @@ export async function fetchMatchEvents(matchId: number): Promise<MatchEventDto[]
   return data;
 }
 
-export async function fetchMatchAgentResearch(matchId: number): Promise<string | null> {
-  const { data } = await axiosInstance.get<string | null>(
+function normalizeMatchResearchOutput(raw: unknown): MatchResearchOutput | null {
+  if (raw == null || typeof raw !== "object") return null;
+  const item = raw as Record<string, unknown>;
+  const matchOverview =
+    typeof item.matchOverview === "string"
+      ? item.matchOverview
+      : typeof item.MatchOverview === "string"
+        ? item.MatchOverview
+        : null;
+  if (matchOverview == null) return null;
+
+  const keyPointsRaw = item.keyPoints ?? item.KeyPoints;
+  const risksRaw = item.risksAndUnknowns ?? item.RisksAndUnknowns;
+
+  return {
+    matchOverview,
+    keyPoints: Array.isArray(keyPointsRaw)
+      ? keyPointsRaw.filter((p): p is string => typeof p === "string")
+      : [],
+    risksAndUnknowns: Array.isArray(risksRaw)
+      ? risksRaw.filter((r): r is string => typeof r === "string")
+      : [],
+  };
+}
+
+export async function fetchMatchAgentResearch(matchId: number): Promise<MatchResearchOutput | null> {
+  const { data } = await axiosInstance.get<unknown>(
     `/api/matchinsights/matches/${matchId}/agent-research`
   );
-  return data;
+  return normalizeMatchResearchOutput(data);
 }
 
 type BetSlipSummaryApiDto = Omit<BetSlipSummaryDto, "status" | "selections"> & {

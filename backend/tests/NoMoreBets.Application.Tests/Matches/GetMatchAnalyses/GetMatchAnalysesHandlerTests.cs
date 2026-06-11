@@ -48,8 +48,11 @@ public class GetMatchAnalysesHandlerTests
     };
     _matches.GetMatchByIdAsync(5, Arg.Any<CancellationToken>()).Returns(match);
     _matches
+      .GetLatestMatchAnalysisByCodeAsync(5, MatchAnalysis.StructuredResearchCode, Arg.Any<CancellationToken>())
+      .Returns(new MatchAnalysis { Id = 1, AgentSessionId = 42, Code = MatchAnalysis.StructuredResearchCode, Content = "{}" });
+    _matches
       .GetLatestMatchAnalysisByCodeAsync(5, MatchAnalysis.ResearchCode, Arg.Any<CancellationToken>())
-      .Returns(new MatchAnalysis { Id = 1, AgentSessionId = 42, Code = MatchAnalysis.ResearchCode, Content = "{}" });
+      .Returns((MatchAnalysis?)null);
     _matches
       .GetNonResearchAnalysesForMatchAsync(5, Arg.Any<CancellationToken>())
       .Returns(new List<MatchAnalysis>

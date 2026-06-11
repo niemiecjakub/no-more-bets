@@ -34,6 +34,13 @@ export const MATCH_STATUS = {
   Finished: 2,
 } as const;
 
+/** Structured agent research output from GET api/matchinsights/matches/:id/agent-research */
+export interface MatchResearchOutput {
+  matchOverview: string;
+  keyPoints: string[];
+  risksAndUnknowns: string[];
+}
+
 /** Structured analysis sections returned when Content is valid JSON. */
 export interface StructuredMatchAnalysis {
   context?: string | null;

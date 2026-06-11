@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace NoMoreBets.Infrastructure.AI.Phases.Research;
+namespace NoMoreBets.Domain.Matches.Dto;
 
 public sealed class MatchResearchOutput
 {

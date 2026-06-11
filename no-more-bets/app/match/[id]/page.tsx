@@ -24,11 +24,13 @@ import {
     type TeamMetrics,
     type MatchDetailsSummary,
     type MatchEventDto,
+    type MatchResearchOutput,
 } from "@/features/matches/interfaces";
 import type { BetSlipSummaryDto } from "@/features/bets/interfaces";
 import { LazyAgentSessionTranscript } from "@/features/bets/components/lazy-agent-session-transcript";
 import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-slip-summary";
 import { MatchClubEventsList } from "@/features/matches/components/match-club-events-list";
+import { MatchResearchOutputView } from "@/features/matches/components/match-research-output-view";
 import { RecentGamesList } from "@/features/matches/components/recent-games-list";
 import {
     fetchMatchAgentResearch,
@@ -46,7 +48,7 @@ import {
 interface MatchInsights {
     lineups: MatchLineupResult | null;
     injuries: MatchInjuriesResult | null;
-    agentResearch: string | null;
+    agentResearch: MatchResearchOutput | null;
     researchBetSlip: BetSlipSummaryDto | null;
     recentGames: ClubPair<RecentMatch[] | null>;
     leagueStatistics: ClubPair<ClubLeagueStats | null>;
@@ -250,9 +252,9 @@ export default function MatchPage() {
 
                 <Card title="Agent Research" icon="🔬" className="mb-6">
                     <AgentResearchSection
-                        summaryPreview={insights.agentResearch}
-                        summaryLoading={insightLoading.agentResearch && insights.agentResearch === undefined}
-                        summaryError={insightErrors.agentResearch}
+                        research={insights.agentResearch}
+                        researchLoading={insightLoading.agentResearch && insights.agentResearch === undefined}
+                        researchError={insightErrors.agentResearch}
                         researchSlip={insights.researchBetSlip}
                         researchSlipLoading={insightLoading.researchBetSlip && insights.researchBetSlip === undefined}
                         researchSlipError={insightErrors.researchBetSlip}
@@ -704,17 +706,17 @@ function PreviewSection({
 }
 
 function AgentResearchSection({
-    summaryPreview,
-    summaryLoading,
-    summaryError,
+    research,
+    researchLoading,
+    researchError,
     researchSlip,
     researchSlipLoading,
     researchSlipError,
     researchAgentSessionId,
 }: {
-    summaryPreview?: string | null;
-    summaryLoading: boolean;
-    summaryError?: string;
+    research?: MatchResearchOutput | null;
+    researchLoading: boolean;
+    researchError?: string;
     researchSlip?: BetSlipSummaryDto | null;
     researchSlipLoading: boolean;
     researchSlipError?: string;
@@ -727,7 +729,15 @@ function AgentResearchSection({
 
     return (
         <div className="px-4 py-4">
-            <PreviewSection preview={summaryPreview} isLoading={summaryLoading} error={summaryError} loadingMessage="Loading agent research..." emptyMessage="No agent research available." />
+            {researchError ? (
+                <p className="text-sm text-red-800 dark:text-red-200">{researchError}</p>
+            ) : researchLoading ? (
+                <MutedText>Loading agent research...</MutedText>
+            ) : research == null ? (
+                <MutedText>No agent research available.</MutedText>
+            ) : (
+                <MatchResearchOutputView research={research} />
+            )}
             {showResearchBetSlipBlock ? (
                 <div className="mt-6 border-t border-zinc-200 pt-6 dark:border-zinc-800">
                     <h3 className="mb-3 text-sm font-semibold text-foreground">Research bet slip</h3>

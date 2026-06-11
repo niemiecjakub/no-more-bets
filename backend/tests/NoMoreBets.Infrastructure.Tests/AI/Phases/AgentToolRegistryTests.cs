@@ -46,14 +46,12 @@ public class AgentToolRegistryTests
       ToolRegistry.Match.GetLeagueTable,
       ToolRegistry.Match.GetMatchBettingOddsHistory,
       ToolRegistry.Match.GetClubRollingPerformance,
-      ToolRegistry.Match.SaveMatchAnalysis,
     ]);
 
-    tools.Should().HaveCount(10);
+    tools.Should().HaveCount(9);
     ToolNames(tools).Should().Contain(
     [
       "Match_GetLineups",
-      "Match_SaveMatchAnalysisAsync",
     ]);
   }
 

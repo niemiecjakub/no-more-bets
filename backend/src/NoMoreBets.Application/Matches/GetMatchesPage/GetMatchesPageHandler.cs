@@ -54,7 +54,7 @@ public sealed class GetMatchesPageHandler(IUnitOfWork unitOfWork, IMediator medi
         .GetMatchIdsWithHeadToHeadAsync(pageIds, cancellationToken)
         .ConfigureAwait(false);
       hasResearchSet = await unitOfWork.Matches
-        .GetMatchIdsWithAnalysisCodeAsync(pageIds, MatchAnalysis.ResearchCode, cancellationToken)
+        .GetMatchIdsWithAnalysisCodeAsync(pageIds, MatchAnalysis.StructuredResearchCode, cancellationToken)
         .ConfigureAwait(false);
       hasResearchBetSet = await unitOfWork.Betting
         .GetMatchIdsWithResearchPhaseSelectionsAsync(pageIds, cancellationToken)

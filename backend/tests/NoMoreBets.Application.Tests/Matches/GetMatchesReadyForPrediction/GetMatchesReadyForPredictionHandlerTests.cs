@@ -56,7 +56,7 @@ public class GetMatchesReadyForPredictionHandlerTests
       .Returns(new List<Match> { soonNoResearch, soonWithResearch });
     _matches.GetMatchIdsWithAnalysisCodeAsync(
         Arg.Is<IReadOnlyCollection<int>>(ids => ids.Contains(11) && ids.Contains(12)),
-        MatchAnalysis.ResearchCode,
+        MatchAnalysis.StructuredResearchCode,
         Arg.Any<CancellationToken>())
       .Returns(new HashSet<int> { 12 });
 

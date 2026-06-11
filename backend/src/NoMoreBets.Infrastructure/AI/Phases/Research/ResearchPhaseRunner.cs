@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 
@@ -18,6 +19,8 @@ public sealed class ResearchPhaseRunner(
   IServiceProvider serviceProvider,
   ILogger<ResearchPhaseRunner> logger)
 {
+  private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
   public async Task<IReadOnlyList<IMessage>> RunAsync(Match match, CancellationToken cancellationToken = default)
   {
     var phaseName = ResearchPhaseDefinition.Phase.ToString();
@@ -47,13 +50,19 @@ public sealed class ResearchPhaseRunner(
 
       var researchOutput = JsonSerializer.Deserialize<MatchResearchOutput>(
         researchResult.Response.Text,
-        new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        JsonOptions);
       if (researchOutput is null)
       {
         logger.LogWarning(
           "Research phase for match {MatchId} did not return parseable {OutputType}",
           match.Id,
           nameof(MatchResearchOutput));
+      }
+      else
+      {
+        var analysis = MatchAnalysis.CreateStructuredResearch(match.Id, sessionId, researchOutput);
+        await unitOfWork.Matches.AddMatchAnalysisAsync(analysis, cancellationToken).ConfigureAwait(false);
+        await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
       }
 
       var paperBetResult = await AgentPhaseStepExecutor.RunAsync(

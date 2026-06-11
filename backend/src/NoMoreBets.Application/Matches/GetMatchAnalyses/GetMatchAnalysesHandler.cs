@@ -21,6 +21,10 @@ public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork)
       return null;
 
     var researchAnalysis = await unitOfWork.Matches
+      .GetLatestMatchAnalysisByCodeAsync(request.MatchId, MatchAnalysis.StructuredResearchCode, cancellationToken)
+      .ConfigureAwait(false);
+
+    researchAnalysis ??= await unitOfWork.Matches
       .GetLatestMatchAnalysisByCodeAsync(request.MatchId, MatchAnalysis.ResearchCode, cancellationToken)
       .ConfigureAwait(false);
 

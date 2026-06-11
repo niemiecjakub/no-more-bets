@@ -1,6 +1,7 @@
+using System.Text;
+using System.Text.Json;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches.Dto;
-using System.Text.Json;
 
 namespace NoMoreBets.Domain.Matches;
 
@@ -8,6 +9,7 @@ public class MatchAnalysis
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
   public const string ResearchCode = "Research";
+  public const string StructuredResearchCode = "StructuredResearch";
 
   public int Id { get; set; }
   public int MatchId { get; set; }
@@ -17,6 +19,44 @@ public class MatchAnalysis
 
   public Match Match { get; set; } = null!;
   public AgentSession? AgentSession { get; set; }
+
+  public static MatchAnalysis CreateStructuredResearch(int matchId, int? agentSessionId, MatchResearchOutput output) =>
+    new()
+    {
+      MatchId = matchId,
+      AgentSessionId = agentSessionId,
+      Code = StructuredResearchCode,
+      Content = JsonSerializer.Serialize(output, JsonOptions),
+    };
+
+  public static string FormatResearchOutput(MatchResearchOutput research)
+  {
+    var sb = new StringBuilder();
+    sb.Append(research.MatchOverview);
+
+    if (research.KeyPoints.Count > 0)
+    {
+      sb.AppendLine();
+      sb.AppendLine();
+      sb.AppendLine("Key points:");
+      foreach (var point in research.KeyPoints)
+      {
+        sb.AppendLine($"- {point}");
+      }
+    }
+
+    if (research.RisksAndUnknowns.Count > 0)
+    {
+      sb.AppendLine();
+      sb.AppendLine("Risks and unknowns:");
+      foreach (var risk in research.RisksAndUnknowns)
+      {
+        sb.AppendLine($"- {risk}");
+      }
+    }
+
+    return sb.ToString();
+  }
 
   public string? GetAgentResearch()
   {
@@ -50,6 +90,45 @@ public class MatchAnalysis
     {
       return null;
     }
+  }
+
+  public MatchResearchOutput? GetStructuredResearch()
+  {
+    if (Code != StructuredResearchCode || string.IsNullOrEmpty(Content))
+    {
+      return null;
+    }
+
+    try
+    {
+      return JsonSerializer.Deserialize<MatchResearchOutput>(Content, JsonOptions);
+    }
+    catch (JsonException)
+    {
+      return null;
+    }
+  }
+
+  public MatchResearchOutput? TryGetAgentResearchOutput()
+  {
+    var structured = GetStructuredResearch();
+    if (structured != null)
+    {
+      return structured;
+    }
+
+    var legacyText = GetAgentResearch();
+    if (string.IsNullOrEmpty(legacyText))
+    {
+      return null;
+    }
+
+    return new MatchResearchOutput
+    {
+      MatchOverview = legacyText,
+      KeyPoints = [],
+      RisksAndUnknowns = [],
+    };
   }
 }
 

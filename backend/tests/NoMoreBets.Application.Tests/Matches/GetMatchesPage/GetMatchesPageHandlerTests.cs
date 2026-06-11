@@ -62,7 +62,7 @@ public class GetMatchesPageHandlerTests
       .Returns(new HashSet<int>());
     _matches.GetMatchIdsWithHeadToHeadAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
       .Returns(new HashSet<int>());
-    _matches.GetMatchIdsWithAnalysisCodeAsync(Arg.Any<IReadOnlyCollection<int>>(), MatchAnalysis.ResearchCode, Arg.Any<CancellationToken>())
+    _matches.GetMatchIdsWithAnalysisCodeAsync(Arg.Any<IReadOnlyCollection<int>>(), MatchAnalysis.StructuredResearchCode, Arg.Any<CancellationToken>())
       .Returns(new HashSet<int>());
     _betting.GetMatchIdsWithResearchPhaseSelectionsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
       .Returns(new HashSet<int>());

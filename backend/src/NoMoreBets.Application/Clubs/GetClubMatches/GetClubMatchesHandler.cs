@@ -45,7 +45,7 @@ public sealed class GetClubMatchesHandler(IUnitOfWork unitOfWork, IMediator medi
       .GetMatchIdsWithHeadToHeadAsync(matchIds, cancellationToken)
       .ConfigureAwait(false);
     var hasResearchSet = await unitOfWork.Matches
-      .GetMatchIdsWithAnalysisCodeAsync(matchIds, Domain.Matches.MatchAnalysis.ResearchCode, cancellationToken)
+      .GetMatchIdsWithAnalysisCodeAsync(matchIds, Domain.Matches.MatchAnalysis.StructuredResearchCode, cancellationToken)
       .ConfigureAwait(false);
     var hasResearchBetSet = await unitOfWork.Betting
       .GetMatchIdsWithResearchPhaseSelectionsAsync(matchIds, cancellationToken)

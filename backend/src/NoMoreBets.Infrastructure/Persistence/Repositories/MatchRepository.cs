@@ -232,7 +232,7 @@ public class MatchRepository : IMatchRepository
       .Where(m => _db.Head2Head.Any(h =>
         (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
         (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)))
-      .Where(m => !_db.MatchAnalysis.Any(a => a.MatchId == m.Id && a.Code == MatchAnalysis.ResearchCode))
+      .Where(m => !_db.MatchAnalysis.Any(a => a.MatchId == m.Id && a.Code == MatchAnalysis.StructuredResearchCode))
       .OrderBy(m => m.MatchDate)
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
@@ -431,7 +431,7 @@ public class MatchRepository : IMatchRepository
   {
     return await _db.MatchAnalysis
       .Where(a => a.MatchId == matchId)
-      .Where(a => a.Code != MatchAnalysis.ResearchCode)
+      .Where(a => a.Code != MatchAnalysis.ResearchCode && a.Code != MatchAnalysis.StructuredResearchCode)
       .OrderBy(a => a.Id)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
