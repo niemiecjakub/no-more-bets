@@ -1,5 +1,5 @@
+using System.Text.Json;
 using Microsoft.Agents.AI;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
@@ -20,18 +20,12 @@ public sealed class ResearchPhaseRunner(
 {
   public async Task<IReadOnlyList<IMessage>> RunAsync(Match match, CancellationToken cancellationToken = default)
   {
-    var definition = ResearchPhaseDefinition.ForMatch(match);
-    if (definition.Steps.Count == 0)
-    {
-      throw new InvalidOperationException($"Agent phase {definition.Phase} has no steps configured.");
-    }
-
-    var phaseName = definition.Phase.ToString();
+    var phaseName = ResearchPhaseDefinition.Phase.ToString();
     logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
 
     var startedAt = DateTime.UtcNow;
     var sessionId = await unitOfWork.AgentSessions
-      .CreateSessionAsync(definition.Phase, startedAt, cancellationToken)
+      .CreateSessionAsync(ResearchPhaseDefinition.Phase, startedAt, cancellationToken)
       .ConfigureAwait(false);
     agentSessionContext.SessionId = sessionId;
 
@@ -39,26 +33,40 @@ public sealed class ResearchPhaseRunner(
     AgentSession? agentSession = null;
     try
     {
-      foreach (var step in definition.Steps)
-      {
-        var tools = step.Implementation.GetTools(serviceProvider);
-        var contextProviders = step.Implementation.GetAIContextProviders(serviceProvider);
-        var prompt = step.Implementation.BuildPrompt();
-        var config = await agentBuilder
-          .BuildForScheduledJobAsync(contextProviders, agentSession, cancellationToken)
-          .ConfigureAwait(false);
-        agentSession ??= config.Session;
-        var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
-        await config.Agent
-          .RunAsync([new ChatMessage(ChatRole.User, prompt)], config.Session, runOptions, cancellationToken)
-          .ConfigureAwait(false);
-        var stepMessages = messageCollector.TakeMessages();
+      var researchResult = await AgentPhaseStepExecutor.RunAsync(
+        new ResearchExecuteStep(match),
+        persistTranscript: true,
+        responseFormatType: typeof(MatchResearchOutput),
+        agentBuilder,
+        messageCollector,
+        serviceProvider,
+        agentSession,
+        messages,
+        cancellationToken).ConfigureAwait(false);
+      agentSession = researchResult.Session;
 
-        if (step.PersistTranscript)
-        {
-          messages.AddRange(stepMessages);
-        }
+      var researchOutput = JsonSerializer.Deserialize<MatchResearchOutput>(
+        researchResult.Response.Text,
+        new JsonSerializerOptions(JsonSerializerDefaults.Web));
+      if (researchOutput is null)
+      {
+        logger.LogWarning(
+          "Research phase for match {MatchId} did not return parseable {OutputType}",
+          match.Id,
+          nameof(MatchResearchOutput));
       }
+
+      var paperBetResult = await AgentPhaseStepExecutor.RunAsync(
+        new PaperBetFollowUpStep(match.Id),
+        persistTranscript: false,
+        responseFormatType: null,
+        agentBuilder,
+        messageCollector,
+        serviceProvider,
+        agentSession,
+        messages,
+        cancellationToken).ConfigureAwait(false);
+      agentSession = paperBetResult.Session;
     }
     finally
     {

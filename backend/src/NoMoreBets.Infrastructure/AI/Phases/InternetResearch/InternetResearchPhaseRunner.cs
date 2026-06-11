@@ -1,5 +1,4 @@
 using Microsoft.Agents.AI;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
@@ -19,18 +18,12 @@ public sealed class InternetResearchPhaseRunner(
 {
   public async Task<IReadOnlyList<IMessage>> RunAsync(CancellationToken cancellationToken = default)
   {
-    var definition = InternetResearchPhaseDefinition.Create();
-    if (definition.Steps.Count == 0)
-    {
-      throw new InvalidOperationException($"Agent phase {definition.Phase} has no steps configured.");
-    }
-
-    var phaseName = definition.Phase.ToString();
+    var phaseName = InternetResearchPhaseDefinition.Phase.ToString();
     logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
 
     var startedAt = DateTime.UtcNow;
     var sessionId = await unitOfWork.AgentSessions
-      .CreateSessionAsync(definition.Phase, startedAt, cancellationToken)
+      .CreateSessionAsync(InternetResearchPhaseDefinition.Phase, startedAt, cancellationToken)
       .ConfigureAwait(false);
     agentSessionContext.SessionId = sessionId;
 
@@ -38,26 +31,17 @@ public sealed class InternetResearchPhaseRunner(
     AgentSession? agentSession = null;
     try
     {
-      foreach (var step in definition.Steps)
-      {
-        var tools = step.Implementation.GetTools(serviceProvider);
-        var contextProviders = step.Implementation.GetAIContextProviders(serviceProvider);
-        var prompt = step.Implementation.BuildPrompt();
-        var config = await agentBuilder
-          .BuildForScheduledJobAsync(contextProviders, agentSession, cancellationToken)
-          .ConfigureAwait(false);
-        agentSession ??= config.Session;
-        var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
-        await config.Agent
-          .RunAsync([new ChatMessage(ChatRole.User, prompt)], config.Session, runOptions, cancellationToken)
-          .ConfigureAwait(false);
-        var stepMessages = messageCollector.TakeMessages();
-
-        if (step.PersistTranscript)
-        {
-          messages.AddRange(stepMessages);
-        }
-      }
+      var executeResult = await AgentPhaseStepExecutor.RunAsync(
+        new InternetResearchExecuteStep(),
+        persistTranscript: true,
+        responseFormatType: null,
+        agentBuilder,
+        messageCollector,
+        serviceProvider,
+        agentSession,
+        messages,
+        cancellationToken).ConfigureAwait(false);
+      agentSession = executeResult.Session;
     }
     finally
     {

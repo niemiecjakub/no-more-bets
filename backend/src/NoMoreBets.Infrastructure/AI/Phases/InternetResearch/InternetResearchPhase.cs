@@ -13,59 +13,47 @@ using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
 
-public sealed class InternetResearchPhaseDefinition
+public static class InternetResearchPhaseDefinition
 {
-  private InternetResearchPhaseDefinition()
-  {
-    Steps =
-    [
-      new AgentPhaseStep(new InternetResearchExecuteStep(), PersistTranscript: true),
-    ];
-  }
+  public static AgentSessionPhase Phase => AgentSessionPhase.InternetResearch;
+}
 
-  public AgentSessionPhase Phase => AgentSessionPhase.InternetResearch;
-  public IReadOnlyList<AgentPhaseStep> Steps { get; }
+internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
+{
+  public string BuildPrompt() => """
+        You are conducting research for upcoming matches for yourself, not for a syndicate or external audience.
+        Focus on narratives, news, sentiment, and game context that your future self can reuse in later match-level analysis and betting decisions.
+        Structure output so your future self can quickly reuse it in the betting phase.
 
-  public static InternetResearchPhaseDefinition Create()
-    => new();
+        Goal:
+        Produce one or more general research briefs for upcoming fixtures that your future self can use for later match-level analysis and betting decisions.
 
-  private sealed class InternetResearchExecuteStep : IAgentPhaseStep
-  {
-    public string BuildPrompt() => """
-          You are conducting research for upcoming matches for yourself, not for a syndicate or external audience.
-          Focus on narratives, news, sentiment, and game context that your future self can reuse in later match-level analysis and betting decisions.
-          Structure output so your future self can quickly reuse it in the betting phase.
+        Completion criteria:
+        Key upcoming fixtures have been surveyed and prioritized fixtures researched.
+        Distilled, reusable insights are persisted to memory — not raw copy-paste dumps.
 
-          Goal:
-          Produce one or more general research briefs for upcoming fixtures that your future self can use for later match-level analysis and betting decisions.
+        Break the work into todos at the start, then work through them marking items complete as you finish.
 
-          Completion criteria:
-          Key upcoming fixtures have been surveyed and prioritized fixtures researched.
-          Distilled, reusable insights are persisted to memory — not raw copy-paste dumps.
+        Review memory for relevant context before gathering new material. Survey upcoming fixtures and identify which matches merit deeper internet research versus a quick pass. Confirm upcoming fixtures still align with expectations and adjust if reality differs materially.
 
-          Break the work into todos at the start, then work through them marking items complete as you finish.
+        Gather internet context for prioritized fixtures — match and club news, league updates, sentiment, and related context. Prioritize recent, reliable sources and label uncertainty. Persist distilled, reusable insights to memory.
 
-          Review memory for relevant context before gathering new material. Survey upcoming fixtures and identify which matches merit deeper internet research versus a quick pass. Confirm upcoming fixtures still align with expectations and adjust if reality differs materially.
+        ## Quality constraints
+        - Be evidence-driven and explicit about missing data
+        - Cross-check important claims when deeper validation is warranted
+        """;
 
-          Gather internet context for prioritized fixtures — match and club news, league updates, sentiment, and related context. Prioritize recent, reliable sources and label uncertainty. Persist distilled, reusable insights to memory.
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
+    serviceProvider.ResolveTools([
+      ToolRegistry.Match.GetUpcomingMatches,
+    ]);
 
-          ## Quality constraints
-          - Be evidence-driven and explicit about missing data
-          - Cross-check important claims when deeper validation is warranted
-          """;
-
-    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-      serviceProvider.ResolveTools([
-        ToolRegistry.Match.GetUpcomingMatches,
-      ]);
-
-    public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
-    [
-      new DateProvider(),
-      new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-      new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
-      new AgentModeProvider(new AgentModeProviderOptions { DefaultMode = "execute" }),
-      new TodoProvider(),
-    ];
-  }
+  public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+  [
+    new DateProvider(),
+    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+    new AgentModeProvider(new AgentModeProviderOptions { DefaultMode = "execute" }),
+    new TodoProvider(),
+  ];
 }

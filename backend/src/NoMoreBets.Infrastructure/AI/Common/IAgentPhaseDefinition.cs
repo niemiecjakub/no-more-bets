@@ -10,5 +10,3 @@ public interface IAgentPhaseStep
   IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) => [];
   IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) => [];
 }
-
-public sealed record AgentPhaseStep(IAgentPhaseStep Implementation, bool PersistTranscript);

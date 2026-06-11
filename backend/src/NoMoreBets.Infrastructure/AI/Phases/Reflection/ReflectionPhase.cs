@@ -13,73 +13,61 @@ using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Reflection;
 
-public sealed class ReflectionPhaseDefinition
+public static class ReflectionPhaseDefinition
 {
-  private ReflectionPhaseDefinition()
-  {
-    Steps =
-    [
-      new AgentPhaseStep(new ReflectionExecuteStep(), PersistTranscript: true),
-    ];
-  }
+  public static AgentSessionPhase Phase => AgentSessionPhase.Reflection;
+}
 
-  public AgentSessionPhase Phase => AgentSessionPhase.Reflection;
-  public IReadOnlyList<AgentPhaseStep> Steps { get; }
+internal sealed class ReflectionExecuteStep : IAgentPhaseStep
+{
+  public string BuildPrompt() => """
+        Learn from recent settled outcomes and identify durable, reusable decision rules that could improve future performance.
+        Treat single outcomes as weak evidence unless they clearly expose a process failure.
+        Only extract insights that will change how you bet across many future matches.
+        Improve future decision quality (edge identification, discipline, sizing, structure) without overfitting to short-term results.
 
-  public static ReflectionPhaseDefinition Create()
-    => new();
+        Goal:
+        Extract and store only high-signal, generalizable decision rules from settled bet slips.
 
-  private sealed class ReflectionExecuteStep : IAgentPhaseStep
-  {
-    public string BuildPrompt() => """
-          Learn from recent settled outcomes and identify durable, reusable decision rules that could improve future performance.
-          Treat single outcomes as weak evidence unless they clearly expose a process failure.
-          Only extract insights that will change how you bet across many future matches.
-          Improve future decision quality (edge identification, discipline, sizing, structure) without overfitting to short-term results.
+        Completion criteria:
+        All settled bet slips awaiting reflection have been analyzed from a process perspective.
+        High-signal rules are persisted to memory, or it is explicitly determined that no strong lessons exist and nothing is stored.
 
-          Goal:
-          Extract and store only high-signal, generalizable decision rules from settled bet slips.
+        Break the work into todos at the start, then work through them marking items complete as you finish.
 
-          Completion criteria:
-          All settled bet slips awaiting reflection have been analyzed from a process perspective.
-          High-signal rules are persisted to memory, or it is explicitly determined that no strong lessons exist and nothing is stored.
+        Core rule — only store insights that meet ALL of the following:
+        - Generalizable across matches (no team-, date-, or match-specific context)
+        - Actionable (changes a future decision: bet, pass, size, structure)
+        - Concise and rule-like (not descriptive, not narrative)
 
-          Break the work into todos at the start, then work through them marking items complete as you finish.
+        Identify settled bet slips awaiting reflection. Review memory for strategy, reflections, and general knowledge.
 
-          Core rule — only store insights that meet ALL of the following:
-          - Generalizable across matches (no team-, date-, or match-specific context)
-          - Actionable (changes a future decision: bet, pass, size, structure)
-          - Concise and rule-like (not descriptive, not narrative)
+        For each settled slip in scope, analyze outcomes strictly from a process perspective: compare pre-bet logic versus actual outcome, separate clear process errors from valid decisions that lost due to variance, and note repeated mistakes such as overstacking, forcing bets, or weak edges.
 
-          Identify settled bet slips awaiting reflection. Review memory for strategy, reflections, and general knowledge.
+        Convert findings into strict decision rules — short, match-agnostic, and focused on future behavior. Persist only high-signal rules to memory with no duplication or minor rewording of existing rules, no match names, dates, or narratives. Think constraint system, not notes.
 
-          For each settled slip in scope, analyze outcomes strictly from a process perspective: compare pre-bet logic versus actual outcome, separate clear process errors from valid decisions that lost due to variance, and note repeated mistakes such as overstacking, forcing bets, or weak edges.
+        Explicitly separate future research improvements from future betting behavior changes where relevant. Only include items that change behavior.
 
-          Convert findings into strict decision rules — short, match-agnostic, and focused on future behavior. Persist only high-signal rules to memory with no duplication or minor rewording of existing rules, no match names, dates, or narratives. Think constraint system, not notes.
+        ## Quality constraints
+        - Do not store match summaries, team-specific insights, or one-off tactical observations
+        - Do not upgrade an edge because it won or justify bets after the fact
+        - Cross-check against strategy and bankroll rules
+        - Prefer fewer, stronger rules over many weak ones
+        - If no strong lessons exist, store nothing
+        """;
 
-          Explicitly separate future research improvements from future betting behavior changes where relevant. Only include items that change behavior.
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
+    serviceProvider.ResolveTools([
+      ToolRegistry.Betting.GetBetSlipsAwaitingReflection,
+      ToolRegistry.Match.GetMatchResearchText,
+    ]);
 
-          ## Quality constraints
-          - Do not store match summaries, team-specific insights, or one-off tactical observations
-          - Do not upgrade an edge because it won or justify bets after the fact
-          - Cross-check against strategy and bankroll rules
-          - Prefer fewer, stronger rules over many weak ones
-          - If no strong lessons exist, store nothing
-          """;
-
-    public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-      serviceProvider.ResolveTools([
-        ToolRegistry.Betting.GetBetSlipsAwaitingReflection,
-        ToolRegistry.Match.GetMatchResearchText,
-      ]);
-
-    public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
-    [
-      new DateProvider(),
-      new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-      new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
-      new AgentModeProvider(new AgentModeProviderOptions { DefaultMode = "execute" }),
-      new TodoProvider(),
-    ];
-  }
+  public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
+  [
+    new DateProvider(),
+    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+    new AgentModeProvider(new AgentModeProviderOptions { DefaultMode = "execute" }),
+    new TodoProvider(),
+  ];
 }

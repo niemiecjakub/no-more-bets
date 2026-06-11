@@ -1,5 +1,4 @@
 using Microsoft.Agents.AI;
-using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -23,11 +22,6 @@ public sealed class BettingPhaseRunner(
   public async Task<IReadOnlyList<IMessage>> RunAsync(CancellationToken cancellationToken = default)
   {
     var definition = BettingPhaseDefinition.Create(xApiOptions.Value.IsOAuthConfigured);
-    if (definition.Steps.Count == 0)
-    {
-      throw new InvalidOperationException($"Agent phase {definition.Phase} has no steps configured.");
-    }
-
     var phaseName = definition.Phase.ToString();
     logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
 
@@ -41,25 +35,31 @@ public sealed class BettingPhaseRunner(
     AgentSession? agentSession = null;
     try
     {
-      foreach (var step in definition.Steps)
-      {
-        var tools = step.Implementation.GetTools(serviceProvider);
-        var contextProviders = step.Implementation.GetAIContextProviders(serviceProvider);
-        var prompt = step.Implementation.BuildPrompt();
-        var config = await agentBuilder
-          .BuildForScheduledJobAsync(contextProviders, agentSession, cancellationToken)
-          .ConfigureAwait(false);
-        agentSession ??= config.Session;
-        var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
-        await config.Agent
-          .RunAsync([new ChatMessage(ChatRole.User, prompt)], config.Session, runOptions, cancellationToken)
-          .ConfigureAwait(false);
-        var stepMessages = messageCollector.TakeMessages();
+      var executeResult = await AgentPhaseStepExecutor.RunAsync(
+        new BettingExecuteStep(),
+        persistTranscript: true,
+        responseFormatType: null,
+        agentBuilder,
+        messageCollector,
+        serviceProvider,
+        agentSession,
+        messages,
+        cancellationToken).ConfigureAwait(false);
+      agentSession = executeResult.Session;
 
-        if (step.PersistTranscript)
-        {
-          messages.AddRange(stepMessages);
-        }
+      if (definition.IncludeXPostFollowUp)
+      {
+        executeResult = await AgentPhaseStepExecutor.RunAsync(
+          new XPostFollowUpStep(),
+          persistTranscript: false,
+          responseFormatType: null,
+          agentBuilder,
+          messageCollector,
+          serviceProvider,
+          agentSession,
+          messages,
+          cancellationToken).ConfigureAwait(false);
+        agentSession = executeResult.Session;
       }
     }
     finally
