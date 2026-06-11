@@ -3,17 +3,19 @@
 import { useEffect, useState } from "react";
 import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-slip-summary";
 import type { BetSlipSummaryDto } from "@/features/bets/interfaces";
+import type { MatchResearchOutput } from "../interfaces";
 import {
   fetchMatchAgentResearch,
   fetchMatchResearchBetSlip,
 } from "../services/match-insights-api";
+import { MatchResearchOutputView } from "./match-research-output-view";
 
 interface MatchListResearchPanelProps {
   matchId: number;
 }
 
 export function MatchListResearchPanel({ matchId }: MatchListResearchPanelProps) {
-  const [research, setResearch] = useState<string | null | undefined>(undefined);
+  const [research, setResearch] = useState<MatchResearchOutput | null | undefined>(undefined);
   const [researchError, setResearchError] = useState<string | undefined>();
   const [slip, setSlip] = useState<BetSlipSummaryDto | null | undefined>(undefined);
   const [slipError, setSlipError] = useState<string | undefined>();
@@ -61,12 +63,10 @@ export function MatchListResearchPanel({ matchId }: MatchListResearchPanelProps)
           <p className="text-sm text-red-800 dark:text-red-200">{researchError}</p>
         ) : researchLoading ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Loading agent research…</p>
-        ) : research == null || research === "" ? (
+        ) : research == null ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">No agent research available.</p>
         ) : (
-          <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-700 dark:text-zinc-300">
-            {research}
-          </p>
+          <MatchResearchOutputView research={research} />
         )}
       </section>
 
