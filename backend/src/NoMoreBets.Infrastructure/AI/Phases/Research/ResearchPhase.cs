@@ -14,7 +14,7 @@ using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Research;
 
-public sealed class ResearchPhaseDefinition : IAgentPhaseDefinition
+public sealed class ResearchPhaseDefinition
 {
   private ResearchPhaseDefinition(Match match)
   {

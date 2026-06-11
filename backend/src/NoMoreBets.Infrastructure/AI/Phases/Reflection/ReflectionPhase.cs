@@ -13,7 +13,7 @@ using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Reflection;
 
-public sealed class ReflectionPhaseDefinition : IAgentPhaseDefinition
+public sealed class ReflectionPhaseDefinition
 {
   private ReflectionPhaseDefinition()
   {

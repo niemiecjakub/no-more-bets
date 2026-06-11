@@ -15,7 +15,7 @@ using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Betting;
 
-public sealed class BettingPhaseDefinition : IAgentPhaseDefinition
+public sealed class BettingPhaseDefinition
 {
   private BettingPhaseDefinition(bool includeXPostFollowUp)
   {

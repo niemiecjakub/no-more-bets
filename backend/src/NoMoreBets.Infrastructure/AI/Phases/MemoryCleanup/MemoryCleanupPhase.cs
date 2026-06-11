@@ -11,7 +11,7 @@ using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
 
-public sealed class MemoryCleanupPhaseDefinition : IAgentPhaseDefinition
+public sealed class MemoryCleanupPhaseDefinition
 {
   private const int DaysCutoff = 2;
 

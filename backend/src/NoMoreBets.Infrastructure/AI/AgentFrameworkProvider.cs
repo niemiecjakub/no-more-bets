@@ -22,7 +22,6 @@ public static class AgentFrameworkProvider
     services.AddScoped<AgentResponseMappingMiddleware>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<AgentSessionContext>();
-    services.AddScoped<AgentPhaseExecutor>();
     services.AddScoped<ResearchPhaseRunner>();
     services.AddScoped<InternetResearchPhaseRunner>();
     services.AddScoped<MemoryCleanupPhaseRunner>();

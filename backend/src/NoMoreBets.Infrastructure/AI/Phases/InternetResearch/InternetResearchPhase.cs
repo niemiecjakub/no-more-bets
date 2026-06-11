@@ -13,7 +13,7 @@ using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
 
-public sealed class InternetResearchPhaseDefinition : IAgentPhaseDefinition
+public sealed class InternetResearchPhaseDefinition
 {
   private InternetResearchPhaseDefinition()
   {
