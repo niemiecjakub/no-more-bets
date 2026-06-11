@@ -1,6 +1,4 @@
 using System.ComponentModel;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Common;
@@ -14,11 +12,6 @@ namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
 public class ResearchBetTool
 {
   private const decimal ResearchStakeAmount = 10m;
-
-  private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
-  {
-    Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true) }
-  };
 
   private readonly IUnitOfWork _unitOfWork;
   private readonly AgentSessionContext _agentSessionContext;
@@ -44,29 +37,14 @@ public class ResearchBetTool
 
   [Description("Paper / Research slip only: records a fictional prediction for this match. One selection is a single; multiple selections on one slip combine as a parlay.")]
   public async Task<string> PlaceBetSlip(
-    [Description("JSON object with property betSelections: an array of selection objects. Each object must have: eventType (string, from GetCurrentOdds eventTypeName), option (string, from GetCurrentOdds option label). Example: {\"betSelections\":[{\"eventType\":\"bothTeamsToScore\",\"option\":\"bothTeamsToScore_Yes\"}]}")]
+    [Description("JSON object with property betSelections: an array of selection objects. Each object must have: eventType (string, from GetMatchEvents eventTypeName), eventOption (string, from GetMatchEvents options). Example: {\"betSelections\":[{\"eventType\":\"BothTeamsToScore\",\"eventOption\":\"BothTeamsToScore_Yes\"}]}")]
     string betSelectionsJson,
     CancellationToken cancellationToken = default)
   {
-    List<ResearchBetSelectionRecord>? betSelections;
-    try
+    if (!ResearchBetSlipJsonParser.TryParse(betSelectionsJson, out var betSelections, out var parseError))
     {
-      var wrapper = JsonSerializer.Deserialize<PlaceResearchBetSlipArgs>(betSelectionsJson, SerializerOptions);
-      betSelections = wrapper?.BetSelections;
-    }
-    catch (JsonException ex)
-    {
-      _logger.LogError(ex, "Invalid bet selections JSON received while placing research bet slip.");
-      throw new ArgumentException(
-        "Invalid betSelections JSON. Expected object with betSelections array of { eventType (enum name), option (BettingEventOption enum name) }.",
-        nameof(betSelectionsJson),
-        ex);
-    }
-
-    if (betSelections is null || betSelections.Count == 0)
-    {
-      _logger.LogError("No bet selections provided while placing a research bet slip.");
-      throw new ArgumentException("At least one selection is required to place a research bet slip.", nameof(betSelectionsJson));
+      _logger.LogWarning("Invalid bet selections JSON while placing research bet slip: {Error}", parseError);
+      return parseError!;
     }
 
     var selectionOdds = new List<decimal>(betSelections.Count);
@@ -83,8 +61,9 @@ public class ResearchBetTool
           _matchId,
           record.EventType,
           record.Option);
-        throw new InvalidOperationException(
-          $"Current odds not found for match {_matchId}, event {record.EventType}, option {record.Option}.");
+        return
+          $"Current odds not found for match {_matchId}, event {record.EventType}, option {record.Option}. "
+          + "Call GetMatchEvents and use exact eventTypeName and option values from that response.";
       }
 
       selectionOdds.Add(odds.Value);
@@ -171,9 +150,6 @@ public class ResearchBetTool
       match.AwayClubId,
       match.AwayClub.Name);
   }
-
-  private sealed record PlaceResearchBetSlipArgs(List<ResearchBetSelectionRecord> BetSelections);
-  private sealed record ResearchBetSelectionRecord(BettingEventType EventType, BettingEventOption Option);
 }
 
 public record MatchBasicInfo(

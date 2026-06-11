@@ -65,17 +65,27 @@ public sealed class ResearchPhaseRunner(
         await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
       }
 
-      var paperBetResult = await AgentPhaseStepExecutor.RunAsync(
-        new PaperBetFollowUpStep(match.Id),
-        persistTranscript: false,
-        responseFormatType: null,
-        agentBuilder,
-        messageCollector,
-        serviceProvider,
-        agentSession,
-        messages,
-        cancellationToken).ConfigureAwait(false);
-      agentSession = paperBetResult.Session;
+      try
+      {
+        var paperBetResult = await AgentPhaseStepExecutor.RunAsync(
+          new PaperBetFollowUpStep(match.Id),
+          persistTranscript: false,
+          responseFormatType: null,
+          agentBuilder,
+          messageCollector,
+          serviceProvider,
+          agentSession,
+          messages,
+          cancellationToken).ConfigureAwait(false);
+        agentSession = paperBetResult.Session;
+      }
+      catch (Exception ex)
+      {
+        logger.LogWarning(
+          ex,
+          "Paper bet follow-up step failed for match {MatchId}; research output was persisted",
+          match.Id);
+      }
     }
     finally
     {
