@@ -7,9 +7,6 @@ public class BettingOddsSnapshot
 {
   private static readonly HashSet<int> RequiredOptionIds =
   [
-    (int)BettingEventOption.DoubleChance_HomeOrAway,
-    (int)BettingEventOption.DoubleChance_HomeOrDraw,
-    (int)BettingEventOption.DoubleChance_AwayOrDraw,
     (int)BettingEventOption.MatchResult_Home,
     (int)BettingEventOption.MatchResult_Away,
     (int)BettingEventOption.MatchResult_Draw,

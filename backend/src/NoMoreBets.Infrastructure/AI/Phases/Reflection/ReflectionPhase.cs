@@ -20,41 +20,71 @@ public static class ReflectionPhaseDefinition
 
 internal sealed class ReflectionExecuteStep : IAgentPhaseStep
 {
-  public string BuildPrompt() => """
-        Learn from recent settled outcomes and identify durable, reusable decision rules that could improve future performance.
-        Treat single outcomes as weak evidence unless they clearly expose a process failure.
-        Only extract insights that will change how you bet across many future matches.
-        Improve future decision quality (edge identification, discipline, sizing, structure) without overfitting to short-term results.
-
-        Goal:
-        Extract and store only high-signal, generalizable decision rules from settled bet slips.
-
-        Completion criteria:
-        All settled bet slips awaiting reflection have been analyzed from a process perspective.
-        High-signal rules are persisted to memory, or it is explicitly determined that no strong lessons exist and nothing is stored.
-
-        Break the work into todos at the start, then work through them marking items complete as you finish.
-
-        Core rule — only store insights that meet ALL of the following:
-        - Generalizable across matches (no team-, date-, or match-specific context)
-        - Actionable (changes a future decision: bet, pass, size, structure)
-        - Concise and rule-like (not descriptive, not narrative)
-
-        Identify settled bet slips awaiting reflection. Review memory for strategy, reflections, and general knowledge.
-
-        For each settled slip in scope, analyze outcomes strictly from a process perspective: compare pre-bet logic versus actual outcome, separate clear process errors from valid decisions that lost due to variance, and note repeated mistakes such as overstacking, forcing bets, or weak edges.
-
-        Convert findings into strict decision rules — short, match-agnostic, and focused on future behavior. Persist only high-signal rules to memory with no duplication or minor rewording of existing rules, no match names, dates, or narratives. Think constraint system, not notes.
-
-        Explicitly separate future research improvements from future betting behavior changes where relevant. Only include items that change behavior.
-
-        ## Quality constraints
-        - Do not store match summaries, team-specific insights, or one-off tactical observations
-        - Do not upgrade an edge because it won or justify bets after the fact
-        - Cross-check against strategy and bankroll rules
-        - Prefer fewer, stronger rules over many weak ones
-        - If no strong lessons exist, store nothing
-        """;
+public string BuildPrompt() => """
+    Learn from recent settled outcomes and extract only durable, reusable decision rules that improve future betting performance.
+    
+    Treat individual outcomes as weak evidence unless they reveal a repeated or structurally meaningful process error.
+    
+    Your goal is not to explain results, but to improve future decision quality across many future matches.
+    
+    Focus on improving:
+    - edge detection quality
+    - discipline in selection
+    - bankroll and sizing behavior
+    - structural decision consistency
+    
+    Do not optimize for explaining wins or losses.
+    
+    GOAL
+    
+    Extract and store only high-signal decision rules derived from systematic patterns across multiple outcomes.
+    
+    A valid rule must satisfy ALL of the following:
+    - Generalizable across matches, teams, and contexts
+    - Behavior-changing (it would alter a future decision, not just describe it)
+    - Based on repeated patterns, structural errors, or consistent success/failure modes
+    - Concise, rule-like, and independently actionable
+    
+    WORKFLOW
+    
+    Identify all settled bet slips awaiting review.
+    
+    For each slip:
+    - Compare pre-bet reasoning vs actual outcome
+    - Determine whether outcome reflects:
+      (a) structural decision error
+      (b) execution issue
+      (c) variance/noise
+    - Only proceed to rule extraction if a repeatable pattern or structural issue is present
+    
+    RULE EXTRACTION REQUIREMENTS
+    
+    When forming rules:
+    - Prefer patterns observed across multiple decisions over single-instance insights
+    - Avoid emotional or result-driven interpretation
+    - Do not derive rules from winning outcomes alone unless supported by repeated evidence
+    - Merge semantically similar rules into a single stronger rule
+    - Reject vague behavioral advice (e.g. "be more disciplined", "trust model more")
+    
+    Explicitly separate:
+    - research improvements (information quality, analysis improvements)
+    - execution improvements (bet selection, sizing, structure)
+    
+    PERSISTENCE RULES
+    
+    Store only unique, non-overlapping rules.
+    If a rule is already represented in memory, do not re-store it in modified form.
+    
+    If no high-signal, repeatable behavioral pattern is identified, store nothing.
+    
+    QUALITY CONSTRAINTS
+    
+    - Do not store match-specific insights or one-off observations
+    - Do not rationalize losing bets after the fact
+    - Do not upgrade confidence because a bet won
+    - Prefer fewer, higher-confidence rules over many weak ones
+    - Cross-check against existing strategy before storing
+    """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
     serviceProvider.ResolveTools([

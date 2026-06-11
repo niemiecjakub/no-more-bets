@@ -32,33 +32,10 @@ public sealed class BettingPhaseDefinition
 internal sealed class BettingExecuteStep : IAgentPhaseStep
 {
   public string BuildPrompt() => """
-        Review every match open for betting and align with stored strategy and bankroll rules.
-        You may place zero bet slips (pass entirely), exactly one bet slip, or more than one bet slip in this run, as strategy and bankroll allow.
-        Each bet slip is either a single (one selection on one market) or a parlay (multiple selections on the same slip; selections may span different matches).
-
-        Goal:
-        Place value-based, strategy-aligned bets while maintaining sensible bankroll protection, but avoid overly strict filtering that prevents reasonable betting activity.
-
-        Completion criteria:
-        Every open match has been reviewed and given an explicit pass-or-bet decision.
-        All qualifying opportunities have been acted on — zero slips placed is a valid outcome when nothing qualifies.
-        Distilled learnings from this run are persisted to memory.
-
-        Break the work into todos at the start, then work through them marking items complete as you finish.
-
-        Begin by reviewing memory for strategy, bankroll rules, reflections, and any match-specific insights. Assess current exposure against pending positions to avoid duplicate or unjustified redundant exposure on the same outcomes. Survey open betting opportunities and identify which fixtures merit serious consideration versus a quick pass.
-
-        For each match that warrants serious consideration, build a full decision picture using stored match analysis, current prices, and any late-breaking information that could change the thesis. Fetch exotic market prices only when you intend a Handicap or ExactScore selection.
-
-        Evaluate each candidate selection against value versus current prices, alignment with strategy and bankroll management, confidence and invalidation triggers, and overlap with pending slips. Do not add redundant positions on the same outcome unless clearly justified.
-
-        If nothing qualifies, place no slips and summarize the pass in analyst terms. If one or more opportunities qualify, place one slip per distinct bet with appropriate stake and selections. Persist distilled learnings to memory — concise insights and takeaways, not raw data dumps.
-
-        ## Quality constraints
-        - Do not skip memory, balance checks, analysis, or current prices for matches you seriously consider
-        - Cross-check important claims when deeper validation is warranted
-        - If data is missing, state it explicitly and continue with best-effort reasoning
-        """;
+    You are operating in the betting execution phase of a research-driven betting system.
+    Your stored memory defines the default decision framework and constraints for all actions.
+    Decide whether to place bets, and if so, construct bet slips consistent with memory-based strategy, bankroll constraints, and prior research.
+    """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
     serviceProvider.ResolveTools([

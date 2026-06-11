@@ -21,27 +21,60 @@ public static class InternetResearchPhaseDefinition
 internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
 {
   public string BuildPrompt() => """
-        You are conducting research for upcoming matches for yourself, not for a syndicate or external audience.
-        Focus on narratives, news, sentiment, and game context that your future self can reuse in later match-level analysis and betting decisions.
-        Structure output so your future self can quickly reuse it in the betting phase.
+      Conduct pre-match research for your own future analytical and betting use.
 
-        Goal:
-        Produce one or more general research briefs for upcoming fixtures that your future self can use for later match-level analysis and betting decisions.
+      The purpose of this phase is to build reusable, decision-relevant intelligence about upcoming fixtures.
+      Build structured understanding that your future self can directly reuse during match-level analysis and decision-making.
 
-        Completion criteria:
-        Key upcoming fixtures have been surveyed and prioritized fixtures researched.
-        Distilled, reusable insights are persisted to memory — not raw copy-paste dumps.
+      PRIORITY OBJECTIVE
 
-        Break the work into todos at the start, then work through them marking items complete as you finish.
+      Transform raw information (news, context, sentiment, updates) into durable insights that change how a match should be interpreted.
+      Do not store raw information unless it directly contributes to understanding match outcomes.
 
-        Review memory for relevant context before gathering new material. Survey upcoming fixtures and identify which matches merit deeper internet research versus a quick pass. Confirm upcoming fixtures still align with expectations and adjust if reality differs materially.
+      WORKFLOW
 
-        Gather internet context for prioritized fixtures — match and club news, league updates, sentiment, and related context. Prioritize recent, reliable sources and label uncertainty. Persist distilled, reusable insights to memory.
+      1. Survey upcoming fixtures
+      Identify which matches are structurally worth deeper investigation based on potential relevance, uncertainty, or information value.
 
-        ## Quality constraints
-        - Be evidence-driven and explicit about missing data
-        - Cross-check important claims when deeper validation is warranted
-        """;
+      2. Prioritize research effort
+      Focus only on matches where new information could plausibly change match interpretation. Ignore low-information or stable fixtures.
+
+      3. Deep context gathering (only for prioritized matches)
+      Gather relevant external information such as news, squad updates, tactical commentary, and contextual signals.
+
+      4. Synthesis into reusable insights
+      Convert gathered information into:
+      - stable patterns about teams or leagues
+      - changes in expected team strength or style
+      - new uncertainties affecting match interpretation
+      - context that materially affects outcome probability
+
+      Do not preserve raw news unless it changes interpretation.
+
+      CORE PRINCIPLE
+
+      Information is only valuable if it changes how a match should be understood or evaluated later.
+
+      Sentiment, narratives, and media coverage should only be included when they are likely to influence team performance, lineup decisions, or meaningful expectations about the match.
+
+      UNCERTAINTY HANDLING
+
+      Explicitly label uncertainty when information is incomplete, conflicting, or based on weak signals.
+
+      OUTPUT REQUIREMENTS
+
+      - Prioritized fixtures with reasoning for inclusion
+      - Concise, reusable insights per fixture (not article summaries)
+      - Clear separation between signal (structural insight) and noise (reporting, speculation)
+      - Distilled knowledge persisted to memory for later reuse
+
+      QUALITY CONSTRAINTS
+
+      - Be evidence-driven
+      - Prefer synthesis over description
+      - Cross-check important claims when necessary
+      - Avoid over-weighting media narratives unless they affect expected match outcomes
+      """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
     serviceProvider.ResolveTools([

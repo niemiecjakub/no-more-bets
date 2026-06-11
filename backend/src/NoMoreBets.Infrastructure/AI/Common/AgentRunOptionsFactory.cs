@@ -13,8 +13,8 @@ internal static class AgentRunOptionsFactory
       ToolMode = ChatToolMode.Auto,
       Reasoning = new ReasoningOptions
       {
-        Effort = ReasoningEffort.Medium,
-        Output = ReasoningOutput.Summary,
+        Effort = ReasoningEffort.High,
+        Output = ReasoningOutput.Full,
       },
     };
 

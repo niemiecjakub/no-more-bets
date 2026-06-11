@@ -30,9 +30,6 @@ public class BettingOddsSnapshotTests
     {
       Rows =
       [
-        new BettingOddsSnapshotRow { EventOption = BettingEventOption.DoubleChance_HomeOrAway },
-        new BettingOddsSnapshotRow { EventOption = BettingEventOption.DoubleChance_HomeOrDraw },
-        new BettingOddsSnapshotRow { EventOption = BettingEventOption.DoubleChance_AwayOrDraw },
         new BettingOddsSnapshotRow { EventOption = BettingEventOption.MatchResult_Home },
         new BettingOddsSnapshotRow { EventOption = BettingEventOption.MatchResult_Away },
         new BettingOddsSnapshotRow { EventOption = BettingEventOption.MatchResult_Draw },
