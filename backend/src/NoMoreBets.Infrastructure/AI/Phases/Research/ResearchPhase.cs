@@ -22,38 +22,26 @@ public static class ResearchPhaseDefinition
 internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
 {
   public string BuildPrompt() => $"""
-        Match ID: {match.Id}
-        Fixture: {match.HomeClub.Name} (ID: {match.HomeClub.Id}) vs {match.AwayClub.Name} (ID: {match.AwayClub.Id})
+        Match ID: {match.Id}   
+        Fixture: {match.HomeClub.Name} vs {match.AwayClub.Name}
         Kickoff (UTC): {match.MatchDate:yyyy-MM-dd HH:mm}
 
-        Important context:
-        You are NOT reacting directly to live betting market movements or line shifts during this research phase.
-        Because of this, you should assume you do NOT have a timing-based market edge (no late line movement advantage, no sharp market reaction signals).
-        Your edge must come only from structural, statistical, tactical, or contextual analysis—not from market positioning or timing.
+        Conduct pre-match intelligence gathering for a betting research system.
+        Your objective is to build the most accurate possible understanding of this match.
 
-        Goal:
-        Create complete, decision-oriented research for this specific match that you will later use in your own betting phase.
-        This is your personal prep work: your future self in the betting phase should be able to read this and decide whether to bet or pass.
+        You are responsible for deciding what information is relevant, how deeply it should be investigated, and which sources deserve trust.
+        Approach the task as an investigator rather than a summarizer.
+        Actively search for the factors most likely to influence the outcome of the match. Determine which factors are genuinely material to this fixture rather than following a fixed research template.
+        Distinguish signal from noise. Give more weight to information that is predictive and well-supported, and less weight to information that is speculative, anecdotal, stale, or weakly connected to match outcomes.
+        Prioritize causal drivers over descriptive facts. Explain not only what is true, but why it matters for this matchup.
+        Focus on synthesis rather than accumulation. The goal is not to gather the most information, but to identify and explain the information most likely to affect interpretation of the match.
+        When evidence is incomplete, conflicting, or uncertain, represent that uncertainty explicitly rather than forcing a conclusion.
 
-        Completion criteria:
-        Core match intelligence and team-level context have been gathered and synthesized.
-        Distilled learnings are persisted to memory.
-        End with a structured JSON summary: match overview, key points, and risks/unknowns.
-
-        Break the work into todos at the start, then work through them marking items complete as you finish.
-
-        Review memory for relevant context before starting new analysis. {(match.IsFifaWorldCup
-          ? "Build core match intelligence covering lineups, injuries, head-to-head history, and odds history. Build team-level context for both national teams including recent form and rolling performance."
-          : "Build core match intelligence covering lineups, injuries, head-to-head history, odds history, and league table. Build team-level context for both clubs including league statistics, recent form, rolling performance, and daily summaries.")}
-
-        Gather news and sentiment for both clubs where needed, separating meaningful signals from noise and assessing source reliability. Cross-check important claims when deeper validation is warranted.
-
-        Synthesize a decision-oriented view with clear betting implications, potential value angles, and confidence drivers. Persist distilled learnings to memory — concise insights, patterns, and hypotheses, not raw data dumps.
-
-        ## Quality constraints
-        - Be analytical and evidence-driven
-        - Cross-check important claims
-        - If data is missing, state it explicitly and continue with best-effort reasoning
+        The final output should allow a future decision-maker to quickly understand:
+        - what matters most in this match,
+        - why it matters,
+        - what remains uncertain,
+        - and which assumptions the current understanding depends on.
         """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
@@ -93,21 +81,18 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
 internal sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
 {
   public string BuildPrompt() => """
-        Goal:
-        Create a paper (fictional) prediction slip for this match as a research artifact that tests the quality of your prior research.
+    Create a fictional prediction slip for this match as a research validation artifact.
+    This is not a real bet and has no financial implications.
 
-        Completion criteria:
-        A paper bet slip is placed with valid, non-contradictory selections based strictly on your prior research.
-        Selections maximize correctness of predictions — odds are unavailable and must be ignored entirely.
+    The purpose is to test whether your prior research produces internally consistent and logically supported predictions when forced into explicit outcomes.
+    Use only information derived from your prior research. Do not introduce new facts, assumptions, or external knowledge.
+    Selections must be strictly consistent with your prior analysis.
+    Do not consider odds, market pricing, or value. These are irrelevant for this task.
 
-        This is not a real bet and does not affect bankroll in any way.
-        Single selections are acceptable but multiple selections (parlays) are preferred.
-        Do not include contradictory or overlapping selections.
-        Avoid combining markets that express the same dimension in conflicting ways.
-        You cannot select multiple options from the same market.
+    Each selection should represent a distinct, logically independent implication of your prior research.
 
-        Confirm match and club context from your prior research, review available markets and outcome options for this fixture, then place the paper slip.
-        """;
+    Before finalizing the slip, validate that all selections are mutually consistent with each other and with the conclusions of your prior research.
+    """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
     serviceProvider.ResolveTools([
