@@ -4,9 +4,9 @@ namespace NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 
 public record Player(string Name, string Position);
 
-public record AgentTeamLineup(IReadOnlyList<Player> Players);
+public record TeamLineup(IReadOnlyList<Player> Players);
 
-public record AgentMatchLineup(AgentTeamLineup Home, AgentTeamLineup Away);
+public record MatchLineup(TeamLineup Home, TeamLineup Away);
 
 public record CurrentOddsMarket(int EventTypeId, string EventTypeName, IReadOnlyList<CurrentOddsOption> Options);
 

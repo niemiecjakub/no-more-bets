@@ -19,7 +19,10 @@ using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using AvailableMatch = NoMoreBets.Infrastructure.AI.Tools.Implementations.Models.AvailableMatch;
+using ToolTeamLineup = NoMoreBets.Infrastructure.AI.Tools.Implementations.Models.TeamLineup;
+using ToolPlayer = NoMoreBets.Infrastructure.AI.Tools.Implementations.Models.Player;
 
 namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
@@ -43,9 +46,17 @@ public class MatchTool
   }
 
   [Description("Retrieves the starting lineups for both the home and away teams for the match.")]
-  public async Task<MatchLineupResult?> GetLineupsAsync(int matchId, CancellationToken cancellationToken = default)
+  public async Task<MatchLineup?> GetLineupsAsync(int matchId, CancellationToken cancellationToken = default)
   {
-    return await _mediator.Send(new GetMatchLineupsQuery(matchId), cancellationToken).ConfigureAwait(false);
+    var result = await _mediator.Send(new GetMatchLineupsQuery(matchId), cancellationToken).ConfigureAwait(false);
+    if (result is null)
+    {
+      return null;
+    }
+
+    return new MatchLineup(
+      new ToolTeamLineup(result.Home.Players.Select(p => new ToolPlayer(p.Name, p.Position)).ToList()),
+      new ToolTeamLineup(result.Away.Players.Select(p => new ToolPlayer(p.Name, p.Position)).ToList()));
   }
 
   [Description("Gets a list of injured or unavailable players for both teams involved in the match.")]

@@ -16,6 +16,10 @@ using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
+using LineupPlayer = NoMoreBets.Application.Matches.GetMatchLineups.Player;
+using ToolTeamLineup = NoMoreBets.Infrastructure.AI.Tools.Implementations.Models.TeamLineup;
+using ToolPlayer = NoMoreBets.Infrastructure.AI.Tools.Implementations.Models.Player;
 
 namespace NoMoreBets.Infrastructure.Tests.AI.Plugins;
 
@@ -36,12 +40,18 @@ public class MatchToolTests
   [Fact]
   public async Task GetLineupsAsync_WhenCalled_DispatchesGetMatchLineupsQuery()
   {
-    var expected = new MatchLineupResult(new TeamLineupResult("Confirmed", []), new TeamLineupResult("Predicted", []));
-    _mediator.Send(Arg.Any<GetMatchLineupsQuery>(), Arg.Any<CancellationToken>()).Returns(expected);
+    var homePlayers = new List<LineupPlayer> { new("Alice", "GK") };
+    var awayPlayers = new List<LineupPlayer> { new("Bob", "FW") };
+    var lineupResult = new MatchLineupResult(
+      new TeamLineupResult("Confirmed", homePlayers),
+      new TeamLineupResult("Predicted", awayPlayers));
+    _mediator.Send(Arg.Any<GetMatchLineupsQuery>(), Arg.Any<CancellationToken>()).Returns(lineupResult);
 
     var result = await _sut.GetLineupsAsync(MatchId);
 
-    result.Should().BeSameAs(expected);
+    result.Should().BeEquivalentTo(new MatchLineup(
+      new ToolTeamLineup([new ToolPlayer("Alice", "GK")]),
+      new ToolTeamLineup([new ToolPlayer("Bob", "FW")])));
     await _mediator.Received(1).Send(Arg.Is<GetMatchLineupsQuery>(q => q.MatchId == MatchId), Arg.Any<CancellationToken>());
   }
 
