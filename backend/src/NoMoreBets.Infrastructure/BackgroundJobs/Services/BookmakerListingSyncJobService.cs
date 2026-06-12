@@ -26,6 +26,7 @@ public sealed class BookmakerListingSyncJobService(
   public async Task GetBetclicGames()
   {
     var leagues = await db.League
+      .Where(l => l.SoccerdataId > 0)
       .Select(l => new { l.Id, l.Name })
       .ToListAsync();
     if (leagues.Count == 0)

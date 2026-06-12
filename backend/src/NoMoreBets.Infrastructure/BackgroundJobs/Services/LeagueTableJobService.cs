@@ -19,6 +19,7 @@ public sealed class LeagueTableJobService(
   public async Task GetLeagueTable()
   {
     var leagues = await db.League
+      .Where(l => l.SoccerdataId > 0)
       .Select(l => new { l.Id, l.Name })
       .ToListAsync();
     if (leagues.Count == 0)

@@ -95,6 +95,14 @@ public sealed class ClubDailyBriefJobService(
 
   public async Task UpdateMatchDetails(string fotmobMatchUrl)
   {
-    await mediator.Send(new UpdateMatchDetailsCommand(fotmobMatchUrl));
+    var result = await mediator.Send(new UpdateMatchDetailsCommand(fotmobMatchUrl));
+    if (result.CreatedNewMatch)
+    {
+      logger.LogInformation(
+        "Job {JobName} created new match {MatchId} while syncing Fotmob recent game details for URL {FotmobMatchUrl}",
+        nameof(UpdateMatchDetails),
+        result.MatchId,
+        fotmobMatchUrl);
+    }
   }
 }

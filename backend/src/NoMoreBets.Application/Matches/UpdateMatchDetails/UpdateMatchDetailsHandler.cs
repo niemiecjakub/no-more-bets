@@ -6,23 +6,28 @@ using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.UpdateMatchDetails;
 
 /// <summary>Command to fetch Fotmob match details by URL and update or create the corresponding Match and MatchDetails.</summary>
-public record UpdateMatchDetailsCommand(string FotmobGameUrl) : IRequest<Unit>;
+public record UpdateMatchDetailsCommand(string FotmobGameUrl) : IRequest<UpdateMatchDetailsResult>;
+
+/// <summary>Outcome of syncing Fotmob match details (e.g. whether a new match row was inserted).</summary>
+public record UpdateMatchDetailsResult(bool CreatedNewMatch, int? MatchId = null);
 
 /// <summary>Handles <see cref="UpdateMatchDetailsCommand"/>: fetches Fotmob details, finds or creates Match, and persists MatchDetails (and optional status/score update).</summary>
 public class UpdateMatchDetailsHandler(
   IMatchDetailsProvider matchDetailsProvider,
   IMatchMatcher matchMatcher,
   IUnitOfWork unitOfWork,
-  ILogger<UpdateMatchDetailsHandler> logger) : IRequestHandler<UpdateMatchDetailsCommand, Unit>
+  ILogger<UpdateMatchDetailsHandler> logger) : IRequestHandler<UpdateMatchDetailsCommand, UpdateMatchDetailsResult>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+  private static readonly UpdateMatchDetailsResult NoChange = new(CreatedNewMatch: false);
 
-  public async Task<Unit> Handle(UpdateMatchDetailsCommand request, CancellationToken cancellationToken)
+  public async Task<UpdateMatchDetailsResult> Handle(UpdateMatchDetailsCommand request, CancellationToken cancellationToken)
   {
     var fotmobGameUrl = request.FotmobGameUrl?.Trim();
     if (string.IsNullOrWhiteSpace(fotmobGameUrl))
@@ -30,7 +35,7 @@ public class UpdateMatchDetailsHandler(
       logger.LogWarning(
         "Handler {HandlerName} skipped: FotmobGameUrl is null or empty.",
         nameof(UpdateMatchDetailsHandler));
-      return Unit.Value;
+      return NoChange;
     }
 
     if (!Uri.TryCreate(fotmobGameUrl, UriKind.Absolute, out _))
@@ -39,7 +44,7 @@ public class UpdateMatchDetailsHandler(
         "Handler {HandlerName} skipped: FotmobGameUrl is not a valid absolute URL. Value: {FotmobGameUrl}",
         nameof(UpdateMatchDetailsHandler),
         fotmobGameUrl.Length > 200 ? fotmobGameUrl[..200] + "…" : fotmobGameUrl);
-      return Unit.Value;
+      return NoChange;
     }
 
     // Path A: existing match by FotmobUrl
@@ -50,7 +55,7 @@ public class UpdateMatchDetailsHandler(
         "Handler {HandlerName} match details for MatchId={MatchId} alredy exists.",
         nameof(UpdateMatchDetailsHandler),
         existingDetails.MatchId);
-      return Unit.Value;
+      return NoChange;
     }
 
     MatchDetailsDto dto;
@@ -79,7 +84,7 @@ public class UpdateMatchDetailsHandler(
         dto.HomeTeam,
         dto.AwayTeam,
         fotmobGameUrl);
-      return Unit.Value;
+      return NoChange;
     }
 
     var matchDate = dto.MatchDate.Value.UtcDateTime;
@@ -113,11 +118,10 @@ public class UpdateMatchDetailsHandler(
         "Handler {HandlerName} linked MatchDetails to existing match by teams+date for MatchId={MatchId}.",
         nameof(UpdateMatchDetailsHandler),
         matched.Id);
-      return Unit.Value;
+      return NoChange;
     }
 
-    // Path C: insert new match
-    var leagues = await unitOfWork.Leagues.GetLeagues().ConfigureAwait(false);
+    // Path C: insert new match under the Unknown league (Fotmob-discovered fixtures).
     var allClubs = await unitOfWork.Clubs.GetClubs().ConfigureAwait(false);
 
     Club homeClub;
@@ -134,33 +138,10 @@ public class UpdateMatchDetailsHandler(
         nameof(UpdateMatchDetailsHandler),
         dto.HomeTeam,
         dto.AwayTeam);
-      return Unit.Value;
+      return NoChange;
     }
 
-    if (homeClub.LeagueId != awayClub.LeagueId)
-    {
-      logger.LogWarning(
-        "Handler {HandlerName} resolved clubs from different leagues for insert ({Home} in {HomeLeagueId}, {Away} in {AwayLeagueId}); skipping insert.",
-        nameof(UpdateMatchDetailsHandler),
-        homeClub.Name,
-        homeClub.LeagueId,
-        awayClub.Name,
-        awayClub.LeagueId);
-      return Unit.Value;
-    }
-
-    var matchLeague = leagues.FirstOrDefault(l => l.Id == homeClub.LeagueId);
-    if (matchLeague is null)
-    {
-      logger.LogWarning(
-        "Handler {HandlerName} could not resolve league for clubs {Home} vs {Away}; skipping insert.",
-        nameof(UpdateMatchDetailsHandler),
-        homeClub.Name,
-        awayClub.Name);
-      return Unit.Value;
-    }
-
-    var stage = await unitOfWork.Leagues.GetCurrentStage(matchLeague.SoccerdataId).ConfigureAwait(false);
+    var stage = await unitOfWork.Leagues.GetCurrentStage(League.UnknownSoccerdataId).ConfigureAwait(false);
     var newMatch = Match.CreateUpcomming(matchDate, stage.Id, homeClub.Id, awayClub.Id);
     await unitOfWork.Matches.AddMatch(newMatch, cancellationToken).ConfigureAwait(false);
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -176,12 +157,13 @@ public class UpdateMatchDetailsHandler(
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     logger.LogInformation(
-      "Handler {HandlerName} inserted new Match (Id={MatchId}) and MatchDetails for {Home} vs {Away}.",
+      "Handler {HandlerName} inserted new Match (Id={MatchId}) and MatchDetails for {Home} vs {Away} from Fotmob recent game URL {FotmobGameUrl}.",
       nameof(UpdateMatchDetailsHandler),
       newMatch.Id,
       dto.HomeTeam,
-      dto.AwayTeam);
-    return Unit.Value;
+      dto.AwayTeam,
+      fotmobGameUrl);
+    return new UpdateMatchDetailsResult(CreatedNewMatch: true, MatchId: newMatch.Id);
   }
 
   private static void ApplyStatusAndScoreIfUpcoming(Match? match, MatchDetailsDto dto)

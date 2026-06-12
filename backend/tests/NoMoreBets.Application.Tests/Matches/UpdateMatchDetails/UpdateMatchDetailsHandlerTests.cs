@@ -30,11 +30,8 @@ public class UpdateMatchDetailsHandlerTests
     _logger = Substitute.For<ILogger<UpdateMatchDetailsHandler>>();
     _sut = new UpdateMatchDetailsHandler(_matchDetailsProvider, _matchMatcher, _unitOfWork, _logger);
 
-    _unitOfWork.Leagues.GetLeagues().Returns(new List<League>
-    {
-      new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 }
-    });
-    _unitOfWork.Leagues.GetCurrentStage(228).Returns(new Stage { Id = 1, SeasonId = 1, Name = "Premier League", SoccerdataId = 13908 });
+    _unitOfWork.Leagues.GetCurrentStage(League.UnknownSoccerdataId)
+      .Returns(new Stage { Id = 8, SeasonId = 8, Name = "Unknown", SoccerdataId = 0 });
   }
 
   [Fact]
@@ -101,7 +98,7 @@ public async Task Handle_WhenExistingDetailsByFotmobUrl_ReturnsWithoutUpdatingOr
 
     var result = await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
 
-    result.Should().Be(Unit.Value);
+    result.CreatedNewMatch.Should().BeFalse();
     await _unitOfWork.Matches.DidNotReceive().AddMatch(Arg.Any<Match>(), Arg.Any<CancellationToken>());
     await _unitOfWork.Matches.DidNotReceive().AddMatchDetailsAsync(Arg.Any<MatchDetails>(), Arg.Any<CancellationToken>());
     await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
@@ -126,7 +123,7 @@ public async Task Handle_WhenExistingDetailsByFotmobUrl_ReturnsWithoutUpdatingOr
 
     var result = await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
 
-    result.Should().Be(Unit.Value);
+    result.CreatedNewMatch.Should().BeFalse();
     await _unitOfWork.Matches.DidNotReceive().AddMatch(Arg.Any<Match>(), Arg.Any<CancellationToken>());
     await _unitOfWork.Matches.DidNotReceive().AddMatchDetailsAsync(Arg.Any<MatchDetails>(), Arg.Any<CancellationToken>());
   }
@@ -211,10 +208,42 @@ public async Task Handle_WhenExistingDetailsByFotmobUrl_ReturnsWithoutUpdatingOr
     _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(homeClub);
     _matchMatcher.FindClub("Chelsea", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(awayClub);
 
-    await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
+    var result = await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
 
-    await _unitOfWork.Matches.Received(1).AddMatch(Arg.Is<Match>(m => m.HomeClubId == 1 && m.AwayClubId == 2), Arg.Any<CancellationToken>());
+    result.CreatedNewMatch.Should().BeTrue();
+    await _unitOfWork.Leagues.Received(1).GetCurrentStage(League.UnknownSoccerdataId);
+    await _unitOfWork.Matches.Received(1).AddMatch(
+      Arg.Is<Match>(m => m.HomeClubId == 1 && m.AwayClubId == 2 && m.StageId == 8),
+      Arg.Any<CancellationToken>());
     await _unitOfWork.Matches.Received(1).AddMatchDetailsAsync(Arg.Is<MatchDetails>(d => d.FotmobUrl == url), Arg.Any<CancellationToken>());
     await _unitOfWork.Received(2).SaveChangesAsync(Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Handle_WhenNoExistingMatch_AndClubsFromDifferentLeagues_InsertsMatchUnderUnknownLeague()
+  {
+    var url = "https://fotmob.com/match/1";
+    var dto = new MatchDetailsDto
+    {
+      HomeTeam = "Arsenal",
+      AwayTeam = "Real Madrid",
+      MatchDate = DateTimeOffset.UtcNow
+    };
+    _matchDetailsProvider.GetMatchDetailsAsync(url, Arg.Any<CancellationToken>()).Returns(dto);
+    _unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(url, Arg.Any<CancellationToken>()).Returns((MatchDetails?)null);
+    _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(new List<Match>());
+
+    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 2, Name = "Real Madrid", LeagueId = 3, SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetClubs().Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(homeClub);
+    _matchMatcher.FindClub("Real Madrid", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(awayClub);
+
+    var result = await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
+
+    result.CreatedNewMatch.Should().BeTrue();
+    await _unitOfWork.Matches.Received(1).AddMatch(
+      Arg.Is<Match>(m => m.StageId == 8),
+      Arg.Any<CancellationToken>());
   }
 }
