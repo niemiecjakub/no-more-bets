@@ -283,8 +283,18 @@ export default function MatchPage() {
                                     awayClubName={data.awayClubName}
                                     homeLogoSlug={homeLogoSlug}
                                     awayLogoSlug={awayLogoSlug}
-                                    home={<LineupList lineup={insights.lineups?.home} />}
-                                    away={<LineupList lineup={insights.lineups?.away} />}
+                                    home={
+                                        <LineupList
+                                            lineup={insights.lineups?.home}
+                                            injuries={insights.injuries?.home}
+                                        />
+                                    }
+                                    away={
+                                        <LineupList
+                                            lineup={insights.lineups?.away}
+                                            injuries={insights.injuries?.away}
+                                        />
+                                    }
                                 />
                             )}
                         </Card>
@@ -308,7 +318,7 @@ export default function MatchPage() {
                             )}
                         </Card>
 
-                        <Card title="Recent league games per club" icon="🕒">
+                        <Card title="Recent games" icon="🕒">
                             {insightErrors.recentGames ? (
                                 <InsightFieldError message={insightErrors.recentGames} />
                             ) : insightLoading.recentGames && insights.recentGames === undefined ? (
@@ -321,8 +331,8 @@ export default function MatchPage() {
                                     awayClubName={data.awayClubName}
                                     homeLogoSlug={homeLogoSlug}
                                     awayLogoSlug={awayLogoSlug}
-                                    home={<RecentGamesList games={insights.recentGames?.home} showLeagueNote />}
-                                    away={<RecentGamesList games={insights.recentGames?.away} showLeagueNote />}
+                                    home={<RecentGamesList games={insights.recentGames?.home} />}
+                                    away={<RecentGamesList games={insights.recentGames?.away} />}
                                 />
                             )}
                         </Card>
@@ -456,8 +466,19 @@ function TeamColumns({ homeClubName, awayClubName, homeLogoSlug, awayLogoSlug, h
     );
 }
 
-function LineupList({ lineup }: { lineup?: TeamLineupResult }) {
+function LineupList({
+    lineup,
+    injuries,
+}: {
+    lineup?: TeamLineupResult;
+    injuries?: TeamInjuriesResult;
+}) {
     if (!lineup) return <MutedText>No lineup data.</MutedText>;
+
+    const injuredPlayerNames = new Set(
+        injuries?.injuries.map((player) => player.name.trim().toLowerCase()) ?? [],
+    );
+
     return (
         <div>
             <p className="mb-2 text-xs uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{lineup.lineupType}</p>
@@ -465,12 +486,23 @@ function LineupList({ lineup }: { lineup?: TeamLineupResult }) {
                 <MutedText>No players listed.</MutedText>
             ) : (
                 <ul className="flex flex-col gap-1 text-sm">
-                    {lineup.players.map((player) => (
-                        <li key={`${player.name}-${player.position}`} className="flex items-center justify-between gap-3">
-                            <span className="truncate text-foreground">{player.name}</span>
-                            <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">{player.position}</span>
-                        </li>
-                    ))}
+                    {lineup.players.map((player) => {
+                        const isInjured = injuredPlayerNames.has(player.name.trim().toLowerCase());
+                        return (
+                            <li key={`${player.name}-${player.position}`} className="flex items-center justify-between gap-3">
+                                <span
+                                    className={`truncate ${isInjured ? "font-medium text-red-700 dark:text-red-400" : "text-foreground"}`}
+                                >
+                                    {player.name}
+                                </span>
+                                <span
+                                    className={`shrink-0 text-xs ${isInjured ? "text-red-600 dark:text-red-400" : "text-zinc-500 dark:text-zinc-400"}`}
+                                >
+                                    {player.position}
+                                </span>
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
         </div>
@@ -483,11 +515,14 @@ function InjuriesList({ injuries }: { injuries?: TeamInjuriesResult }) {
     return (
         <ul className="flex flex-col gap-2 text-sm">
             {injuries.injuries.map((player) => (
-                <li key={`${player.name}-${player.position}`} className="rounded-md border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950">
-                    <p className="font-medium text-foreground">{player.name}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                <li
+                    key={`${player.name}-${player.position}`}
+                    className="flex items-center justify-between gap-3 rounded-md border border-zinc-200 bg-white p-2 dark:border-zinc-800 dark:bg-zinc-950"
+                >
+                    <span className="truncate font-medium text-foreground">{player.name}</span>
+                    <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-400">
                         {player.position} · {player.injuryStatus}
-                    </p>
+                    </span>
                 </li>
             ))}
         </ul>
@@ -624,7 +659,7 @@ function RollingPerformanceSection({ data }: { data?: TeamPerformanceResult | nu
     return (
         <div className="space-y-3 text-sm">
             <div className="flex justify-between gap-3">
-                <span className="text-zinc-500 dark:text-zinc-400">Avg team rating</span>
+                <span className="text-zinc-500 dark:text-zinc-400">Average team rating</span>
                 <span className="font-semibold text-foreground">{data.avgTeamRating.toFixed(2)}</span>
             </div>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">Formations: {data.formations.join(", ") || "N/A"}</p>

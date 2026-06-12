@@ -42,13 +42,7 @@ function OpponentInfo({ game }: { game: RecentMatch }) {
   );
 }
 
-export function RecentGamesList({
-  games,
-  showLeagueNote = false,
-}: {
-  games?: RecentMatch[] | null;
-  showLeagueNote?: boolean;
-}) {
+export function RecentGamesList({ games }: { games?: RecentMatch[] | null }) {
   if (!games || games.length === 0) {
     return <p className="text-sm text-zinc-500 dark:text-zinc-400">No recent games available.</p>;
   }
@@ -58,9 +52,6 @@ export function RecentGamesList({
 
   return (
     <div className="space-y-2">
-      {showLeagueNote ? (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">League games only.</p>
-      ) : null}
     <ul className="flex flex-col gap-2 text-sm">
       {games.map((game) => (
         <li key={`${game.matchId}-${game.opponent}-${game.date}`}>
