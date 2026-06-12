@@ -5,8 +5,9 @@ using NoMoreBets.Domain.Matches;
 namespace NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 
 /// <summary>
-/// Upcoming matches ready for prediction: those with lineup, odds snapshot, and head-to-head data,
-/// merged with upcoming matches whose kickoff (UTC) is in the future and within two days from now.
+/// Upcoming matches ready for prediction: those with lineup, odds snapshot, and head-to-head data
+/// (head-to-head not required for FIFA World Cup fixtures), merged with upcoming matches whose kickoff
+/// (UTC) is in the future and within two days from now.
 /// </summary>
 /// <param name="ExcludeWithExistingResearch">
 /// When true (default), matches that already have agent research analysis are omitted from both sources
