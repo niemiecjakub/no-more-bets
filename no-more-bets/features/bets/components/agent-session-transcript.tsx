@@ -4,6 +4,8 @@ import { Lightbulb, MessageSquareText, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { MatchResearchOutputView } from "@/features/matches/components/match-research-output-view";
+import { parseMatchResearchOutputText } from "@/features/matches/services/match-insights-api";
 import type { AgentSessionMessage } from "../services/agent-session-api";
 
 const MESSAGE_MARKDOWN_CLASS =
@@ -53,10 +55,19 @@ function messageKindBadgeStyle(kind: number): MessageKindBadgeStyle {
 
 interface AgentSessionTranscriptProps {
   messages: AgentSessionMessage[];
+  /** Hide the structured research JSON payload (shown separately on match pages). */
+  hideStructuredResearchOutput?: boolean;
 }
 
-export function AgentSessionTranscript({ messages }: AgentSessionTranscriptProps) {
-  const visible = messages.filter((m) => m.kind !== FUNCTION_CALL_KIND);
+export function AgentSessionTranscript({
+  messages,
+  hideStructuredResearchOutput = false,
+}: AgentSessionTranscriptProps) {
+  const visible = messages.filter(
+    (m) =>
+      m.kind !== FUNCTION_CALL_KIND &&
+      !(hideStructuredResearchOutput && parseMatchResearchOutputText(m.text) != null),
+  );
 
   if (visible.length === 0) {
     return (
@@ -72,10 +83,11 @@ export function AgentSessionTranscript({ messages }: AgentSessionTranscriptProps
       {visible.map((m) => {
         const badge = messageKindBadgeStyle(m.kind);
         const BadgeIcon = badge.icon;
+        const structuredResearch = parseMatchResearchOutputText(m.text);
 
         return (
           <li key={m.id} className="w-full min-w-0 px-4 py-3 text-sm">
-            <div className="mb-0 flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="mb-1.5 flex flex-wrap items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
               <span
                 className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 font-medium ${badge.className}`}
               >
@@ -83,9 +95,13 @@ export function AgentSessionTranscript({ messages }: AgentSessionTranscriptProps
                 {badge.label}
               </span>
             </div>
-            <div className={MESSAGE_MARKDOWN_CLASS}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
-            </div>
+            {structuredResearch ? (
+              <MatchResearchOutputView research={structuredResearch} />
+            ) : (
+              <div className={MESSAGE_MARKDOWN_CLASS}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
+              </div>
+            )}
           </li>
         );
       })}

@@ -9,6 +9,7 @@ import { AgentSessionTranscript } from "./agent-session-transcript";
 interface LazyAgentSessionTranscriptProps {
   sessionId: number;
   active: boolean;
+  hideStructuredResearchOutput?: boolean;
 }
 
 /**
@@ -17,6 +18,7 @@ interface LazyAgentSessionTranscriptProps {
 export function LazyAgentSessionTranscript({
   sessionId,
   active,
+  hideStructuredResearchOutput = false,
 }: LazyAgentSessionTranscriptProps) {
   const [messages, setMessages] = useState<AgentSessionMessage[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -66,7 +68,12 @@ export function LazyAgentSessionTranscript({
     return <p className="px-3 py-3 text-sm text-red-800 dark:text-red-200">{error}</p>;
   }
   if (messages) {
-    return <AgentSessionTranscript messages={messages} />;
+    return (
+      <AgentSessionTranscript
+        messages={messages}
+        hideStructuredResearchOutput={hideStructuredResearchOutput}
+      />
+    );
   }
   return null;
 }

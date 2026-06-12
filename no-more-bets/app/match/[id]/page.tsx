@@ -761,7 +761,11 @@ function AgentResearchSection({
                         </span>
                     </summary>
                     <div className="border-t border-zinc-200 dark:border-zinc-800">
-                        <LazyAgentSessionTranscript sessionId={researchAgentSessionId} active={transcriptOpen} />
+                        <LazyAgentSessionTranscript
+                            sessionId={researchAgentSessionId}
+                            active={transcriptOpen}
+                            hideStructuredResearchOutput
+                        />
                     </div>
                 </details>
             ) : null}

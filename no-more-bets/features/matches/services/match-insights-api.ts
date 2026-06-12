@@ -38,7 +38,7 @@ export async function fetchMatchEvents(matchId: number): Promise<MatchEventDto[]
   return data;
 }
 
-function normalizeMatchResearchOutput(raw: unknown): MatchResearchOutput | null {
+export function normalizeMatchResearchOutput(raw: unknown): MatchResearchOutput | null {
   if (raw == null || typeof raw !== "object") return null;
   const item = raw as Record<string, unknown>;
   const matchOverview =
@@ -61,6 +61,17 @@ function normalizeMatchResearchOutput(raw: unknown): MatchResearchOutput | null 
       ? risksRaw.filter((r): r is string => typeof r === "string")
       : [],
   };
+}
+
+export function parseMatchResearchOutputText(text: string): MatchResearchOutput | null {
+  const trimmed = text.trim();
+  if (!trimmed.startsWith("{")) return null;
+
+  try {
+    return normalizeMatchResearchOutput(JSON.parse(trimmed));
+  } catch {
+    return null;
+  }
 }
 
 export async function fetchMatchAgentResearch(matchId: number): Promise<MatchResearchOutput | null> {
