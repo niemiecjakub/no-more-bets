@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import type { AgentSessionListItem } from "@/features/sessions/interfaces";
 import { sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
 
@@ -43,6 +43,38 @@ export function AgentSessionsList({
 }: AgentSessionsListProps) {
   const scrollRootRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const scrollTopRef = useRef(0);
+
+  useEffect(() => {
+    const root = scrollRootRef.current;
+    if (!root) return;
+
+    const handleScroll = () => {
+      scrollTopRef.current = root.scrollTop;
+    };
+
+    handleScroll();
+    root.addEventListener("scroll", handleScroll, { passive: true });
+    return () => root.removeEventListener("scroll", handleScroll);
+  }, [isLoading, sessions.length]);
+
+  useLayoutEffect(() => {
+    if (isLoading) {
+      scrollTopRef.current = 0;
+      return;
+    }
+
+    const root = scrollRootRef.current;
+    if (!root) return;
+    root.scrollTop = scrollTopRef.current;
+  }, [isLoading, isLoadingMore, selectedSessionId, sessions.length]);
+
+  function handleSelectSession(sessionId: number) {
+    if (scrollRootRef.current) {
+      scrollTopRef.current = scrollRootRef.current.scrollTop;
+    }
+    onSelectSession(sessionId);
+  }
 
   useEffect(() => {
     if (isLoading || isLoadingMore || !hasMore) return;
@@ -97,7 +129,8 @@ export function AgentSessionsList({
             <li key={session.id} className="w-full min-w-0">
               <button
                 type="button"
-                onClick={() => onSelectSession(session.id)}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => handleSelectSession(session.id)}
                 className={
                   "flex w-full min-w-0 max-w-full gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors " +
                   (isSelected

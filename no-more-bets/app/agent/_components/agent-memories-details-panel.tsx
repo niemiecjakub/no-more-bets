@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { MemoryListItem } from "@/features/memories/interfaces";
 import { fetchMemoriesPage } from "@/features/memories/services/memories-api";
 import { handleServiceError } from "@/lib/error-handler";
@@ -74,6 +74,8 @@ export function AgentMemoriesDetailsPanel() {
   const [memoriesError, setMemoriesError] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const isLoadingMoreRef = useRef(false);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  const shouldScrollToDetailRef = useRef(false);
 
   const applyMemoriesPage = useCallback(
     (page: Awaited<ReturnType<typeof fetchMemoriesPage>>, append: boolean) => {
@@ -147,8 +149,20 @@ export function AgentMemoriesDetailsPanel() {
     });
   }, [memories]);
 
+  useLayoutEffect(() => {
+    if (!shouldScrollToDetailRef.current) return;
+    shouldScrollToDetailRef.current = false;
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
+    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [selectedMemoryId]);
+
   const selectedMemory = selectedMemoryId != null ? memories.find((memory) => memory.id === selectedMemoryId) : undefined;
   const selectedMemoryIsDeleted = selectedMemory != null && isMemoryDeleted(selectedMemory);
+
+  function selectMemory(memoryId: number) {
+    shouldScrollToDetailRef.current = true;
+    setSelectedMemoryId(memoryId);
+  }
 
   if (isLoadingMemories && memories.length === 0) {
     return <MemoriesFallback />;
@@ -183,7 +197,7 @@ export function AgentMemoriesDetailsPanel() {
         <AgentMemoriesList
           memories={memories}
           selectedMemoryId={selectedMemoryId}
-          onSelectMemory={setSelectedMemoryId}
+          onSelectMemory={selectMemory}
           isLoading={isLoadingMemories}
           hasMore={hasMore}
           isLoadingMore={isLoadingMore}
@@ -193,7 +207,10 @@ export function AgentMemoriesDetailsPanel() {
           emptyMessage={showDeleted ? "No memories found." : "No memories saved yet."}
         />
       </div>
-      <div className="flex min-h-[min(78vh,44rem)] min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+      <div
+        ref={detailPanelRef}
+        className="flex min-h-[min(78vh,44rem)] min-w-0 scroll-mt-20 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+      >
         {selectedMemory ? (
           <>
             <div className="flex min-w-0 shrink-0 items-center border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">

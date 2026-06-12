@@ -1,3 +1,6 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
 import type {
   AgentDashboardBankrollWidget,
   AgentDashboardBettingSummaryWidget,
@@ -81,13 +84,57 @@ export function AgentWidgetNavigation({
   activeWidget,
   onSelectWidget,
 }: AgentWidgetNavigationProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showCarouselIndicator, setShowCarouselIndicator] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+
+  const updateCarouselState = useCallback(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const isCarouselViewport = !window.matchMedia("(min-width: 1024px)").matches;
+    const maxScroll = container.scrollWidth - container.clientWidth;
+    const isScrollable = maxScroll > 1;
+
+    setShowCarouselIndicator(isCarouselViewport && isScrollable);
+    setScrollProgress(isScrollable ? container.scrollLeft / maxScroll : 0);
+  }, []);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const frame = requestAnimationFrame(updateCarouselState);
+
+    container.addEventListener("scroll", updateCarouselState, { passive: true });
+    window.addEventListener("resize", updateCarouselState);
+
+    const mediaQuery = window.matchMedia("(min-width: 1024px)");
+    mediaQuery.addEventListener("change", updateCarouselState);
+
+    const resizeObserver = new ResizeObserver(updateCarouselState);
+    resizeObserver.observe(container);
+
+    return () => {
+      cancelAnimationFrame(frame);
+      container.removeEventListener("scroll", updateCarouselState);
+      window.removeEventListener("resize", updateCarouselState);
+      mediaQuery.removeEventListener("change", updateCarouselState);
+      resizeObserver.disconnect();
+    };
+  }, [updateCarouselState]);
+
   const bankrollBalance = bankrollWidget?.balance ?? 0;
   const isNegativeBankroll = bankrollBalance < 0;
   const bankrollAccentClassName = isNegativeBankroll ? "bg-red-500/80" : "bg-emerald-500/80";
 
   return (
     <section className="flex flex-col gap-3">
-      <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-5">
+      <div
+        ref={scrollRef}
+        className="-mx-4 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-6 sm:px-6 lg:mx-0 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden"
+      >
+        <div className="grid auto-cols-[66%] grid-flow-col gap-3 snap-x snap-mandatory [&>button]:snap-start md:auto-cols-[38%] lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-5 lg:snap-none">
       <WidgetCard
         title="Bankroll"
         value={
@@ -216,7 +263,25 @@ export function AgentWidgetNavigation({
         isActive={activeWidget === AGENT_WIDGET_IDS.MEMORIES}
         onClick={() => onSelectWidget(AGENT_WIDGET_IDS.MEMORIES)}
       />
+        </div>
       </div>
+      {showCarouselIndicator ? (
+        <div
+          className="flex justify-center lg:hidden"
+          role="progressbar"
+          aria-label="Widget scroll position"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.round(scrollProgress * 100)}
+        >
+          <div className="relative h-1 w-16 rounded-full bg-zinc-200 dark:bg-zinc-700">
+            <div
+              className="absolute inset-y-0 w-4 rounded-full bg-zinc-900 transition-[left] duration-150 dark:bg-zinc-100"
+              style={{ left: `${scrollProgress * 75}%` }}
+            />
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

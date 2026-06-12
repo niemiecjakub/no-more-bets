@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bot, ChevronRight, WalletCards } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BetSlipList } from "@/features/bets/components/bet-slip-list";
 import type { BetSlipListItem } from "@/features/bets/interfaces";
 import { fetchBetSlips } from "@/features/bets/services/bets-api";
@@ -95,6 +95,10 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     const [selectedPhaseIds, setSelectedPhaseIds] = useState<number[]>([]);
     const hasActivePhaseFilter = selectedPhaseIds.length > 0;
     const phaseIdsForRequest = hasActivePhaseFilter ? selectedPhaseIds : undefined;
+    const bootstrapIncludeSessionIdRef = useRef(initialSelectedSessionId);
+    const lastUrlSessionIdRef = useRef(initialSelectedSessionId);
+    const detailPanelRef = useRef<HTMLDivElement>(null);
+    const shouldScrollToDetailRef = useRef(false);
 
     const applySessionsPage = useCallback(
         (page: Awaited<ReturnType<typeof fetchAgentSessionsPage>>, append: boolean) => {
@@ -119,7 +123,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         setNextCursor(null);
 
         fetchAgentSessionsPage({
-            includeSessionId: initialSelectedSessionId ?? undefined,
+            includeSessionId: bootstrapIncludeSessionIdRef.current ?? undefined,
             phaseIds: phaseIdsForRequest,
         })
             .then((page) => {
@@ -137,7 +141,41 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         return () => {
             cancelled = true;
         };
-    }, [applySessionsPage, initialSelectedSessionId, selectedPhaseIds]);
+    }, [applySessionsPage, selectedPhaseIds]);
+
+    useEffect(() => {
+        if (initialSelectedSessionId === lastUrlSessionIdRef.current) return;
+        lastUrlSessionIdRef.current = initialSelectedSessionId;
+
+        if (initialSelectedSessionId == null) return;
+
+        if (sessions.some((session) => session.id === initialSelectedSessionId)) {
+            setSelectedSessionId(initialSelectedSessionId);
+            return;
+        }
+
+        let cancelled = false;
+
+        fetchAgentSessionsPage({
+            includeSessionId: initialSelectedSessionId,
+            phaseIds: phaseIdsForRequest,
+        })
+            .then((page) => {
+                if (!cancelled) {
+                    applySessionsPage(page, true);
+                    setSelectedSessionId(initialSelectedSessionId);
+                }
+            })
+            .catch((error) => {
+                if (!cancelled) {
+                    setSessionsError(handleServiceError(error, "Failed to load agent sessions."));
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [applySessionsPage, initialSelectedSessionId, phaseIdsForRequest, sessions]);
 
     const loadMore = useCallback(() => {
         if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
@@ -232,6 +270,13 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         };
     }, [selectedSessionId]);
 
+    useLayoutEffect(() => {
+        if (!shouldScrollToDetailRef.current) return;
+        shouldScrollToDetailRef.current = false;
+        if (window.matchMedia("(min-width: 1024px)").matches) return;
+        detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, [selectedSessionId]);
+
     const selectedSession = selectedSessionId != null ? sessions.find((session) => session.id === selectedSessionId) : undefined;
     const SelectedPhaseIcon = selectedSession ? sessionPhaseIcon(selectedSession.phaseId) : Bot;
     const selectedSessionSlips = useMemo(() => {
@@ -240,15 +285,17 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     }, [allBetSlips, selectedSessionId]);
 
     function handleSelectedPhaseIdsChange(phaseIds: number[]) {
+        bootstrapIncludeSessionIdRef.current = selectedSessionId;
         setSelectedPhaseIds(phaseIds);
     }
 
     function selectSession(sessionId: number) {
+        shouldScrollToDetailRef.current = true;
         setSelectedSessionId(sessionId);
         const params = new URLSearchParams(searchParams.toString());
         params.set("widget", "sessions");
         params.set("sessionId", String(sessionId));
-        router.replace(`${pathname}?${params.toString()}`);
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
 
     if (isLoadingSessions && sessions.length === 0) {
@@ -287,7 +334,10 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
                     }
                 />
             </div>
-            <div className="flex min-h-[min(78vh,44rem)] min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+            <div
+                ref={detailPanelRef}
+                className="flex min-h-[min(78vh,44rem)] min-w-0 scroll-mt-20 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+            >
                 {selectedSession ? (
                     <>
                         <div className="flex min-w-0 shrink-0 items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
