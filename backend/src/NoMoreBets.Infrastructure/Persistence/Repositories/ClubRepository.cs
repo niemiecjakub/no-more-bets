@@ -17,6 +17,11 @@ public class ClubRepository : IClubRepository
     await _db.Head2Head.AddAsync(head2Head);
   }
 
+  public async Task AddClubAsync(Club club, CancellationToken cancellationToken = default)
+  {
+    await _db.Club.AddAsync(club, cancellationToken).ConfigureAwait(false);
+  }
+
   public async Task<Club?> GetByIdAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _db.Club

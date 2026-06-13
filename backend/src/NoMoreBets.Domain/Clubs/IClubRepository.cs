@@ -11,4 +11,5 @@ public interface IClubRepository
   public Task<ClubDailySummary?> GetDailySummaryAsync(int clubId, DateOnly? date = null, CancellationToken cancellationToken = default);
   public Task AddDailySummaryAsync(ClubDailySummary summary, CancellationToken cancellationToken = default);
   public Task AddHead2Head(Head2Head head2Head);
+  Task AddClubAsync(Club club, CancellationToken cancellationToken = default);
 }

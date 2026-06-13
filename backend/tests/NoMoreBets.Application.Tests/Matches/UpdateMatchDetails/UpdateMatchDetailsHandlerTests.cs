@@ -32,6 +32,8 @@ public class UpdateMatchDetailsHandlerTests
 
     _unitOfWork.Leagues.GetCurrentStage(League.UnknownSoccerdataId)
       .Returns(new Stage { Id = 8, SeasonId = 8, Name = "Unknown", SoccerdataId = 0 });
+    _unitOfWork.Leagues.GetLeagues()
+      .Returns(new List<League> { new() { Id = 8, Name = "Unknown", Slug = League.UnknownSlug, SoccerdataId = League.UnknownSoccerdataId } });
   }
 
   [Fact]
@@ -105,7 +107,7 @@ public async Task Handle_WhenExistingDetailsByFotmobUrl_ReturnsWithoutUpdatingOr
   }
 
   [Fact]
-  public async Task Handle_WhenFindClubThrows_ReturnsWithoutInsert()
+  public async Task Handle_WhenFindClubThrows_CreatesUnknownClubAndInsertsMatch()
   {
     var url = "https://fotmob.com/match/1";
     var dto = new MatchDetailsDto
@@ -117,15 +119,97 @@ public async Task Handle_WhenExistingDetailsByFotmobUrl_ReturnsWithoutUpdatingOr
     _matchDetailsProvider.GetMatchDetailsAsync(url, Arg.Any<CancellationToken>()).Returns(dto);
     _unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(url, Arg.Any<CancellationToken>()).Returns((MatchDetails?)null);
     _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(new List<Match>());
-    var clubs = new List<ClubEntity> { new() { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 } };
-    _unitOfWork.Clubs.GetClubs().Returns(Task.FromResult(clubs));
-    _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(_ => throw new InvalidOperationException("No club"));
+    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", Slug = "chelsea", LeagueId = 1, SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetClubs().Returns(Task.FromResult(new List<ClubEntity> { awayClub }));
+    _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>())
+      .Returns(_ => throw new ClubMatchNotFoundException("Arsenal", "No matching club found for 'Arsenal'"));
+    _matchMatcher.FindClub("Chelsea", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(awayClub);
+    StubAddClubAssignsIds(startingId: 100);
 
     var result = await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
 
-    result.CreatedNewMatch.Should().BeFalse();
-    await _unitOfWork.Matches.DidNotReceive().AddMatch(Arg.Any<Match>(), Arg.Any<CancellationToken>());
-    await _unitOfWork.Matches.DidNotReceive().AddMatchDetailsAsync(Arg.Any<MatchDetails>(), Arg.Any<CancellationToken>());
+    result.CreatedNewMatch.Should().BeTrue();
+    await _unitOfWork.Clubs.Received(1).AddClubAsync(
+      Arg.Is<ClubEntity>(c => c.Name == "Arsenal" && c.LeagueId == 8 && c.Slug == "arsenal"),
+      Arg.Any<CancellationToken>());
+    await _unitOfWork.Matches.Received(1).AddMatch(
+      Arg.Is<Match>(m => m.HomeClubId == 100 && m.AwayClubId == 2 && m.StageId == 8),
+      Arg.Any<CancellationToken>());
+    await _unitOfWork.Matches.Received(1).AddMatchDetailsAsync(Arg.Is<MatchDetails>(d => d.FotmobUrl == url), Arg.Any<CancellationToken>());
+    await _unitOfWork.Received(3).SaveChangesAsync(Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Handle_WhenBothClubsUnresolved_CreatesTwoUnknownClubsAndInsertsMatch()
+  {
+    var url = "https://fotmob.com/match/1";
+    var dto = new MatchDetailsDto
+    {
+      HomeTeam = "Team Alpha",
+      AwayTeam = "Team Beta",
+      MatchDate = DateTimeOffset.UtcNow
+    };
+    _matchDetailsProvider.GetMatchDetailsAsync(url, Arg.Any<CancellationToken>()).Returns(dto);
+    _unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(url, Arg.Any<CancellationToken>()).Returns((MatchDetails?)null);
+    _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(new List<Match>());
+    _unitOfWork.Clubs.GetClubs().Returns(Task.FromResult(new List<ClubEntity>()));
+    _matchMatcher.FindClub("Team Beta", Arg.Any<IReadOnlyList<ClubEntity>>())
+      .Returns(_ => throw new ClubMatchNotFoundException("Team Beta", "No matching club found for 'Team Beta'"));
+    StubAddClubAssignsIds(startingId: 100);
+
+    var result = await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
+
+    result.CreatedNewMatch.Should().BeTrue();
+    await _unitOfWork.Clubs.Received(2).AddClubAsync(
+      Arg.Is<ClubEntity>(c => c.LeagueId == 8),
+      Arg.Any<CancellationToken>());
+    await _unitOfWork.Matches.Received(1).AddMatch(
+      Arg.Is<Match>(m => m.HomeClubId == 100 && m.AwayClubId == 101 && m.StageId == 8),
+      Arg.Any<CancellationToken>());
+    await _unitOfWork.Received(3).SaveChangesAsync(Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Handle_WhenHomeClubResolvedAndAwayUnresolved_CreatesOneUnknownClubAndInsertsMatch()
+  {
+    var url = "https://fotmob.com/match/1";
+    var dto = new MatchDetailsDto
+    {
+      HomeTeam = "Arsenal",
+      AwayTeam = "Unknown FC",
+      MatchDate = DateTimeOffset.UtcNow
+    };
+    _matchDetailsProvider.GetMatchDetailsAsync(url, Arg.Any<CancellationToken>()).Returns(dto);
+    _unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(url, Arg.Any<CancellationToken>()).Returns((MatchDetails?)null);
+    _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(new List<Match>());
+    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", Slug = "arsenal", LeagueId = 1, SoccerdataId = 1 };
+    _unitOfWork.Clubs.GetClubs().Returns(Task.FromResult(new List<ClubEntity> { homeClub }));
+    _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(homeClub);
+    _matchMatcher.FindClub("Unknown FC", Arg.Any<IReadOnlyList<ClubEntity>>())
+      .Returns(_ => throw new ClubMatchNotFoundException("Unknown FC", "No matching club found for 'Unknown FC'"));
+    StubAddClubAssignsIds(startingId: 200);
+
+    var result = await _sut.Handle(new UpdateMatchDetailsCommand(url), CancellationToken.None);
+
+    result.CreatedNewMatch.Should().BeTrue();
+    await _unitOfWork.Clubs.Received(1).AddClubAsync(
+      Arg.Is<ClubEntity>(c => c.Name == "Unknown FC" && c.LeagueId == 8),
+      Arg.Any<CancellationToken>());
+    await _unitOfWork.Matches.Received(1).AddMatch(
+      Arg.Is<Match>(m => m.HomeClubId == 1 && m.AwayClubId == 200 && m.StageId == 8),
+      Arg.Any<CancellationToken>());
+    await _unitOfWork.Received(3).SaveChangesAsync(Arg.Any<CancellationToken>());
+  }
+
+  private void StubAddClubAssignsIds(int startingId)
+  {
+    var nextClubId = startingId;
+    _unitOfWork.Clubs.AddClubAsync(Arg.Any<ClubEntity>(), Arg.Any<CancellationToken>())
+      .Returns(callInfo =>
+      {
+        callInfo.ArgAt<ClubEntity>(0).Id = nextClubId++;
+        return Task.CompletedTask;
+      });
   }
 
   [Fact]

@@ -122,23 +122,21 @@ public class UpdateMatchDetailsHandler(
     }
 
     // Path C: insert new match under the Unknown league (Fotmob-discovered fixtures).
-    var allClubs = await unitOfWork.Clubs.GetClubs().ConfigureAwait(false);
+    var allClubs = (await unitOfWork.Clubs.GetClubs().ConfigureAwait(false)).ToList();
+    var unknownLeague = (await unitOfWork.Leagues.GetLeagues().ConfigureAwait(false))
+      .First(l => l.SoccerdataId == League.UnknownSoccerdataId);
 
-    Club homeClub;
-    Club awayClub;
-    try
+    var clubsCreated = false;
+    (Club homeClub, var homeCreated) = await ResolveOrCreateClubAsync(
+      dto.HomeTeam, allClubs, unknownLeague.Id, cancellationToken).ConfigureAwait(false);
+    clubsCreated |= homeCreated;
+    (Club awayClub, var awayCreated) = await ResolveOrCreateClubAsync(
+      dto.AwayTeam, allClubs, unknownLeague.Id, cancellationToken).ConfigureAwait(false);
+    clubsCreated |= awayCreated;
+
+    if (clubsCreated)
     {
-      homeClub = matchMatcher.FindClub(dto.HomeTeam, allClubs);
-      awayClub = matchMatcher.FindClub(dto.AwayTeam, allClubs);
-    }
-    catch (Exception ex)
-    {
-      logger.LogWarning(ex,
-        "Handler {HandlerName} could not resolve clubs for insert ({Home} vs {Away}); skipping insert.",
-        nameof(UpdateMatchDetailsHandler),
-        dto.HomeTeam,
-        dto.AwayTeam);
-      return NoChange;
+      await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
     var stage = await unitOfWork.Leagues.GetCurrentStage(League.UnknownSoccerdataId).ConfigureAwait(false);
@@ -164,6 +162,87 @@ public class UpdateMatchDetailsHandler(
       dto.AwayTeam,
       fotmobGameUrl);
     return new UpdateMatchDetailsResult(CreatedNewMatch: true, MatchId: newMatch.Id);
+  }
+
+  private async Task<(Club Club, bool Created)> ResolveOrCreateClubAsync(
+    string teamName,
+    List<Club> allClubs,
+    int unknownLeagueId,
+    CancellationToken cancellationToken)
+  {
+    if (allClubs.Count > 0)
+    {
+      try
+      {
+        return (matchMatcher.FindClub(teamName, allClubs), false);
+      }
+      catch (ClubMatchNotFoundException)
+      {
+        // Create below.
+      }
+    }
+
+    var trimmed = (teamName ?? string.Empty).Trim();
+    var effectiveName = ClubNameMatchHints.ResolveEffectiveName(trimmed);
+    var slug = EnsureUniqueSlug(ToSlug(effectiveName), allClubs);
+    var soccerdataId = AllocateSyntheticSoccerdataId(effectiveName, allClubs);
+
+    var club = new Club
+    {
+      Name = effectiveName,
+      Slug = slug,
+      LeagueId = unknownLeagueId,
+      SoccerdataId = soccerdataId,
+    };
+
+    await unitOfWork.Clubs.AddClubAsync(club, cancellationToken).ConfigureAwait(false);
+    allClubs.Add(club);
+
+    logger.LogInformation(
+      "Handler {HandlerName} created club '{ClubName}' (Slug={Slug}) in Unknown league for Fotmob team '{TeamName}'.",
+      nameof(UpdateMatchDetailsHandler),
+      effectiveName,
+      slug,
+      trimmed);
+
+    return (club, true);
+  }
+
+  private static string ToSlug(string name)
+  {
+    var folded = ClubNameMatchHints.FoldDiacritics(name).ToLowerInvariant();
+    var slug = System.Text.RegularExpressions.Regex.Replace(folded, @"[^a-z0-9]+", "-").Trim('-');
+    return string.IsNullOrEmpty(slug) ? "unknown-club" : slug;
+  }
+
+  private static string EnsureUniqueSlug(string baseSlug, IReadOnlyList<Club> existing)
+  {
+    var existingSlugs = existing.Select(c => c.Slug).ToHashSet(StringComparer.OrdinalIgnoreCase);
+    if (!existingSlugs.Contains(baseSlug))
+    {
+      return baseSlug;
+    }
+
+    for (var i = 2; ; i++)
+    {
+      var candidate = $"{baseSlug}-{i}";
+      if (!existingSlugs.Contains(candidate))
+      {
+        return candidate;
+      }
+    }
+  }
+
+  private static int AllocateSyntheticSoccerdataId(string name, IReadOnlyList<Club> existing)
+  {
+    var existingIds = existing.Select(c => c.SoccerdataId).ToHashSet();
+    var candidate = unchecked(-Math.Abs(StringComparer.OrdinalIgnoreCase.GetHashCode(name)));
+    while (existingIds.Contains(candidate))
+    {
+      candidate--;
+    }
+
+    return candidate;
   }
 
   private static void ApplyStatusAndScoreIfUpcoming(Match? match, MatchDetailsDto dto)
