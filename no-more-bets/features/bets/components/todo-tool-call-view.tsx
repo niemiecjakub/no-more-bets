@@ -13,6 +13,7 @@ import {
 const OPEN_TODO_ICON_CLASS = "text-amber-600 dark:text-amber-400";
 const COMPLETED_TODO_ICON_CLASS =
   "fill-amber-100 text-amber-700 dark:fill-amber-900/50 dark:text-amber-300";
+const COMPLETED_TODO_TITLE_CLASS = "text-zinc-500 line-through dark:text-zinc-400";
 
 interface TodoToolCallViewProps {
   payload: FunctionCallPayload;
@@ -70,22 +71,32 @@ function renderAdd(payload: FunctionCallPayload, state: SimulatedTodoState) {
 }
 
 function renderComplete(payload: FunctionCallPayload, state: SimulatedTodoState) {
-  const items = extractCompleteItems(payload);
-  if (items.length === 0) {
+  const completedNow = new Map(
+    extractCompleteItems(payload).map((item) => [item.id, item.reason] as const),
+  );
+
+  if (state.items.length === 0) {
     return <EmptyTodoAction message="No todo items completed." />;
   }
 
   return (
     <TodoList>
-      {items.map((item) => {
-        const title = resolveTodoTitle(state, item.id) ?? `Todo #${item.id}`;
+      {state.items.map((item) => {
+        const justCompleted = completedNow.has(item.id);
+        const isComplete = item.isComplete || justCompleted;
+
         return (
           <TodoListRow
             key={item.id}
-            icon={CircleCheck}
-            iconClassName={COMPLETED_TODO_ICON_CLASS}
-            title={title}
-            reason={item.reason}
+            icon={isComplete ? CircleCheck : Circle}
+            iconClassName={isComplete ? COMPLETED_TODO_ICON_CLASS : OPEN_TODO_ICON_CLASS}
+            title={item.title}
+            titleClassName={isComplete ? COMPLETED_TODO_TITLE_CLASS : undefined}
+            reason={
+              isComplete
+                ? (justCompleted ? (completedNow.get(item.id) ?? null) : item.completionReason)
+                : null
+            }
           />
         );
       })}
@@ -109,7 +120,7 @@ function renderRemove(payload: FunctionCallPayload, state: SimulatedTodoState) {
             icon={CircleMinus}
             iconClassName="text-zinc-400 dark:text-zinc-500"
             title={title}
-            titleClassName="text-zinc-500 line-through dark:text-zinc-400"
+            titleClassName={COMPLETED_TODO_TITLE_CLASS}
           />
         );
       })}
@@ -150,6 +161,8 @@ function renderAll(state: SimulatedTodoState) {
           icon={item.isComplete ? CircleCheck : Circle}
           iconClassName={item.isComplete ? COMPLETED_TODO_ICON_CLASS : OPEN_TODO_ICON_CLASS}
           title={item.title}
+          titleClassName={item.isComplete ? COMPLETED_TODO_TITLE_CLASS : undefined}
+          reason={item.isComplete ? item.completionReason : null}
         />
       ))}
     </TodoList>

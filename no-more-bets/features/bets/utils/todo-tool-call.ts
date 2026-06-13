@@ -26,6 +26,7 @@ export interface SimulatedTodoItem {
   id: number;
   title: string;
   isComplete: boolean;
+  completionReason: string | null;
 }
 
 export interface SimulatedTodoState {
@@ -120,15 +121,17 @@ export function applyTodoAction(state: SimulatedTodoState, payload: FunctionCall
           id: state.nextId++,
           title,
           isComplete: false,
+          completionReason: null,
         });
       }
       break;
     }
     case "todos_complete": {
-      const idSet = new Set(extractCompleteItems(payload).map((item) => item.id));
-      for (const item of state.items) {
-        if (!item.isComplete && idSet.has(item.id)) {
+      for (const { id, reason } of extractCompleteItems(payload)) {
+        const item = state.items.find((todo) => todo.id === id);
+        if (item != null && !item.isComplete) {
           item.isComplete = true;
+          item.completionReason = reason;
         }
       }
       break;
