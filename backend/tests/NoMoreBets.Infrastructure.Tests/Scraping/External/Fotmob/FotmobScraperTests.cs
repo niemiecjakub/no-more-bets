@@ -105,6 +105,55 @@ public class FotmobScraperTests
     }
 
     [Fact]
+    public async Task ParseLeagueTableClubsAsync_SkipsBestThirdPlaceSummarySubTable()
+    {
+        var html = """
+            <html><body>
+            <article class="TableContainer">
+              <section class="SubTableCSS">
+                <a class="SubTableHeaderCSS">Grp. A</a>
+                <div class="TableRowCSS">
+                  <div class="TablePositionCell">1</div>
+                  <div class="TableTeamCell"><a class="TeamLink" href="/teams/6710/overview/mexico"><img class="TeamIcon" src="https://images.fotmob.com/image_resources/logo/teamlogo/6710_xsmall.png"/><span class="TeamName">Mexico</span><span class="TeamShortname">Mexico</span></a></div>
+                  <div>1</div><div>1</div><div>0</div><div>0</div><div>2 - 0</div><div>+2</div><div>3</div><div></div><div></div>
+                </div>
+              </section>
+              <section class="SubTableCSS">
+                <a class="SubTableHeaderCSS">Best 3rd placed teams</a>
+                <div class="TableRowCSS">
+                  <div class="TablePositionCell">1</div>
+                  <div class="TableTeamCell"><a class="TeamLink" href="/teams/10106/overview/bosnia-herzegovina"><img class="TeamIcon" src="https://images.fotmob.com/image_resources/logo/teamlogo/10106_xsmall.png"/><span class="TeamName">Bosnia-Herzegovina</span><span class="TeamShortname">Bosnia-Herzegovina</span></a></div>
+                  <div>1</div><div>0</div><div>1</div><div>0</div><div>1 - 1</div><div>0</div><div>1</div><div></div><div></div>
+                </div>
+              </section>
+            </article>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        var result = await sut.ParseLeagueTableClubsAsync(html);
+
+        result.Should().ContainSingle();
+        result[0].TeamName.Should().Be("Mexico");
+    }
+
+    [Fact]
+    public async Task ParseLeagueTableClubsAsync_WithWorldCupGeneralHtml_Returns48UniqueTeams()
+    {
+        var path = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "..", "general.html"));
+        if (!File.Exists(path))
+            return;
+
+        var html = await File.ReadAllTextAsync(path);
+        var sut = CreateScraper();
+
+        var result = await sut.ParseLeagueTableClubsAsync(html, path);
+
+        result.Should().HaveCount(48);
+        result.Select(c => c.TeamId).Should().OnlyHaveUniqueItems();
+    }
+
+    [Fact]
     public async Task ParseLeagueTableClubsAsync_WithTailwindTeamformCell_ParsesLastFiveForm()
     {
         // Arrange: 2025+ FotMob form column — <a><div class="... bg-teamform-win|draw|lose ...">

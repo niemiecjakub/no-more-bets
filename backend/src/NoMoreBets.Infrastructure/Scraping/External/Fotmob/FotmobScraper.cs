@@ -594,6 +594,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
 
     foreach (var row in rows)
     {
+      if (IsInThirdPlaceSummarySubTable(row))
+        continue;
+
       try
       {
         var club = ParseLeagueTableRow(row);
@@ -635,6 +638,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
 
     foreach (var row in rows)
     {
+      if (IsInThirdPlaceSummarySubTable(row))
+        continue;
+
       try
       {
         var cells = row.QuerySelectorAll(":scope > div").ToArray();
@@ -715,6 +721,34 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   private static IElement? FindFotmobTableRoot(IDocument doc) =>
     doc.QuerySelector("article.TableContainer")
     ?? doc.QuerySelector("[class*='TableContainer']");
+
+  /// <summary>FotMob World Cup pages include a duplicate "best third-place teams" sub-table; skip it.</summary>
+  private static bool IsInThirdPlaceSummarySubTable(IElement row)
+  {
+    var section = row.Closest("section[class*='SubTableCSS']");
+    if (section is null)
+      return false;
+
+    var headerLink = section.QuerySelector("a[class*='SubTableHeaderCSS']");
+    var headerText = headerLink?.TextContent?.Trim() ?? string.Empty;
+    return IsThirdPlaceSummaryHeader(headerText);
+  }
+
+  private static bool IsThirdPlaceSummaryHeader(string headerText)
+  {
+    if (string.IsNullOrWhiteSpace(headerText))
+      return false;
+
+    var lower = headerText.ToLowerInvariant();
+    if (lower.Contains("trzecich miejsc", StringComparison.Ordinal))
+      return true;
+
+    // Production EN header: "Best 3rd placed teams" (FotMob /en/leagues/.../table/world-cup).
+    return lower.Contains("3rd placed", StringComparison.Ordinal)
+      || lower.Contains("third place", StringComparison.Ordinal)
+      || lower.Contains("third-placed", StringComparison.Ordinal)
+      || lower.Contains("third placed", StringComparison.Ordinal);
+  }
 
   private TableEntry? ParseLeagueTableRow(IElement row)
   {
