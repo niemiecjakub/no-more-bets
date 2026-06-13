@@ -1,12 +1,13 @@
 "use client";
 
-import { ClipboardList, Lightbulb, MessageSquareText, Wrench } from "lucide-react";
+import { Lightbulb, MessageSquareText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MatchResearchOutputView } from "@/features/matches/components/match-research-output-view";
 import { parseMatchResearchOutputText } from "@/features/matches/services/match-insights-api";
 import { TodoToolCallView } from "./todo-tool-call-view";
+import { getToolCallBadgeStyle, ToolCallView } from "./tool-call-view";
 import type { AgentSessionMessage } from "../services/agent-session-api";
 import {
   applyTodoAction,
@@ -29,13 +30,6 @@ interface MessageKindBadgeStyle {
   className: string;
 }
 
-const TODO_BADGE_STYLE: MessageKindBadgeStyle = {
-  label: "Todo list",
-  icon: ClipboardList,
-  className:
-    "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200",
-};
-
 function messageKindBadgeStyle(kind: number): MessageKindBadgeStyle {
   switch (kind) {
     case 1:
@@ -51,13 +45,6 @@ function messageKindBadgeStyle(kind: number): MessageKindBadgeStyle {
         icon: Lightbulb,
         className:
           "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200",
-      };
-    case 3:
-      return {
-        label: "Function call",
-        icon: Wrench,
-        className:
-          "border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-700 dark:bg-orange-900/30 dark:text-orange-200",
       };
     default:
       return {
@@ -91,14 +78,26 @@ function buildTodoStateByMessageId(messages: AgentSessionMessage[]): Map<number,
   return stateByMessageId;
 }
 
+function isFunctionCall(message: AgentSessionMessage): boolean {
+  return message.kind === FUNCTION_CALL_KIND;
+}
+
+function fallbackToolCallBadge(message: AgentSessionMessage): MessageKindBadgeStyle {
+  const payload = parseFunctionCallText(message.text);
+  return {
+    label: payload?.name ?? "Tool call",
+    icon: MessageSquareText,
+    className:
+      "border-zinc-300 bg-zinc-100 text-zinc-800 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200",
+  };
+}
+
 export function AgentSessionTranscript({
   messages,
   hideStructuredResearchOutput = false,
 }: AgentSessionTranscriptProps) {
   const visible = messages.filter(
-    (m) =>
-      (m.kind !== FUNCTION_CALL_KIND || isTodoToolCall(m)) &&
-      !(hideStructuredResearchOutput && parseMatchResearchOutputText(m.text) != null),
+    (m) => !(hideStructuredResearchOutput && parseMatchResearchOutputText(m.text) != null),
   );
 
   const todoStateByMessageId = buildTodoStateByMessageId(visible);
@@ -106,9 +105,7 @@ export function AgentSessionTranscript({
   if (visible.length === 0) {
     return (
       <p className="px-4 py-3 text-sm text-zinc-500 dark:text-zinc-400">
-        {messages.length === 0
-          ? "No messages in this session."
-          : "No transcript text to show (only tool calls were recorded)."}
+        No messages in this session.
       </p>
     );
   }
@@ -116,10 +113,17 @@ export function AgentSessionTranscript({
     <ul className="flex w-full min-w-0 flex-1 flex-col divide-y divide-zinc-200 overflow-hidden border-0 bg-zinc-50/80 dark:divide-zinc-800 dark:bg-zinc-900/40">
       {visible.map((m) => {
         const isTodo = isTodoToolCall(m);
-        const badge = isTodo ? TODO_BADGE_STYLE : messageKindBadgeStyle(m.kind);
+        const isToolCall = isFunctionCall(m);
+        const functionPayload = isToolCall ? parseFunctionCallText(m.text) : null;
+        const badge =
+          isToolCall && m.toolCallDisplay != null
+            ? getToolCallBadgeStyle(m.toolCallDisplay)
+            : isToolCall
+              ? fallbackToolCallBadge(m)
+              : messageKindBadgeStyle(m.kind);
         const BadgeIcon = badge.icon;
         const structuredResearch = parseMatchResearchOutputText(m.text);
-        const todoPayload = isTodo ? parseFunctionCallText(m.text) : null;
+        const todoPayload = isTodo ? functionPayload : null;
         const todoState = todoPayload ? todoStateByMessageId.get(m.id) : undefined;
 
         return (
@@ -134,6 +138,8 @@ export function AgentSessionTranscript({
             </div>
             {todoPayload && todoState ? (
               <TodoToolCallView payload={todoPayload} state={todoState} />
+            ) : isToolCall && m.toolCallDisplay != null ? (
+              <ToolCallView display={m.toolCallDisplay} />
             ) : structuredResearch ? (
               <MatchResearchOutputView research={structuredResearch} />
             ) : (

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using NoMoreBets.Application.AgentTools;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -7,12 +8,6 @@ namespace NoMoreBets.Infrastructure.AI.Providers.Todo;
 
 public sealed class TodoProvider : AIContextProvider, IDisposable
 {
-  private const string TodosAddToolName = "todos_add";
-  private const string TodosCompleteToolName = "todos_complete";
-  private const string TodosRemoveToolName = "todos_remove";
-  private const string TodosGetRemainingToolName = "todos_get_remaining";
-  private const string TodosGetAllToolName = "todos_get_all";
-
   private static readonly string Instructions =
       $$"""
         # Todo Items
@@ -23,11 +18,11 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         Update the todo list when requirements change by removing irrelevant items or adding new ones as needed.
 
         Use these tools to manage your tasks:
-        - Use {{TodosAddToolName}} to break down complex work into trackable items (supports adding one or many at once).
-        - Use {{TodosCompleteToolName}} to mark items as done when finished (supports one or many at once). Include a reason describing how the items were completed.
-        - Use {{TodosGetRemainingToolName}} to check what work is still pending.
-        - Use {{TodosGetAllToolName}} to review the full list including completed items.
-        - Use {{TodosRemoveToolName}} to remove items that are no longer needed (supports one or many at once).
+        - Use {{AgentToolCatalog.Todo.Add.Name}} to break down complex work into trackable items (supports adding one or many at once).
+        - Use {{AgentToolCatalog.Todo.Complete.Name}} to mark items as done when finished (supports one or many at once). Include a reason describing how the items were completed.
+        - Use {{AgentToolCatalog.Todo.GetRemaining.Name}} to check what work is still pending.
+        - Use {{AgentToolCatalog.Todo.GetAll.Name}} to review the full list including completed items.
+        - Use {{AgentToolCatalog.Todo.Remove.Name}} to remove items that are no longer needed (supports one or many at once).
         """;
 
   private readonly ProviderSessionState<TodoState> _sessionState;
@@ -209,7 +204,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         (List<TodoItemInput> todos) => AddTodosAsync(session, todos),
         new AIFunctionFactoryOptions
         {
-          Name = TodosAddToolName,
+          Name = AgentToolCatalog.Todo.Add.Name,
           Description = "Add one or more todo items. Each item has a title. Returns the list of created todo items.",
           SerializerOptions = serializerOptions,
         }),
@@ -218,7 +213,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         (List<TodoCompleteInput> items) => CompleteTodosAsync(session, items),
         new AIFunctionFactoryOptions
         {
-          Name = TodosCompleteToolName,
+          Name = AgentToolCatalog.Todo.Complete.Name,
           Description = "Mark one or more todo items as complete. Each entry has an ID and a reason describing how/why the item was completed. Returns the number of items that were found and marked complete.",
           SerializerOptions = serializerOptions,
         }),
@@ -227,7 +222,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         (List<int> ids) => RemoveTodosAsync(session, ids),
         new AIFunctionFactoryOptions
         {
-          Name = TodosRemoveToolName,
+          Name = AgentToolCatalog.Todo.Remove.Name,
           Description = "Remove one or more todo items by their IDs. Returns the number of items that were found and removed.",
           SerializerOptions = serializerOptions,
         }),
@@ -236,7 +231,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         () => GetRemainingTodosAsync(session),
         new AIFunctionFactoryOptions
         {
-          Name = TodosGetRemainingToolName,
+          Name = AgentToolCatalog.Todo.GetRemaining.Name,
           Description = "Retrieve the list of incomplete todo items.",
           SerializerOptions = serializerOptions,
         }),
@@ -245,7 +240,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         () => GetAllTodosAsync(session),
         new AIFunctionFactoryOptions
         {
-          Name = TodosGetAllToolName,
+          Name = AgentToolCatalog.Todo.GetAll.Name,
           Description = "Retrieve the full list of todo items, both complete and incomplete.",
           SerializerOptions = serializerOptions,
         }),

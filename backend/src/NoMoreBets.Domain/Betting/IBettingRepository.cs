@@ -16,6 +16,9 @@ public interface IBettingRepository
   /// </summary>
   Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsAsync(CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<BetSlip>> GetBetSlipsByAgentSessionIdAsync(
+    int agentSessionId,
+    CancellationToken cancellationToken = default);
 
   /// <summary>
   /// Latest research-phase bet slip that includes a selection on <paramref name="matchId"/>, if any.

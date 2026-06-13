@@ -6,17 +6,12 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Memories;
 
+using NoMoreBets.Application.AgentTools;
+
 namespace NoMoreBets.Infrastructure.AI.Providers.Memories;
 
 public sealed class MemoriesProvider : AIContextProvider
 {
-  private const string GetRecordsToolName = "memories_getRecords";
-  private const string ReadToolName = "memories_read";
-  private const string WriteToolName = "memories_write";
-  private const string AppendToolName = "memories_append";
-  private const string ReplaceToolName = "memories_replace";
-  private const string DeleteToolName = "memories_delete";
-
   private static readonly string Instructions =
       $$"""
         # Personal Memories
@@ -28,12 +23,12 @@ public sealed class MemoriesProvider : AIContextProvider
         When you learn something likely to be useful in the future, consider saving it.
 
         Use these tools to manage memories:
-        - Use {{GetRecordsToolName}} to list all saved memory records.
-        - Use {{ReadToolName}} to load the full content of a saved memory record.
-        - Use {{WriteToolName}} to replace an entire memory record with new contentor creates the record if it does not exist.
-        - Use {{AppendToolName}} to add text to the end of an existing memory record.
-        - Use {{ReplaceToolName}} to find an exact substring in a memory record and substitute new text.
-        - Use {{DeleteToolName}} to permanently delete a named memory record.
+        - Use {{AgentToolCatalog.Memories.GetRecords.Name}} to list all saved memory records.
+        - Use {{AgentToolCatalog.Memories.Read.Name}} to load the full content of a saved memory record.
+        - Use {{AgentToolCatalog.Memories.Write.Name}} to replace an entire memory record with new contentor creates the record if it does not exist.
+        - Use {{AgentToolCatalog.Memories.Append.Name}} to add text to the end of an existing memory record.
+        - Use {{AgentToolCatalog.Memories.Replace.Name}} to find an exact substring in a memory record and substitute new text.
+        - Use {{AgentToolCatalog.Memories.Delete.Name}} to permanently delete a named memory record.
         """;
 
   private readonly IUnitOfWork _unitOfWork;
@@ -66,7 +61,7 @@ public sealed class MemoriesProvider : AIContextProvider
         GetMemoryRecordsAsync,
         new AIFunctionFactoryOptions
         {
-          Name = GetRecordsToolName,
+          Name = AgentToolCatalog.Memories.GetRecords.Name,
           Description = "Lists all saved memory records.",
           SerializerOptions = serializerOptions,
         }),
@@ -75,7 +70,7 @@ public sealed class MemoriesProvider : AIContextProvider
         ReadAsync,
         new AIFunctionFactoryOptions
         {
-          Name = ReadToolName,
+          Name = AgentToolCatalog.Memories.Read.Name,
           Description = "Loads the full content of a saved memory record.",
           SerializerOptions = serializerOptions,
         }),
@@ -84,7 +79,7 @@ public sealed class MemoriesProvider : AIContextProvider
         WriteAsync,
         new AIFunctionFactoryOptions
         {
-          Name = WriteToolName,
+          Name = AgentToolCatalog.Memories.Write.Name,
           Description = "Replaces the entire memory record with new content. Creates the record if it does not exist. Prefer Append or Replace for small changes so you do not drop existing text.",
           SerializerOptions = serializerOptions,
         }),
@@ -93,7 +88,7 @@ public sealed class MemoriesProvider : AIContextProvider
         AppendAsync,
         new AIFunctionFactoryOptions
         {
-          Name = AppendToolName,
+          Name = AgentToolCatalog.Memories.Append.Name,
           Description = "Adds text to the end of an existing memory record.",
           SerializerOptions = serializerOptions,
         }),
@@ -102,7 +97,7 @@ public sealed class MemoriesProvider : AIContextProvider
         ReplaceAsync,
         new AIFunctionFactoryOptions
         {
-          Name = ReplaceToolName,
+          Name = AgentToolCatalog.Memories.Replace.Name,
           Description = "Finds an exact substring in a memory record and substitutes newText. Matching is case-sensitive and does not ignore whitespace. If replaceAll is false, oldText must occur exactly once or the call fails.",
           SerializerOptions = serializerOptions,
         }),
@@ -111,7 +106,7 @@ public sealed class MemoriesProvider : AIContextProvider
         DeleteMemoryAsync,
         new AIFunctionFactoryOptions
         {
-          Name = DeleteToolName,
+          Name = AgentToolCatalog.Memories.Delete.Name,
           Description = "Permanently deletes a named memory record. Use only when the entire record is obsolete.",
           SerializerOptions = serializerOptions,
         }),

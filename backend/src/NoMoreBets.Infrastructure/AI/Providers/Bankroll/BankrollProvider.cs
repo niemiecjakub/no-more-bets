@@ -3,22 +3,20 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Bankroll.GetCurrentBankAccount;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
+using NoMoreBets.Application.AgentTools;
 
 namespace NoMoreBets.Infrastructure.AI.Providers.Bankroll;
 
 public sealed class BankrollProvider : AIContextProvider
 {
-  private const string GetBalanceToolName = "bankroll_getBalance";
-  private const string GetDaysUntilPaydayToolName = "bankroll_getDaysUntillPayday";
-
   private static readonly string Instructions =
       $$"""
         # Bankroll
         You have access to your bankroll data.
 
         Use these tools to manage your bankroll:
-        - Use {{GetBalanceToolName}} to get your current bank account balance.
-        - Use {{GetDaysUntilPaydayToolName}} to get the number of days until your next payday.
+        - Use {{AgentToolCatalog.Bankroll.GetBalance.Name}} to get your current bank account balance.
+        - Use {{AgentToolCatalog.Bankroll.GetDaysUntilPayday.Name}} to get the number of days until your next payday.
         """;
 
   private readonly IMediator _mediator;
@@ -49,7 +47,7 @@ public sealed class BankrollProvider : AIContextProvider
         GetCurrentBalanceAsync,
         new AIFunctionFactoryOptions
         {
-          Name = GetBalanceToolName,
+          Name = AgentToolCatalog.Bankroll.GetBalance.Name,
           Description = "Get your current bank account balance.",
           SerializerOptions = serializerOptions,
         }),
@@ -58,7 +56,7 @@ public sealed class BankrollProvider : AIContextProvider
         GetDaysUntilPaydayAsync,
         new AIFunctionFactoryOptions
         {
-          Name = GetDaysUntilPaydayToolName,
+          Name = AgentToolCatalog.Bankroll.GetDaysUntilPayday.Name,
           Description = "Get number of days until your next payday.",
           SerializerOptions = serializerOptions,
         }),

@@ -1,5 +1,6 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
+using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.AI.Tools;
@@ -9,92 +10,92 @@ public static class ToolRegistry
   public static class Match
   {
     public static readonly AgentTool GetLineups =
-      FromMatch("match_getLineups", p => p.GetLineupsAsync);
+      FromMatch(AgentToolCatalog.Match.GetLineups, p => p.GetLineupsAsync);
 
     public static readonly AgentTool GetInjuries =
-      FromMatch("match_getInjuries", p => p.GetInjuriesAsync);
+      FromMatch(AgentToolCatalog.Match.GetInjuries, p => p.GetInjuriesAsync);
 
     public static readonly AgentTool GetHead2HeadStats =
-      FromMatch("match_getHead2HeadStats", p => p.GetHead2HeadStatsAsync);
+      FromMatch(AgentToolCatalog.Match.GetHead2HeadStats, p => p.GetHead2HeadStatsAsync);
 
     public static readonly AgentTool GetClubDailySummary =
-      FromMatch("match_getClubDailySummary", p => p.GetClubDailySummaryAsync);
+      FromMatch(AgentToolCatalog.Match.GetClubDailySummary, p => p.GetClubDailySummaryAsync);
 
     public static readonly AgentTool GetClubRecentGames =
-      FromMatch("match_getClubRecentGames", p => p.GetClubRecentGamesAsync);
+      FromMatch(AgentToolCatalog.Match.GetClubRecentGames, p => p.GetClubRecentGamesAsync);
 
     public static readonly AgentTool GetClubLeagueStatistics =
-      FromMatch("match_getClubLeagueStatistics", p => p.GetClubStatistics);
+      FromMatch(AgentToolCatalog.Match.GetClubLeagueStatistics, p => p.GetClubStatistics);
 
     public static readonly AgentTool GetLeagueTable =
-      FromMatch("match_getLeagueTable", p => p.GetLeagueTableAsync);
+      FromMatch(AgentToolCatalog.Match.GetLeagueTable, p => p.GetLeagueTableAsync);
 
     public static readonly AgentTool GetGroupTable =
-      FromMatch("match_getGroupTable", p => p.GetGroupTableAsync);
+      FromMatch(AgentToolCatalog.Match.GetGroupTable, p => p.GetGroupTableAsync);
 
     public static readonly AgentTool GetMatchBettingOddsHistory =
-      FromMatch("match_getMatchBettingOddsHistory", p => p.GetMatchBettingOddsHistoryAsync);
+      FromMatch(AgentToolCatalog.Match.GetMatchBettingOddsHistory, p => p.GetMatchBettingOddsHistoryAsync);
 
     public static readonly AgentTool GetClubRollingPerformance =
-      FromMatch("match_getClubRollingPerformance", p => p.GetClubRollingPerformanceAsync);
+      FromMatch(AgentToolCatalog.Match.GetClubRollingPerformance, p => p.GetClubRollingPerformanceAsync);
 
     public static readonly AgentTool SaveMatchAnalysis =
-      FromMatch("match_saveMatchAnalysisAsync", p => p.SaveMatchAnalysisAsync);
+      FromMatch(AgentToolCatalog.Match.SaveMatchAnalysis, p => p.SaveMatchAnalysisAsync);
 
     public static readonly AgentTool GetMatchResearchText =
-      FromMatch("match_getMatchResearchTextAsync", p => p.GetMatchResearchTextAsync);
+      FromMatch(AgentToolCatalog.Match.GetMatchResearchText, p => p.GetMatchResearchTextAsync);
 
     public static readonly AgentTool GetUpcomingMatches =
-      FromMatch("match_getAvailableMatchesAsync", p => p.GetUpcomingMatchesAsync);
+      FromMatch(AgentToolCatalog.Match.GetUpcomingMatches, p => p.GetUpcomingMatchesAsync);
   }
 
   public static class Betting
   {
     public static readonly AgentTool GetAvailableMatches =
-      FromBetting("betting_getAvailableMatches", p => p.GetAvailableMatchesAsync);
+      FromBetting(AgentToolCatalog.Betting.GetAvailableMatches, p => p.GetAvailableMatchesAsync);
 
     public static readonly AgentTool GetCurrentOdds =
-      FromBetting("betting_getCurrentOdds", p => p.GetCurrentOddsAsync);
+      FromBetting(AgentToolCatalog.Betting.GetCurrentOdds, p => p.GetCurrentOddsAsync);
 
     public static readonly AgentTool GetMatchAnalysis =
-      FromBetting("betting_getMatchAnalysis", p => p.GetMatchAnalysisAsync);
+      FromBetting(AgentToolCatalog.Betting.GetMatchAnalysis, p => p.GetMatchAnalysisAsync);
 
     public static readonly AgentTool PlaceBetSlip =
-      FromBetting("betting_placeBetSlip", p => p.PlaceBetSlip);
+      FromBetting(AgentToolCatalog.Betting.PlaceBetSlip, p => p.PlaceBetSlip);
 
     public static readonly AgentTool GetBetSlips =
-      FromBetting("betting_getBetSlips", p => p.GetBetSlipsAsync);
+      FromBetting(AgentToolCatalog.Betting.GetBetSlips, p => p.GetBetSlipsAsync);
 
     public static readonly AgentTool GetBetSlipsAwaitingReflection =
-      FromBetting("betting_getBetSlipsAwaitingReflectionAsync", p => p.GetBetSlipsAwaitingReflectionAsync);
+      FromBetting(AgentToolCatalog.Betting.GetBetSlipsAwaitingReflection, p => p.GetBetSlipsAwaitingReflectionAsync);
   }
 
   public static class SocialMedia
   {
     public static readonly AgentTool CreateXPost =
-      FromSocialMedia("socialmedia_createXPost", p => p.CreateXPostAsync);
+      FromSocialMedia(AgentToolCatalog.SocialMedia.CreateXPost, p => p.CreateXPostAsync);
   }
 
   public static class ResearchBet
   {
     public static AgentTool GetMatchBasicInfo(int matchId) =>
-      new(ctx => Create(ctx.ResearchBet(matchId).GetMatchBasicInfoAsync, "researchbet_getMatchBasicInfo"));
+      new(ctx => Create(ctx.ResearchBet(matchId).GetMatchBasicInfoAsync, AgentToolCatalog.ResearchBet.GetMatchBasicInfo.Name));
 
     public static AgentTool GetMatchEvents(int matchId) =>
-      new(ctx => Create(ctx.ResearchBet(matchId).GetMatchEventsAsync, "researchbet_getMatchEvents"));
+      new(ctx => Create(ctx.ResearchBet(matchId).GetMatchEventsAsync, AgentToolCatalog.ResearchBet.GetMatchEvents.Name));
 
     public static AgentTool PlaceBetSlip(int matchId) =>
-      new(ctx => Create(ctx.ResearchBet(matchId).PlaceBetSlip, "researchbet_placeBetSlip"));
+      new(ctx => Create(ctx.ResearchBet(matchId).PlaceBetSlip, AgentToolCatalog.ResearchBet.PlaceBetSlip.Name));
   }
 
-  private static AgentTool FromMatch(string name, Func<MatchTool, Delegate> method) =>
-    new(ctx => Create(method(ctx.Match), name));
+  private static AgentTool FromMatch(AgentToolDefinition definition, Func<MatchTool, Delegate> method) =>
+    new(ctx => Create(method(ctx.Match), definition.Name));
 
-  private static AgentTool FromBetting(string name, Func<BettingTool, Delegate> method) =>
-    new(ctx => Create(method(ctx.Betting), name));
+  private static AgentTool FromBetting(AgentToolDefinition definition, Func<BettingTool, Delegate> method) =>
+    new(ctx => Create(method(ctx.Betting), definition.Name));
 
-  private static AgentTool FromSocialMedia(string name, Func<SocialMediaTool, Delegate> method) =>
-    new(ctx => Create(method(ctx.SocialMedia), name));
+  private static AgentTool FromSocialMedia(AgentToolDefinition definition, Func<SocialMediaTool, Delegate> method) =>
+    new(ctx => Create(method(ctx.SocialMedia), definition.Name));
 
   internal static AITool Create(Delegate method, string name) =>
     AIFunctionFactory.Create(method, new AIFunctionFactoryOptions

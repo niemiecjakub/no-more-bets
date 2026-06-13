@@ -5,6 +5,9 @@ namespace NoMoreBets.Domain.Matches;
 public interface IMatchRepository
 {
   public Task<Match?> GetMatchByIdAsync(int matchId, CancellationToken cancellationToken = default);
+  public Task<IReadOnlyList<Match>> GetMatchesByIdsAsync(
+    IReadOnlyList<int> matchIds,
+    CancellationToken cancellationToken = default);
   public Task<Match?> GetMatchBySoccerdataId(int soccerdataId);
   public Task<MatchDetails?> GetMatchDetailsByFotmobUrlAsync(string fotmobUrl, CancellationToken cancellationToken = default);
   public Task<MatchDetails?> GetMatchDetailsByMatchIdAsync(int matchId, CancellationToken cancellationToken = default);

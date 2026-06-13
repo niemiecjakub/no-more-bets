@@ -1,5 +1,12 @@
 import axiosInstance from "../../../lib/axios";
 
+/** Aligned with backend ToolCallDisplayDto. */
+export interface ToolCallDisplay {
+  label: string;
+  category: string;
+  details: string[] | null;
+}
+
 /** Aligned with backend AgentSessionMessageDto. */
 export interface AgentSessionMessage {
   id: number;
@@ -7,6 +14,7 @@ export interface AgentSessionMessage {
   ordinal: number;
   kind: number;
   text: string;
+  toolCallDisplay?: ToolCallDisplay | null;
 }
 
 /**

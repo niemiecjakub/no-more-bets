@@ -185,10 +185,10 @@ function groupBetSlips(slips: BetSlipListItem[]): BetSlipGroupModel[] {
 
 function BetSessionGroupHeader({
   agentSessionId,
-  slipCount,
+  slips,
 }: {
   agentSessionId: number;
-  slipCount: number;
+  slips: BetSlipListItem[];
 }) {
   const [transcriptOpen, setTranscriptOpen] = useState(false);
 
@@ -198,7 +198,7 @@ function BetSessionGroupHeader({
         <p className="text-sm font-medium text-foreground">
           Betting session #{agentSessionId}
           <span className="ml-2 font-normal text-zinc-500 dark:text-zinc-400">
-            · {slipCount} slip{slipCount === 1 ? "" : "s"}
+            · {slips.length} slip{slips.length === 1 ? "" : "s"}
           </span>
         </p>
       </div>
@@ -216,7 +216,10 @@ function BetSessionGroupHeader({
           </span>
         </summary>
         <div className="border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
-          <LazyAgentSessionTranscript sessionId={agentSessionId} active={transcriptOpen} />
+          <LazyAgentSessionTranscript
+            sessionId={agentSessionId}
+            active={transcriptOpen}
+          />
         </div>
       </details>
     </div>
@@ -257,7 +260,7 @@ export function BetSlipList({
             <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
               <BetSessionGroupHeader
                 agentSessionId={group.agentSessionId}
-                slipCount={group.slips.length}
+                slips={group.slips}
               />
               <ul>
                 {group.slips.map((slip, index) => (

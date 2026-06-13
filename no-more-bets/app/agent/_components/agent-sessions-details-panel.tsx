@@ -393,7 +393,9 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
                             ) : transcriptError ? (
                                 <p className="px-4 py-3 text-sm text-red-800 dark:text-red-200">{transcriptError}</p>
                             ) : transcriptMessages ? (
-                                <AgentSessionTranscript messages={transcriptMessages} />
+                                <AgentSessionTranscript
+                                    messages={transcriptMessages}
+                                />
                             ) : null}
                         </div>
                     </>

@@ -34,6 +34,23 @@ public class MatchRepository : IMatchRepository
       .FirstOrDefaultAsync(m => m.Id == matchId, cancellationToken);
   }
 
+  public async Task<IReadOnlyList<Match>> GetMatchesByIdsAsync(
+    IReadOnlyList<int> matchIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (matchIds.Count == 0)
+      return [];
+
+    var ids = matchIds.Distinct().ToList();
+    return await _db.Match
+      .AsNoTracking()
+      .Where(m => ids.Contains(m.Id))
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public Task<Lineup?> GetLineup(int matchId)
   {
     return _db.Lineup.SingleOrDefaultAsync(l => l.MatchId == matchId);

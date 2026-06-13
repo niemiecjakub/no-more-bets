@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
+using NoMoreBets.Application.AgentTools;
 using SearchLlmContextOptions = NoMoreBets.Application.Search.SearchLlmContext.SearchLlmContextOptions;
 using SearchNewsOptions = NoMoreBets.Application.Search.SearchNews.SearchNewsOptions;
 
@@ -12,17 +13,14 @@ namespace NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 
 public sealed class WebSearchProvider : AIContextProvider
 {
-  private const string SearchNewsToolName = "websearch_searchNews";
-  private const string GetWebGroundingToolName = "websearch_getWebGrounding";
-
   private static readonly string Instructions =
       $$"""
         # Web Search
         You have access to web search.
 
         Use these tools to search the web:
-        - Use {{SearchNewsToolName}} to search for recent news articles and current events.
-        - Use {{GetWebGroundingToolName}} to retrieve high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.
+        - Use {{AgentToolCatalog.WebSearch.SearchNews.Name}} to search for recent news articles and current events.
+        - Use {{AgentToolCatalog.WebSearch.GetWebGrounding.Name}} to retrieve high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.
         """;
 
   private readonly ISearchService _searchService;
@@ -55,7 +53,7 @@ public sealed class WebSearchProvider : AIContextProvider
         SearchNewsAsync,
         new AIFunctionFactoryOptions
         {
-          Name = SearchNewsToolName,
+          Name = AgentToolCatalog.WebSearch.SearchNews.Name,
           Description = "Search for recent news articles and current events.",
           SerializerOptions = serializerOptions,
         }),
@@ -64,7 +62,7 @@ public sealed class WebSearchProvider : AIContextProvider
         GetWebGroundingAsync,
         new AIFunctionFactoryOptions
         {
-          Name = GetWebGroundingToolName,
+          Name = AgentToolCatalog.WebSearch.GetWebGrounding.Name,
           Description = "Retrieves high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.",
           SerializerOptions = serializerOptions,
         }),

@@ -104,6 +104,23 @@ public class BettingRepository : IBettingRepository
       .ConfigureAwait(false);
   }
 
+  public async Task<IReadOnlyList<BetSlip>> GetBetSlipsByAgentSessionIdAsync(
+    int agentSessionId,
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.BetSlip
+      .AsNoTracking()
+      .Where(s => s.AgentSessionId == agentSessionId)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task<BetSlip?> GetLatestResearchBetSlipForMatchAsync(int matchId, CancellationToken cancellationToken = default)
   {
     return await _db.BetSlip

@@ -1,4 +1,13 @@
 import type { AgentSessionMessage } from "../services/agent-session-api";
+import {
+  asArray,
+  findArgumentValue,
+  parseFunctionCallText,
+  type FunctionCallPayload,
+} from "./function-call";
+
+export type { FunctionCallArgument, FunctionCallPayload } from "./function-call";
+export { parseFunctionCallText } from "./function-call";
 
 /** Matches tool names in TodoProvider.cs */
 export const TODO_TOOL_NAMES = new Set([
@@ -11,16 +20,6 @@ export const TODO_TOOL_NAMES = new Set([
 
 /** Matches `AgentSessionMessageKind.FunctionCall` on the API. */
 const FUNCTION_CALL_KIND = 3;
-
-export interface FunctionCallArgument {
-  name: string;
-  value?: string | null;
-}
-
-export interface FunctionCallPayload {
-  name: string;
-  arguments?: FunctionCallArgument[] | null;
-}
 
 export interface SimulatedTodoItem {
   id: number;
@@ -37,26 +36,6 @@ export interface SimulatedTodoState {
 export interface TodoCompleteItem {
   id: number;
   reason: string | null;
-}
-
-function parseJsonValue(value: string | null | undefined): unknown {
-  if (value == null || value === "") return null;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
-}
-
-function findArgumentValue(payload: FunctionCallPayload, argumentName: string): unknown {
-  const arg = payload.arguments?.find((a) => a.name === argumentName);
-  return parseJsonValue(arg?.value);
-}
-
-function asArray(value: unknown): unknown[] {
-  if (Array.isArray(value)) return value;
-  if (value == null) return [];
-  return [value];
 }
 
 export function createEmptyTodoState(): SimulatedTodoState {
@@ -145,21 +124,6 @@ export function applyTodoAction(state: SimulatedTodoState, payload: FunctionCall
     case "todos_get_all":
       break;
   }
-}
-
-export function parseFunctionCallText(text: string): FunctionCallPayload | null {
-  try {
-    const parsed: unknown = JSON.parse(text);
-    if (parsed != null && typeof parsed === "object" && "name" in parsed) {
-      const name = (parsed as { name: unknown }).name;
-      if (typeof name === "string") {
-        return parsed as FunctionCallPayload;
-      }
-    }
-  } catch {
-    // ignore invalid JSON
-  }
-  return null;
 }
 
 export function isTodoToolCall(message: AgentSessionMessage): boolean {
