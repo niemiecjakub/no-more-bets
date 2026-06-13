@@ -1,12 +1,21 @@
 "use client";
 
-import { Lightbulb, MessageSquareText, Wrench } from "lucide-react";
+import { ClipboardList, Lightbulb, MessageSquareText, Wrench } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MatchResearchOutputView } from "@/features/matches/components/match-research-output-view";
 import { parseMatchResearchOutputText } from "@/features/matches/services/match-insights-api";
+import { TodoToolCallView } from "./todo-tool-call-view";
 import type { AgentSessionMessage } from "../services/agent-session-api";
+import {
+  applyTodoAction,
+  cloneTodoState,
+  createEmptyTodoState,
+  isTodoToolCall,
+  parseFunctionCallText,
+  type SimulatedTodoState,
+} from "../utils/todo-tool-call";
 
 const MESSAGE_MARKDOWN_CLASS =
   "text-sm text-foreground leading-6 [&_p]:my-2 [&_p:first-of-type]:mt-0 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold [&_a]:text-violet-600 dark:[&_a]:text-violet-400 [&_a]:underline [&_pre]:overflow-x-auto [&_code]:rounded [&_code]:bg-zinc-200 [&_code]:px-1 dark:[&_code]:bg-zinc-700 wrap-break-word";
@@ -19,6 +28,13 @@ interface MessageKindBadgeStyle {
   icon: LucideIcon;
   className: string;
 }
+
+const TODO_BADGE_STYLE: MessageKindBadgeStyle = {
+  label: "Todo list",
+  icon: ClipboardList,
+  className:
+    "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200",
+};
 
 function messageKindBadgeStyle(kind: number): MessageKindBadgeStyle {
   switch (kind) {
@@ -59,15 +75,33 @@ interface AgentSessionTranscriptProps {
   hideStructuredResearchOutput?: boolean;
 }
 
+function buildTodoStateByMessageId(messages: AgentSessionMessage[]): Map<number, SimulatedTodoState> {
+  const stateByMessageId = new Map<number, SimulatedTodoState>();
+  const runningState = createEmptyTodoState();
+
+  for (const message of messages) {
+    if (!isTodoToolCall(message)) continue;
+    const payload = parseFunctionCallText(message.text);
+    if (payload == null) continue;
+
+    stateByMessageId.set(message.id, cloneTodoState(runningState));
+    applyTodoAction(runningState, payload);
+  }
+
+  return stateByMessageId;
+}
+
 export function AgentSessionTranscript({
   messages,
   hideStructuredResearchOutput = false,
 }: AgentSessionTranscriptProps) {
   const visible = messages.filter(
     (m) =>
-      m.kind !== FUNCTION_CALL_KIND &&
+      (m.kind !== FUNCTION_CALL_KIND || isTodoToolCall(m)) &&
       !(hideStructuredResearchOutput && parseMatchResearchOutputText(m.text) != null),
   );
+
+  const todoStateByMessageId = buildTodoStateByMessageId(visible);
 
   if (visible.length === 0) {
     return (
@@ -81,9 +115,12 @@ export function AgentSessionTranscript({
   return (
     <ul className="flex w-full min-w-0 flex-1 flex-col divide-y divide-zinc-200 overflow-hidden border-0 bg-zinc-50/80 dark:divide-zinc-800 dark:bg-zinc-900/40">
       {visible.map((m) => {
-        const badge = messageKindBadgeStyle(m.kind);
+        const isTodo = isTodoToolCall(m);
+        const badge = isTodo ? TODO_BADGE_STYLE : messageKindBadgeStyle(m.kind);
         const BadgeIcon = badge.icon;
         const structuredResearch = parseMatchResearchOutputText(m.text);
+        const todoPayload = isTodo ? parseFunctionCallText(m.text) : null;
+        const todoState = todoPayload ? todoStateByMessageId.get(m.id) : undefined;
 
         return (
           <li key={m.id} className="w-full min-w-0 px-4 py-3 text-sm">
@@ -95,7 +132,9 @@ export function AgentSessionTranscript({
                 {badge.label}
               </span>
             </div>
-            {structuredResearch ? (
+            {todoPayload && todoState ? (
+              <TodoToolCallView payload={todoPayload} state={todoState} />
+            ) : structuredResearch ? (
               <MatchResearchOutputView research={structuredResearch} />
             ) : (
               <div className={MESSAGE_MARKDOWN_CLASS}>
