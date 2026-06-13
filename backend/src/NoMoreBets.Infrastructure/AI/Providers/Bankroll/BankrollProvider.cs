@@ -8,8 +8,8 @@ namespace NoMoreBets.Infrastructure.AI.Providers.Bankroll;
 
 public sealed class BankrollProvider : AIContextProvider
 {
-  private const string GetBalanceToolName = "Bankroll_GetBalance";
-  private const string GetDaysUntilPaydayToolName = "Bankroll_GetDaysUntillPayday";
+  private const string GetBalanceToolName = "bankroll_getBalance";
+  private const string GetDaysUntilPaydayToolName = "bankroll_getDaysUntillPayday";
 
   private static readonly string Instructions =
       $$"""

@@ -12,8 +12,8 @@ namespace NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 
 public sealed class WebSearchProvider : AIContextProvider
 {
-  private const string SearchNewsToolName = "WebSearch_SearchNews";
-  private const string GetWebGroundingToolName = "WebSearch_GetWebGrounding";
+  private const string SearchNewsToolName = "websearch_searchNews";
+  private const string GetWebGroundingToolName = "websearch_getWebGrounding";
 
   private static readonly string Instructions =
       $$"""

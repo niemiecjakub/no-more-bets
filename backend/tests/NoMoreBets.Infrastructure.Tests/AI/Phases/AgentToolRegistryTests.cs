@@ -51,7 +51,7 @@ public class AgentToolRegistryTests
     tools.Should().HaveCount(9);
     ToolNames(tools).Should().Contain(
     [
-      "Match_GetLineups",
+      "match_getLineups",
     ]);
   }
 
@@ -65,7 +65,7 @@ public class AgentToolRegistryTests
     ]);
 
     tools.Should().HaveCount(3);
-    ToolNames(tools).Should().BeEquivalentTo(["ResearchBet_GetMatchBasicInfo", "ResearchBet_GetMatchEvents", "ResearchBet_PlaceBetSlip"]);
+    ToolNames(tools).Should().BeEquivalentTo(["researchbet_getMatchBasicInfo", "researchbet_getMatchEvents", "researchbet_placeBetSlip"]);
   }
 
   [Fact]
@@ -80,7 +80,7 @@ public class AgentToolRegistryTests
     ]);
 
     tools.Should().HaveCount(5);
-    ToolNames(tools).Should().Contain(["Betting_GetAvailableMatches", "Betting_PlaceBetSlip", "Betting_GetBetSlips"]);
+    ToolNames(tools).Should().Contain(["betting_getAvailableMatches", "betting_placeBetSlip", "betting_getBetSlips"]);
   }
 
   [Fact]
@@ -89,7 +89,7 @@ public class AgentToolRegistryTests
     var tools = _serviceProvider.ResolveTools([ToolRegistry.SocialMedia.CreateXPost]);
 
     tools.Should().ContainSingle();
-    ToolNames(tools).Should().ContainSingle("SocialMedia_CreateXPost");
+    ToolNames(tools).Should().ContainSingle("socialmedia_createXPost");
   }
 
   [Fact]
@@ -101,7 +101,7 @@ public class AgentToolRegistryTests
     ]);
 
     tools.Should().HaveCount(2);
-    ToolNames(tools).Should().Contain(["Betting_GetBetSlipsAwaitingReflectionAsync", "Match_GetMatchResearchTextAsync"]);
+    ToolNames(tools).Should().Contain(["betting_getBetSlipsAwaitingReflectionAsync", "match_getMatchResearchTextAsync"]);
   }
 
   [Fact]
@@ -120,7 +120,7 @@ public class AgentToolRegistryTests
     ]);
 
     tools.Should().HaveCount(1);
-    ToolNames(tools).Should().Contain(["Match_GetAvailableMatchesAsync"]);
+    ToolNames(tools).Should().Contain(["match_getAvailableMatchesAsync"]);
   }
 
   private static IEnumerable<string> ToolNames(IReadOnlyList<AITool> tools) =>

@@ -21,12 +21,6 @@ public sealed class TodoItem
   public string Title { get; set; } = string.Empty;
 
   /// <summary>
-  /// Gets or sets an optional description providing additional details about this todo item.
-  /// </summary>
-  [JsonPropertyName("description")]
-  public string? Description { get; set; }
-
-  /// <summary>
   /// Gets or sets a value indicating whether this todo item has been completed.
   /// </summary>
   [JsonPropertyName("isComplete")]

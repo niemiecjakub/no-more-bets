@@ -12,7 +12,10 @@ public sealed class DateProvider : AIContextProvider
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
     var aiContext = new AIContext
     {
-      Instructions = $"Today is {today}.",
+      Instructions = $"""
+        # Date
+        Today is {today}.
+        """,
     };
 
     return ValueTask.FromResult(aiContext);

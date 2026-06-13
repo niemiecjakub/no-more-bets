@@ -10,17 +10,22 @@ namespace NoMoreBets.Infrastructure.AI.Providers.Memories;
 
 public sealed class MemoriesProvider : AIContextProvider
 {
-  private const string GetRecordsToolName = "Memories_GetRecords";
-  private const string ReadToolName = "Memories_Read";
-  private const string WriteToolName = "Memories_Write";
-  private const string AppendToolName = "Memories_Append";
-  private const string ReplaceToolName = "Memories_Replace";
-  private const string DeleteToolName = "Memories_Delete";
+  private const string GetRecordsToolName = "memories_getRecords";
+  private const string ReadToolName = "memories_read";
+  private const string WriteToolName = "memories_write";
+  private const string AppendToolName = "memories_append";
+  private const string ReplaceToolName = "memories_replace";
+  private const string DeleteToolName = "memories_delete";
 
   private static readonly string Instructions =
       $$"""
-        # Memories
-        You have access to persistent memory records.
+        # Personal Memories
+
+        You have access to persistent memory records. These are your personal memory notes to help you remember things.   
+        These records are your personal notes. Think of them as your private notebook that persists across conversations and tasks. You may store anything that helps you work more effectively.
+        
+        Before starting work, consider whether existing memories may be relevant.
+        When you learn something likely to be useful in the future, consider saving it.
 
         Use these tools to manage memories:
         - Use {{GetRecordsToolName}} to list all saved memory records.

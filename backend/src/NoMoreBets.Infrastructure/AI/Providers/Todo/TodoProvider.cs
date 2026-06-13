@@ -101,7 +101,6 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         {
           Id = state.NextId++,
           Title = input.Title.Trim(),
-          Description = input.Description?.Trim(),
         };
         state.Items.Add(item);
         created.Add(item);
@@ -211,7 +210,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         new AIFunctionFactoryOptions
         {
           Name = TodosAddToolName,
-          Description = "Add one or more todo items. Each item has a title and an optional description. Returns the list of created todo items.",
+          Description = "Add one or more todo items. Each item has a title. Returns the list of created todo items.",
           SerializerOptions = serializerOptions,
         }),
 
@@ -264,13 +263,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
     foreach (TodoItem item in items)
     {
       string status = item.IsComplete ? "done" : "open";
-      sb.Append($"- {item.Id} [{status}] {item.Title}");
-      if (!string.IsNullOrWhiteSpace(item.Description))
-      {
-        sb.Append($": {item.Description}");
-      }
-
-      sb.AppendLine();
+      sb.AppendLine($"- {item.Id} [{status}] {item.Title}");
     }
 
     return sb.ToString().TrimEnd();

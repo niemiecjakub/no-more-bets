@@ -86,7 +86,7 @@ internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
     new DateProvider(),
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
     new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
-    new AgentModeProvider(new AgentModeProviderOptions { DefaultMode = "execute" }),
+    new AgentModeProvider(),
     new TodoProvider(),
   ];
 }

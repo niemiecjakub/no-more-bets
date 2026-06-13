@@ -13,10 +13,4 @@ internal sealed class TodoItemInput
   /// </summary>
   [JsonPropertyName("title")]
   public string Title { get; set; } = string.Empty;
-
-  /// <summary>
-  /// Gets or sets an optional description providing additional details about the todo item.
-  /// </summary>
-  [JsonPropertyName("description")]
-  public string? Description { get; set; }
 }
