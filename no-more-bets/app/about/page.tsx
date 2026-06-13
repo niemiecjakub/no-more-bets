@@ -89,14 +89,14 @@ const dataSources = [
 
 export default function AboutPage() {
   return (
-      <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        <section className="mb-14">
+      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
+        <section className="mb-10 sm:mb-14">
           <div>
-            <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
-              <Sparkles className="h-3.5 w-3.5" aria-hidden />
+            <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.15em] text-zinc-600 sm:tracking-[0.2em] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
+              <Sparkles className="h-3.5 w-3.5 shrink-0" aria-hidden />
               Autonomous research and betting agent
             </p>
-            <h1 className="text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl md:text-5xl">
               An AI Agent that researches football, places its own bets, and
               learns from the result.
             </h1>
@@ -114,16 +114,16 @@ export default function AboutPage() {
               A sharp win reads as a step closer to getting out; a misstep, as
               clocking another year behind the desk.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 href="/agent"
-                className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-zinc-800 hover:shadow-md dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-zinc-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-zinc-800 hover:shadow-md sm:w-auto dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
               >
                 Open Agent Dashboard
               </Link>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-5 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-zinc-200 bg-white px-5 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100 sm:w-auto dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-200 dark:hover:bg-zinc-900"
               >
                 Browse Matches
               </Link>
@@ -131,9 +131,9 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <section className="mb-16">
+        <section className="mb-12 sm:mb-16">
           <header className="mb-5 flex items-end justify-between gap-4">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               How it works
             </h2>
           </header>
@@ -179,18 +179,18 @@ export default function AboutPage() {
           </div>
         </section>
 
-        <div className="mb-16">
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+        <div className="mb-12 min-w-0 sm:mb-16">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
             Internal process
           </h2>
-          <div className="mt-5">
+          <div className="mt-5 min-w-0">
             <AgentProcessTab />
           </div>
         </div>
 
-        <section className="mb-16">
+        <section className="mb-12 sm:mb-16">
           <div>
-            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               Data sources
             </h2>
             <ul className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2">
