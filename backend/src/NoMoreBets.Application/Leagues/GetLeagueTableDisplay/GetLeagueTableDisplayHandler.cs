@@ -1,13 +1,16 @@
 using MediatR;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Leagues;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.GetLeagueTableDisplay;
 
-public record GetLeagueTableDisplayQuery(int LeagueId) : IRequest<LeagueTableDto?>;
+public record GetLeagueTableDisplayQuery(int LeagueId, int? ClubId = null) : IRequest<LeagueTableDto?>;
 
-public sealed class GetLeagueTableDisplayHandler(IUnitOfWork unitOfWork)
+public sealed class GetLeagueTableDisplayHandler(
+  IUnitOfWork unitOfWork,
+  WorldCupGroupRegistry worldCupGroupRegistry)
   : IRequestHandler<GetLeagueTableDisplayQuery, LeagueTableDto?>
 {
   public async Task<LeagueTableDto?> Handle(
@@ -26,36 +29,42 @@ public sealed class GetLeagueTableDisplayHandler(IUnitOfWork unitOfWork)
       .GetFormForClubsInSeasonAsync(snapshot.SeasonId, clubIds, 5, cancellationToken)
       .ConfigureAwait(false);
 
-    return MapToDto(snapshot, formByClub);
-  }
+    var rowDtosByClubId = snapshot.Rows.ToDictionary(
+      r => r.ClubId,
+      r => MapRow(r, formByClub));
 
-  private static LeagueTableDto MapToDto(
-    LeagueTableSnapshot snapshot,
-    IReadOnlyDictionary<int, IReadOnlyList<MatchResult>> formByClub)
-  {
-    var rows = snapshot.Rows
-      .OrderBy(r => r.Position)
-      .Select(r => new LeagueTableRowDto(
-        r.Position,
-        r.ClubId,
-        r.Club.Name,
-        r.Club.Slug,
-        r.MatchesPlayed,
-        r.Wins,
-        r.Draws,
-        r.Losses,
-        r.GoalsFor,
-        r.GoalsAgainst,
-        r.GoalDifference,
-        r.Points,
-        r.Xg,
-        r.XgDiff,
-        r.Xga,
-        r.XgaDiff,
-        r.Xpts,
-        r.XptsDiff,
-        formByClub.GetValueOrDefault(r.ClubId, Array.Empty<MatchResult>())))
+    if (request.ClubId is null
+        || !worldCupGroupRegistry.IsWorldCupLeagueSlug(snapshot.League.Slug))
+    {
+      return MapFlatDto(snapshot, rowDtosByClubId.Values.OrderBy(r => r.Position).ToList());
+    }
+
+    var club = await unitOfWork.Clubs.GetByIdAsync(request.ClubId.Value, cancellationToken)
+      .ConfigureAwait(false);
+    if (club is null || club.LeagueId != request.LeagueId)
+      return null;
+
+    var ownGroup = worldCupGroupRegistry.GetGroupForClubName(club.Name);
+    if (ownGroup is null)
+      return MapFlatDto(snapshot, rowDtosByClubId.Values.OrderBy(r => r.Position).ToList());
+
+    var orderedGroups = worldCupGroupRegistry.Groups
+      .OrderBy(g => g.Code == ownGroup.Code ? 0 : 1)
+      .ThenBy(g => g.Code, StringComparer.Ordinal)
       .ToList();
+
+    var groups = orderedGroups
+      .Select(group => new WorldCupGroupTableDto(
+        group.Code,
+        group.Label,
+        snapshot.Rows
+          .Where(r => worldCupGroupRegistry.IsClubInGroup(r.Club.Name, group.Code))
+          .OrderBy(r => r.Position)
+          .Select(r => rowDtosByClubId[r.ClubId])
+          .ToList()))
+      .ToList();
+
+    var ownGroupRows = groups.First(g => g.GroupCode == ownGroup.Code).Rows;
 
     return new LeagueTableDto(
       snapshot.Id,
@@ -64,6 +73,44 @@ public sealed class GetLeagueTableDisplayHandler(IUnitOfWork unitOfWork)
       snapshot.SnapshotDate,
       snapshot.League.Name,
       snapshot.League.Slug,
-      rows);
+      ownGroupRows,
+      ownGroup.Code,
+      groups);
   }
+
+  private static LeagueTableDto MapFlatDto(
+    LeagueTableSnapshot snapshot,
+    IReadOnlyList<LeagueTableRowDto> rows) =>
+    new(
+      snapshot.Id,
+      snapshot.LeagueId,
+      snapshot.SeasonId,
+      snapshot.SnapshotDate,
+      snapshot.League.Name,
+      snapshot.League.Slug,
+      rows);
+
+  private static LeagueTableRowDto MapRow(
+    LeagueTableSnapshotRow row,
+    IReadOnlyDictionary<int, IReadOnlyList<MatchResult>> formByClub) =>
+    new(
+      row.Position,
+      row.ClubId,
+      row.Club.Name,
+      row.Club.Slug,
+      row.MatchesPlayed,
+      row.Wins,
+      row.Draws,
+      row.Losses,
+      row.GoalsFor,
+      row.GoalsAgainst,
+      row.GoalDifference,
+      row.Points,
+      row.Xg,
+      row.XgDiff,
+      row.Xga,
+      row.XgaDiff,
+      row.Xpts,
+      row.XptsDiff,
+      formByClub.GetValueOrDefault(row.ClubId, Array.Empty<MatchResult>()));
 }

@@ -54,14 +54,17 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
       ToolRegistry.Match.GetClubRecentGames,
       ToolRegistry.Match.GetMatchBettingOddsHistory,
       ToolRegistry.Match.GetClubRollingPerformance,
+      ToolRegistry.Match.GetClubLeagueStatistics,
     };
 
-    // National teams have no club daily summary, and a tournament has no
-    // league statistics or league table, so skip those tools for World Cup matches.
-    if (!match.IsFifaWorldCup)
+    // National teams have no club daily summary. World Cup uses group tables instead of a flat league table.
+    if (match.IsFifaWorldCup)
+    {
+      tools.Add(ToolRegistry.Match.GetGroupTable);
+    }
+    else
     {
       tools.Add(ToolRegistry.Match.GetClubDailySummary);
-      tools.Add(ToolRegistry.Match.GetClubLeagueStatistics);
       tools.Add(ToolRegistry.Match.GetLeagueTable);
     }
 

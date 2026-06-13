@@ -10,6 +10,7 @@ using NoMoreBets.Application.Clubs.GetClubRollingPerformance;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues.GetClubLeagueStatistics;
 using NoMoreBets.Application.Leagues.GetLeagueTable;
+using NoMoreBets.Application.Leagues.GetMatchGroupTable;
 using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
@@ -83,7 +84,7 @@ public class MatchTool
     return await _mediator.Send(new GetClubRecentGamesQuery(clubId), cancellationToken).ConfigureAwait(false);
   }
 
-  [Description("Retrieves league table standing and advanced metrics (xG, xGA, xPts) for a club.")]
+  [Description("Returns one club's current statistics: table position, points, W/D/L record, goals for/against, and expected metrics (xG, xGA, xPts) with variance from actual results.")]
   public async Task<ClubLeagueStats?> GetClubStatistics(int clubId, CancellationToken cancellationToken = default)
   {
     return await _mediator.Send(new GetClubLeagueStatisticsQuery(clubId), cancellationToken).ConfigureAwait(false);
@@ -101,6 +102,12 @@ public class MatchTool
     }
 
     return await _mediator.Send(new GetLeagueTableQuery(league.Id), cancellationToken).ConfigureAwait(false);
+  }
+
+  [Description("Returns the group table for the group containing this match's teams.")]
+  public async Task<IReadOnlyList<LeagueTableStanding>?> GetGroupTableAsync(int matchId, CancellationToken cancellationToken = default)
+  {
+    return await _mediator.Send(new GetMatchGroupTableQuery(matchId), cancellationToken).ConfigureAwait(false);
   }
 
   [Description("Provides the movement of betting odds for this match, showing how prices have changed over time across different event types.")]

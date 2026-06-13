@@ -1,6 +1,7 @@
 using FluentAssertions;
 using NSubstitute;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Leagues.GetLeagueTableDisplay;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
@@ -15,13 +16,16 @@ public class GetLeagueTableDisplayHandlerTests
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly ILeagueRepository _leagues = Substitute.For<ILeagueRepository>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
+  private readonly IClubRepository _clubs = Substitute.For<IClubRepository>();
+  private readonly WorldCupGroupRegistry _worldCupGroupRegistry = new([]);
   private readonly GetLeagueTableDisplayHandler _sut;
 
   public GetLeagueTableDisplayHandlerTests()
   {
     _unitOfWork.Leagues.Returns(_leagues);
     _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetLeagueTableDisplayHandler(_unitOfWork);
+    _unitOfWork.Clubs.Returns(_clubs);
+    _sut = new GetLeagueTableDisplayHandler(_unitOfWork, _worldCupGroupRegistry);
   }
 
   [Fact]
@@ -168,5 +172,86 @@ public class GetLeagueTableDisplayHandlerTests
     var result = await _sut.Handle(new GetLeagueTableDisplayQuery(1), CancellationToken.None);
 
     result!.Rows[0].Form.Should().BeEmpty();
+  }
+
+  [Fact]
+  public async Task Handle_WhenWorldCupClubIdProvided_ReturnsGroupedTablesWithOwnGroupFirst()
+  {
+    var groupA = new WorldCupGroupDefinition("A", "Grp. A", [6710, 7804, 8496, 6316], ["Mexico", "Korea Republic", "Czechia", "South Africa"]);
+    var groupB = new WorldCupGroupDefinition("B", "Grp. B", [6717, 5810, 10106, 5902], ["Switzerland", "Canada", "Bosnia-Herzegovina", "Qatar"]);
+    var sut = new GetLeagueTableDisplayHandler(_unitOfWork, new WorldCupGroupRegistry([groupA, groupB]));
+
+    var club = new ClubEntity { Id = 1, Name = "Mexico", LeagueId = 7, Slug = "mexico" };
+    _clubs.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(club);
+
+    var snapshot = new LeagueTableSnapshot
+    {
+      Id = 50,
+      LeagueId = 7,
+      SeasonId = 7,
+      SnapshotDate = new DateOnly(2026, 6, 1),
+      League = new League { Name = "FIFA World Cup", Slug = League.FifaWorldCupSlug },
+      Rows =
+      [
+        new LeagueTableSnapshotRow
+        {
+          Position = 1,
+          ClubId = 1,
+          Club = new ClubEntity { Name = "Mexico", Slug = "mexico" },
+          MatchesPlayed = 1,
+          Wins = 1,
+          Draws = 0,
+          Losses = 0,
+          Points = 3,
+        },
+        new LeagueTableSnapshotRow
+        {
+          Position = 2,
+          ClubId = 2,
+          Club = new ClubEntity { Name = "Korea Republic", Slug = "korea-republic" },
+          MatchesPlayed = 1,
+          Wins = 1,
+          Draws = 0,
+          Losses = 0,
+          Points = 3,
+        },
+        new LeagueTableSnapshotRow
+        {
+          Position = 1,
+          ClubId = 3,
+          Club = new ClubEntity { Name = "Switzerland", Slug = "switzerland" },
+          MatchesPlayed = 1,
+          Wins = 0,
+          Draws = 1,
+          Losses = 0,
+          Points = 1,
+        },
+        new LeagueTableSnapshotRow
+        {
+          Position = 2,
+          ClubId = 4,
+          Club = new ClubEntity { Name = "Canada", Slug = "canada" },
+          MatchesPlayed = 1,
+          Wins = 0,
+          Draws = 0,
+          Losses = 1,
+          Points = 0,
+        },
+      ],
+    };
+
+    _leagues.GetLatestLeagueTableSnapshotAsync(7, Arg.Any<CancellationToken>()).Returns(snapshot);
+    _matches.GetFormForClubsInSeasonAsync(7, Arg.Any<IReadOnlyList<int>>(), 5, Arg.Any<CancellationToken>())
+      .Returns(new Dictionary<int, IReadOnlyList<MatchResult>>());
+
+    var result = await sut.Handle(new GetLeagueTableDisplayQuery(7, 1), CancellationToken.None);
+
+    result.Should().NotBeNull();
+    result!.OwnGroupCode.Should().Be("A");
+    result.Groups.Should().HaveCount(2);
+    result.Groups![0].GroupCode.Should().Be("A");
+    result.Groups[0].Rows.Should().HaveCount(2);
+    result.Groups[1].GroupCode.Should().Be("B");
+    result.Rows.Should().Equal(result.Groups[0].Rows);
   }
 }

@@ -114,7 +114,11 @@ public static class DependencyInjection
       });
 
     // Scrapers
-    services.AddSingleton<IFotmobConstants, FotmobConstants>();
+    services.AddSingleton<FotmobConstants>();
+    services.AddSingleton<IFotmobConstants>(sp => sp.GetRequiredService<FotmobConstants>());
+    services.AddSingleton<FotmobWorldCupGroupDefinitions>();
+    services.AddSingleton<WorldCupGroupRegistry>(sp =>
+      new WorldCupGroupRegistry(sp.GetRequiredService<FotmobWorldCupGroupDefinitions>().Groups));
     services.AddSingleton<RotowireScraper>();
     services.AddSingleton<BetclicScraper>();
     services.AddSingleton<FotmobScraper>();

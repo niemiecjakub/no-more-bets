@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { SlugIcon } from "@/components/slug-icon";
 import { ClubBetSelectionChart } from "@/features/clubs/components/club-bet-selection-chart";
 import { ClubLeagueTable } from "@/features/clubs/components/club-league-table";
+import { ClubWorldCupGroupTables } from "@/features/clubs/components/club-world-cup-group-tables";
 import { ClubNextMatchCard } from "@/features/clubs/components/club-next-match-card";
 import { ClubRecentMatchesPanel } from "@/features/clubs/components/club-recent-matches-panel";
 import { MatchList } from "@/features/matches/components/match-list";
@@ -360,7 +361,10 @@ export default function ClubPage() {
       return next;
     });
 
-    void fetchLeagueTable(club.leagueId)
+    void fetchLeagueTable(
+      club.leagueId,
+      club.leagueSlug === "fifa-world-cup" ? club.id : undefined,
+    )
       .then((table) => {
         if (!isMounted) return;
         setLeagueTable(table);
@@ -507,7 +511,11 @@ export default function ClubPage() {
               ) : sectionLoading.leagueTable && leagueTable === undefined ? (
                 <TableSkeleton flush />
               ) : leagueTable ? (
-                <ClubLeagueTable table={leagueTable} highlightClubId={club.id} />
+                leagueTable.groups && leagueTable.groups.length > 0 ? (
+                  <ClubWorldCupGroupTables table={leagueTable} highlightClubId={club.id} />
+                ) : (
+                  <ClubLeagueTable table={leagueTable} highlightClubId={club.id} />
+                )
               ) : (
                 <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No league table data available.</p>
               )}

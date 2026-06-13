@@ -8,6 +8,7 @@ using NoMoreBets.Application.Clubs.GetClubRollingPerformance;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues.GetClubLeagueStatistics;
 using NoMoreBets.Application.Leagues.GetLeagueTable;
+using NoMoreBets.Application.Leagues.GetMatchGroupTable;
 using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
@@ -171,5 +172,17 @@ public class MatchToolTests
 
     result.Should().BeNull();
     await _mediator.DidNotReceive().Send(Arg.Any<GetLeagueTableQuery>(), Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task GetGroupTableAsync_WhenCalled_DispatchesGetMatchGroupTableQuery()
+  {
+    var expected = new List<LeagueTableStanding>();
+    _mediator.Send(Arg.Any<GetMatchGroupTableQuery>(), Arg.Any<CancellationToken>()).Returns(expected);
+
+    var result = await _sut.GetGroupTableAsync(MatchId);
+
+    result.Should().BeSameAs(expected);
+    await _mediator.Received(1).Send(Arg.Is<GetMatchGroupTableQuery>(q => q.MatchId == MatchId), Arg.Any<CancellationToken>());
   }
 }

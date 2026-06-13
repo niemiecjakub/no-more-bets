@@ -29,6 +29,9 @@ public static class ToolRegistry
     public static readonly AgentTool GetLeagueTable =
       FromMatch("match_getLeagueTable", p => p.GetLeagueTableAsync);
 
+    public static readonly AgentTool GetGroupTable =
+      FromMatch("match_getGroupTable", p => p.GetGroupTableAsync);
+
     public static readonly AgentTool GetMatchBettingOddsHistory =
       FromMatch("match_getMatchBettingOddsHistory", p => p.GetMatchBettingOddsHistoryAsync);
 

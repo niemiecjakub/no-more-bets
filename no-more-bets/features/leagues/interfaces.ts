@@ -33,6 +33,12 @@ export interface LeagueTableRow {
   form: MatchResult[];
 }
 
+export interface WorldCupGroupTable {
+  groupCode: string;
+  groupLabel: string;
+  rows: LeagueTableRow[];
+}
+
 export interface LeagueTable {
   snapshotId: number;
   leagueId: number;
@@ -41,4 +47,6 @@ export interface LeagueTable {
   leagueName: string;
   leagueSlug: string;
   rows: LeagueTableRow[];
+  ownGroupCode?: string | null;
+  groups?: WorldCupGroupTable[] | null;
 }

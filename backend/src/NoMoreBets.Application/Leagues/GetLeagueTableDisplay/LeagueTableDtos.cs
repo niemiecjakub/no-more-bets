@@ -9,6 +9,13 @@ public record LeagueTableDto(
   DateOnly SnapshotDate,
   string LeagueName,
   string LeagueSlug,
+  IReadOnlyList<LeagueTableRowDto> Rows,
+  string? OwnGroupCode = null,
+  IReadOnlyList<WorldCupGroupTableDto>? Groups = null);
+
+public record WorldCupGroupTableDto(
+  string GroupCode,
+  string GroupLabel,
   IReadOnlyList<LeagueTableRowDto> Rows);
 
 public record LeagueTableRowDto(

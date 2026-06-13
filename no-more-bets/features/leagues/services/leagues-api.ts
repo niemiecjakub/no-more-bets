@@ -11,9 +11,10 @@ export async function fetchLeagues(): Promise<LeagueListItem[]> {
   return data;
 }
 
-export async function fetchLeagueTable(leagueId: number): Promise<LeagueTable> {
+export async function fetchLeagueTable(leagueId: number, clubId?: number): Promise<LeagueTable> {
   const { data } = await axiosInstance.get<LeagueTable>(
-    `/api/leagues/${leagueId}/table`
+    `/api/leagues/${leagueId}/table`,
+    clubId != null ? { params: { clubId } } : undefined,
   );
   return data;
 }
