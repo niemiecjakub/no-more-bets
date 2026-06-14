@@ -10,6 +10,22 @@ import {
 export interface FetchMatchesFilters {
   matchStatusId?: number;
   leagueIds?: number[];
+  sortOrder?: MatchDateSortOrder;
+  search?: string;
+}
+
+export const MATCH_DATE_SORT = {
+  Ascending: "asc",
+  Descending: "desc",
+} as const;
+
+export type MatchDateSortOrder =
+  (typeof MATCH_DATE_SORT)[keyof typeof MATCH_DATE_SORT];
+
+export function getDefaultSortForStatus(statusId: number): MatchDateSortOrder {
+  return statusId === MATCH_STATUS.Upcoming
+    ? MATCH_DATE_SORT.Ascending
+    : MATCH_DATE_SORT.Descending;
 }
 
 function optionalInt(v: unknown): number | null {
@@ -161,7 +177,7 @@ export interface FetchMatchesPageParams {
 }
 
 /**
- * Fetches a page of matches from the backend (newest match date first).
+ * Fetches a page of matches from the backend.
  */
 export async function fetchMatchesPage(
   filters?: FetchMatchesFilters,
@@ -172,6 +188,13 @@ export async function fetchMatchesPage(
 
   if (filters?.matchStatusId != null) {
     queryParams.set("matchStatusId", String(filters.matchStatusId));
+  }
+  if (filters?.sortOrder != null) {
+    queryParams.set("sortOrder", filters.sortOrder);
+  }
+  const search = filters?.search?.trim();
+  if (search) {
+    queryParams.set("search", search);
   }
   for (const leagueId of filters?.leagueIds ?? []) {
     if (Number.isInteger(leagueId) && leagueId > 0) {

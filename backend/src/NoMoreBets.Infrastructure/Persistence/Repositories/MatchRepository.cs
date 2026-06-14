@@ -350,6 +350,8 @@ public class MatchRepository : IMatchRepository
     IReadOnlyList<int> leagueIds,
     DateTime? afterMatchDateUtc,
     int? afterId,
+    MatchDateSortOrder sortOrder = MatchDateSortOrder.Descending,
+    string? search = null,
     CancellationToken cancellationToken = default)
   {
     var selectedLeagueIds = leagueIds.Distinct().ToArray();
@@ -363,24 +365,38 @@ public class MatchRepository : IMatchRepository
         m.Stage != null &&
         selectedLeagueIds.Contains(m.Stage.Season.LeagueId));
 
+    if (!string.IsNullOrWhiteSpace(search))
+    {
+      var term = search.Trim().ToLowerInvariant();
+      matchesQuery = matchesQuery.Where(m =>
+        m.HomeClub.Name.ToLower().Contains(term)
+        || m.AwayClub.Name.ToLower().Contains(term));
+    }
+
     if (afterMatchDateUtc is not null && afterId is not null)
     {
       var cursorMatchDate = afterMatchDateUtc.Value;
       var cursorId = afterId.Value;
-      matchesQuery = matchesQuery.Where(m =>
-        m.MatchDate < cursorMatchDate
-        || (m.MatchDate == cursorMatchDate && m.Id < cursorId));
+      matchesQuery = sortOrder == MatchDateSortOrder.Ascending
+        ? matchesQuery.Where(m =>
+          m.MatchDate > cursorMatchDate
+          || (m.MatchDate == cursorMatchDate && m.Id > cursorId))
+        : matchesQuery.Where(m =>
+          m.MatchDate < cursorMatchDate
+          || (m.MatchDate == cursorMatchDate && m.Id < cursorId));
     }
 
-    var rows = await matchesQuery
+    var orderedQuery = sortOrder == MatchDateSortOrder.Ascending
+      ? matchesQuery.OrderBy(m => m.MatchDate).ThenBy(m => m.Id)
+      : matchesQuery.OrderByDescending(m => m.MatchDate).ThenByDescending(m => m.Id);
+
+    var rows = await orderedQuery
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
       .Include(m => m.MatchStatusEntity)
       .Include(m => m.Stage)
         .ThenInclude(s => s!.Season)
         .ThenInclude(se => se.League)
-      .OrderByDescending(m => m.MatchDate)
-      .ThenByDescending(m => m.Id)
       .Take(limit + 1)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);

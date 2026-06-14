@@ -10,25 +10,35 @@ import {
 } from "@/components/ui/sheet";
 import {
   ALL_STATUSES_ID,
+  isExplicitSortOverride,
   MatchFiltersPanel,
   type MatchFiltersPanelProps,
 } from "./match-filters-panel";
 
-type MatchFiltersMobileSheetProps = Omit<MatchFiltersPanelProps, "onFilterApplied">;
+type MatchFiltersMobileSheetProps = Omit<MatchFiltersPanelProps, "onFilterApplied"> & {
+  sortParam: string | null;
+};
 
 export function MatchFiltersMobileSheet(props: MatchFiltersMobileSheetProps) {
+  const { sortParam, ...panelProps } = props;
   const [open, setOpen] = useState(false);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (props.selectedLeagueIds.length > 0) {
-      count += props.selectedLeagueIds.length;
+    if (panelProps.selectedLeagueIds.length > 0) {
+      count += panelProps.selectedLeagueIds.length;
     }
-    if (props.selectedStatusId !== ALL_STATUSES_ID) {
+    if (panelProps.selectedStatusId !== ALL_STATUSES_ID) {
+      count += 1;
+    }
+    if (isExplicitSortOverride(sortParam, panelProps.selectedStatusId)) {
+      count += 1;
+    }
+    if (panelProps.searchQuery.trim().length > 0) {
       count += 1;
     }
     return count;
-  }, [props.selectedLeagueIds, props.selectedStatusId]);
+  }, [panelProps.selectedLeagueIds, panelProps.selectedStatusId, panelProps.searchQuery, sortParam]);
 
   return (
     <>
@@ -57,7 +67,8 @@ export function MatchFiltersMobileSheet(props: MatchFiltersMobileSheetProps) {
           </SheetHeader>
           <div className="px-4 pb-6">
             <MatchFiltersPanel
-              {...props}
+              {...panelProps}
+              showTitle={false}
               onFilterApplied={() => setOpen(false)}
             />
           </div>

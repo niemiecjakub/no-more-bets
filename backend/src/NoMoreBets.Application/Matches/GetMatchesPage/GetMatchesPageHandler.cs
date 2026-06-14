@@ -1,6 +1,7 @@
 using MediatR;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.GetMatchesPage;
@@ -10,7 +11,9 @@ public record GetMatchesPageQuery(
   int? MatchStatusId,
   IReadOnlyList<int> LeagueIds,
   DateTime? AfterMatchDateUtc,
-  int? AfterId) : IRequest<Paged<MatchDto>>;
+  int? AfterId,
+  MatchDateSortOrder SortOrder = MatchDateSortOrder.Descending,
+  string? Search = null) : IRequest<Paged<MatchDto>>;
 
 public sealed class GetMatchesPageHandler(IUnitOfWork unitOfWork, IMediator mediator)
   : IRequestHandler<GetMatchesPageQuery, Paged<MatchDto>>
@@ -26,6 +29,8 @@ public sealed class GetMatchesPageHandler(IUnitOfWork unitOfWork, IMediator medi
         request.LeagueIds,
         request.AfterMatchDateUtc,
         request.AfterId,
+        request.SortOrder,
+        request.Search,
         cancellationToken)
       .ConfigureAwait(false);
 

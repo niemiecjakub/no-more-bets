@@ -7,6 +7,7 @@ using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchEvents;
 using NoMoreBets.Application.Matches.GetMatchLineups;
+using NoMoreBets.Domain.Enums;
 using MatchInjuriesResult = NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult;
 using MatchLineupResult = NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult;
 using NoMoreBets.Application.Matches.MatchExists;
@@ -24,6 +25,8 @@ public class MatchesController(IMediator mediator) : ControllerBase
     [FromQuery] int limit = 10,
     [FromQuery] DateTime? afterMatchDate = null,
     [FromQuery] int? afterId = null,
+    [FromQuery] string? sortOrder = null,
+    [FromQuery] string? search = null,
     CancellationToken cancellationToken = default)
   {
     limit = Math.Clamp(limit, 1, 100);
@@ -31,9 +34,14 @@ public class MatchesController(IMediator mediator) : ControllerBase
     if (afterMatchDate is null != afterId is null)
       return BadRequest("afterMatchDate and afterId must both be provided or omitted.");
 
+    if (!TryParseMatchDateSortOrder(sortOrder, out var parsedSortOrder))
+      return BadRequest("sortOrder must be 'asc' or 'desc'.");
+
     DateTime? afterMatchDateUtc = afterMatchDate is not null
       ? DateTimeQueryExtensions.ToUtc(afterMatchDate.Value)
       : null;
+
+    var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
 
     var result = await mediator.Send(
       new GetMatchesPageQuery(
@@ -41,10 +49,33 @@ public class MatchesController(IMediator mediator) : ControllerBase
         matchStatusId,
         (leagueIds ?? []).Distinct().ToArray(),
         afterMatchDateUtc,
-        afterId),
+        afterId,
+        parsedSortOrder,
+        normalizedSearch),
       cancellationToken).ConfigureAwait(false);
 
     return Ok(result);
+  }
+
+  private static bool TryParseMatchDateSortOrder(string? sortOrder, out MatchDateSortOrder parsed)
+  {
+    parsed = MatchDateSortOrder.Descending;
+    if (string.IsNullOrWhiteSpace(sortOrder))
+      return true;
+
+    if (string.Equals(sortOrder, "asc", StringComparison.OrdinalIgnoreCase))
+    {
+      parsed = MatchDateSortOrder.Ascending;
+      return true;
+    }
+
+    if (string.Equals(sortOrder, "desc", StringComparison.OrdinalIgnoreCase))
+    {
+      parsed = MatchDateSortOrder.Descending;
+      return true;
+    }
+
+    return false;
   }
 
   [HttpGet("matches/{matchId:int}/analyses")]

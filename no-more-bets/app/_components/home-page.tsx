@@ -7,8 +7,14 @@ import { MatchList } from "../../features/matches/components/match-list";
 import {
   ALL_STATUSES_ID,
   MatchFiltersPanel,
+  parseSortOrderParam,
   statusFilters,
 } from "../../features/matches/components/match-filters-panel";
+import { MATCH_STATUS } from "../../features/matches/interfaces";
+import {
+  getDefaultSortForStatus,
+  type MatchDateSortOrder,
+} from "../../features/matches/services/matches-api";
 import { MatchFiltersMobileSheet } from "../../features/matches/components/match-filters-mobile-sheet";
 import { useMatchStore } from "@/store/match-store";
 import { useLeagueStore } from "@/store/league-store";
@@ -128,12 +134,17 @@ export default function HomePage() {
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
 
-  const { selectedLeagueIds, selectedStatusId, matchFilters } = useMemo(() => {
+  const { selectedLeagueIds, selectedStatusId, selectedSortOrder, searchQuery, matchFilters } = useMemo(() => {
     const statusParam = Number(searchParams.get("status"));
     const matchedStatus = statusFilters.find(
       (statusFilter) => statusFilter.id === statusParam
     );
-    const parsedStatusId = matchedStatus?.id ?? ALL_STATUSES_ID;
+    const parsedStatusId = matchedStatus?.id ?? MATCH_STATUS.Upcoming;
+    const parsedSortOrder = parseSortOrderParam(
+      searchParams.get("sort"),
+      parsedStatusId,
+    );
+    const parsedSearchQuery = (searchParams.get("search") ?? "").trim();
 
     const leaguesParam = searchParams.get("leagues");
     const parsedLeagueIds = leaguesParam
@@ -146,10 +157,14 @@ export default function HomePage() {
     return {
       selectedLeagueIds: parsedLeagueIds,
       selectedStatusId: parsedStatusId,
+      selectedSortOrder: parsedSortOrder,
+      searchQuery: parsedSearchQuery,
       matchFilters: {
         matchStatusId:
           parsedStatusId === ALL_STATUSES_ID ? undefined : parsedStatusId,
         leagueIds: parsedLeagueIds.length > 0 ? parsedLeagueIds : undefined,
+        sortOrder: parsedSortOrder,
+        search: parsedSearchQuery || undefined,
       },
     };
   }, [searchParams]);
@@ -197,9 +212,19 @@ export default function HomePage() {
     };
   }, [selectedLeagueIds]);
 
-  function syncFiltersInUrl(nextLeagueIds: number[], nextStatusId: number) {
+  function syncFiltersInUrl(
+    nextLeagueIds: number[],
+    nextStatusId: number,
+    nextSortOrder?: MatchDateSortOrder,
+  ) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("status", String(nextStatusId));
+    const sortOrder = nextSortOrder ?? getDefaultSortForStatus(nextStatusId);
+    if (sortOrder === getDefaultSortForStatus(nextStatusId)) {
+      params.delete("sort");
+    } else {
+      params.set("sort", sortOrder);
+    }
     if (nextLeagueIds.length > 0) {
       params.set("leagues", nextLeagueIds.join(","));
     } else {
@@ -212,7 +237,7 @@ export default function HomePage() {
     const nextLeagueIds = selectedLeagueIds.includes(leagueId)
       ? selectedLeagueIds.filter((id) => id !== leagueId)
       : [...selectedLeagueIds, leagueId];
-    syncFiltersInUrl(nextLeagueIds, selectedStatusId);
+    syncFiltersInUrl(nextLeagueIds, selectedStatusId, selectedSortOrder);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -221,21 +246,44 @@ export default function HomePage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function handleSelectSort(sortOrder: MatchDateSortOrder) {
+    syncFiltersInUrl(selectedLeagueIds, selectedStatusId, sortOrder);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  const handleSearchQueryChange = useCallback((value: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const trimmed = value.trim();
+    if (trimmed) {
+      params.set("search", trimmed);
+    } else {
+      params.delete("search");
+    }
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams]);
+
   const filterPanelProps = {
     leagues,
     isLeaguesLoading,
     leaguesError,
     selectedLeagueIds,
     selectedStatusId,
+    selectedSortOrder,
+    searchQuery,
     onToggleLeague: handleToggleLeague,
     onSelectStatus: handleSelectStatus,
+    onSelectSort: handleSelectSort,
+    onSearchQueryChange: handleSearchQueryChange,
   };
 
   return (
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.75fr)_minmax(0,1fr)] lg:items-start">
           <div className="order-1 lg:hidden">
-            <MatchFiltersMobileSheet {...filterPanelProps} />
+            <MatchFiltersMobileSheet
+              {...filterPanelProps}
+              sortParam={searchParams.get("sort")}
+            />
           </div>
           <aside className="order-1 hidden flex-col gap-4 self-start lg:sticky lg:top-20 lg:flex">
             <MatchFiltersPanel {...filterPanelProps} />
@@ -262,9 +310,6 @@ export default function HomePage() {
             <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Research betting
             </h2>
-            <p className="px-1 text-xs text-zinc-500 dark:text-zinc-400">
-              Scope: {researchStatsScopeLabel}
-            </p>
             {statsError ? (
               <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
                 {statsError}
@@ -301,6 +346,9 @@ export default function HomePage() {
                     />
                   </PieChart>
                 </ChartContainer>
+                <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                  Scope: {researchStatsScopeLabel}
+                </p>
               </article>
             ) : null}
           </aside>
