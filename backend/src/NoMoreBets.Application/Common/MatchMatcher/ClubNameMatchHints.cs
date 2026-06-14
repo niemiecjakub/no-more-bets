@@ -60,7 +60,7 @@ internal static class ClubNameMatchHints
     AddClubAlternatives(aliases, "Belgium", "Belgia");
     AddClubAlternatives(aliases, "Bosnia-Herzegovina", "Bosnia and Herzegovina", "Bośnia i H.", "Bośnia i Hercegowina");
     AddClubAlternatives(aliases, "Brazil", "Brazylia");
-    AddClubAlternatives(aliases, "Cabo Verde", "Cape Verde", "Wyspy Ziel. Przyl.");
+    AddClubAlternatives(aliases, "Cabo Verde", "Cape Verde", "Wyspy Ziel. Przyl.","Wyspy Zielonego Przylądka");
     AddClubAlternatives(aliases, "Canada", "Kanada");
     AddClubAlternatives(aliases, "Colombia", "Kolumbia");
     AddClubAlternatives(aliases, "Congo DR", "DR Congo", "DR Konga");
