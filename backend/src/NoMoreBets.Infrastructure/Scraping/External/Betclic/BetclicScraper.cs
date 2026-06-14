@@ -26,7 +26,6 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
     ["fifa-world-cup"] = BaseUrl + "/football-sfootball/ms-c1"
   };
 
-  private readonly BetclicScraperOptions _betclicOptions;
   private readonly ILogger<BetclicScraper> _logger;
 
   private static readonly TimeSpan BetclicInteractiveTimeout = TimeSpan.FromSeconds(45);
@@ -49,11 +48,9 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
   public BetclicScraper(
       PlaywrightPageFetcher pageFetcher,
       IOptions<BaseScraperOptions> options,
-      IOptions<BetclicScraperOptions> betclicOptions,
       ILogger<BetclicScraper> logger)
       : base(pageFetcher, options, logger)
   {
-    _betclicOptions = betclicOptions.Value;
     _logger = logger;
   }
 
@@ -68,78 +65,48 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
       return [];
     }
 
-    var games = new List<UpcomingGame>();
-    for (var attempt = 0; attempt < _betclicOptions.EmptyResultRetryCount; attempt++)
+    var html = await GetHtmlAfterInteractionsAsync(
+        leagueUrl,
+        UpcomingGamesSteps,
+        BetclicInteractiveTimeout,
+        cancellationToken,
+        blockStylesheets: false,
+        blockResources: false).ConfigureAwait(false);
+    var games = (await ParseUpcomingGamesAsync(html).ConfigureAwait(false)).ToList();
+    if (games.Count == 0)
     {
-      var html = await GetHtmlAfterInteractionsAsync(
-          leagueUrl,
-          UpcomingGamesSteps,
-          BetclicInteractiveTimeout,
-          cancellationToken,
-          blockStylesheets: false,
-          blockResources: false).ConfigureAwait(false);
-      games = (await ParseUpcomingGamesAsync(html).ConfigureAwait(false)).ToList();
-      if (games.Count > 0)
-        return games;
-      if (attempt < _betclicOptions.EmptyResultRetryCount - 1)
-      {
-        var delay = JitterDelay(_betclicOptions.EmptyResultRetryDelayMinSeconds, _betclicOptions.EmptyResultRetryDelayMaxSeconds);
-        _logger.LogWarning(
-          "Betclic upcoming games returned no results on attempt {Attempt}/{MaxAttempts}; retrying after {DelaySeconds}s. Url: {Url}",
-          attempt + 1,
-          _betclicOptions.EmptyResultRetryCount,
-          Math.Round(delay, 2),
-          leagueUrl);
-        await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken).ConfigureAwait(false);
-      }
+      _logger.LogWarning(
+        "Betclic upcoming games returned no results. Url: {Url}",
+        leagueUrl);
     }
 
-    _logger.LogWarning(
-      "Betclic upcoming games returned no results after {MaxAttempts} attempts. Url: {Url}",
-      _betclicOptions.EmptyResultRetryCount,
-      leagueUrl);
     return games;
   }
 
   /// <inheritdoc />
   public async Task<IReadOnlyList<BookmakerEvent>> GetMatchEventsAsync(string gameUrl, bool expand, CancellationToken cancellationToken = default)
   {
-    var events = new List<BookmakerEvent>();
-    for (var attempt = 0; attempt < _betclicOptions.EmptyResultRetryCount; attempt++)
-    {
-      string html;
-      if (expand)
-        html = await GetHtmlAfterInteractionsAsync(
-            gameUrl,
-            ExpandSteps,
-            BetclicInteractiveTimeout,
-            cancellationToken,
-            blockStylesheets: false,
-            blockResources: false).ConfigureAwait(false);
-      else
-        html = await GetPageHtmlAsync(gameUrl, cancellationToken).ConfigureAwait(false);
+    string html;
+    if (expand)
+      html = await GetHtmlAfterInteractionsAsync(
+          gameUrl,
+          ExpandSteps,
+          BetclicInteractiveTimeout,
+          cancellationToken,
+          blockStylesheets: false,
+          blockResources: false).ConfigureAwait(false);
+    else
+      html = await GetPageHtmlAsync(gameUrl, cancellationToken).ConfigureAwait(false);
 
-      var extracted = await ExtractEventsAsync(html).ConfigureAwait(false);
-      events = AggregateEvents(extracted);
-      if (events.Count > 0)
-        return events;
-      if (attempt < _betclicOptions.EmptyResultRetryCount - 1)
-      {
-        var delay = JitterDelay(_betclicOptions.MatchEventsRetryDelayMinSeconds, _betclicOptions.MatchEventsRetryDelayMaxSeconds);
-        _logger.LogWarning(
-          "Betclic match events returned no results on attempt {Attempt}/{MaxAttempts}; retrying after {DelaySeconds}s. Url: {Url}",
-          attempt + 1,
-          _betclicOptions.EmptyResultRetryCount,
-          Math.Round(delay, 2),
-          gameUrl);
-        await Task.Delay(TimeSpan.FromSeconds(delay), cancellationToken).ConfigureAwait(false);
-      }
+    var extracted = await ExtractEventsAsync(html).ConfigureAwait(false);
+    var events = AggregateEvents(extracted);
+    if (events.Count == 0)
+    {
+      _logger.LogWarning(
+        "Betclic match events returned no results. Url: {Url}",
+        gameUrl);
     }
 
-    _logger.LogWarning(
-      "Betclic match events returned no results after {MaxAttempts} attempts. Url: {Url}",
-      _betclicOptions.EmptyResultRetryCount,
-      gameUrl);
     return events;
   }
 
@@ -415,10 +382,5 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
     }
     var sorted = optionsDict.Values.OrderBy(x => x.Label).ToList();
     return new BookmakerEvent { Title = events[0].Title, Options = sorted };
-  }
-
-  private static double JitterDelay(double minSeconds, double maxSeconds)
-  {
-    return minSeconds + (Random.Shared.NextDouble() * (maxSeconds - minSeconds));
   }
 }

@@ -18,8 +18,7 @@ public class BetclicScraperTests
 
   private static BetclicScraper CreateScraper(
       PlaywrightPageFetcher? pageFetcher = null,
-      BaseScraperOptions? baseOptions = null,
-      BetclicScraperOptions? betclicOptions = null)
+      BaseScraperOptions? baseOptions = null)
   {
     pageFetcher ??= PlaywrightPageFetcherMockHelper.CreateMock();
     var baseOpts = Options.Create(baseOptions ?? new BaseScraperOptions
@@ -29,16 +28,8 @@ public class BetclicScraperTests
       RetryDelaySeconds = 0.01,
       TimeoutSeconds = 15
     });
-    var betclicOpts = Options.Create(betclicOptions ?? new BetclicScraperOptions
-    {
-      EmptyResultRetryCount = 1,
-      EmptyResultRetryDelayMinSeconds = 0,
-      EmptyResultRetryDelayMaxSeconds = 0,
-      MatchEventsRetryDelayMinSeconds = 0,
-      MatchEventsRetryDelayMaxSeconds = 0
-    });
     var logger = NullLogger<BetclicScraper>.Instance;
-    return new BetclicScraper(pageFetcher, baseOpts, betclicOpts, logger);
+    return new BetclicScraper(pageFetcher, baseOpts, logger);
   }
 
   private static string MinimalUpcomingGamesHtml()

@@ -58,7 +58,6 @@ public static class DependencyInjection
 
     // Options (Infrastructure)
     services.Configure<BaseScraperOptions>(configuration.GetSection(BaseScraperOptions.SectionName));
-    services.Configure<BetclicScraperOptions>(configuration.GetSection(BetclicScraperOptions.SectionName));
     services.Configure<SoccerDataOptions>(configuration.GetSection(SoccerDataOptions.SectionName));
     services.Configure<ProxyOptions>(configuration.GetSection(ProxyOptions.SectionName));
     services.Configure<BraveSearchOptions>(configuration.GetSection(BraveSearchOptions.SectionName));
