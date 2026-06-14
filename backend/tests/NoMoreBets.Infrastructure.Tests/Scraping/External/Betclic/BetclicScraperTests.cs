@@ -115,6 +115,31 @@ public class BetclicScraperTests
   }
 
   [Fact]
+  public async Task ParseUpcomingGamesAsync_WithDzisWNocyHeader_TreatsDateAsTomorrow()
+  {
+    var html = """
+            <html><body>
+            <div class="groupEvents">
+                <h2 class="groupEvents_headTitle">Dziś w nocy</h2>
+                <a class="cardEvent groupEvents_card" href="/football-sfootball/ms-c1/team-a-team-b-m1">
+                    <div data-qa="contestant-1-label">Team A</div>
+                    <div data-qa="contestant-2-label">Team B</div>
+                    <div class="scoreboard_hour">23:00</div>
+                </a>
+            </div>
+            </body></html>
+            """;
+    var sut = CreateScraper();
+
+    var result = await sut.ParseUpcomingGamesAsync(html);
+
+    result.Should().HaveCount(1);
+    result[0].Date.Should().Be(DateTime.Today.AddDays(1));
+    result[0].HomeTeam.Should().Be("Team A");
+    result[0].AwayTeam.Should().Be("Team B");
+  }
+
+  [Fact]
   public async Task ParseUpcomingGamesAsync_WithNoGroupEvents_ReturnsEmpty()
   {
     // Arrange
@@ -186,13 +211,18 @@ public class BetclicScraperTests
     await pageFetcher.Received(1)
         .GetHtmlAfterInteractionsAsync(
             PremierLeagueUrl,
-            Arg.Any<IReadOnlyList<InteractionStep>>(),
+            Arg.Is<IReadOnlyList<InteractionStep>>(steps =>
+                steps.Count == 2 &&
+                steps[0].Action == InteractionAction.Click &&
+                steps[0].Selector == "#popin_tc_privacy_button_2" &&
+                steps[1].Action == InteractionAction.ScrollToBottom &&
+                steps[1].Selector == ".groupEvents_card"),
             Arg.Any<TimeSpan?>(),
             Arg.Any<CancellationToken>(),
             Arg.Any<string?>(),
             Arg.Any<string?>(),
-            Arg.Any<bool>(),
-            Arg.Any<bool>());
+            blockStylesheets: false,
+            blockResources: false);
   }
 
   [Theory]

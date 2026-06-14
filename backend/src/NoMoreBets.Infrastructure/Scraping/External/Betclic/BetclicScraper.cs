@@ -31,9 +31,17 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
 
   private static readonly TimeSpan BetclicInteractiveTimeout = TimeSpan.FromSeconds(45);
 
+  private const string PrivacyAcceptAllSelector = "#popin_tc_privacy_button_2";
+
+  private static readonly IReadOnlyList<InteractionStep> UpcomingGamesSteps =
+  [
+      new InteractionStep(PrivacyAcceptAllSelector, InteractionAction.Click, 500),
+      new InteractionStep(".groupEvents_card", InteractionAction.ScrollToBottom)
+  ];
+
   private static readonly IReadOnlyList<InteractionStep> ExpandSteps =
   [
-      new InteractionStep("#popin_tc_privacy_container_button button:nth-of-type(2)", InteractionAction.Click, 500),
+      new InteractionStep(PrivacyAcceptAllSelector, InteractionAction.Click, 500),
       new InteractionStep("div.modal button", InteractionAction.Click, 500),
       new InteractionStep("button.is-seeMore, button[class*='seeMore'], button[class*='see-more']", InteractionAction.Click, 500)
   ];
@@ -63,7 +71,13 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
     var games = new List<UpcomingGame>();
     for (var attempt = 0; attempt < _betclicOptions.EmptyResultRetryCount; attempt++)
     {
-      var html = await GetPageHtmlAsync(leagueUrl, cancellationToken).ConfigureAwait(false);
+      var html = await GetHtmlAfterInteractionsAsync(
+          leagueUrl,
+          UpcomingGamesSteps,
+          BetclicInteractiveTimeout,
+          cancellationToken,
+          blockStylesheets: false,
+          blockResources: false).ConfigureAwait(false);
       games = (await ParseUpcomingGamesAsync(html).ConfigureAwait(false)).ToList();
       if (games.Count > 0)
         return games;
@@ -199,7 +213,8 @@ public class BetclicScraper : BaseScraper, IBookmakerMatchesProvider, IBetEvents
     {
       return DateTime.Today;
     }
-    if (string.Equals(trimmed, "Jutro", StringComparison.OrdinalIgnoreCase))
+    if (string.Equals(trimmed, "Jutro", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(trimmed, "Dziś w nocy", StringComparison.OrdinalIgnoreCase))
     {
       return DateTime.Today.AddDays(1);
     }

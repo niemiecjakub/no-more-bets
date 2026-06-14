@@ -129,10 +129,56 @@ public class PlaywrightPageFetcher
           foreach (var step in steps)
           {
             cancellationToken.ThrowIfCancellationRequested();
+            if (step.Action == InteractionAction.ScrollToBottom)
+            {
+              if (!string.IsNullOrWhiteSpace(step.Selector))
+              {
+                var stableRounds = 0;
+                var previousCount = -1;
+                for (var round = 0; round < 25 && stableRounds < 2; round++)
+                {
+                  await page.EvaluateAsync(
+                      "window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight))")
+                    .ConfigureAwait(false);
+                  await Task.Delay(Random.Shared.Next(1000, 2000), cancellationToken).ConfigureAwait(false);
+                  var currentCount = await page.Locator(step.Selector.Trim()).CountAsync().ConfigureAwait(false);
+                  if (currentCount == previousCount)
+                    stableRounds++;
+                  else
+                    stableRounds = 0;
+                  previousCount = currentCount;
+                }
+              }
+              else
+              {
+                await page.EvaluateAsync(
+                    "window.scrollTo(0, Math.max(document.body.scrollHeight, document.documentElement.scrollHeight))")
+                  .ConfigureAwait(false);
+                await Task.Delay(Random.Shared.Next(1000, 2000), cancellationToken).ConfigureAwait(false);
+              }
+
+              continue;
+            }
+
             if (step.Action != InteractionAction.Click)
               continue;
 
-            var locators = await page.Locator(step.Selector).AllAsync().ConfigureAwait(false);
+            var rootLocator = page.Locator(step.Selector.Trim());
+            try
+            {
+              await rootLocator.First.WaitForAsync(new LocatorWaitForOptions
+              {
+                State = WaitForSelectorState.Visible,
+                Timeout = 10_000
+              }).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+              _logger.LogDebug(ex, "Interaction step skipped; selector not visible: {Selector}", step.Selector);
+              continue;
+            }
+
+            var locators = await rootLocator.AllAsync().ConfigureAwait(false);
             foreach (var locator in locators)
             {
               try
