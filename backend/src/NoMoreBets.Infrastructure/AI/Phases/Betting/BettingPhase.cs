@@ -10,6 +10,7 @@ using NoMoreBets.Infrastructure.AI.Providers.Bankroll;
 using NoMoreBets.Infrastructure.AI.Providers.Date;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
+using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
 
@@ -51,7 +52,9 @@ internal sealed class BettingExecuteStep : IAgentPhaseStep
     new DateProvider(),
     new BankrollProvider(serviceProvider.GetRequiredService<IMediator>()),
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+    new WebSearchProvider(
+      serviceProvider.GetRequiredService<ISearchService>(),
+      serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
     new AgentModeProvider(),
     new TodoProvider(),
   ];
@@ -80,6 +83,8 @@ internal sealed class XPostFollowUpStep : IAgentPhaseStep
     new DateProvider(),
     new BankrollProvider(serviceProvider.GetRequiredService<IMediator>()),
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+    new WebSearchProvider(
+      serviceProvider.GetRequiredService<ISearchService>(),
+      serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
   ];
 }

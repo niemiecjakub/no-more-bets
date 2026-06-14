@@ -8,6 +8,7 @@ using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Date;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
+using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
 
@@ -96,7 +97,9 @@ public string BuildPrompt() => """
   [
     new DateProvider(),
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-    new WebSearchProvider(serviceProvider.GetRequiredService<ISearchService>()),
+    new WebSearchProvider(
+      serviceProvider.GetRequiredService<ISearchService>(),
+      serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
     new AgentModeProvider(),
     new TodoProvider(),
   ];

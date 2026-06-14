@@ -19,6 +19,7 @@ public static class AgentFrameworkProvider
     services.AddScoped<BettingTool>();
     services.AddScoped<SocialMediaTool>();
     services.AddScoped<AgentRunMessageCollector>();
+    services.AddScoped<AgentRunToolMetadataCollector>();
     services.AddScoped<AgentResponseMappingMiddleware>();
     services.AddScoped<AgentBuilder>();
     services.AddScoped<AgentSessionContext>();

@@ -474,6 +474,7 @@ public class AppDbContext : DbContext
       entity.Property(e => e.Ordinal).IsRequired();
       entity.Property(e => e.Kind).IsRequired().HasConversion<int>();
       entity.Property(e => e.Text).IsRequired();
+      entity.Property(e => e.Metadata).HasColumnType("jsonb");
       entity.HasIndex(e => e.SessionId);
       entity.HasOne(e => e.Session)
         .WithMany(s => s.Messages)

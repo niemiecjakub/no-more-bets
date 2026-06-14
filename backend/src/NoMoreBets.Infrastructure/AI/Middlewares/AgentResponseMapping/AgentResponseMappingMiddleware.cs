@@ -7,10 +7,14 @@ namespace NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 public sealed class AgentResponseMappingMiddleware
 {
   private readonly AgentRunMessageCollector _collector;
+  private readonly AgentRunToolMetadataCollector _toolMetadataCollector;
 
-  public AgentResponseMappingMiddleware(AgentRunMessageCollector collector)
+  public AgentResponseMappingMiddleware(
+    AgentRunMessageCollector collector,
+    AgentRunToolMetadataCollector toolMetadataCollector)
   {
     _collector = collector;
+    _toolMetadataCollector = toolMetadataCollector;
   }
 
   public async Task<AgentResponse> InvokeAsync(
@@ -20,6 +24,8 @@ public sealed class AgentResponseMappingMiddleware
     AIAgent innerAgent,
     CancellationToken cancellationToken)
   {
+    _toolMetadataCollector.Reset();
+
     var response = await innerAgent
       .RunAsync(messages, session, options, cancellationToken)
       .ConfigureAwait(false);
@@ -28,7 +34,7 @@ public sealed class AgentResponseMappingMiddleware
     return response;
   }
 
-  private static List<IMessage> Map(AgentResponse response)
+  private List<IMessage> Map(AgentResponse response)
   {
     var messages = new List<IMessage>();
 
@@ -46,7 +52,8 @@ public sealed class AgentResponseMappingMiddleware
             var arguments = functionCall.Arguments?
               .Select(a => new FunctionArgument(a.Key, a.Value?.ToString()))
               .ToList();
-            messages.Add(new FunctionMessage(functionCall.Name, arguments));
+            var metadata = _toolMetadataCollector.TryTake(functionCall.CallId);
+            messages.Add(new FunctionMessage(functionCall.Name, arguments, metadata));
             break;
 
           case TextContent text when !string.IsNullOrEmpty(text.Text):

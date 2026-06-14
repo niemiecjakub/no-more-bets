@@ -3,9 +3,10 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NoMoreBets.Application.Search;
-using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using NoMoreBets.Application.AgentTools;
+using NoMoreBets.Application.Search;
+using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using SearchLlmContextOptions = NoMoreBets.Application.Search.SearchLlmContext.SearchLlmContextOptions;
 using SearchNewsOptions = NoMoreBets.Application.Search.SearchNews.SearchNewsOptions;
 
@@ -24,11 +25,16 @@ public sealed class WebSearchProvider : AIContextProvider
         """;
 
   private readonly ISearchService _searchService;
+  private readonly AgentRunToolMetadataCollector _toolMetadataCollector;
   private readonly ILogger<WebSearchProvider> _logger;
 
-  public WebSearchProvider(ISearchService searchService, ILogger<WebSearchProvider>? logger = null)
+  public WebSearchProvider(
+    ISearchService searchService,
+    AgentRunToolMetadataCollector toolMetadataCollector,
+    ILogger<WebSearchProvider>? logger = null)
   {
     _searchService = searchService;
+    _toolMetadataCollector = toolMetadataCollector;
     _logger = logger ?? NullLogger<WebSearchProvider>.Instance;
   }
 
@@ -82,7 +88,6 @@ public sealed class WebSearchProvider : AIContextProvider
       {
         Count = 3,
         Freshness = freshness,
-        Country = "GB",
         ExtraSnippets = true
       }, cancellationToken).ConfigureAwait(false);
       if (src.Items.Count == 0)
@@ -90,8 +95,18 @@ public sealed class WebSearchProvider : AIContextProvider
         _logger.LogWarning("SearchNews returned no items for query {Query} and freshness {Freshness}.", query, freshness);
       }
 
-      return src.Items
+      var items = src.Items
         .OrderByDescending(item => item.PublishedAt ?? DateTimeOffset.MinValue)
+        .ToList();
+
+      _toolMetadataCollector.Record(
+        GetCurrentCallId(),
+        items.Select(item => new WebSearchToolSourceMetadata(
+          item.Title,
+          item.Url,
+          item.Hostname ?? item.Source)).ToList());
+
+      return items
         .Select(item => new SearchNewsArticleDto(
           Title: item.Title,
           Source: item.Source,
@@ -126,6 +141,10 @@ public sealed class WebSearchProvider : AIContextProvider
         throw new InvalidOperationException("GetWebGrounding returned no items.");
       }
 
+      _toolMetadataCollector.Record(
+        GetCurrentCallId(),
+        [new WebSearchToolSourceMetadata(firstItem.Title, firstItem.Url, firstItem.Hostname)]);
+
       return new SearchLlmContextItemDto(
         Snippets: firstItem.Snippets,
         Title: firstItem.Title,
@@ -138,4 +157,7 @@ public sealed class WebSearchProvider : AIContextProvider
       throw;
     }
   }
+
+  private static string? GetCurrentCallId() =>
+    FunctionInvokingChatClient.CurrentContext?.CallContent.CallId;
 }

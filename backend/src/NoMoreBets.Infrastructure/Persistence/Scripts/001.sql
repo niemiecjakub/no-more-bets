@@ -353,6 +353,7 @@ CREATE TABLE "AgentSessionMessage" (
 	"Ordinal" int4 NOT NULL,
 	"Kind" int4 NOT NULL,
 	"Text" text NOT NULL,
+	"Metadata" jsonb NULL,
 	CONSTRAINT "AgentSessionMessage_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT fk_agentsessionmessage_session FOREIGN KEY ("SessionId") REFERENCES "AgentSession"("Id") ON DELETE CASCADE
 );

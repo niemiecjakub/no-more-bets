@@ -40,7 +40,8 @@ internal static class AgentSessionTranscriptMapper
       {
         Ordinal = ordinal,
         Kind = AgentSessionMessageKind.FunctionCall,
-        Text = SerializeFunctionCall(f)
+        Text = SerializeFunctionCall(f),
+        Metadata = f.Metadata
       },
       _ => throw new ArgumentOutOfRangeException(nameof(message), message.GetType().FullName, null)
     };

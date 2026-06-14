@@ -151,7 +151,8 @@ public class RotowireScraper : BaseScraper, ILineupProvider
 
     var homeName = homeTeamName ?? $"Team {homeCode}";
     var awayName = awayTeamName ?? $"Team {awayCode}";
-    ValiiadteLineupPlayers(homeLineup, awayLineup, homeName, awayName);
+    if (!ValiiadteLineupPlayers(homeLineup, awayLineup, homeName, awayName))
+      return null;
 
     var kickoff = ParseRotowireKickoff(date, timeText);
     return new GameLineup
@@ -325,11 +326,21 @@ public class RotowireScraper : BaseScraper, ILineupProvider
     };
   }
 
-  private void ValiiadteLineupPlayers(TeamLineup homeLineup, TeamLineup awayLineup, string homeTeamName, string awayTeamName)
+  private bool ValiiadteLineupPlayers(TeamLineup homeLineup, TeamLineup awayLineup, string homeTeamName, string awayTeamName)
   {
+    var isValid = true;
     if (homeLineup.Players.Count != 11)
+    {
       _logger.LogError("{Team} lineup has {Count} players (expected 11)", homeTeamName, homeLineup.Players.Count);
+      isValid = false;
+    }
+
     if (awayLineup.Players.Count != 11)
+    {
       _logger.LogError("{Team} lineup has {Count} players (expected 11)", awayTeamName, awayLineup.Players.Count);
+      isValid = false;
+    }
+
+    return isValid;
   }
 }
