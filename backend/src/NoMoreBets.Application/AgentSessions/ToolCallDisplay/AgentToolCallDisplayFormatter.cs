@@ -34,7 +34,7 @@ public sealed class AgentToolCallDisplayFormatter(IUnitOfWork unitOfWork)
       if (!FunctionCallPayloadParser.TryParse(message.Text, out var payload))
         continue;
 
-      result[message.Id] = Format(payload, context);
+      result[message.Id] = Format(payload, context, message.Metadata);
     }
 
     return result;
@@ -94,14 +94,34 @@ public sealed class AgentToolCallDisplayFormatter(IUnitOfWork unitOfWork)
     }
   }
 
-  internal static ToolCallDisplayDto Format(FunctionCallPayload payload, ToolCallDisplayContext context)
+  internal static ToolCallDisplayDto Format(
+    FunctionCallPayload payload,
+    ToolCallDisplayContext context,
+    string? metadata = null)
   {
     var toolDef = ToolByName.GetValueOrDefault(payload.Name);
     var label = toolDef?.DisplayName ?? payload.Name;
     var category = toolDef?.Category.ToSlug() ?? "unknown";
     var details = FormatDetails(payload, toolDef, context);
+    var toolMetadata = FormatMetadata(toolDef, metadata);
 
-    return new ToolCallDisplayDto(label, category, details);
+    return new ToolCallDisplayDto(label, category, details, toolMetadata);
+  }
+
+  private static IReadOnlyList<ToolCallMetadataDto>? FormatMetadata(
+    AgentToolDefinition? toolDef,
+    string? metadata)
+  {
+    if (toolDef?.Category != AgentToolCategory.WebSearch)
+      return null;
+
+    var sources = WebSearchToolMetadataParser.Parse(metadata)
+      .Select(source => new WebSearchSourceLinkDto(source.Title, source.Hostname, source.Url))
+      .ToList();
+
+    return sources.Count > 0
+      ? [new WebSearchSourcesToolCallMetadataDto(sources)]
+      : null;
   }
 
   private static IReadOnlyList<string>? FormatDetails(

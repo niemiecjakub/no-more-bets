@@ -1,4 +1,5 @@
 using FluentAssertions;
+using NoMoreBets.Application.AgentSessions.GetAgentSessionMessages;
 using NoMoreBets.Application.AgentSessions.ToolCallDisplay;
 using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Common;
@@ -153,6 +154,176 @@ public class AgentToolCallDisplayFormatterTests
     result[messageId].Label.Should().Be("custom_unknownTool");
     result[messageId].Category.Should().Be("unknown");
     result[messageId].Details.Should().ContainSingle("hello");
+  }
+
+  [Fact]
+  public async Task BuildDisplayByMessageIdAsync_SearchNews_IncludesMetadataSources()
+  {
+    // Arrange
+    const int sessionId = 1;
+    const int messageId = 20;
+    var messages = new List<AgentSessionMessage>
+    {
+      new()
+      {
+        Id = messageId,
+        Kind = AgentSessionMessageKind.FunctionCall,
+        Text = """{"name":"websearch_searchNews","arguments":[{"name":"query","value":"\"Arsenal injury news\""}]}""",
+        Metadata = """
+          {
+            "sources": [
+              {
+                "title": "Premier League injury update",
+                "url": "https://bbc.co.uk/sport/injury",
+                "hostname": "bbc.co.uk"
+              },
+              {
+                "title": "Arteta confirms Saka doubt",
+                "url": "https://theguardian.com/football/saka",
+                "hostname": "theguardian.com"
+              }
+            ]
+          }
+          """,
+      },
+    };
+
+    SetupEmptyContext(sessionId);
+
+    // Act
+    var result = await _sut.BuildDisplayByMessageIdAsync(sessionId, messages, CancellationToken.None);
+
+    // Assert
+    result[messageId].Label.Should().Be(AgentToolCatalog.WebSearch.SearchNews.DisplayName);
+    result[messageId].Category.Should().Be("websearch");
+    result[messageId].Details.Should().ContainSingle("Arsenal injury news");
+    var webSearchMetadata = result[messageId].Metadata.Should().ContainSingle().Subject
+      .Should().BeOfType<WebSearchSourcesToolCallMetadataDto>().Subject;
+    webSearchMetadata.Sources.Should().HaveCount(2);
+    webSearchMetadata.Sources[0].Title.Should().Be("Premier League injury update");
+    webSearchMetadata.Sources[0].Hostname.Should().Be("bbc.co.uk");
+    webSearchMetadata.Sources[0].Url.Should().Be("https://bbc.co.uk/sport/injury");
+    webSearchMetadata.Sources[1].Title.Should().Be("Arteta confirms Saka doubt");
+    webSearchMetadata.Sources[1].Hostname.Should().Be("theguardian.com");
+    webSearchMetadata.Sources[1].Url.Should().Be("https://theguardian.com/football/saka");
+  }
+
+  [Fact]
+  public async Task BuildDisplayByMessageIdAsync_GetWebGrounding_IncludesMetadataSource()
+  {
+    // Arrange
+    const int sessionId = 1;
+    const int messageId = 21;
+    var messages = new List<AgentSessionMessage>
+    {
+      new()
+      {
+        Id = messageId,
+        Kind = AgentSessionMessageKind.FunctionCall,
+        Text = """{"name":"websearch_getWebGrounding","arguments":[{"name":"query","value":"\"Arsenal form guide\""}]}""",
+        Metadata = """
+          {
+            "sources": [
+              {
+                "title": "Grounding Title",
+                "url": "https://wiki.example/page",
+                "hostname": "wiki.example"
+              }
+            ]
+          }
+          """,
+      },
+    };
+
+    SetupEmptyContext(sessionId);
+
+    // Act
+    var result = await _sut.BuildDisplayByMessageIdAsync(sessionId, messages, CancellationToken.None);
+
+    // Assert
+    result[messageId].Label.Should().Be(AgentToolCatalog.WebSearch.GetWebGrounding.DisplayName);
+    result[messageId].Category.Should().Be("websearch");
+    result[messageId].Details.Should().ContainSingle("Arsenal form guide");
+    var webSearchMetadata = result[messageId].Metadata.Should().ContainSingle().Subject
+      .Should().BeOfType<WebSearchSourcesToolCallMetadataDto>().Subject;
+    webSearchMetadata.Sources.Should().ContainSingle();
+    webSearchMetadata.Sources[0].Title.Should().Be("Grounding Title");
+    webSearchMetadata.Sources[0].Hostname.Should().Be("wiki.example");
+    webSearchMetadata.Sources[0].Url.Should().Be("https://wiki.example/page");
+  }
+
+  [Fact]
+  public async Task BuildDisplayByMessageIdAsync_SearchNews_WithInvalidMetadata_ShowsQueryOnly()
+  {
+    // Arrange
+    const int sessionId = 1;
+    const int messageId = 22;
+    var messages = new List<AgentSessionMessage>
+    {
+      new()
+      {
+        Id = messageId,
+        Kind = AgentSessionMessageKind.FunctionCall,
+        Text = """{"name":"websearch_searchNews","arguments":[{"name":"query","value":"\"Arsenal injury news\""}]}""",
+        Metadata = "not-json",
+      },
+    };
+
+    SetupEmptyContext(sessionId);
+
+    // Act
+    var result = await _sut.BuildDisplayByMessageIdAsync(sessionId, messages, CancellationToken.None);
+
+    // Assert
+    result[messageId].Details.Should().ContainSingle("Arsenal injury news");
+    result[messageId].Metadata.Should().BeNull();
+  }
+
+  [Fact]
+  public async Task BuildDisplayByMessageIdAsync_NonWebSearchTool_IgnoresMetadata()
+  {
+    // Arrange
+    const int sessionId = 1;
+    const int messageId = 23;
+    var messages = new List<AgentSessionMessage>
+    {
+      new()
+      {
+        Id = messageId,
+        Kind = AgentSessionMessageKind.FunctionCall,
+        Text = """{"name":"custom_unknownTool","arguments":[{"name":"query","value":"\"hello\""}]}""",
+        Metadata = """
+          {
+            "sources": [
+              {
+                "title": "Should not appear",
+                "url": "https://example.com",
+                "hostname": "example.com"
+              }
+            ]
+          }
+          """,
+      },
+    };
+
+    SetupEmptyContext(sessionId);
+
+    // Act
+    var result = await _sut.BuildDisplayByMessageIdAsync(sessionId, messages, CancellationToken.None);
+
+    // Assert
+    result[messageId].Details.Should().ContainSingle("hello");
+    result[messageId].Metadata.Should().BeNull();
+  }
+
+  private void SetupEmptyContext(int sessionId)
+  {
+    _agentSessions.GetMatchIdsBySessionIdsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
+      .Returns(new Dictionary<int, int>());
+    _betting.GetBetSlipsByAgentSessionIdAsync(sessionId, Arg.Any<CancellationToken>())
+      .Returns(Array.Empty<BetSlip>());
+    _matches.GetMatchesByIdsAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .Returns(Array.Empty<Match>());
   }
 
   private static Match CreateMatch(int id, string homeName, string awayName) =>

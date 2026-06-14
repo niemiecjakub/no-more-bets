@@ -1,10 +1,28 @@
 import axiosInstance from "../../../lib/axios";
 
+/** Aligned with backend WebSearchSourceLinkDto. */
+export interface WebSearchSourceLink {
+  title: string | null;
+  hostname: string | null;
+  url: string | null;
+}
+
+/** Aligned with backend ToolCallMetadataDto (discriminator: type). */
+export interface ToolCallMetadata {
+  type: string;
+}
+
+export interface WebSearchSourcesToolCallMetadata extends ToolCallMetadata {
+  type: "webSearchSources";
+  sources: WebSearchSourceLink[];
+}
+
 /** Aligned with backend ToolCallDisplayDto. */
 export interface ToolCallDisplay {
   label: string;
   category: string;
   details: string[] | null;
+  metadata?: ToolCallMetadata[] | null;
 }
 
 /** Aligned with backend AgentSessionMessageDto. */

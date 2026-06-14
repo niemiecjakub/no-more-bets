@@ -12,7 +12,7 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import type { ToolCallDisplay } from "../services/agent-session-api";
+import type { ToolCallDisplay, WebSearchSourceLink, WebSearchSourcesToolCallMetadata } from "../services/agent-session-api";
 
 export type ToolCategory =
   | "match"
@@ -97,18 +97,74 @@ interface ToolCallViewProps {
   display: ToolCallDisplay;
 }
 
+function stripWwwPrefix(hostname: string): string {
+  return hostname.replace(/^www\./i, "");
+}
+
+function isWebSearchSourcesMetadata(metadata: { type: string }): metadata is WebSearchSourcesToolCallMetadata {
+  return metadata.type === "webSearchSources";
+}
+
+function getWebSearchSources(display: ToolCallDisplay): WebSearchSourceLink[] {
+  return (
+    display.metadata
+      ?.filter(isWebSearchSourcesMetadata)
+      .flatMap((metadata) => metadata.sources) ?? []
+  );
+}
+
+function formatWebSearchSourceLabel(source: WebSearchSourceLink): string {
+  const parts: string[] = [];
+  if (source.hostname?.trim()) parts.push(stripWwwPrefix(source.hostname.trim()));
+  if (source.title?.trim()) parts.push(source.title.trim());
+  return parts.length > 0 ? parts.join(" | ") : "Source";
+}
+
 export function ToolCallView({ display }: ToolCallViewProps) {
-  if (display.details == null || display.details.length === 0) {
+  const hasDetails = display.details != null && display.details.length > 0;
+  const webSearchSources = getWebSearchSources(display);
+  const hasSources = webSearchSources.length > 0;
+
+  if (!hasDetails && !hasSources) {
     return null;
   }
 
   return (
-    <ul className="flex flex-col gap-0.5">
-      {display.details.map((line, index) => (
-        <li key={`${index}-${line}`} className="text-sm italic leading-5 text-zinc-600 dark:text-zinc-400">
-          {line}
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-1.5">
+      {hasDetails ? (
+        <ul className="flex flex-col gap-0.5">
+          {display.details!.map((line, index) => (
+            <li key={`${index}-${line}`} className="text-sm italic leading-5 text-zinc-600 dark:text-zinc-400">
+              {line}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {hasSources ? (
+        <ul className="list-disc space-y-0.5 pl-5">
+          {webSearchSources.map((source, index) => {
+            const label = formatWebSearchSourceLabel(source);
+            const url = source.url?.trim();
+
+            return (
+              <li key={`${index}-${label}`} className="text-sm leading-5 text-zinc-600 dark:text-zinc-400">
+                {url ? (
+                  <a
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-700 underline decoration-cyan-700/40 underline-offset-2 hover:text-cyan-800 dark:text-cyan-300 dark:decoration-cyan-300/40 dark:hover:text-cyan-200"
+                  >
+                    {label}
+                  </a>
+                ) : (
+                  label
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
   );
 }
