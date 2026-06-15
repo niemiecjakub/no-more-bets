@@ -33,10 +33,9 @@ public sealed class BettingPhaseDefinition
 internal sealed class BettingExecuteStep : IAgentPhaseStep
 {
   public string BuildPrompt() => """
-    You are operating in the betting execution phase of a research-driven betting system.
-    Your stored memory defines the default decision framework and constraints for all actions.
-    Decide whether to place bets, and if so, construct bet slips consistent with memory-based strategy, bankroll constraints, and prior research.
-    """;
+        Begin betting execution phase. 
+        Evaluate current betting opportunities and existing exposure, then proceed with actions.
+        """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
     serviceProvider.ResolveTools([

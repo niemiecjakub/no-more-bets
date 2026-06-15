@@ -12,7 +12,7 @@ public sealed class BankrollProvider : AIContextProvider
   private static readonly string Instructions =
       $$"""
         # Bankroll
-        You have access to your bankroll data.
+        You have access to your bankroll data. Treat it as your own operational capital, not external data.
 
         Use these tools to manage your bankroll:
         - Use {{AgentToolCatalog.Bankroll.GetBalance.Name}} to get your current bank account balance.
