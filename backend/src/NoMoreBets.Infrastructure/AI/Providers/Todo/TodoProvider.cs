@@ -23,6 +23,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
         - Use {{AgentToolCatalog.Todo.GetRemaining.Name}} to check what work is still pending.
         - Use {{AgentToolCatalog.Todo.GetAll.Name}} to review the full list including completed items.
         - Use {{AgentToolCatalog.Todo.Remove.Name}} to remove items that are no longer needed (supports one or many at once).
+
         """;
 
   private readonly ProviderSessionState<TodoState> _sessionState;

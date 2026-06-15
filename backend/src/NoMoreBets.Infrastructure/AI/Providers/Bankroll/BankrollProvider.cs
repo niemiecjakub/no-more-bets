@@ -17,6 +17,7 @@ public sealed class BankrollProvider : AIContextProvider
         Use these tools to manage your bankroll:
         - Use {{AgentToolCatalog.Bankroll.GetBalance.Name}} to get your current bank account balance.
         - Use {{AgentToolCatalog.Bankroll.GetDaysUntilPayday.Name}} to get the number of days until your next payday.
+
         """;
 
   private readonly IMediator _mediator;

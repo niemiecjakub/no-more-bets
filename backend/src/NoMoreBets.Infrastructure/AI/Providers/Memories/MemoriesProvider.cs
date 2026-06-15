@@ -29,6 +29,7 @@ public sealed class MemoriesProvider : AIContextProvider
         - Use {{AgentToolCatalog.Memories.Append.Name}} to add text to the end of an existing memory record.
         - Use {{AgentToolCatalog.Memories.Replace.Name}} to find an exact substring in a memory record and substitute new text.
         - Use {{AgentToolCatalog.Memories.Delete.Name}} to permanently delete a named memory record.
+
         """;
 
   private readonly IUnitOfWork _unitOfWork;

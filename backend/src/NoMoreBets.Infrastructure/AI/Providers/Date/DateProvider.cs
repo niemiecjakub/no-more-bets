@@ -15,6 +15,7 @@ public sealed class DateProvider : AIContextProvider
       Instructions = $"""
         # Date
         Today is {today}.
+
         """,
     };
 

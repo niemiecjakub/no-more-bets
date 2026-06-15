@@ -22,6 +22,7 @@ public sealed class WebSearchProvider : AIContextProvider
         Use these tools to search the web:
         - Use {{AgentToolCatalog.WebSearch.SearchNews.Name}} to search for recent news articles and current events.
         - Use {{AgentToolCatalog.WebSearch.GetWebGrounding.Name}} to retrieve high-quality, grounded information chunks from the web. Best for fact-checking, gathering deep context for a complex question, or summarizing a specific topic.
+
         """;
 
   private readonly ISearchService _searchService;

@@ -7,12 +7,14 @@ using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Bankroll;
+using NoMoreBets.Infrastructure.AI.Providers.Betting;
 using NoMoreBets.Infrastructure.AI.Providers.Date;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Betting;
 
@@ -38,18 +40,13 @@ internal sealed class BettingExecuteStep : IAgentPhaseStep
         """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([
-      ToolRegistry.Betting.GetAvailableMatches,
-      ToolRegistry.Betting.GetCurrentOdds,
-      ToolRegistry.Betting.GetMatchAnalysis,
-      ToolRegistry.Betting.PlaceBetSlip,
-      ToolRegistry.Betting.GetBetSlips,
-    ]);
+    serviceProvider.ResolveTools([]);
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [
     new DateProvider(),
     new BankrollProvider(serviceProvider.GetRequiredService<IMediator>()),
+    new BettingProvider(serviceProvider.GetRequiredService<BettingTool>()),
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
     new WebSearchProvider(
       serviceProvider.GetRequiredService<ISearchService>(),

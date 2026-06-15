@@ -18,6 +18,7 @@ public sealed class AgentModeProvider : AIContextProvider
         6. If you encounter ambiguity or an unexpected situation during execution, choose the most reasonable option, note your choice, and keep going.
         7. Mark todo items as completed as you finish them.
         8. Continue working, thinking, and calling tools until you have the result for the user.
+        
         """;
 
   /// <inheritdoc />
