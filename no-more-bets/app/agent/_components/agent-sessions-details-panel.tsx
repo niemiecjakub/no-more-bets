@@ -2,17 +2,21 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bot, ChevronRight, WalletCards } from "lucide-react";
+import { Bot, WalletCards } from "lucide-react";
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { SlugIcon } from "@/components/slug-icon";
 import { BetSlipList } from "@/features/bets/components/bet-slip-list";
 import type { BetSlipListItem } from "@/features/bets/interfaces";
 import { fetchBetSlips } from "@/features/bets/services/bets-api";
 import { AgentSessionTranscript } from "@/features/bets/components/agent-session-transcript";
 import { fetchAgentSessionMessages, type AgentSessionMessage } from "@/features/bets/services/agent-session-api";
+import { MATCH_STATUS } from "@/features/matches/interfaces";
 import { isBettingSessionPhase, sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
-import type { AgentSessionListItem } from "@/features/sessions/interfaces";
+import type { AgentSessionListItem, AgentSessionMatchSummary } from "@/features/sessions/interfaces";
 import { fetchAgentSessionsPage } from "@/features/sessions/services/sessions-api";
 import { handleServiceError } from "@/lib/error-handler";
+import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
+import { formatMatchTime } from "@/utils/format-date";
 import { AgentSessionPhaseFilter } from "./agent-session-phase-filter";
 import { AgentSessionsList } from "./agent-sessions-list";
 
@@ -40,6 +44,65 @@ function formatDate(iso: string) {
     } catch {
         return iso;
     }
+}
+
+function centerScoreOrTime(match: AgentSessionMatchSummary): string {
+    if (
+        match.matchStatusId === MATCH_STATUS.Finished &&
+        match.homeGoals != null &&
+        match.awayGoals != null
+    ) {
+        return `${match.homeGoals} - ${match.awayGoals}`;
+    }
+    return formatMatchTime(match.matchDate);
+}
+
+function SessionMatchTeamsRow({ match }: { match: AgentSessionMatchSummary }) {
+    const homeLogoSlug = clubLogoSlugSegment(match.homeClubSlug, match.homeClubName);
+    const awayLogoSlug = clubLogoSlugSegment(match.awayClubSlug, match.awayClubName);
+    const center = centerScoreOrTime(match);
+    const showScore =
+        match.matchStatusId === MATCH_STATUS.Finished &&
+        match.homeGoals != null &&
+        match.awayGoals != null;
+    const centerCell = showScore ? (
+        <span className="inline-block text-center text-xl font-bold tabular-nums tracking-tight text-foreground">
+            {center}
+        </span>
+    ) : (
+        <time
+            dateTime={match.matchDate}
+            className="inline-block min-w-22 text-center text-xl font-bold tabular-nums tracking-tight text-foreground"
+        >
+            {center}
+        </time>
+    );
+
+    return (
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-4">
+            <Link
+                href={`/match/${match.matchId}`}
+                className="flex min-w-0 items-center justify-end gap-2"
+            >
+                <span className="min-w-0 truncate text-end text-sm font-medium text-foreground">
+                    {match.homeClubName}
+                </span>
+                <SlugIcon kind="club" slug={homeLogoSlug} alt={match.homeClubName} className="h-6 w-6" />
+            </Link>
+            <Link href={`/match/${match.matchId}`} className="justify-self-center px-3">
+                {centerCell}
+            </Link>
+            <Link
+                href={`/match/${match.matchId}`}
+                className="flex min-w-0 items-center justify-start gap-2"
+            >
+                <SlugIcon kind="club" slug={awayLogoSlug} alt={match.awayClubName} className="h-6 w-6" />
+                <span className="min-w-0 truncate text-sm font-medium text-foreground">
+                    {match.awayClubName}
+                </span>
+            </Link>
+        </div>
+    );
 }
 
 function SessionsFallback() {
@@ -340,8 +403,13 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
             >
                 {selectedSession ? (
                     <>
-                        <div className="flex min-w-0 shrink-0 items-center justify-between gap-3 border-b border-zinc-100 px-4 py-3 dark:border-zinc-800">
-                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                        <div
+                            className={
+                                "flex min-w-0 shrink-0 flex-col border-b border-zinc-100 px-4 py-3 dark:border-zinc-800" +
+                                (selectedSession.matchSummary ? " gap-2" : "")
+                            }
+                        >
+                            <div className="flex min-w-0 items-center gap-3">
                                 <SelectedPhaseIcon className="h-5 w-5 shrink-0 text-zinc-500 dark:text-zinc-400" aria-hidden />
                                 <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
                                     <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-foreground">{selectedSession.phaseName}</h2>
@@ -350,14 +418,8 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
                                     </span>
                                 </div>
                             </div>
-                            {selectedSession.matchId != null ? (
-                                <Link
-                                    href={`/match/${selectedSession.matchId}`}
-                                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-sky-300 bg-sky-500 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-sky-600 dark:border-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500"
-                                >
-                                    Match
-                                    <ChevronRight className="h-4 w-4 text-white/90" aria-hidden />
-                                </Link>
+                            {selectedSession.matchSummary ? (
+                                <SessionMatchTeamsRow match={selectedSession.matchSummary} />
                             ) : null}
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">

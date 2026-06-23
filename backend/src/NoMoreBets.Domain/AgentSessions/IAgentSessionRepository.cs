@@ -20,6 +20,9 @@ public interface IAgentSessionRepository
   Task<IReadOnlyDictionary<int, int>> GetMatchIdsBySessionIdsAsync(
     IReadOnlyCollection<int> sessionIds,
     CancellationToken cancellationToken = default);
+  Task<IReadOnlyDictionary<int, AgentSessionMatchSummary>> GetMatchSummariesBySessionIdsAsync(
+    IReadOnlyCollection<int> sessionIds,
+    CancellationToken cancellationToken = default);
   Task<bool> SessionExistsAsync(int sessionId, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<AgentSessionMessage>> GetMessagesAsync(
     int sessionId,

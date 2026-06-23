@@ -28,18 +28,34 @@ public sealed class GetAgentSessionsPageHandler(IUnitOfWork unitOfWork)
         cancellationToken)
       .ConfigureAwait(false);
 
-    var matchIdBySessionId = await unitOfWork.AgentSessions
-      .GetMatchIdsBySessionIdsAsync(page.Items.Select(r => r.Id).ToList(), cancellationToken)
+    var matchSummaryBySessionId = await unitOfWork.AgentSessions
+      .GetMatchSummariesBySessionIdsAsync(page.Items.Select(r => r.Id).ToList(), cancellationToken)
       .ConfigureAwait(false);
 
     var items = page.Items
-      .Select(r => new AgentSessionListItemDto(
-        r.Id,
-        (int)r.Phase,
-        r.Phase.ToString(),
-        r.StartedAt,
-        r.MessageCount,
-        matchIdBySessionId.TryGetValue(r.Id, out var matchId) ? matchId : null))
+      .Select(r =>
+      {
+        matchSummaryBySessionId.TryGetValue(r.Id, out var matchSummary);
+        return new AgentSessionListItemDto(
+          r.Id,
+          (int)r.Phase,
+          r.Phase.ToString(),
+          r.StartedAt,
+          r.MessageCount,
+          matchSummary?.MatchId,
+          matchSummary is null
+            ? null
+            : new AgentSessionMatchSummaryDto(
+              matchSummary.MatchId,
+              matchSummary.HomeClubName,
+              matchSummary.AwayClubName,
+              matchSummary.HomeClubSlug,
+              matchSummary.AwayClubSlug,
+              matchSummary.MatchDate,
+              matchSummary.MatchStatusId,
+              matchSummary.HomeGoals,
+              matchSummary.AwayGoals));
+      })
       .ToList();
 
     return PagedFactory.Create(items, page.HasMore, item => item.StartedAt, item => item.Id);

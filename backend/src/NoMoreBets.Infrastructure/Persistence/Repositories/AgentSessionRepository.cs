@@ -131,6 +131,52 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
       .ToDictionary(g => g.Key, g => g.First().MatchId);
   }
 
+  public async Task<IReadOnlyDictionary<int, AgentSessionMatchSummary>> GetMatchSummariesBySessionIdsAsync(
+    IReadOnlyCollection<int> sessionIds,
+    CancellationToken cancellationToken = default)
+  {
+    if (sessionIds.Count == 0)
+      return new Dictionary<int, AgentSessionMatchSummary>();
+
+    var rows = await db.MatchAnalysis
+      .AsNoTracking()
+      .Where(a => a.AgentSessionId != null && sessionIds.Contains(a.AgentSessionId.Value))
+      .Select(a => new
+      {
+        SessionId = a.AgentSessionId!.Value,
+        a.MatchId,
+        a.Match.MatchDate,
+        a.Match.MatchStatusId,
+        a.Match.HomeGoals,
+        a.Match.AwayGoals,
+        HomeClubName = a.Match.HomeClub.Name,
+        AwayClubName = a.Match.AwayClub.Name,
+        HomeClubSlug = a.Match.HomeClub.Slug,
+        AwayClubSlug = a.Match.AwayClub.Slug,
+      })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return rows
+      .GroupBy(r => r.SessionId)
+      .ToDictionary(
+        g => g.Key,
+        g =>
+        {
+          var row = g.First();
+          return new AgentSessionMatchSummary(
+            row.MatchId,
+            row.HomeClubName,
+            row.AwayClubName,
+            row.HomeClubSlug,
+            row.AwayClubSlug,
+            row.MatchDate,
+            row.MatchStatusId,
+            row.HomeGoals,
+            row.AwayGoals);
+        });
+  }
+
   public Task<bool> SessionExistsAsync(int sessionId, CancellationToken cancellationToken = default) =>
     db.AgentSession.AsNoTracking().AnyAsync(s => s.Id == sessionId, cancellationToken);
 
