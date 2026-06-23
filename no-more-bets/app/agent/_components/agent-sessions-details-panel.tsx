@@ -10,7 +10,6 @@ import type { BetSlipListItem } from "@/features/bets/interfaces";
 import { fetchBetSlips } from "@/features/bets/services/bets-api";
 import { AgentSessionTranscript } from "@/features/bets/components/agent-session-transcript";
 import { fetchAgentSessionMessages, type AgentSessionMessage } from "@/features/bets/services/agent-session-api";
-import { MATCH_STATUS } from "@/features/matches/interfaces";
 import { isBettingSessionPhase, sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
 import type { AgentSessionListItem, AgentSessionMatchSummary } from "@/features/sessions/interfaces";
 import { fetchAgentSessionsPage } from "@/features/sessions/services/sessions-api";
@@ -46,35 +45,39 @@ function formatDate(iso: string) {
     }
 }
 
-function centerScoreOrTime(match: AgentSessionMatchSummary): string {
-    if (
-        match.matchStatusId === MATCH_STATUS.Finished &&
-        match.homeGoals != null &&
-        match.awayGoals != null
-    ) {
-        return `${match.homeGoals} - ${match.awayGoals}`;
+function formatMatchDay(iso: string): string {
+    try {
+        return new Date(iso).toLocaleDateString(undefined, {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+        });
+    } catch {
+        return iso;
     }
-    return formatMatchTime(match.matchDate);
+}
+
+function hasMatchScore(match: AgentSessionMatchSummary): boolean {
+    return match.homeGoals != null && match.awayGoals != null;
 }
 
 function SessionMatchTeamsRow({ match }: { match: AgentSessionMatchSummary }) {
     const homeLogoSlug = clubLogoSlugSegment(match.homeClubSlug, match.homeClubName);
     const awayLogoSlug = clubLogoSlugSegment(match.awayClubSlug, match.awayClubName);
-    const center = centerScoreOrTime(match);
-    const showScore =
-        match.matchStatusId === MATCH_STATUS.Finished &&
-        match.homeGoals != null &&
-        match.awayGoals != null;
-    const centerCell = showScore ? (
-        <span className="inline-block text-center text-xl font-bold tabular-nums tracking-tight text-foreground">
-            {center}
-        </span>
-    ) : (
+    const showScore = hasMatchScore(match);
+    const centerCell = (
         <time
             dateTime={match.matchDate}
-            className="inline-block min-w-22 text-center text-xl font-bold tabular-nums tracking-tight text-foreground"
+            className="inline-flex flex-col items-center text-center tabular-nums tracking-tight text-foreground"
         >
-            {center}
+            <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                {formatMatchDay(match.matchDate)}
+            </span>
+            {showScore ? (
+                <span className="text-xl font-bold">{match.homeGoals} - {match.awayGoals}</span>
+            ) : (
+                <span className="text-xl font-bold">{formatMatchTime(match.matchDate)}</span>
+            )}
         </time>
     );
 
