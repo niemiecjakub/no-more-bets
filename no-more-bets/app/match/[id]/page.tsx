@@ -29,7 +29,7 @@ import {
 import type { BetSlipSummaryDto } from "@/features/bets/interfaces";
 import { LazyAgentSessionTranscript } from "@/features/bets/components/lazy-agent-session-transcript";
 import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-slip-summary";
-import { MatchClubEventsList } from "@/features/matches/components/match-club-events-list";
+import { MatchClubEventsList, partitionMatchEventsBySide } from "@/features/matches/components/match-club-events-list";
 import { MatchResearchOutputView } from "@/features/matches/components/match-research-output-view";
 import { RecentGamesList } from "@/features/matches/components/recent-games-list";
 import {
@@ -189,8 +189,11 @@ export default function MatchPage() {
     const homeLogoSlug = clubLogoSlugSegment(data.homeClubSlug, data.homeClubName);
     const awayLogoSlug = clubLogoSlugSegment(data.awayClubSlug, data.awayClubName);
     const showFinishedScore = data.matchStatusId === MATCH_STATUS.Finished && data.homeGoals != null && data.awayGoals != null;
-    const homeEvents = insights.matchEvents?.filter((e) => e.clubId === data.homeClubId) ?? [];
-    const awayEvents = insights.matchEvents?.filter((e) => e.clubId === data.awayClubId) ?? [];
+    const { home: homeEvents, away: awayEvents } = partitionMatchEventsBySide(
+        insights.matchEvents ?? [],
+        data.homeClubId,
+        data.awayClubId,
+    );
     const matchEventsLoading = insightLoading.matchEvents && insights.matchEvents === undefined;
     const matchEventsError = insightErrors.matchEvents;
 

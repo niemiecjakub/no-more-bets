@@ -3,6 +3,31 @@ import type { MatchEventDto } from "../interfaces";
 /** Scoring events shown in the match header timeline. */
 const GOAL_EVENT_TYPES = new Set(["Goal", "OwnGoal", "PenaltyGoal"]);
 
+export function partitionMatchEventsBySide(
+  events: MatchEventDto[],
+  homeClubId: number,
+  awayClubId: number,
+): { home: MatchEventDto[]; away: MatchEventDto[] } {
+  const home: MatchEventDto[] = [];
+  const away: MatchEventDto[] = [];
+
+  for (const event of events) {
+    if (event.eventType === "OwnGoal") {
+      if (event.clubId === homeClubId) {
+        away.push(event);
+      } else if (event.clubId === awayClubId) {
+        home.push(event);
+      }
+    } else if (event.clubId === homeClubId) {
+      home.push(event);
+    } else if (event.clubId === awayClubId) {
+      away.push(event);
+    }
+  }
+
+  return { home, away };
+}
+
 interface MatchClubEventsListProps {
   events: MatchEventDto[];
   isLoading: boolean;
@@ -43,7 +68,13 @@ export function MatchClubEventsList({ events, isLoading, error, align }: MatchCl
           key={`${event.minute}-${event.eventTypeId}-${event.playerName}-${index}`}
           className="max-w-full truncate text-xs text-zinc-500 dark:text-zinc-400"
         >
-          <span className="text-zinc-600 dark:text-zinc-300">{event.playerName}</span>{" "}
+          <span className="text-zinc-600 dark:text-zinc-300">{event.playerName}</span>
+          {event.eventType === "OwnGoal" ? (
+            <>
+              {" "}
+              <span className="text-zinc-500 dark:text-zinc-400">(OG)</span>
+            </>
+          ) : null}{" "}
           <span className="tabular-nums">{event.minute}&apos;</span>
         </li>
       ))}
