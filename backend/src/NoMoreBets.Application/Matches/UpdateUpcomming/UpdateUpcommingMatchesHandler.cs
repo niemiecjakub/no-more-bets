@@ -1,9 +1,8 @@
-using System.Globalization;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
+using NoMoreBets.Application.Common.SoccerData;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Domain.Matches;
 
@@ -20,8 +19,6 @@ public class UpdateUpcommingMatchesHandler(
   ILogger<UpdateUpcommingMatchesHandler> logger)
   : IRequestHandler<UpdateUpcommingMatchesCommand, List<Match>>
 {
-  /// <summary>Soccerdata kickoff times are stored in UTC but run 2 hours behind our match calendar.</summary>
-  private static readonly TimeSpan SoccerdataKickoffOffset = TimeSpan.FromHours(2);
   public async Task<List<Match>> Handle(UpdateUpcommingMatchesCommand request, CancellationToken cancellationToken)
   {
     logger.LogInformation(
@@ -58,7 +55,7 @@ public class UpdateUpcommingMatchesHandler(
       var currentStage = await unitOfWork.Leagues.GetCurrentStage(league.LeagueId);
       foreach (var matchPreview in league.MatchPreviews)
       {
-        if (!TryParseMatchDate(matchPreview.Date, matchPreview.Time, out var gameDayUtc))
+        if (!SoccerDataKickoffDateParser.TryParse(matchPreview.Date, matchPreview.Time, out var gameDayUtc))
         {
           continue;
         }
@@ -108,27 +105,5 @@ public class UpdateUpcommingMatchesHandler(
       added.Count,
       request.SoccerdataLeagueId);
     return added;
-  }
-
-  private static bool TryParseMatchDate(string dateStr, string timeStr, out DateTime gameDayUtc)
-  {
-    gameDayUtc = default;
-    if (string.IsNullOrWhiteSpace(dateStr))
-    {
-      return false;
-    }
-
-    if (!DateTime.TryParseExact(
-      $"{dateStr.Trim()} {timeStr?.Trim() ?? "00:00"}",
-      new[] { "dd/MM/yyyy HH:mm", "dd/MM/yyyy H:mm", "dd/MM/yyyy" },
-      CultureInfo.InvariantCulture,
-      DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
-      out var parsed))
-    {
-      return false;
-    }
-
-    gameDayUtc = DateTime.SpecifyKind(parsed.Add(SoccerdataKickoffOffset), DateTimeKind.Utc);
-    return true;
   }
 }
