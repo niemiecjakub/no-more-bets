@@ -6,6 +6,7 @@ using NoMoreBets.Application.Clubs.GetOverview;
 using NoMoreBets.Application.Clubs.UpdateDailySummary;
 using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Application.Matches.UpdateMatchDetails;
+using NoMoreBets.Domain.Enums;
 using NoMoreBets.Infrastructure.Persistence;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
@@ -21,17 +22,27 @@ public sealed class ClubDailyBriefJobService(
   ILogger<ClubDailyBriefJobService> logger)
 {
   /// <summary>
-  /// Enqueues UpdateDailySummary for every club in the database. Run daily (e.g. at 14:00).
+  /// Enqueues daily summary updates for clubs with an upcoming match within 10 days.
   /// Uses staggered delays so club summary and match-detail jobs do not collide.
   /// </summary>
   [AutomaticRetry(Attempts = 1)]
   public async Task UpdateClubOverview()
   {
     logger.LogInformation(
-      "Starting job {JobName} to enqueue daily summary updates for all clubs",
+      "Starting job {JobName} to enqueue daily summary updates for clubs with upcoming matches within 10 days",
       nameof(UpdateClubOverview));
 
-    var clubs = await db.Club.Select(c => new { c.Id, c.Name }).ToListAsync();
+    var utcNow = DateTime.UtcNow;
+    var kickoffWithinTenDaysEnd = utcNow.AddDays(10);
+
+    var clubs = await db.Club
+      .Where(c => db.Match.Any(m =>
+        m.MatchStatusId == (int)MatchStatus.Upcomming
+        && m.MatchDate > utcNow
+        && m.MatchDate <= kickoffWithinTenDaysEnd
+        && (m.HomeClubId == c.Id || m.AwayClubId == c.Id)))
+      .Select(c => new { c.Id, c.Name })
+      .ToListAsync();
 
     logger.LogInformation(
       "Job {JobName} found {ClubCount} clubs to update",

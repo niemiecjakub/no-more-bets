@@ -85,8 +85,14 @@ public sealed class BookmakerListingSyncJobService(
       "Starting job {JobName} to schedule betting odds for upcoming matches",
       nameof(ScheduleBettingOddsJob));
 
+    var utcNow = DateTime.UtcNow;
+    var kickoffWithinTenDaysEnd = utcNow.AddDays(10);
+
     var upcommingGames = await db.Match
-      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming && m.BetclicUrl != null)
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming
+        && m.BetclicUrl != null
+        && m.MatchDate > utcNow
+        && m.MatchDate <= kickoffWithinTenDaysEnd)
       .Select(m => new { m.BetclicUrl })
       .ToListAsync();
 
@@ -160,6 +166,18 @@ public sealed class BookmakerListingSyncJobService(
           nameof(GetBettingOdds),
           match.Id,
           gameUrl);
+        return;
+      }
+
+      var utcNow = DateTime.UtcNow;
+      if (match.MatchDate <= utcNow || match.MatchDate > utcNow.AddDays(10))
+      {
+        logger.LogInformation(
+          "Job {JobName} skipped match {MatchId} at {GameUrl} because kickoff {KickoffUtc} is outside the 10-day scraping window",
+          nameof(GetBettingOdds),
+          match.Id,
+          gameUrl,
+          match.MatchDate);
         return;
       }
 
