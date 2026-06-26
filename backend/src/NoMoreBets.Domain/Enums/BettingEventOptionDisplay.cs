@@ -2,6 +2,19 @@ namespace NoMoreBets.Domain.Enums;
 
 public static class BettingEventOptionDisplay
 {
+  /// <summary>
+  /// Sort key for ordering options within a market: enum value encodes canonical UI order.
+  /// </summary>
+  public static int GetDisplayOrder(BettingEventOption option) => (int)option;
+
+  /// <summary>
+  /// Sort key from persisted option label; unknown labels sort last.
+  /// </summary>
+  public static int GetDisplayOrder(string optionLabel) =>
+    Enum.TryParse<BettingEventOption>(optionLabel, ignoreCase: false, out var parsed)
+      ? GetDisplayOrder(parsed)
+      : int.MaxValue;
+
   public static string GetDisplayName(BettingEventOption option, string? homeClubName, string? awayClubName)
   {
     var h = string.IsNullOrWhiteSpace(homeClubName) ? "Home" : homeClubName.Trim();

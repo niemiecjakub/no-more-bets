@@ -68,14 +68,17 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork, IL
         var acc = kv.Value;
         var eventType = (BettingEventType)kv.Key;
         var marketDisplayName = BettingEventTypeDisplay.GetDisplayName(eventType);
-        var options = acc.OptionOrder.Select(label =>
-        {
-          var segments = CollapseToSegments(acc.OddsByLabel.TryGetValue(label, out var o) ? o : Array.Empty<(double, DateTime)>());
-          var outcomeDisplay = Enum.TryParse<BettingEventOption>(label, ignoreCase: false, out var parsedOption)
-            ? BettingEventOptionDisplay.GetDisplayName(parsedOption, homeName, awayName)
-            : label;
-          return new OutcomePriceTimeline(outcomeDisplay, segments);
-        }).ToList();
+        var options = acc.OptionOrder
+          .OrderBy(BettingEventOptionDisplay.GetDisplayOrder)
+          .ThenBy(label => label, StringComparer.Ordinal)
+          .Select(label =>
+          {
+            var segments = CollapseToSegments(acc.OddsByLabel.TryGetValue(label, out var o) ? o : Array.Empty<(double, DateTime)>());
+            var outcomeDisplay = Enum.TryParse<BettingEventOption>(label, ignoreCase: false, out var parsedOption)
+              ? BettingEventOptionDisplay.GetDisplayName(parsedOption, homeName, awayName)
+              : label;
+            return new OutcomePriceTimeline(outcomeDisplay, segments);
+          }).ToList();
         return new MarketPriceHistory(acc.EventTypeName, marketDisplayName, options);
       }).ToList();
   }

@@ -126,6 +126,26 @@ public class BettingEventOptionDisplayTests
   }
 
   [Fact]
+  public void GetDisplayOrder_UnknownLabel_ReturnsMaxValue()
+  {
+    // Act
+    var order = BettingEventOptionDisplay.GetDisplayOrder("UnknownFutureOption");
+
+    // Assert
+    order.Should().Be(int.MaxValue);
+  }
+
+  [Fact]
+  public void GetDisplayOrder_KnownOption_ReturnsEnumValue()
+  {
+    // Act & Assert
+    BettingEventOptionDisplay.GetDisplayOrder(BettingEventOption.TotalGoals_Over_2_5)
+      .Should().Be((int)BettingEventOption.TotalGoals_Over_2_5);
+    BettingEventOptionDisplay.GetDisplayOrder(nameof(BettingEventOption.TotalGoals_Over_2_5))
+      .Should().Be((int)BettingEventOption.TotalGoals_Over_2_5);
+  }
+
+  [Fact]
   public void GetDisplayName_WhenValueIsNotDefined_ThrowsArgumentOutOfRangeException()
   {
     // Arrange

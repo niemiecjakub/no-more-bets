@@ -142,6 +142,99 @@ public class GetMatchBettingOddsHistoryHandlerTests
       nameof(BettingEventType.ExactScore));
   }
 
+  [Fact]
+  public async Task Handle_OrdersOverUnderOutcomesByDisplayOrder()
+  {
+    // Arrange — rows in shuffled order
+    var t1 = DateTime.UtcNow.AddHours(-1);
+    var snapshot = new BettingOddsSnapshot { SnapshotTime = t1, MatchId = 10 };
+    snapshot.Rows.Add(BuildRow(BettingEventType.OverUnderGoals, BettingEventOption.TotalGoals_Under_5_5));
+    snapshot.Rows.Add(BuildRow(BettingEventType.OverUnderGoals, BettingEventOption.TotalGoals_Over_2_5));
+    snapshot.Rows.Add(BuildRow(BettingEventType.OverUnderGoals, BettingEventOption.TotalGoals_Under_2_5));
+    snapshot.Rows.Add(BuildRow(BettingEventType.OverUnderGoals, BettingEventOption.TotalGoals_Over_5_5));
+    _bettingRepository.GetBettingOddsSnapshotsForMatchAsync(10, Arg.Any<CancellationToken>())
+      .Returns(new List<BettingOddsSnapshot> { snapshot });
+
+    // Act
+    var result = await _sut.Handle(new GetMatchBettingOddsHistoryQuery(10), CancellationToken.None);
+
+    // Assert
+    result.Should().NotBeNull();
+    var market = result!.Single(m => m.MarketKey == nameof(BettingEventType.OverUnderGoals));
+    market.Outcomes.Select(o => o.OutcomeName).Should().ContainInOrder(
+      "Over 2.5",
+      "Under 2.5",
+      "Over 5.5",
+      "Under 5.5");
+  }
+
+  [Fact]
+  public async Task Handle_OrdersHandicapOutcomesByDisplayOrder()
+  {
+    // Arrange — rows in shuffled order
+    var t1 = DateTime.UtcNow.AddHours(-1);
+    var snapshot = new BettingOddsSnapshot { SnapshotTime = t1, MatchId = 10 };
+    snapshot.Rows.Add(BuildRow(BettingEventType.Handicap, BettingEventOption.Handicap_Away_Plus_2));
+    snapshot.Rows.Add(BuildRow(BettingEventType.Handicap, BettingEventOption.Handicap_Home_Minus_1));
+    snapshot.Rows.Add(BuildRow(BettingEventType.Handicap, BettingEventOption.Handicap_Draw_Minus_1));
+    snapshot.Rows.Add(BuildRow(BettingEventType.Handicap, BettingEventOption.Handicap_Away_Plus_1));
+    snapshot.Rows.Add(BuildRow(BettingEventType.Handicap, BettingEventOption.Handicap_Home_Minus_2));
+    snapshot.Rows.Add(BuildRow(BettingEventType.Handicap, BettingEventOption.Handicap_Draw_Minus_2));
+    snapshot.Rows.Add(BuildRow(BettingEventType.Handicap, BettingEventOption.Handicap_Away_Plus_2));
+    _bettingRepository.GetBettingOddsSnapshotsForMatchAsync(10, Arg.Any<CancellationToken>())
+      .Returns(new List<BettingOddsSnapshot> { snapshot });
+    var match = new Match
+    {
+      Id = 10,
+      HomeClub = new NoMoreBets.Domain.Clubs.Club { Name = "Spain" },
+      AwayClub = new NoMoreBets.Domain.Clubs.Club { Name = "Uruguay" },
+    };
+    _matchRepository.GetMatchByIdAsync(10, Arg.Any<CancellationToken>())
+      .Returns(Task.FromResult<Match?>(match));
+
+    // Act
+    var result = await _sut.Handle(new GetMatchBettingOddsHistoryQuery(10), CancellationToken.None);
+
+    // Assert
+    result.Should().NotBeNull();
+    var market = result!.Single(m => m.MarketKey == nameof(BettingEventType.Handicap));
+    market.Outcomes.Select(o => o.OutcomeName).Should().ContainInOrder(
+      "Spain (-2)",
+      "Draw (-2)",
+      "Uruguay (+2)",
+      "Spain (-1)",
+      "Draw (-1)",
+      "Uruguay (+1)");
+  }
+
+  [Fact]
+  public async Task Handle_OrdersExactScoreOutcomesByDisplayOrder()
+  {
+    // Arrange — rows in shuffled order
+    var t1 = DateTime.UtcNow.AddHours(-1);
+    var snapshot = new BettingOddsSnapshot { SnapshotTime = t1, MatchId = 10 };
+    snapshot.Rows.Add(BuildRow(BettingEventType.ExactScore, BettingEventOption.CorrectScore_4_3));
+    snapshot.Rows.Add(BuildRow(BettingEventType.ExactScore, BettingEventOption.CorrectScore_0_0));
+    snapshot.Rows.Add(BuildRow(BettingEventType.ExactScore, BettingEventOption.CorrectScore_1_1));
+    snapshot.Rows.Add(BuildRow(BettingEventType.ExactScore, BettingEventOption.CorrectScore_0_1));
+    snapshot.Rows.Add(BuildRow(BettingEventType.ExactScore, BettingEventOption.CorrectScore_Other));
+    _bettingRepository.GetBettingOddsSnapshotsForMatchAsync(10, Arg.Any<CancellationToken>())
+      .Returns(new List<BettingOddsSnapshot> { snapshot });
+
+    // Act
+    var result = await _sut.Handle(new GetMatchBettingOddsHistoryQuery(10), CancellationToken.None);
+
+    // Assert
+    result.Should().NotBeNull();
+    var market = result!.Single(m => m.MarketKey == nameof(BettingEventType.ExactScore));
+    market.Outcomes.Select(o => o.OutcomeName).Should().ContainInOrder(
+      "0:0",
+      "0:1",
+      "1:1",
+      "4:3",
+      "Other");
+  }
+
   private static BettingOddsSnapshotRow BuildRow(BettingEventType eventType, BettingEventOption option)
   {
     var optionName = option.ToString();
