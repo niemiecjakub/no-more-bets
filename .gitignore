@@ -16,3 +16,4 @@ venv/
 
 .env
 plans/
+/monitoring/
