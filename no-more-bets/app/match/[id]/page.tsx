@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { SlugIcon } from "@/components/slug-icon";
 import { useMatchStore } from "@/store/match-store";
 import { clubLogoSlugSegment } from "../../../utils/club-logo-slug";
@@ -15,6 +16,7 @@ import {
     type ClubPair,
     type HeadToHead,
     type MarketPriceHistory,
+    type PricePoint,
     type MatchInjuriesResult,
     type MatchLineupResult,
     type RecentMatch,
@@ -32,6 +34,7 @@ import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-
 import { MatchClubEventsList, partitionMatchEventsBySide } from "@/features/matches/components/match-club-events-list";
 import { MatchResearchOutputView } from "@/features/matches/components/match-research-output-view";
 import { RecentGamesList } from "@/features/matches/components/recent-games-list";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
     fetchMatchAgentResearch,
     fetchMatchBettingOddsHistory,
@@ -282,6 +285,8 @@ export default function MatchPage() {
                                 </div>
                             ) : (
                                 <TeamColumns
+                                    homeClubId={data.homeClubId}
+                                    awayClubId={data.awayClubId}
                                     homeClubName={data.homeClubName}
                                     awayClubName={data.awayClubName}
                                     homeLogoSlug={homeLogoSlug}
@@ -311,6 +316,8 @@ export default function MatchPage() {
                                 </div>
                             ) : (
                                 <TeamColumns
+                                    homeClubId={data.homeClubId}
+                                    awayClubId={data.awayClubId}
                                     homeClubName={data.homeClubName}
                                     awayClubName={data.awayClubName}
                                     homeLogoSlug={homeLogoSlug}
@@ -330,6 +337,8 @@ export default function MatchPage() {
                                 </div>
                             ) : (
                                 <TeamColumns
+                                    homeClubId={data.homeClubId}
+                                    awayClubId={data.awayClubId}
                                     homeClubName={data.homeClubName}
                                     awayClubName={data.awayClubName}
                                     homeLogoSlug={homeLogoSlug}
@@ -349,6 +358,8 @@ export default function MatchPage() {
                                 </div>
                             ) : (
                                 <TeamColumns
+                                    homeClubId={data.homeClubId}
+                                    awayClubId={data.awayClubId}
                                     homeClubName={data.homeClubName}
                                     awayClubName={data.awayClubName}
                                     homeLogoSlug={homeLogoSlug}
@@ -370,6 +381,8 @@ export default function MatchPage() {
                                 </div>
                             ) : (
                                 <TeamColumns
+                                    homeClubId={data.homeClubId}
+                                    awayClubId={data.awayClubId}
                                     homeClubName={data.homeClubName}
                                     awayClubName={data.awayClubName}
                                     homeLogoSlug={homeLogoSlug}
@@ -385,6 +398,8 @@ export default function MatchPage() {
                                 data={insights.headToHead}
                                 isLoading={insightLoading.headToHead && insights.headToHead === undefined}
                                 error={insightErrors.headToHead}
+                                homeClubId={data.homeClubId}
+                                awayClubId={data.awayClubId}
                                 homeLogoSlug={homeLogoSlug}
                                 awayLogoSlug={awayLogoSlug}
                             />
@@ -439,7 +454,30 @@ function InsightFieldError({ message }: { message: string }) {
     );
 }
 
+function ClubHeaderLink({
+    clubId,
+    clubName,
+    logoSlug,
+}: {
+    clubId: number;
+    clubName: string;
+    logoSlug: string;
+}) {
+    return (
+        <Link
+            href={`/club/${clubId}`}
+            className="mb-3 flex min-w-0 items-center gap-2.5 text-foreground transition-colors hover:text-red-600 dark:hover:text-red-400"
+            title={clubName}
+        >
+            <SlugIcon kind="club" slug={logoSlug} alt={clubName} className="h-7 w-7 shrink-0" />
+            <span className="min-w-0 truncate text-sm font-semibold">{clubName}</span>
+        </Link>
+    );
+}
+
 interface TeamColumnsProps {
+    homeClubId: number;
+    awayClubId: number;
     homeClubName: string;
     awayClubName: string;
     homeLogoSlug: string;
@@ -448,21 +486,24 @@ interface TeamColumnsProps {
     away: React.ReactNode;
 }
 
-function TeamColumns({ homeClubName, awayClubName, homeLogoSlug, awayLogoSlug, home, away }: TeamColumnsProps) {
+function TeamColumns({
+    homeClubId,
+    awayClubId,
+    homeClubName,
+    awayClubName,
+    homeLogoSlug,
+    awayLogoSlug,
+    home,
+    away,
+}: TeamColumnsProps) {
     return (
         <div className="grid divide-y divide-zinc-200 dark:divide-zinc-800 md:grid-cols-2 md:divide-x md:divide-y-0">
             <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
-                <div className="mb-3 flex min-w-0 items-center gap-2.5">
-                    <SlugIcon kind="club" slug={homeLogoSlug} alt={homeClubName} className="h-7 w-7" />
-                    <h3 className="min-w-0 truncate text-sm font-semibold text-foreground">{homeClubName}</h3>
-                </div>
+                <ClubHeaderLink clubId={homeClubId} clubName={homeClubName} logoSlug={homeLogoSlug} />
                 {home}
             </div>
             <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
-                <div className="mb-3 flex min-w-0 items-center gap-2.5">
-                    <SlugIcon kind="club" slug={awayLogoSlug} alt={awayClubName} className="h-7 w-7" />
-                    <h3 className="min-w-0 truncate text-sm font-semibold text-foreground">{awayClubName}</h3>
-                </div>
+                <ClubHeaderLink clubId={awayClubId} clubName={awayClubName} logoSlug={awayLogoSlug} />
                 {away}
             </div>
         </div>
@@ -555,7 +596,23 @@ function LeagueStatsSection({ stats }: { stats?: ClubLeagueStats | null }) {
     );
 }
 
-function HeadToHeadSection({ data, isLoading, error, homeLogoSlug, awayLogoSlug }: { data?: HeadToHead | null; isLoading: boolean; error?: string; homeLogoSlug: string; awayLogoSlug: string }) {
+function HeadToHeadSection({
+    data,
+    isLoading,
+    error,
+    homeClubId,
+    awayClubId,
+    homeLogoSlug,
+    awayLogoSlug,
+}: {
+    data?: HeadToHead | null;
+    isLoading: boolean;
+    error?: string;
+    homeClubId: number;
+    awayClubId: number;
+    homeLogoSlug: string;
+    awayLogoSlug: string;
+}) {
     if (error) {
         return <InsightFieldError message={error} />;
     }
@@ -578,17 +635,11 @@ function HeadToHeadSection({ data, isLoading, error, homeLogoSlug, awayLogoSlug 
             <p className="border-b border-zinc-200 px-4 py-3 text-xs text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">All-time H2H.</p>
             <div className="grid divide-y divide-zinc-200 dark:divide-zinc-800 md:grid-cols-2 md:divide-x md:divide-y-0">
                 <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
-                    <div className="mb-3 flex min-w-0 items-center gap-2.5">
-                        <SlugIcon kind="club" slug={homeLogoSlug} alt={data.teamA.name} className="h-7 w-7" />
-                        <h3 className="min-w-0 truncate text-sm font-semibold text-foreground">{data.teamA.name}</h3>
-                    </div>
+                    <ClubHeaderLink clubId={homeClubId} clubName={data.teamA.name} logoSlug={homeLogoSlug} />
                     <HeadToHeadMetricsList team={data.teamA} />
                 </div>
                 <div className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
-                    <div className="mb-3 flex min-w-0 items-center gap-2.5">
-                        <SlugIcon kind="club" slug={awayLogoSlug} alt={data.teamB.name} className="h-7 w-7" />
-                        <h3 className="min-w-0 truncate text-sm font-semibold text-foreground">{data.teamB.name}</h3>
-                    </div>
+                    <ClubHeaderLink clubId={awayClubId} clubName={data.teamB.name} logoSlug={awayLogoSlug} />
                     <HeadToHeadMetricsList team={data.teamB} />
                 </div>
             </div>
@@ -618,6 +669,37 @@ function HeadToHeadMetricsList({ team }: { team: TeamMetrics }) {
     );
 }
 
+interface OutcomeOddsSummary {
+    current: number;
+    min: number;
+    max: number;
+}
+
+function summarizeOutcomeOdds(timeline: PricePoint[]): OutcomeOddsSummary | null {
+    if (timeline.length === 0) return null;
+
+    let min = timeline[0].price;
+    let max = timeline[0].price;
+    for (let i = 1; i < timeline.length; i++) {
+        const price = timeline[i].price;
+        if (price < min) min = price;
+        if (price > max) max = price;
+    }
+
+    return {
+        current: timeline[timeline.length - 1].price,
+        min,
+        max,
+    };
+}
+
+function formatOutcomeOddsTooltip(summary: OutcomeOddsSummary): string {
+    if (summary.min === summary.max) {
+        return `Currently ${summary.current.toFixed(2)}`;
+    }
+    return `Currently ${summary.current.toFixed(2)} · Min ${summary.min.toFixed(2)} · Max ${summary.max.toFixed(2)}`;
+}
+
 function BettingOddsSection({ data, isLoading, error }: { data?: MarketPriceHistory[] | null; isLoading: boolean; error?: string }) {
     if (error) {
         return <InsightFieldError message={error} />;
@@ -642,14 +724,36 @@ function BettingOddsSection({ data, isLoading, error }: { data?: MarketPriceHist
                 <div key={market.marketKey} className="bg-zinc-50/70 px-4 py-4 dark:bg-zinc-900/35">
                     <h4 className="mb-3 text-sm font-semibold text-foreground">{market.marketDisplayName ?? market.marketKey}</h4>
                     <ul className="flex flex-col gap-2 text-sm">
-                        {market.outcomes.map((outcome) => (
-                            <li key={outcome.outcomeName} className="flex justify-between gap-3">
-                                <span className="text-zinc-600 dark:text-zinc-300">{outcome.outcomeName}</span>
-                                <span className="shrink-0 font-medium tabular-nums text-foreground">
-                                    {outcome.timeline.length === 0 ? "No data" : `${outcome.timeline[0].price.toFixed(2)} -> ${outcome.timeline[outcome.timeline.length - 1].price.toFixed(2)}`}
-                                </span>
-                            </li>
-                        ))}
+                        {market.outcomes.map((outcome) => {
+                            const summary = summarizeOutcomeOdds(outcome.timeline);
+                            return (
+                                <li key={outcome.outcomeName} className="flex justify-between gap-3">
+                                    <span className="text-zinc-600 dark:text-zinc-300">{outcome.outcomeName}</span>
+                                    {summary == null ? (
+                                        <span className="shrink-0 text-zinc-500 dark:text-zinc-400">No data</span>
+                                    ) : (
+                                        <Tooltip>
+                                            <TooltipTrigger className="shrink-0 cursor-help border-0 bg-transparent p-0 tabular-nums text-end">
+                                                <span className="font-medium text-foreground">{summary.current.toFixed(2)}</span>
+                                                {summary.min !== summary.max ? (
+                                                    <span className="ms-1 inline-flex items-center gap-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                                                        <span aria-hidden>(</span>
+                                                        <ArrowDown className="h-3 w-3 shrink-0" aria-hidden />
+                                                        {summary.min.toFixed(2)}
+                                                        <ArrowUp className="h-3 w-3 shrink-0" aria-hidden />
+                                                        {summary.max.toFixed(2)}
+                                                        <span aria-hidden>)</span>
+                                                    </span>
+                                                ) : null}
+                                            </TooltipTrigger>
+                                            <TooltipContent side="top" align="end">
+                                                {formatOutcomeOddsTooltip(summary)}
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    )}
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             ))}

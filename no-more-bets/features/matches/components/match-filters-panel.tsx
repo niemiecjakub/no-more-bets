@@ -20,8 +20,8 @@ export const statusFilters = [
 ] as const;
 
 export const sortFilters = [
-  { id: MATCH_DATE_SORT.Ascending, label: "Earliest" },
-  { id: MATCH_DATE_SORT.Descending, label: "Latest" },
+  { id: MATCH_DATE_SORT.Ascending, label: "Ascending" },
+  { id: MATCH_DATE_SORT.Descending, label: "Descending" },
 ] as const;
 
 export function parseSortOrderParam(
