@@ -9,6 +9,7 @@ import { FeedbackSheetTrigger } from "@/features/feedback/components/feedback-sh
 
 const tabs = [
   { href: "/", label: "Matches" },
+  { href: "/knowledge", label: "Knowledge" },
   { href: "/about", label: "About" },
 ] as const;
 
