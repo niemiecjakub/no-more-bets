@@ -16,6 +16,8 @@ public record Match
   public IReadOnlyList<MatchEvent> Events { get; init; } = [];
   public Odds Odds { get; init; } = null!;
   public MatchPreviewInfo MatchPreview { get; init; } = null!;
+
+  public bool IsFinished => string.Equals(Status, "finished", StringComparison.OrdinalIgnoreCase);
 }
 
 public record MatchPreviewInfo

@@ -86,6 +86,9 @@ public sealed class FinishedMatchScoreJobService(
         if (soccerDataMatch is null)
           continue;
 
+        if (soccerDataMatch.IsFinished)
+          continue;
+
         if (!item.Match.SoccerdataId.HasValue)
         {
           var conflict = await db.Match.AnyAsync(
