@@ -106,10 +106,10 @@ public class BettingTool
   }
 
   [Description("Returns structured match analysis for the given match.")]
-  public async Task<StructuredMatchAnalysis?> GetMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
+  public async Task<MatchResearchOutput?> GetMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
   {
     var analysis = await _unitOfWork.Matches.GetLatestMatchAnalysisAsync(matchId, cancellationToken).ConfigureAwait(false);
-    return analysis?.GetAnalysis();
+    return analysis?.TryGetAgentResearchOutput();
   }
 
   [Description("Places one bet slip per call. One selection is a single bet; multiple selections combine as a parlay on that slip. Call once per slip; you may call multiple times for multiple separate slips.")]

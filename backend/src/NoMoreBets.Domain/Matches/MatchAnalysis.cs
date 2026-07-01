@@ -75,7 +75,7 @@ public class MatchAnalysis
     }
   }
 
-  public StructuredMatchAnalysis? GetAnalysis()
+  private StructuredMatchAnalysis? GetAnalysis()
   {
     if (string.IsNullOrEmpty(Content))
     {
@@ -92,7 +92,7 @@ public class MatchAnalysis
     }
   }
 
-  public MatchResearchOutput? GetStructuredResearch()
+  private MatchResearchOutput? GetStructuredResearch()
   {
     if (Code != StructuredResearchCode || string.IsNullOrEmpty(Content))
     {
@@ -108,6 +108,8 @@ public class MatchAnalysis
       return null;
     }
   }
+
+  public StructuredMatchAnalysis? TryGetStructuredAnalysis() => GetAnalysis();
 
   public MatchResearchOutput? TryGetAgentResearchOutput()
   {

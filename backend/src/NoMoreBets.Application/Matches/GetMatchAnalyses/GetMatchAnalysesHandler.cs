@@ -6,8 +6,7 @@ namespace NoMoreBets.Application.Matches.GetMatchAnalyses;
 
 public record GetMatchAnalysesQuery(int MatchId) : IRequest<MatchAnalysisPageDto?>;
 
-public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork)
-  : IRequestHandler<GetMatchAnalysesQuery, MatchAnalysisPageDto?>
+public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetMatchAnalysesQuery, MatchAnalysisPageDto?>
 {
   public async Task<MatchAnalysisPageDto?> Handle(
     GetMatchAnalysesQuery request,
@@ -37,7 +36,7 @@ public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork)
         a.Id,
         a.Code,
         a.Content,
-        MatchAnalysisDtoMapper.MapStructured(a.GetAnalysis())))
+        MatchAnalysisDtoMapper.MapStructured(a.TryGetStructuredAnalysis())))
       .ToList();
 
     return new MatchAnalysisPageDto(
