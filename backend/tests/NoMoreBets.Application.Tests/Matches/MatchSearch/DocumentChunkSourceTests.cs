@@ -1,14 +1,18 @@
+using System.Text.Json;
 using FluentAssertions;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
+using NoMoreBets.Domain.Players;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
 
 namespace NoMoreBets.Application.Tests.Matches.MatchSearch;
 
 public class DocumentChunkSourceTests
 {
+  private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+
   [Fact]
   public void BuildEmbeddingText_MatchWithScore_IncludesMatchDetails()
   {
@@ -34,6 +38,43 @@ public class DocumentChunkSourceTests
 
     // Assert
     text.Should().Be("Premier League | Arsenal vs Chelsea | 2026-03-15 | Upcomming");
+  }
+
+  [Fact]
+  public void BuildEmbeddingText_MatchWithLineupAndEvents_IncludesBoth()
+  {
+    // Arrange
+    var match = CreateMatch(homeGoals: 2, awayGoals: 1);
+    match.Lineup = new Lineup
+    {
+      MatchId = 1,
+      HomeTeamJson = JsonSerializer.Serialize(new TeamLineup
+      {
+        LineupType = LineupType.Confirmed,
+        Players = [new PlayerInLineup(FootballPosition.GK, "Raya"), new PlayerInLineup(FootballPosition.ST, "Saka")]
+      }, JsonOptions),
+      AwayTeamJson = JsonSerializer.Serialize(new TeamLineup
+      {
+        LineupType = LineupType.Predicted,
+        Players = [new PlayerInLineup(FootballPosition.GK, "Sanchez")]
+      }, JsonOptions)
+    };
+    match.MatchEvents =
+    [
+      CreateMatchEvent(match, match.HomeClub, "Saka", MatchEventType.Goal, 23),
+      CreateMatchEvent(match, match.AwayClub, "Palmer", MatchEventType.YellowCard, 40),
+      CreateMatchEvent(match, match.HomeClub, "Martinelli", MatchEventType.SubstitutionIn, 70)
+    ];
+
+    // Act
+    var text = match.BuildEmbeddingText();
+
+    // Assert
+    text.Should().Be(
+      "Premier League | Arsenal vs Chelsea | 2026-03-15 | Finished | 2-1"
+      + " | Arsenal lineup: GK Raya, ST Saka"
+      + " | Chelsea lineup: GK Sanchez"
+      + " | Events: 23' Goal Saka, 40' YellowCard Palmer");
   }
 
   [Fact]
@@ -135,4 +176,12 @@ public class DocumentChunkSourceTests
       HomeGoals = homeGoals,
       AwayGoals = awayGoals
     };
+
+  private static MatchEvent CreateMatchEvent(
+    Match match,
+    ClubEntity club,
+    string playerName,
+    MatchEventType type,
+    int minute) =>
+    MatchEvent.Create(match.Id, club.Id, new Player { Name = playerName }, type, minute);
 }

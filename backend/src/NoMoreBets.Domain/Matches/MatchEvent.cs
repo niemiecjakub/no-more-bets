@@ -32,4 +32,10 @@ public class MatchEvent
       EventTypeId = (int)eventType,
       Minute = minute
     };
+
+  public string FormatEmbeddingText()
+  {
+    var playerName = Player?.Name ?? "Unknown";
+    return $"{Minute}' {(MatchEventType)EventTypeId} {playerName}";
+  }
 }

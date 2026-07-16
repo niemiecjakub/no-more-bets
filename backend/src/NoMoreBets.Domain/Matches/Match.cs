@@ -66,7 +66,31 @@ public class Match : IDocumentChunkSource
     if (HomeGoals is not null && AwayGoals is not null)
       parts.Add($"{HomeGoals}-{AwayGoals}");
 
+    if (Lineup is not null)
+    {
+      AppendLineup(parts, HomeClub.Name, Lineup.GetHomeTeamLineup());
+      AppendLineup(parts, AwayClub.Name, Lineup.GetAwayTeamLineup());
+    }
+
+    var events = MatchEvents
+      .Where(e => ((MatchEventType)e.EventTypeId).IsEmbeddingEventType())
+      .OrderBy(e => e.Minute)
+      .ThenBy(e => e.Id)
+      .Select(e => e.FormatEmbeddingText())
+      .ToList();
+    if (events.Count > 0)
+      parts.Add($"Events: {string.Join(", ", events)}");
+
     return string.Join(" | ", parts);
+  }
+
+  private static void AppendLineup(List<string> parts, string clubName, TeamLineup team)
+  {
+    if (team.Players.Count == 0)
+      return;
+
+    var players = string.Join(", ", team.Players.Select(p => $"{p.Position} {p.Player}"));
+    parts.Add($"{clubName} lineup: {players}");
   }
 
   public DocumentChunkMetadata BuildMetadata()
