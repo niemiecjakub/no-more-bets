@@ -19,6 +19,7 @@ using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Feedback;
 using NoMoreBets.Domain.Memories;
 using NoMoreBets.Infrastructure.AI;
+using NoMoreBets.Infrastructure.AI.Common.Embedding;
 using NoMoreBets.Infrastructure.BackgroundJobs;
 using NoMoreBets.Infrastructure.Http;
 using NoMoreBets.Infrastructure.Persistence;
@@ -99,6 +100,7 @@ public static class DependencyInjection
     services.AddScoped<BettingAgentCronService>();
     services.AddScoped<UpcomingMatchesInternetResearchCronService>();
     services.AddScoped<MemoryCleanupCronService>();
+    services.AddScoped<IEmbeddingService, OpenAiEmbeddingService>();
 
     //HTTP resilience & external clients
     services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>
