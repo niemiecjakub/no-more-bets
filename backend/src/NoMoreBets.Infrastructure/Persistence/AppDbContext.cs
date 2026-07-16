@@ -47,10 +47,13 @@ public class AppDbContext : DbContext
   public DbSet<AgentSession> AgentSession { get; set; }
   public DbSet<AgentSessionMessage> AgentSessionMessage { get; set; }
   public DbSet<Feedback> Feedback { get; set; }
+  public DbSet<DocumentChunk> DocumentChunk { get; set; }
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     base.OnModelCreating(modelBuilder);
+
+    modelBuilder.HasPostgresExtension("vector");
 
     modelBuilder.Entity<League>(entity =>
     {
@@ -492,6 +495,22 @@ public class AppDbContext : DbContext
       entity.Property(e => e.CreatedAt).IsRequired();
       entity.HasIndex(e => e.CreatedAt)
         .HasDatabaseName("idx_feedback_createdat");
+    });
+
+    modelBuilder.Entity<DocumentChunk>(entity =>
+    {
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Id).UseIdentityAlwaysColumn();
+      entity.Property(e => e.SourceType).IsRequired().HasMaxLength(50);
+      entity.Property(e => e.SourceId).IsRequired();
+      entity.Property(e => e.ChunkIndex).IsRequired();
+      entity.Property(e => e.Content).IsRequired();
+      entity.Property(e => e.MetadataJson).IsRequired(false);
+      entity.Property(e => e.Embedding).HasColumnType("vector(1536)");
+      entity.Property(e => e.EmbeddingModel).IsRequired().HasMaxLength(100);
+      entity.Property(e => e.UpdatedAt).IsRequired();
+      entity.HasIndex(e => new { e.SourceType, e.SourceId, e.ChunkIndex, e.EmbeddingModel }).IsUnique();
+      entity.HasIndex(e => new { e.SourceType, e.SourceId });
     });
   }
 }
