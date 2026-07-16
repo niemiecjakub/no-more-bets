@@ -47,6 +47,10 @@ public class MatchRepository : IMatchRepository
       .Where(m => ids.Contains(m.Id))
       .Include(m => m.HomeClub)
       .Include(m => m.AwayClub)
+      .Include(m => m.MatchStatusEntity)
+      .Include(m => m.Stage)
+        .ThenInclude(s => s!.Season)
+        .ThenInclude(se => se.League)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
   }

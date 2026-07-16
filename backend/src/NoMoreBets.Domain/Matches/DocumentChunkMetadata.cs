@@ -4,7 +4,31 @@ namespace NoMoreBets.Domain.Matches;
 
 public sealed record DocumentChunkMetadata(
   IReadOnlyList<int> ClubIds,
-  int? LeagueId);
+  int? LeagueId)
+{
+  public static Builder CreateBuilder() => new();
+
+  public sealed class Builder
+  {
+    private readonly List<int> _clubIds = [];
+    private int? _leagueId;
+
+    public Builder WithClubIds(IEnumerable<int> clubIds)
+    {
+      _clubIds.AddRange(clubIds);
+      return this;
+    }
+
+    public Builder WithLeagueId(int? leagueId)
+    {
+      _leagueId = leagueId;
+      return this;
+    }
+
+    public DocumentChunkMetadata Build() =>
+      new([.. _clubIds], _leagueId);
+  }
+}
 
 public static class DocumentChunkMetadataJson
 {

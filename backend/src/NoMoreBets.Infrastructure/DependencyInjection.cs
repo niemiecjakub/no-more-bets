@@ -8,6 +8,7 @@ using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Application.Matches;
+using NoMoreBets.Application.Matches.MatchSearch;
 using NoMoreBets.Application.SocialMedia;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.Bankrolls;
@@ -22,6 +23,7 @@ using NoMoreBets.Infrastructure.AI;
 using NoMoreBets.Infrastructure.AI.Common.Embedding;
 using NoMoreBets.Infrastructure.BackgroundJobs;
 using NoMoreBets.Infrastructure.Http;
+using NoMoreBets.Infrastructure.MatchSearch;
 using NoMoreBets.Infrastructure.Persistence;
 using NoMoreBets.Infrastructure.Persistence.Repositories;
 using NoMoreBets.Infrastructure.Scraping;
@@ -50,6 +52,7 @@ public static class DependencyInjection
       options.UseNpgsql(connectionString, o =>
       {
         o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+        o.UseVector();
       }));
 
     // Health checks
@@ -101,6 +104,7 @@ public static class DependencyInjection
     services.AddScoped<UpcomingMatchesInternetResearchCronService>();
     services.AddScoped<MemoryCleanupCronService>();
     services.AddScoped<IEmbeddingService, OpenAiEmbeddingService>();
+    services.AddScoped<IDocumentChunkIndexer, DocumentChunkIndexer>();
 
     //HTTP resilience & external clients
     services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>

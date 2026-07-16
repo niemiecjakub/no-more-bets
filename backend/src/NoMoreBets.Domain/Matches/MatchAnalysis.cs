@@ -5,7 +5,7 @@ using NoMoreBets.Domain.Matches.Dto;
 
 namespace NoMoreBets.Domain.Matches;
 
-public class MatchAnalysis
+public class MatchAnalysis : IDocumentChunkSource
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
   public const string ResearchCode = "Research";
@@ -132,6 +132,18 @@ public class MatchAnalysis
       RisksAndUnknowns = [],
     };
   }
+
+  public string? BuildEmbeddingText()
+  {
+    var research = TryGetAgentResearchOutput();
+    if (research is null)
+      return null;
+
+    var body = FormatResearchOutput(research).Trim();
+    return string.IsNullOrWhiteSpace(body) ? null : body;
+  }
+
+  public DocumentChunkMetadata BuildMetadata() => Match.BuildMetadata();
 }
 
 public sealed record ResearchText(string Text);

@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace NoMoreBets.Domain.Matches;
 
-public class Match
+public class Match : IDocumentChunkSource
 {
   public int Id { get; set; }
   public int? SoccerdataId { get; set; }
@@ -51,6 +51,31 @@ public class Match
       AwayClubId = awayClubId,
       MatchStatus = MatchStatus.Upcomming
     };
+  }
+
+  public string BuildEmbeddingText()
+  {
+    var parts = new List<string>
+    {
+      Stage?.Season.League.Name ?? "Unknown",
+      $"{HomeClub.Name} vs {AwayClub.Name}",
+      MatchDate.ToUniversalTime().ToString("yyyy-MM-dd"),
+      MatchStatus.ToString()
+    };
+
+    if (HomeGoals is not null && AwayGoals is not null)
+      parts.Add($"{HomeGoals}-{AwayGoals}");
+
+    return string.Join(" | ", parts);
+  }
+
+  public DocumentChunkMetadata BuildMetadata()
+  {
+    var leagueId = Stage?.Season.LeagueId ?? HomeClub.LeagueId;
+    return DocumentChunkMetadata.CreateBuilder()
+      .WithClubIds([HomeClubId, AwayClubId])
+      .WithLeagueId(leagueId)
+      .Build();
   }
 }
 

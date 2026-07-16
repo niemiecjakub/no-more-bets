@@ -16,12 +16,14 @@ public sealed class OpenAiEmbeddingService : IEmbeddingService
     ArgumentException.ThrowIfNullOrWhiteSpace(_options.EmbeddingModelId, nameof(OpenAIOptions.EmbeddingModelId));
   }
 
+  public string ModelId => _options.EmbeddingModelId;
+
   public async Task<float[]> EmbedAsync(string text, CancellationToken cancellationToken = default)
   {
     if (string.IsNullOrWhiteSpace(text))
       throw new ArgumentException("Text to embed must not be empty.", nameof(text));
 
-    var client = new OpenAIClient(new ApiKeyCredential(_options.ApiKey)).GetEmbeddingClient(_options.EmbeddingModelId);
+    var client = new OpenAIClient(new ApiKeyCredential(_options.ApiKey)).GetEmbeddingClient(ModelId);
     var result = await client
       .GenerateEmbeddingAsync(text, cancellationToken: cancellationToken)
       .ConfigureAwait(false);
