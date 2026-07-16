@@ -46,12 +46,17 @@ public static class DependencyInjection
       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 
     // DbContext
-    services.AddDbContext<AppDbContext>(options =>
+    services.AddScoped<DocumentChunkIndexInterceptor>();
+    services.AddSingleton<IDocumentChunkIndexScheduler, HangfireDocumentChunkIndexScheduler>();
+    services.AddDbContext<AppDbContext>((sp, options) =>
+    {
       options.UseNpgsql(connectionString, o =>
       {
         o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
         o.UseVector();
-      }));
+      });
+      options.AddInterceptors(sp.GetRequiredService<DocumentChunkIndexInterceptor>());
+    });
 
     // Health checks
     services.AddHealthChecks()
@@ -101,6 +106,8 @@ public static class DependencyInjection
     services.AddScoped<BettingAgentCronService>();
     services.AddScoped<UpcomingMatchesInternetResearchCronService>();
     services.AddScoped<MemoryCleanupCronService>();
+    services.AddScoped<DocumentChunkIndexJobService>();
+    services.AddScoped<IDocumentChunkSourceLoader, DocumentChunkSourceLoader>();
     services.AddScoped<IEmbeddingService, OpenAiEmbeddingService>();
     services.AddScoped<IDocumentChunkIndexer, DocumentChunkIndexer>();
 
