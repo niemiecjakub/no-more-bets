@@ -20,6 +20,7 @@ services:
       - SoccerData__ApiKey=${SOCCERDATA_API_KEY}
       - OpenAI__ApiKey=${OPENAI_API_KEY}
       - OpenAI__ModelId=${OPENAI_MODEL}
+      - OpenAI__EmbeddingModelId=${OPENAI_EMBEDDING_MODEL}
       - BraveSearch__ApiKey=${BRAVE_SEARCH_API_KEY}
       - ProxyOptions__ProxyUser=${PROXY_USER}
       - ProxyOptions__ProxyPassword=${PROXY_PASSWORD}
@@ -38,7 +39,7 @@ services:
 
   db:
     container_name: no-more-bets-db
-    image: postgres:17
+    image: pgvector/pgvector:pg17
     ports:
       - "${POSTGRES_PORT}:5432"
     environment:
