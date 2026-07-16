@@ -55,13 +55,18 @@ public class Match : IDocumentChunkSource
 
   public string BuildEmbeddingText()
   {
-    var parts = new List<string>
+    var parts = new List<string>();
+
+    var league = Stage?.Season?.League ?? HomeClub.League;
+    if (league is not null && league.Slug != League.UnknownSlug)
     {
-      Stage?.Season.League.Name ?? "Unknown",
-      $"{HomeClub.Name} vs {AwayClub.Name}",
-      MatchDate.ToUniversalTime().ToString("yyyy-MM-dd"),
-      MatchStatus.ToString()
-    };
+      var year = Stage?.Season?.Year;
+      parts.Add(string.IsNullOrWhiteSpace(year) ? league.Name : $"{league.Name} {year}");
+    }
+
+    parts.Add($"{HomeClub.Name} vs {AwayClub.Name}");
+    parts.Add(MatchDate.ToUniversalTime().ToString("yyyy-MM-dd"));
+    parts.Add(MatchStatus.ToString());
 
     if (HomeGoals is not null && AwayGoals is not null)
       parts.Add($"{HomeGoals}-{AwayGoals}");

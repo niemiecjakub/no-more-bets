@@ -23,7 +23,7 @@ public class DocumentChunkSourceTests
     var text = match.BuildEmbeddingText();
 
     // Assert
-    text.Should().Be("Premier League | Arsenal vs Chelsea | 2026-03-15 | Finished | 2-1");
+    text.Should().Be("Premier League 2025/26 | Arsenal vs Chelsea | 2026-03-15 | Finished | 2-1");
   }
 
   [Fact]
@@ -37,7 +37,47 @@ public class DocumentChunkSourceTests
     var text = match.BuildEmbeddingText();
 
     // Assert
-    text.Should().Be("Premier League | Arsenal vs Chelsea | 2026-03-15 | Upcomming");
+    text.Should().Be("Premier League 2025/26 | Arsenal vs Chelsea | 2026-03-15 | Upcomming");
+  }
+
+  [Fact]
+  public void BuildEmbeddingText_MatchWithoutSeason_IncludesLeagueOnly()
+  {
+    // Arrange
+    var match = CreateMatch(homeGoals: 1, awayGoals: 0);
+    match.Stage = null;
+    match.HomeClub.League = new League { Id = 7, Name = "Premier League", Slug = "premier-league" };
+
+    // Act
+    var text = match.BuildEmbeddingText();
+
+    // Assert
+    text.Should().Be("Premier League | Arsenal vs Chelsea | 2026-03-15 | Finished | 1-0");
+  }
+
+  [Fact]
+  public void BuildEmbeddingText_UnknownLeague_OmitsLeagueSeason()
+  {
+    // Arrange
+    var match = CreateMatch(homeGoals: 1, awayGoals: 0);
+    match.Stage!.Season = new Season
+    {
+      LeagueId = 8,
+      Year = "N/A",
+      League = new League
+      {
+        Id = 8,
+        Name = "Unknown",
+        Slug = League.UnknownSlug,
+        SoccerdataId = League.UnknownSoccerdataId
+      }
+    };
+
+    // Act
+    var text = match.BuildEmbeddingText();
+
+    // Assert
+    text.Should().Be("Arsenal vs Chelsea | 2026-03-15 | Finished | 1-0");
   }
 
   [Fact]
@@ -71,7 +111,7 @@ public class DocumentChunkSourceTests
 
     // Assert
     text.Should().Be(
-      "Premier League | Arsenal vs Chelsea | 2026-03-15 | Finished | 2-1"
+      "Premier League 2025/26 | Arsenal vs Chelsea | 2026-03-15 | Finished | 2-1"
       + " | Arsenal lineup: GK Raya, ST Saka"
       + " | Chelsea lineup: GK Sanchez"
       + " | Events: 23' Goal Saka, 40' YellowCard Palmer");
@@ -166,7 +206,8 @@ public class DocumentChunkSourceTests
         Season = new Season
         {
           LeagueId = 7,
-          League = new League { Id = 7, Name = "Premier League" }
+          Year = "2025/26",
+          League = new League { Id = 7, Name = "Premier League", Slug = "premier-league" }
         }
       },
       HomeClub = new ClubEntity { Id = 10, Name = "Arsenal", LeagueId = 7 },

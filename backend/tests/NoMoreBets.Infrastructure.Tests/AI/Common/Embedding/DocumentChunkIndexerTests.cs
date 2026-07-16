@@ -1,7 +1,7 @@
 using FluentAssertions;
-using NoMoreBets.Infrastructure.MatchSearch;
+using NoMoreBets.Infrastructure.AI.Common.Embedding;
 
-namespace NoMoreBets.Infrastructure.Tests.MatchSearch;
+namespace NoMoreBets.Infrastructure.Tests.AI.Common.Embedding;
 
 public class DocumentChunkIndexerTests
 {
