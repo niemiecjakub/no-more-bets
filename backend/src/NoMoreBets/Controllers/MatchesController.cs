@@ -7,6 +7,7 @@ using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchEvents;
 using NoMoreBets.Application.Matches.GetMatchLineups;
+using NoMoreBets.Application.Matches.SemanticSearchMatches;
 using NoMoreBets.Domain.Enums;
 using MatchInjuriesResult = NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult;
 using MatchLineupResult = NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult;
@@ -53,6 +54,18 @@ public class MatchesController(IMediator mediator) : ControllerBase
         parsedSortOrder,
         normalizedSearch),
       cancellationToken).ConfigureAwait(false);
+
+    return Ok(result);
+  }
+
+  [HttpGet("matches/semantic-search")]
+  public async Task<ActionResult<IReadOnlyList<MatchDto>>> SemanticSearch(
+    [FromQuery] string? q = null,
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator
+      .Send(new SemanticSearchMatchesQuery(q ?? string.Empty), cancellationToken)
+      .ConfigureAwait(false);
 
     return Ok(result);
   }

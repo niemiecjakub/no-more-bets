@@ -110,6 +110,7 @@ public static class DependencyInjection
     services.AddScoped<IDocumentChunkSourceLoader, DocumentChunkSourceLoader>();
     services.AddScoped<IEmbeddingService, OpenAiEmbeddingService>();
     services.AddScoped<IDocumentChunkIndexer, DocumentChunkIndexer>();
+    services.AddScoped<IDocumentChunkSearch, DocumentChunkSearch>();
 
     //HTTP resilience & external clients
     services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>
