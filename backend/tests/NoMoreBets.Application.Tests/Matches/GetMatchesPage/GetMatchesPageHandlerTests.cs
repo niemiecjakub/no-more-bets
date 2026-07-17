@@ -18,13 +18,16 @@ public class GetMatchesPageHandlerTests
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
+  private readonly IEmbeddingService _embedding = Substitute.For<IEmbeddingService>();
+  private readonly IDocumentChunkSearch _chunkSearch = Substitute.For<IDocumentChunkSearch>();
   private readonly GetMatchesPageHandler _sut;
 
   public GetMatchesPageHandlerTests()
   {
     _unitOfWork.Matches.Returns(_matches);
     _unitOfWork.Betting.Returns(_betting);
-    _sut = new GetMatchesPageHandler(_unitOfWork, _mediator);
+    _embedding.ModelId.Returns("text-embedding-3-small");
+    _sut = new GetMatchesPageHandler(_unitOfWork, _mediator, _embedding, _chunkSearch);
   }
 
   [Fact]
@@ -33,7 +36,7 @@ public class GetMatchesPageHandlerTests
     var cursorAt = new DateTime(2026, 5, 1, 12, 0, 0, DateTimeKind.Utc);
     var leagueIds = new[] { 1, 2 };
     _matches
-      .GetMatchesPageAsync(10, 3, leagueIds, cursorAt, 5, MatchDateSortOrder.Descending, null, Arg.Any<CancellationToken>())
+      .GetMatchesPageAsync(10, 3, leagueIds, cursorAt, 5, MatchDateSortOrder.Descending, Arg.Any<CancellationToken>())
       .Returns(new MatchPage(Array.Empty<DomainMatch>(), false));
     _mediator
       .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
@@ -43,7 +46,8 @@ public class GetMatchesPageHandlerTests
       new GetMatchesPageQuery(10, 3, leagueIds, cursorAt, 5),
       CancellationToken.None);
 
-    await _matches.Received(1).GetMatchesPageAsync(10, 3, leagueIds, cursorAt, 5, MatchDateSortOrder.Descending, null, Arg.Any<CancellationToken>());
+    await _matches.Received(1).GetMatchesPageAsync(10, 3, leagueIds, cursorAt, 5, MatchDateSortOrder.Descending, Arg.Any<CancellationToken>());
+    await _embedding.DidNotReceive().EmbedAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
   }
 
   [Fact]
@@ -51,7 +55,7 @@ public class GetMatchesPageHandlerTests
   {
     var match = CreateMatch(7, "Arsenal", "Chelsea");
     _matches
-      .GetMatchesPageAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<IReadOnlyList<int>>(), Arg.Any<DateTime?>(), Arg.Any<int?>(), Arg.Any<MatchDateSortOrder>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+      .GetMatchesPageAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<IReadOnlyList<int>>(), Arg.Any<DateTime?>(), Arg.Any<int?>(), Arg.Any<MatchDateSortOrder>(), Arg.Any<CancellationToken>())
       .Returns(new MatchPage(new List<DomainMatch> { match }, false));
     _mediator
       .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
@@ -82,7 +86,7 @@ public class GetMatchesPageHandlerTests
     var older = CreateMatch(1, "A", "B", new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc));
     var newer = CreateMatch(2, "C", "D", new DateTime(2026, 5, 2, 0, 0, 0, DateTimeKind.Utc));
     _matches
-      .GetMatchesPageAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<IReadOnlyList<int>>(), Arg.Any<DateTime?>(), Arg.Any<int?>(), Arg.Any<MatchDateSortOrder>(), Arg.Any<string?>(), Arg.Any<CancellationToken>())
+      .GetMatchesPageAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<IReadOnlyList<int>>(), Arg.Any<DateTime?>(), Arg.Any<int?>(), Arg.Any<MatchDateSortOrder>(), Arg.Any<CancellationToken>())
       .Returns(new MatchPage(new List<DomainMatch> { newer, older }, true));
     _mediator
       .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
@@ -93,6 +97,60 @@ public class GetMatchesPageHandlerTests
     result.HasMore.Should().BeTrue();
     result.NextCursorAt.Should().Be(older.MatchDate);
     result.NextCursorId.Should().Be(older.Id);
+  }
+
+  [Fact]
+  public async Task Handle_WhenSearchProvided_UsesHybridSearchAndPreservesRankOrder()
+  {
+    // Arrange
+    var first = CreateMatch(10, "Arsenal", "Chelsea");
+    var second = CreateMatch(20, "Liverpool", "Everton");
+    _embedding.EmbedAsync("injuries", Arg.Any<CancellationToken>()).Returns([0.1f]);
+    _chunkSearch
+      .FindMatchIdsAsync("injuries", Arg.Any<float[]>(), "text-embedding-3-small", Arg.Any<CancellationToken>())
+      .Returns(new[] { 20, 10 });
+    _matches
+      .GetMatchesByIdsAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .Returns(new List<DomainMatch> { first, second });
+    _mediator
+      .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
+      .Returns(Array.Empty<DomainMatch>());
+    StubFlagLookups();
+
+    // Act
+    var result = await _sut.Handle(
+      new GetMatchesPageQuery(10, null, [], null, null, Search: "injuries"),
+      CancellationToken.None);
+
+    // Assert
+    result.Items.Select(i => i.Id).Should().Equal(20, 10);
+    await _matches.DidNotReceive().GetMatchesPageAsync(
+      Arg.Any<int>(),
+      Arg.Any<int?>(),
+      Arg.Any<IReadOnlyList<int>>(),
+      Arg.Any<DateTime?>(),
+      Arg.Any<int?>(),
+      Arg.Any<MatchDateSortOrder>(),
+      Arg.Any<CancellationToken>());
+  }
+
+  private void StubFlagLookups()
+  {
+    _matches.GetMatchIdsWithLineupAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
+      .Returns(new HashSet<int>());
+    _matches.GetMatchIdsWithOddsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
+      .Returns(new HashSet<int>());
+    _matches.GetMatchIdsWithHeadToHeadAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
+      .Returns(new HashSet<int>());
+    _matches.GetMatchIdsWithAnalysisCodeAsync(
+        Arg.Any<IReadOnlyCollection<int>>(),
+        MatchAnalysis.StructuredResearchCode,
+        Arg.Any<CancellationToken>())
+      .Returns(new HashSet<int>());
+    _betting.GetMatchIdsWithResearchPhaseSelectionsAsync(
+        Arg.Any<IReadOnlyCollection<int>>(),
+        Arg.Any<CancellationToken>())
+      .Returns(new HashSet<int>());
   }
 
   private static DomainMatch CreateMatch(int id, string home, string away, DateTime? matchDate = null)

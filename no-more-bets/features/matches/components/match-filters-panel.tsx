@@ -72,8 +72,8 @@ function MatchSearchField({
       type="search"
       value={draft}
       onChange={(event) => setDraft(event.target.value)}
-      placeholder="Search club..."
-      aria-label="Search by club"
+      placeholder="Search matches…"
+      aria-label="Search matches"
       className="h-8 bg-white dark:bg-zinc-950"
     />
   );

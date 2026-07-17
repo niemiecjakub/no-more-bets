@@ -215,26 +215,6 @@ export async function fetchMatchesPage(
 }
 
 /**
- * Semantic search over indexed match/analysis chunks.
- */
-export async function fetchSemanticSearchMatches(
-  query: string,
-): Promise<MatchListItem[]> {
-  const q = query.trim();
-  if (!q) return [];
-
-  const queryParams = new URLSearchParams();
-  queryParams.set("q", q);
-
-  const { data } = await axiosInstance.get<unknown>(
-    `/api/matches/semantic-search?${queryParams.toString()}`,
-  );
-
-  if (!Array.isArray(data)) return [];
-  return data.map(normalizeMatchListItem);
-}
-
-/**
  * Fetches match header and all analyses for a match.
  */
 export async function fetchMatchAnalysisPage(

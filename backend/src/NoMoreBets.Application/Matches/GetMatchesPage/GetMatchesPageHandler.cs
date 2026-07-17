@@ -15,24 +15,35 @@ public record GetMatchesPageQuery(
   MatchDateSortOrder SortOrder = MatchDateSortOrder.Descending,
   string? Search = null) : IRequest<Paged<MatchDto>>;
 
-public sealed class GetMatchesPageHandler(IUnitOfWork unitOfWork, IMediator mediator)
+public sealed class GetMatchesPageHandler(
+  IUnitOfWork unitOfWork,
+  IMediator mediator,
+  IEmbeddingService embeddingService,
+  IDocumentChunkSearch documentChunkSearch)
   : IRequestHandler<GetMatchesPageQuery, Paged<MatchDto>>
 {
   public async Task<Paged<MatchDto>> Handle(
     GetMatchesPageQuery request,
     CancellationToken cancellationToken)
   {
-    var page = await unitOfWork.Matches
-      .GetMatchesPageAsync(
-        request.Limit,
-        request.MatchStatusId,
-        request.LeagueIds,
-        request.AfterMatchDateUtc,
-        request.AfterId,
-        request.SortOrder,
-        request.Search,
-        cancellationToken)
-      .ConfigureAwait(false);
+    MatchPage page;
+    if (!string.IsNullOrWhiteSpace(request.Search))
+    {
+      page = await GetHybridSearchPageAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+    else
+    {
+      page = await unitOfWork.Matches
+        .GetMatchesPageAsync(
+          request.Limit,
+          request.MatchStatusId,
+          request.LeagueIds,
+          request.AfterMatchDateUtc,
+          request.AfterId,
+          request.SortOrder,
+          cancellationToken)
+        .ConfigureAwait(false);
+    }
 
     var readyForPrediction = await mediator
       .Send(new GetUpcomingMatchesReadyForPredictionQuery(ExcludeWithExistingResearch: false), cancellationToken)
@@ -78,5 +89,51 @@ public sealed class GetMatchesPageHandler(IUnitOfWork unitOfWork, IMediator medi
       .ToList();
 
     return PagedFactory.Create(items, page.HasMore, item => item.MatchDate, item => item.Id);
+  }
+
+  private async Task<MatchPage> GetHybridSearchPageAsync(
+    GetMatchesPageQuery request,
+    CancellationToken cancellationToken)
+  {
+    var query = request.Search!.Trim();
+    var embedding = await embeddingService
+      .EmbedAsync(query, cancellationToken)
+      .ConfigureAwait(false);
+
+    var rankedMatchIds = await documentChunkSearch
+      .FindMatchIdsAsync(query, embedding, embeddingService.ModelId, cancellationToken)
+      .ConfigureAwait(false);
+
+    if (rankedMatchIds.Count == 0)
+      return new MatchPage([], false);
+
+    var matches = await unitOfWork.Matches
+      .GetMatchesByIdsAsync(rankedMatchIds, cancellationToken)
+      .ConfigureAwait(false);
+
+    var byId = matches.ToDictionary(m => m.Id);
+    var selectedLeagueIds = request.LeagueIds.Distinct().ToHashSet();
+    var hasLeagueFilter = selectedLeagueIds.Count > 0;
+
+    var ordered = rankedMatchIds
+      .Where(byId.ContainsKey)
+      .Select(id => byId[id])
+      .Where(m => !request.MatchStatusId.HasValue || m.MatchStatusId == request.MatchStatusId.Value)
+      .Where(m => !hasLeagueFilter
+        || (m.Stage != null && selectedLeagueIds.Contains(m.Stage.Season.LeagueId)))
+      .ToList();
+
+    if (request.AfterId is int afterId)
+    {
+      var cursorIndex = ordered.FindIndex(m => m.Id == afterId);
+      if (cursorIndex >= 0)
+        ordered = ordered.Skip(cursorIndex + 1).ToList();
+    }
+
+    var hasMore = ordered.Count > request.Limit;
+    if (hasMore)
+      ordered = ordered.Take(request.Limit).ToList();
+
+    return new MatchPage(ordered, hasMore);
   }
 }
