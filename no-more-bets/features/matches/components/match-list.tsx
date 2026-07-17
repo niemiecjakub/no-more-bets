@@ -112,8 +112,8 @@ export function MatchList({
 
   const groups = matches.reduce<MatchDateGroup[]>((acc, match) => {
     const key = toDateKey(match.matchDate);
-    const existing = acc[acc.length - 1];
-    if (existing && existing.key === key) {
+    const existing = acc.find((group) => group.key === key);
+    if (existing) {
       existing.matches.push(match);
       return acc;
     }
