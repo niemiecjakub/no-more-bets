@@ -304,8 +304,8 @@ public class MatchMatcherTests
     // Arrange: club names that will not match "XYZ Unknown"
     var clubs = new List<ClubEntity>
     {
-      new() { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 },
-      new() { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 }
+      new() { Id = 1, Name = "Arsenal", SoccerdataId = 1 },
+      new() { Id = 2, Name = "Chelsea", SoccerdataId = 2 }
     };
 
     // Act
@@ -320,7 +320,7 @@ public class MatchMatcherTests
   public void FindClub_ExactMatchIgnoreCase_ReturnsClub()
   {
     // Arrange
-    var arsenal = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
+    var arsenal = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
     var clubs = new List<ClubEntity> { arsenal };
 
     // Act
@@ -335,7 +335,7 @@ public class MatchMatcherTests
   public void FindClub_FuzzyMatchAboveCutoff_ReturnsClub()
   {
     // Arrange: "Arsenal" vs "Arsenal FC" - fuzzy match typically above 70
-    var arsenalFc = new ClubEntity { Id = 1, Name = "Arsenal FC", LeagueId = 1, SoccerdataId = 1 };
+    var arsenalFc = new ClubEntity { Id = 1, Name = "Arsenal FC", SoccerdataId = 1 };
     var clubs = new List<ClubEntity> { arsenalFc };
 
     // Act
@@ -349,7 +349,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_BetclicPolishMarseilleAlias_ReturnsMarseille()
   {
-    var marseille = new ClubEntity { Id = 1, Name = "Marseille", LeagueId = 6, SoccerdataId = 3769 };
+    var marseille = new ClubEntity { Id = 1, Name = "Marseille", SoccerdataId = 3769 };
     var clubs = new List<ClubEntity> { marseille };
 
     var result = _sut.FindClub("Marsylia", clubs);
@@ -361,7 +361,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_BetclicFcKoelnAlias_ReturnsFcCologne()
   {
-    var fcCologne = new ClubEntity { Id = 1, Name = "FC Cologne", LeagueId = 4, SoccerdataId = 3336 };
+    var fcCologne = new ClubEntity { Id = 1, Name = "FC Cologne", SoccerdataId = 3336 };
     var clubs = new List<ClubEntity> { fcCologne };
 
     var result = _sut.FindClub("FC Koeln", clubs);
@@ -373,7 +373,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_GermanOneFcKolnWithUmlaut_ReturnsFcCologne()
   {
-    var fcCologne = new ClubEntity { Id = 1, Name = "FC Cologne", LeagueId = 4, SoccerdataId = 3336 };
+    var fcCologne = new ClubEntity { Id = 1, Name = "FC Cologne", SoccerdataId = 3336 };
     var clubs = new List<ClubEntity> { fcCologne };
 
     var result = _sut.FindClub("1. FC Köln", clubs);
@@ -385,7 +385,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_MonchengladbachAlias_ReturnsBorussiaMGladbach()
   {
-    var gladbach = new ClubEntity { Id = 1, Name = "Borussia M'gladbach", LeagueId = 4, SoccerdataId = 4272 };
+    var gladbach = new ClubEntity { Id = 1, Name = "Borussia M'gladbach", SoccerdataId = 4272 };
     var clubs = new List<ClubEntity> { gladbach };
 
     var result = _sut.FindClub("Mönchengladbach", clubs);
@@ -397,7 +397,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_Hoffenheim1899Alias_ReturnsHoffenheim()
   {
-    var hoffenheim = new ClubEntity { Id = 1, Name = "Hoffenheim", LeagueId = 4, SoccerdataId = 3297 };
+    var hoffenheim = new ClubEntity { Id = 1, Name = "Hoffenheim", SoccerdataId = 3297 };
     var clubs = new List<ClubEntity> { hoffenheim };
 
     var result = _sut.FindClub("1899 Hoffenheim", clubs);
@@ -409,7 +409,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_AekLarnacaAlias_ReturnsAekLarnaka()
   {
-    var aek = new ClubEntity { Id = 1, Name = "AEK Larnaka", LeagueId = 1, SoccerdataId = 1 };
+    var aek = new ClubEntity { Id = 1, Name = "AEK Larnaka", SoccerdataId = 1 };
     var clubs = new List<ClubEntity> { aek };
 
     var result = _sut.FindClub("AEK Larnaca", clubs);
@@ -421,7 +421,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_ParisSaintGermainAlias_ReturnsPsg()
   {
-    var psg = new ClubEntity { Id = 1, Name = "PSG", LeagueId = 6, SoccerdataId = 4228 };
+    var psg = new ClubEntity { Id = 1, Name = "PSG", SoccerdataId = 4228 };
     var clubs = new List<ClubEntity> { psg };
 
     var result = _sut.FindClub("Paris Saint-Germain", clubs);
@@ -443,7 +443,7 @@ public class MatchMatcherTests
   [InlineData("Cote D'ivoire", "Cote d'Ivoire")]
   public void FindClub_FotmobWorldCupAlias_ReturnsDbClubName(string fotmobName, string dbName)
   {
-    var club = new ClubEntity { Id = 1, Name = dbName, LeagueId = 7, SoccerdataId = 1 };
+    var club = new ClubEntity { Id = 1, Name = dbName, SoccerdataId = 1 };
     var clubs = new List<ClubEntity> { club };
 
     var result = _sut.FindClub(fotmobName, clubs);
@@ -462,7 +462,7 @@ public class MatchMatcherTests
   [InlineData("Wybrzeże Kości Słoniowej", "Cote d'Ivoire")]
   public void FindClub_BetclicPolishWorldCupAlias_ReturnsDbClubName(string betclicName, string dbName)
   {
-    var club = new ClubEntity { Id = 1, Name = dbName, LeagueId = 7, SoccerdataId = 1 };
+    var club = new ClubEntity { Id = 1, Name = dbName, SoccerdataId = 1 };
     var clubs = new List<ClubEntity> { club };
 
     var result = _sut.FindClub(betclicName, clubs);
@@ -474,8 +474,8 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_ParisFcAndPsgInLeague_Disambiguates()
   {
-    var parisFc = new ClubEntity { Id = 1, Name = "Paris FC", LeagueId = 6, SoccerdataId = 4241 };
-    var psg = new ClubEntity { Id = 2, Name = "PSG", LeagueId = 6, SoccerdataId = 4228 };
+    var parisFc = new ClubEntity { Id = 1, Name = "Paris FC", SoccerdataId = 4241 };
+    var psg = new ClubEntity { Id = 2, Name = "PSG", SoccerdataId = 4228 };
     var clubs = new List<ClubEntity> { psg, parisFc };
 
     _sut.FindClub("Paris FC", clubs).Should().BeSameAs(parisFc);
@@ -502,7 +502,7 @@ public class MatchMatcherTests
   [Fact]
   public void FindClub_FoldedDiacriticsExactMatch_ReturnsClub()
   {
-    var club = new ClubEntity { Id = 1, Name = "TSV München Test", LeagueId = 1, SoccerdataId = 1 };
+    var club = new ClubEntity { Id = 1, Name = "TSV München Test", SoccerdataId = 1 };
     var clubs = new List<ClubEntity> { club };
 
     var result = _sut.FindClub("TSV Munchen Test", clubs);
@@ -803,7 +803,7 @@ public class MatchMatcherTests
   [MemberData(nameof(RotowireLineupNames))]
   public void FindClub_RotowireLineupName_ResolvesToDbClub(string rotowireName, string dbName)
   {
-    var club = new ClubEntity { Id = 1, Name = dbName, LeagueId = 7, SoccerdataId = 1 };
+    var club = new ClubEntity { Id = 1, Name = dbName, SoccerdataId = 1 };
     var clubs = new List<ClubEntity> { club };
 
     var result = _sut.FindClub(rotowireName, clubs);

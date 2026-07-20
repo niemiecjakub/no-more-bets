@@ -11,7 +11,12 @@ import { ClubWorldCupGroupTables } from "@/features/clubs/components/club-world-
 import { ClubNextMatchCard } from "@/features/clubs/components/club-next-match-card";
 import { ClubRecentMatchesPanel } from "@/features/clubs/components/club-recent-matches-panel";
 import { MatchList } from "@/features/matches/components/match-list";
-import type { ClubBetSelectionStats, ClubDetail, ClubNextMatch } from "@/features/clubs/interfaces";
+import type {
+  ClubBetSelectionStats,
+  ClubDetail,
+  ClubNextMatch,
+  ClubSeasonMembership,
+} from "@/features/clubs/interfaces";
 import {
   fetchClubBetSelectionStats,
   fetchClubById,
@@ -33,6 +38,13 @@ function resolveRequestedTab(searchParams: URLSearchParams): ClubTab | null {
   const requestedTab = searchParams.get("tab");
   if (requestedTab === "general" || requestedTab === "matches") return requestedTab;
   return null;
+}
+
+function resolveDefaultMembership(memberships: ClubSeasonMembership[]): ClubSeasonMembership | null {
+  const today = new Date().toISOString().slice(0, 10);
+  return memberships.find((membership) => !membership.startDate || membership.startDate <= today)
+    ?? memberships.at(-1)
+    ?? null;
 }
 
 function initialSectionLoading(): Record<SectionKey, boolean> {
@@ -246,6 +258,13 @@ export default function ClubPage() {
   const [leagueTable, setLeagueTable] = useState<LeagueTable | undefined>();
   const [nextMatch, setNextMatch] = useState<ClubNextMatch | null | undefined>();
   const [betStats, setBetStats] = useState<ClubBetSelectionStats | undefined>();
+  const requestedSeasonId = Number(searchParams.get("seasonId"));
+  const selectedMembership = club?.memberships.find(
+    (membership) => membership.seasonId === requestedSeasonId,
+  ) ?? (club ? resolveDefaultMembership(club.memberships) : null);
+  const displayedLeagueTable = leagueTable?.seasonId === selectedMembership?.seasonId
+    ? leagueTable
+    : undefined;
 
   const [activeTab, setActiveTab] = useState<ClubTab>(() => {
     const requestedTab = resolveRequestedTab(new URLSearchParams(searchParams.toString()));
@@ -274,6 +293,22 @@ export default function ClubPage() {
     [pathname, router, searchParams],
   );
 
+  const handleSeasonChange = useCallback(
+    (seasonId: number) => {
+      const params = new URLSearchParams(searchParams.toString());
+      params.set("seasonId", seasonId.toString());
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  useEffect(() => {
+    if (!selectedMembership || searchParams.get("seasonId") === selectedMembership.seasonId.toString()) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("seasonId", selectedMembership.seasonId.toString());
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [pathname, router, searchParams, selectedMembership]);
+
   useEffect(() => {
     if (!isValidId) return;
     let isMounted = true;
@@ -293,6 +328,9 @@ export default function ClubPage() {
       .then((data) => {
         if (!isMounted) return;
         setClub(data);
+        if (data.memberships.length === 0) {
+          setSectionLoading((prev) => ({ ...prev, leagueTable: false }));
+        }
         setClubError(null);
       })
       .catch((err) => {
@@ -352,7 +390,7 @@ export default function ClubPage() {
   }, [clubId, isValidId]);
 
   useEffect(() => {
-    if (!club) return;
+    if (!club || !selectedMembership) return;
     let isMounted = true;
     setSectionLoading((prev) => ({ ...prev, leagueTable: true }));
     setSectionErrors((prev) => {
@@ -362,8 +400,9 @@ export default function ClubPage() {
     });
 
     void fetchLeagueTable(
-      club.leagueId,
-      club.leagueSlug === "fifa-world-cup" ? club.id : undefined,
+      selectedMembership.leagueId,
+      selectedMembership.seasonId,
+      selectedMembership.leagueSlug === "fifa-world-cup" ? club.id : undefined,
     )
       .then((table) => {
         if (!isMounted) return;
@@ -387,7 +426,7 @@ export default function ClubPage() {
     return () => {
       isMounted = false;
     };
-  }, [club]);
+  }, [club, selectedMembership]);
 
   if (id != null && id !== "" && !isValidId) {
     notFound();
@@ -443,10 +482,31 @@ export default function ClubPage() {
         <SlugIcon kind="club" slug={club.slug} alt={club.name} className="h-16 w-16 shrink-0" />
         <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 py-0.5">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">{club.name}</h1>
-          <p className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-            <SlugIcon kind="league" slug={club.leagueSlug} alt={club.leagueName} className="h-5 w-5 shrink-0" />
-            <span>{club.leagueName}</span>
-          </p>
+          {selectedMembership ? (
+            <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
+              <SlugIcon
+                kind="league"
+                slug={selectedMembership.leagueSlug}
+                alt={selectedMembership.leagueName}
+                className="h-5 w-5 shrink-0"
+              />
+              <label htmlFor="club-season" className="sr-only">Season</label>
+              <select
+                id="club-season"
+                value={selectedMembership.seasonId}
+                onChange={(event) => handleSeasonChange(Number(event.target.value))}
+                className="max-w-full rounded-md border border-zinc-200 bg-white px-2 py-1 text-sm text-foreground dark:border-zinc-700 dark:bg-zinc-900"
+              >
+                {club.memberships.map((membership) => (
+                  <option key={membership.seasonId} value={membership.seasonId}>
+                    {membership.leagueName} {membership.seasonYear}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">No season memberships</p>
+          )}
         </div>
         <ClubHeaderTabs active={activeTab} onChange={handleTabChange} />
       </header>
@@ -478,8 +538,8 @@ export default function ClubPage() {
                   ) : nextMatch ? (
                     <ClubNextMatchCard
                       match={nextMatch}
-                      leagueName={club.leagueName}
-                      leagueSlug={club.leagueSlug}
+                      leagueName={selectedMembership?.leagueName ?? ""}
+                      leagueSlug={selectedMembership?.leagueSlug ?? ""}
                     />
                   ) : (
                     <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No upcoming match scheduled.</p>
@@ -501,20 +561,25 @@ export default function ClubPage() {
             </div>
 
             <SectionCard
-              title={<LeagueTableHeader leagueName={club.leagueName} leagueSlug={club.leagueSlug} />}
+              title={selectedMembership
+                ? <LeagueTableHeader
+                    leagueName={`${selectedMembership.leagueName} ${selectedMembership.seasonYear}`}
+                    leagueSlug={selectedMembership.leagueSlug}
+                  />
+                : "League table"}
               flush
             >
               {sectionErrors.leagueTable ? (
                 <div className="px-4 py-4">
                   <SectionError message={sectionErrors.leagueTable} />
                 </div>
-              ) : sectionLoading.leagueTable && leagueTable === undefined ? (
+              ) : sectionLoading.leagueTable && displayedLeagueTable === undefined ? (
                 <TableSkeleton flush />
-              ) : leagueTable ? (
-                leagueTable.groups && leagueTable.groups.length > 0 ? (
-                  <ClubWorldCupGroupTables table={leagueTable} highlightClubId={club.id} />
+              ) : displayedLeagueTable ? (
+                displayedLeagueTable.groups && displayedLeagueTable.groups.length > 0 ? (
+                  <ClubWorldCupGroupTables table={displayedLeagueTable} highlightClubId={club.id} />
                 ) : (
-                  <ClubLeagueTable table={leagueTable} highlightClubId={club.id} />
+                  <ClubLeagueTable table={displayedLeagueTable} highlightClubId={club.id} />
                 )
               ) : (
                 <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No league table data available.</p>

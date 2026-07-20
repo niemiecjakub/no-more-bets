@@ -32,10 +32,10 @@ public class GetLeagueTableDisplayHandlerTests
   public async Task Handle_WhenSnapshotMissing_ReturnsNull()
   {
     _leagues
-      .GetLatestLeagueTableSnapshotAsync(9, Arg.Any<CancellationToken>())
+      .GetLatestLeagueTableSnapshotAsync(9, 14, Arg.Any<CancellationToken>())
       .Returns((LeagueTableSnapshot?)null);
 
-    var result = await _sut.Handle(new GetLeagueTableDisplayQuery(9), CancellationToken.None);
+    var result = await _sut.Handle(new GetLeagueTableDisplayQuery(9, 14), CancellationToken.None);
 
     result.Should().BeNull();
   }
@@ -95,7 +95,7 @@ public class GetLeagueTableDisplayHandlerTests
       ],
     };
     _leagues
-      .GetLatestLeagueTableSnapshotAsync(3, Arg.Any<CancellationToken>())
+      .GetLatestLeagueTableSnapshotAsync(3, 7, Arg.Any<CancellationToken>())
       .Returns(snapshot);
 
     var formByClub = new Dictionary<int, IReadOnlyList<MatchResult>>
@@ -107,7 +107,7 @@ public class GetLeagueTableDisplayHandlerTests
       .GetFormForClubsInSeasonAsync(7, Arg.Any<IReadOnlyList<int>>(), 5, Arg.Any<CancellationToken>())
       .Returns(formByClub);
 
-    var result = await _sut.Handle(new GetLeagueTableDisplayQuery(3), CancellationToken.None);
+    var result = await _sut.Handle(new GetLeagueTableDisplayQuery(3, 7), CancellationToken.None);
 
     result.Should().NotBeNull();
     result!.SnapshotId.Should().Be(100);
@@ -163,13 +163,13 @@ public class GetLeagueTableDisplayHandlerTests
       ],
     };
     _leagues
-      .GetLatestLeagueTableSnapshotAsync(1, Arg.Any<CancellationToken>())
+      .GetLatestLeagueTableSnapshotAsync(1, 2, Arg.Any<CancellationToken>())
       .Returns(snapshot);
     _matches
       .GetFormForClubsInSeasonAsync(2, Arg.Any<IReadOnlyList<int>>(), 5, Arg.Any<CancellationToken>())
       .Returns(new Dictionary<int, IReadOnlyList<MatchResult>>());
 
-    var result = await _sut.Handle(new GetLeagueTableDisplayQuery(1), CancellationToken.None);
+    var result = await _sut.Handle(new GetLeagueTableDisplayQuery(1, 2), CancellationToken.None);
 
     result!.Rows[0].Form.Should().BeEmpty();
   }
@@ -181,7 +181,13 @@ public class GetLeagueTableDisplayHandlerTests
     var groupB = new WorldCupGroupDefinition("B", "Grp. B", [6717, 5810, 10106, 5902], ["Switzerland", "Canada", "Bosnia-Herzegovina", "Qatar"]);
     var sut = new GetLeagueTableDisplayHandler(_unitOfWork, new WorldCupGroupRegistry([groupA, groupB]));
 
-    var club = new ClubEntity { Id = 1, Name = "Mexico", LeagueId = 7, Slug = "mexico" };
+    var club = new ClubEntity
+    {
+      Id = 1,
+      Name = "Mexico",
+      Slug = "mexico",
+      ClubSeasons = [new ClubSeason { ClubId = 1, SeasonId = 7 }]
+    };
     _clubs.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(club);
 
     var snapshot = new LeagueTableSnapshot
@@ -240,11 +246,11 @@ public class GetLeagueTableDisplayHandlerTests
       ],
     };
 
-    _leagues.GetLatestLeagueTableSnapshotAsync(7, Arg.Any<CancellationToken>()).Returns(snapshot);
+    _leagues.GetLatestLeagueTableSnapshotAsync(7, 7, Arg.Any<CancellationToken>()).Returns(snapshot);
     _matches.GetFormForClubsInSeasonAsync(7, Arg.Any<IReadOnlyList<int>>(), 5, Arg.Any<CancellationToken>())
       .Returns(new Dictionary<int, IReadOnlyList<MatchResult>>());
 
-    var result = await sut.Handle(new GetLeagueTableDisplayQuery(7, 1), CancellationToken.None);
+    var result = await sut.Handle(new GetLeagueTableDisplayQuery(7, 7, 1), CancellationToken.None);
 
     result.Should().NotBeNull();
     result!.OwnGroupCode.Should().Be("A");

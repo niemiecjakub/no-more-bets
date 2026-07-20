@@ -52,7 +52,6 @@ public class UpdateUpcommingMatchesHandler(
         continue;
       }
 
-      var currentStage = await unitOfWork.Leagues.GetCurrentStage(league.LeagueId);
       foreach (var matchPreview in league.MatchPreviews)
       {
         if (!SoccerDataKickoffDateParser.TryParse(matchPreview.Date, matchPreview.Time, out var gameDayUtc))
@@ -77,20 +76,26 @@ public class UpdateUpcommingMatchesHandler(
           continue;
         }
 
+        var stage = await unitOfWork.Leagues.GetStageForDateAsync(
+          league.LeagueId,
+          DateOnly.FromDateTime(gameDayUtc));
         if (!clubsMap.TryGetValue(matchPreview.Teams.Home.Id, out var homeClub) ||
-            !clubsMap.TryGetValue(matchPreview.Teams.Away.Id, out var awayClub))
+            !clubsMap.TryGetValue(matchPreview.Teams.Away.Id, out var awayClub) ||
+            homeClub.ClubSeasons.All(cs => cs.SeasonId != stage.SeasonId) ||
+            awayClub.ClubSeasons.All(cs => cs.SeasonId != stage.SeasonId))
         {
           logger.LogWarning(
-            "Skipping insert for match {MatchId} ({Home} vs {Away}): missing club(s) in DB. HomeClubId={HomeSoccerdataId}, AwayClubId={AwaySoccerdataId}",
+            "Skipping insert for match {MatchId} ({Home} vs {Away}): clubs are missing or not members of season {SeasonId}. HomeClubId={HomeSoccerdataId}, AwayClubId={AwaySoccerdataId}",
             matchPreview.Id,
             matchPreview.Teams.Home.Name,
             matchPreview.Teams.Away.Name,
+            stage.SeasonId,
             matchPreview.Teams.Home.Id,
             matchPreview.Teams.Away.Id);
           continue;
         }
 
-        var newMatch = Match.CreateUpcomming(gameDayUtc, currentStage.Id, homeClub.Id, awayClub.Id);
+        var newMatch = Match.CreateUpcomming(gameDayUtc, stage.Id, homeClub.Id, awayClub.Id);
         newMatch.SoccerdataId = matchPreview.Id;
         await unitOfWork.Matches.AddMatch(newMatch);
         added.Add(newMatch);

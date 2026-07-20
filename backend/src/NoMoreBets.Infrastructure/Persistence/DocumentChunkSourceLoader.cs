@@ -26,7 +26,6 @@ public sealed class DocumentChunkSourceLoader(AppDbContext db) : IDocumentChunkS
     return await db.Match
       .AsSplitQuery()
       .Include(m => m.HomeClub)
-        .ThenInclude(c => c.League)
       .Include(m => m.AwayClub)
       .Include(m => m.Stage!)
         .ThenInclude(s => s.Season)
@@ -44,7 +43,6 @@ public sealed class DocumentChunkSourceLoader(AppDbContext db) : IDocumentChunkS
       .AsSplitQuery()
       .Include(a => a.Match)
         .ThenInclude(m => m.HomeClub)
-          .ThenInclude(c => c.League)
       .Include(a => a.Match)
         .ThenInclude(m => m.AwayClub)
       .Include(a => a.Match)

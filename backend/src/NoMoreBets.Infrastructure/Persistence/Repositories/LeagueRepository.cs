@@ -12,22 +12,25 @@ public class LeagueRepository : ILeagueRepository
     _db = db;
   }
 
-  public Task<Season?> GetLatestSeason(int leagueId)
+  public Task<Season?> GetSeasonForDateAsync(int leagueId, DateOnly date)
   {
     return _db.Season
-      .Where(s => s.LeagueId == leagueId)
-      .OrderByDescending(s => s.Id)
+      .Where(s => s.LeagueId == leagueId
+        && (s.StartDate == null || s.StartDate <= date)
+        && (s.EndDate == null || s.EndDate >= date))
+      .OrderByDescending(s => s.StartDate)
+      .ThenByDescending(s => s.Id)
       .FirstOrDefaultAsync();
   }
-  public Task<bool> TableSnapshotExists(int leagueId, DateOnly date)
+  public Task<bool> TableSnapshotExists(int seasonId, DateOnly date)
   {
-    return _db.LeagueTableSnapshot.AnyAsync(s => s.LeagueId == leagueId && s.SnapshotDate == date);
+    return _db.LeagueTableSnapshot.AnyAsync(s => s.SeasonId == seasonId && s.SnapshotDate == date);
   }
 
-  public Task<LeagueTableSnapshot?> GetLatestTableSnapshot(int leagueId)
+  public Task<LeagueTableSnapshot?> GetLatestTableSnapshot(int seasonId)
   {
     return _db.LeagueTableSnapshot
-      .Where(s => s.LeagueId == leagueId)
+      .Where(s => s.SeasonId == seasonId)
       .Include(s => s.Rows)
       .OrderByDescending(s => s.SnapshotDate)
       .FirstOrDefaultAsync();
@@ -69,11 +72,12 @@ public class LeagueRepository : ILeagueRepository
 
   public Task<LeagueTableSnapshot?> GetLatestLeagueTableSnapshotAsync(
     int leagueId,
+    int seasonId,
     CancellationToken cancellationToken = default)
   {
     return _db.LeagueTableSnapshot
       .AsNoTracking()
-      .Where(s => s.LeagueId == leagueId)
+      .Where(s => s.LeagueId == leagueId && s.SeasonId == seasonId)
       .Include(s => s.League)
       .Include(s => s.Rows)
       .ThenInclude(r => r.Club)
@@ -86,12 +90,15 @@ public class LeagueRepository : ILeagueRepository
     return _db.League.AsNoTracking().FirstOrDefaultAsync(l => l.Id == leagueId, cancellationToken);
   }
 
-  public Task<Stage> GetCurrentStage(int leagueId)
+  public Task<Stage> GetStageForDateAsync(int soccerdataLeagueId, DateOnly date)
   {
     return _db.Stage
-         .Where(s => s.Season.League.SoccerdataId == leagueId)
-         .OrderByDescending(s => s.Id)
-         .FirstAsync();
+      .Where(s => s.Season.League.SoccerdataId == soccerdataLeagueId
+        && (s.Season.StartDate == null || s.Season.StartDate <= date)
+        && (s.Season.EndDate == null || s.Season.EndDate >= date))
+      .OrderByDescending(s => s.Season.StartDate)
+      .ThenByDescending(s => s.Id)
+      .FirstAsync();
   }
 
   public async Task AddLeagueTableSnapshot(LeagueTableSnapshot snapshot)

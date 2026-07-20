@@ -39,7 +39,7 @@ public class UpdateDailySummaryHandlerTests
   [Fact]
   public async Task Handle_WhenLatestSummarySameAsRequest_SkipsInsert()
   {
-    var club = new NoMoreBets.Domain.Clubs.Club { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
+    var club = new NoMoreBets.Domain.Clubs.Club { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
     _unitOfWork.Clubs.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult<NoMoreBets.Domain.Clubs.Club?>(club));
     var latestSummary = new ClubDailySummary { Id = 1, ClubId = 1, Summary = "Same summary" };
     _unitOfWork.Clubs.GetDailySummaryAsync(1, null, Arg.Any<CancellationToken>()).Returns(latestSummary);
@@ -53,7 +53,7 @@ public class UpdateDailySummaryHandlerTests
   [Fact]
   public async Task Handle_WhenSummaryDifferent_AddsDailySummaryAndSaveChanges()
   {
-    var club = new NoMoreBets.Domain.Clubs.Club { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
+    var club = new NoMoreBets.Domain.Clubs.Club { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
     _unitOfWork.Clubs.GetByIdAsync(1, Arg.Any<CancellationToken>()).Returns(Task.FromResult<NoMoreBets.Domain.Clubs.Club?>(club));
     _unitOfWork.Clubs.GetDailySummaryAsync(1, null, Arg.Any<CancellationToken>()).Returns((ClubDailySummary?)null);
 

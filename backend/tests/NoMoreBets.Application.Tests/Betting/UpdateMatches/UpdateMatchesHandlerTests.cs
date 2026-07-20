@@ -32,7 +32,8 @@ public class UpdateMatchesHandlerTests
     {
       new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 }
     });
-    _unitOfWork.Leagues.GetCurrentStage(228).Returns(new Stage { Id = 1, SeasonId = 1, Name = "Premier League", SoccerdataId = 13908 });
+    _unitOfWork.Leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
+      .Returns(new Stage { Id = 1, SeasonId = 1, Name = "Premier League", SoccerdataId = 13908 });
   }
 
   [Fact]
@@ -60,9 +61,9 @@ public class UpdateMatchesHandlerTests
     };
     _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
-    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
-    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
-    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetClubsForSeasonAsync(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
 
     var existingMatch = Match.CreateUpcomming(DateTime.SpecifyKind(gameDate, DateTimeKind.Utc), 1, 1, 2);
     existingMatch.BetclicUrl = null;
@@ -93,8 +94,8 @@ public class UpdateMatchesHandlerTests
     };
     _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
-    var clubs = new List<ClubEntity> { new() { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 } };
-    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(clubs));
+    var clubs = new List<ClubEntity> { new() { Id = 2, Name = "Chelsea", SoccerdataId = 2 } };
+    _unitOfWork.Clubs.GetClubsForSeasonAsync(1).Returns(Task.FromResult(clubs));
     _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(Task.FromResult(new List<Match>()));
 
     _matchMatcher.FindBestMatch(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>())
@@ -121,9 +122,9 @@ public class UpdateMatchesHandlerTests
     };
     _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
-    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
-    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
-    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetClubsForSeasonAsync(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
     _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(Task.FromResult(new List<Match>()));
 
     _matchMatcher.FindBestMatch(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>())
@@ -154,10 +155,10 @@ public class UpdateMatchesHandlerTests
     };
     _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
-    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
-    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
+    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", SoccerdataId = 2 };
     var clubs = new List<ClubEntity> { homeClub, awayClub };
-    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(clubs));
+    _unitOfWork.Clubs.GetClubsForSeasonAsync(1).Returns(Task.FromResult(clubs));
     _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(Task.FromResult(new List<Match>()));
 
     _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>())
@@ -188,9 +189,9 @@ public class UpdateMatchesHandlerTests
     };
     _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
-    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
-    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
-    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetClubsForSeasonAsync(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
     _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(Task.FromResult(new List<Match>()));
 
     _matchMatcher.FindBestMatch(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>()).Returns((Match?)null);
@@ -216,9 +217,9 @@ public class UpdateMatchesHandlerTests
     };
     _bookmakerMatchesProvider.GetUpcomingGamesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<UpcomingGame>>(games));
 
-    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", LeagueId = 1, SoccerdataId = 1 };
-    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", LeagueId = 1, SoccerdataId = 2 };
-    _unitOfWork.Clubs.GetClubs(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    var homeClub = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
+    var awayClub = new ClubEntity { Id = 2, Name = "Chelsea", SoccerdataId = 2 };
+    _unitOfWork.Clubs.GetClubsForSeasonAsync(1).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
     _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(Task.FromResult(new List<Match>()));
 
     _matchMatcher.FindBestMatch(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>()).Returns((Match?)null);

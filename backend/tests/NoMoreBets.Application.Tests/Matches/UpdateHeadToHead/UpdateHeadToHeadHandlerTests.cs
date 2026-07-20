@@ -45,7 +45,7 @@ public class UpdateHeadToHeadHandlerTests
     _headToHeadProvider.GetHeadToHeadAsync(1, 2, Arg.Any<CancellationToken>()).Returns(CreateHeadToHeadDto());
     _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
     {
-      new() { Id = 1, SoccerdataId = 1, Name = "Arsenal", LeagueId = 1 }
+      new() { Id = 1, SoccerdataId = 1, Name = "Arsenal" }
     });
 
     var result = await _sut.Handle(new UpdateHeadToHeadCommand(1, 2), CancellationToken.None);
@@ -61,8 +61,8 @@ public class UpdateHeadToHeadHandlerTests
     _headToHeadProvider.GetHeadToHeadAsync(1, 2, Arg.Any<CancellationToken>()).Returns(CreateHeadToHeadDto());
     _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
     {
-      new() { Id = 1, SoccerdataId = 1, Name = "Arsenal", LeagueId = 1 },
-      new() { Id = 2, SoccerdataId = 2, Name = "Chelsea", LeagueId = 1 }
+      new() { Id = 1, SoccerdataId = 1, Name = "Arsenal" },
+      new() { Id = 2, SoccerdataId = 2, Name = "Chelsea" }
     });
     _unitOfWork.Matches.GetHeadToHead(1, 2).Returns((Head2Head?)null);
 
@@ -78,8 +78,8 @@ public class UpdateHeadToHeadHandlerTests
     _headToHeadProvider.GetHeadToHeadAsync(1, 2, Arg.Any<CancellationToken>()).Returns(CreateHeadToHeadDto());
     _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
     {
-      new() { Id = 1, SoccerdataId = 1, Name = "Arsenal", LeagueId = 1 },
-      new() { Id = 2, SoccerdataId = 2, Name = "Chelsea", LeagueId = 1 }
+      new() { Id = 1, SoccerdataId = 1, Name = "Arsenal" },
+      new() { Id = 2, SoccerdataId = 2, Name = "Chelsea" }
     });
     var existing = new Head2Head { Team1Id = 1, Team2Id = 2, Head2HeadJson = "old" };
     _unitOfWork.Matches.GetHeadToHead(1, 2).Returns(existing);

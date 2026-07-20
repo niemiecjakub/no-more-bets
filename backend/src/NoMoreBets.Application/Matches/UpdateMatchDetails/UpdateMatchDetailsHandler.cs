@@ -123,15 +123,16 @@ public class UpdateMatchDetailsHandler(
 
     // Path C: insert new match under the Unknown league (Fotmob-discovered fixtures).
     var allClubs = (await unitOfWork.Clubs.GetClubs().ConfigureAwait(false)).ToList();
-    var unknownLeague = (await unitOfWork.Leagues.GetLeagues().ConfigureAwait(false))
-      .First(l => l.SoccerdataId == League.UnknownSoccerdataId);
+    var stage = await unitOfWork.Leagues.GetStageForDateAsync(
+      League.UnknownSoccerdataId,
+      DateOnly.FromDateTime(matchDate)).ConfigureAwait(false);
 
     var clubsCreated = false;
     (Club homeClub, var homeCreated) = await ResolveOrCreateClubAsync(
-      dto.HomeTeam, allClubs, unknownLeague.Id, cancellationToken).ConfigureAwait(false);
+      dto.HomeTeam, allClubs, stage.SeasonId, cancellationToken).ConfigureAwait(false);
     clubsCreated |= homeCreated;
     (Club awayClub, var awayCreated) = await ResolveOrCreateClubAsync(
-      dto.AwayTeam, allClubs, unknownLeague.Id, cancellationToken).ConfigureAwait(false);
+      dto.AwayTeam, allClubs, stage.SeasonId, cancellationToken).ConfigureAwait(false);
     clubsCreated |= awayCreated;
 
     if (clubsCreated)
@@ -139,7 +140,6 @@ public class UpdateMatchDetailsHandler(
       await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    var stage = await unitOfWork.Leagues.GetCurrentStage(League.UnknownSoccerdataId).ConfigureAwait(false);
     var newMatch = Match.CreateUpcomming(matchDate, stage.Id, homeClub.Id, awayClub.Id);
     await unitOfWork.Matches.AddMatch(newMatch, cancellationToken).ConfigureAwait(false);
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -167,7 +167,7 @@ public class UpdateMatchDetailsHandler(
   private async Task<(Club Club, bool Created)> ResolveOrCreateClubAsync(
     string teamName,
     List<Club> allClubs,
-    int unknownLeagueId,
+    int unknownSeasonId,
     CancellationToken cancellationToken)
   {
     if (allClubs.Count > 0)
@@ -191,15 +191,15 @@ public class UpdateMatchDetailsHandler(
     {
       Name = effectiveName,
       Slug = slug,
-      LeagueId = unknownLeagueId,
       SoccerdataId = soccerdataId,
+      ClubSeasons = [new ClubSeason { SeasonId = unknownSeasonId }],
     };
 
     await unitOfWork.Clubs.AddClubAsync(club, cancellationToken).ConfigureAwait(false);
     allClubs.Add(club);
 
     logger.LogInformation(
-      "Handler {HandlerName} created club '{ClubName}' (Slug={Slug}) in Unknown league for Fotmob team '{TeamName}'.",
+      "Handler {HandlerName} created club '{ClubName}' (Slug={Slug}) in the Unknown season for Fotmob team '{TeamName}'.",
       nameof(UpdateMatchDetailsHandler),
       effectiveName,
       slug,

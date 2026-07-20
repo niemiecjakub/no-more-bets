@@ -9,7 +9,7 @@ using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.UpdateTable;
 
-/// <summary>Command to refresh league table snapshot from FotMob (scrape table + xG, merge, persist). Always updates the latest season (max id) for the given league.</summary>
+/// <summary>Command to refresh the active league season's table snapshot from FotMob.</summary>
 public record UpdateTableCommand(int LeagueId) : IRequest<Unit>;
 
 /// <summary>
@@ -30,19 +30,20 @@ public class UpdateTableHandler(
       nameof(UpdateTableHandler),
       request.LeagueId);
 
-    var season = await unitOfWork.Leagues.GetLatestSeason(request.LeagueId);
+    var snapshotDate = DateOnly.FromDateTime(DateTime.UtcNow);
+    var season = await unitOfWork.Leagues.GetSeasonForDateAsync(request.LeagueId, snapshotDate);
 
     if (season == null)
     {
-      logger.LogError(
-        "Handler {HandlerName} found no season for league {LeagueId}",
+      logger.LogInformation(
+        "Handler {HandlerName} skipped league {LeagueId} because no season is active on {SnapshotDate}",
         nameof(UpdateTableHandler),
-        request.LeagueId);
-      throw new InvalidOperationException($"No season found for league {request.LeagueId}.");
+        request.LeagueId,
+        snapshotDate);
+      return Unit.Value;
     }
 
-    var snapshotDate = DateOnly.FromDateTime(DateTime.UtcNow);
-    var snapshotExists = await unitOfWork.Leagues.TableSnapshotExists(request.LeagueId, snapshotDate);
+    var snapshotExists = await unitOfWork.Leagues.TableSnapshotExists(season.Id, snapshotDate);
 
     if (snapshotExists)
     {
@@ -54,7 +55,7 @@ public class UpdateTableHandler(
       return Unit.Value;
     }
 
-    var domainClubs = await unitOfWork.Clubs.GetClubs(request.LeagueId);
+    var domainClubs = await unitOfWork.Clubs.GetClubsForSeasonAsync(season.Id);
     var league = (await unitOfWork.Leagues.GetLeagues())
       .FirstOrDefault(l => l.Id == request.LeagueId);
     if (league == null)
@@ -73,7 +74,7 @@ public class UpdateTableHandler(
     var tableClubs = tableTask.Result;
     var xgStats = xgTask.Result;
 
-    var latestSnapshot = await unitOfWork.Leagues.GetLatestTableSnapshot(request.LeagueId) ?? new();
+    var latestSnapshot = await unitOfWork.Leagues.GetLatestTableSnapshot(season.Id) ?? new();
 
     if (latestSnapshot.Rows.Count > 0 && latestSnapshot.Rows.Count == tableClubs.Count)
     {

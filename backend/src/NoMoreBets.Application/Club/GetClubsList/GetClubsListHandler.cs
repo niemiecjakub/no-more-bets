@@ -1,5 +1,6 @@
 using MediatR;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Common.Dto.Clubs;
 
 namespace NoMoreBets.Application.Clubs.GetClubsList;
 
@@ -13,11 +14,26 @@ public sealed class GetClubsListHandler(IUnitOfWork unitOfWork)
     CancellationToken cancellationToken)
   {
     var clubs = await unitOfWork.Clubs
-      .GetClubsWithLeagueOrderedByNameAsync(cancellationToken)
+      .GetClubsWithMembershipsOrderedByNameAsync(cancellationToken)
       .ConfigureAwait(false);
 
     return clubs
-      .Select(c => new ClubDto(c.Id, c.Name, c.LeagueId, c.League.Name, c.Slug, c.League.Slug))
+      .Select(c => new ClubDto(
+        c.Id,
+        c.Name,
+        c.Slug,
+        c.ClubSeasons
+          .OrderByDescending(cs => cs.Season.StartDate ?? DateOnly.MinValue)
+          .ThenByDescending(cs => cs.Season.Id)
+          .Select(cs => new ClubSeasonMembershipDto(
+            cs.SeasonId,
+            cs.Season.Year,
+            cs.Season.StartDate,
+            cs.Season.EndDate,
+            cs.Season.LeagueId,
+            cs.Season.League.Name,
+            cs.Season.League.Slug))
+          .ToList()))
       .ToList();
   }
 }

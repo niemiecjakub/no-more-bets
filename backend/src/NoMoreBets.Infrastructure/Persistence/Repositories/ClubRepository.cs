@@ -25,7 +25,9 @@ public class ClubRepository : IClubRepository
   public async Task<Club?> GetByIdAsync(int clubId, CancellationToken cancellationToken = default)
   {
     return await _db.Club
-      .Include(c => c.League)
+      .Include(c => c.ClubSeasons)
+      .ThenInclude(cs => cs.Season)
+      .ThenInclude(s => s.League)
       .FirstOrDefaultAsync(c => c.Id == clubId, cancellationToken)
       .ConfigureAwait(false);
   }
@@ -67,25 +69,32 @@ public class ClubRepository : IClubRepository
   public Task<List<Club>> GetBySoccerdataId(IEnumerable<int> soccerdataIds)
   {
     return _db.Club
+      .Include(c => c.ClubSeasons)
       .Where(c => soccerdataIds.Contains(c.SoccerdataId))
       .ToListAsync();
   }
 
-  public async Task<IReadOnlyList<Club>> GetClubsWithLeagueOrderedByNameAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<Club>> GetClubsWithMembershipsOrderedByNameAsync(CancellationToken cancellationToken = default)
   {
     return await _db.Club
       .AsNoTracking()
-      .Include(c => c.League)
+      .Include(c => c.ClubSeasons)
+      .ThenInclude(cs => cs.Season)
+      .ThenInclude(s => s.League)
       .OrderBy(c => c.Name)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
   }
 
-  public Task<List<Club>> GetClubs(int? leagueId = null)
+  public Task<List<Club>> GetClubs()
   {
-    var query = _db.Club.AsQueryable();
-    if (leagueId.HasValue)
-      query = query.Where(c => c.LeagueId == leagueId.Value);
-    return query.ToListAsync();
+    return _db.Club.ToListAsync();
+  }
+
+  public Task<List<Club>> GetClubsForSeasonAsync(int seasonId)
+  {
+    return _db.Club
+      .Where(c => c.ClubSeasons.Any(cs => cs.SeasonId == seasonId))
+      .ToListAsync();
   }
 }

@@ -20,11 +20,12 @@ public class LeaguesController(IMediator mediator) : ControllerBase
   [HttpGet("leagues/{leagueId:int}/table")]
   public async Task<ActionResult<LeagueTableDto>> GetLeagueTable(
     int leagueId,
+    [FromQuery] int seasonId,
     [FromQuery] int? clubId,
     CancellationToken cancellationToken = default)
   {
     var table = await mediator
-      .Send(new GetLeagueTableDisplayQuery(leagueId, clubId), cancellationToken)
+      .Send(new GetLeagueTableDisplayQuery(leagueId, seasonId, clubId), cancellationToken)
       .ConfigureAwait(false);
 
     if (table == null)

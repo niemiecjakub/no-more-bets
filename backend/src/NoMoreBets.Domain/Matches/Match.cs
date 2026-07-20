@@ -57,7 +57,7 @@ public class Match : IDocumentChunkSource
   {
     var parts = new List<string>();
 
-    var league = Stage?.Season?.League ?? HomeClub.League;
+    var league = Stage?.Season?.League;
     if (league is not null && league.Slug != League.UnknownSlug)
     {
       var year = Stage?.Season?.Year;
@@ -100,10 +100,9 @@ public class Match : IDocumentChunkSource
 
   public DocumentChunkMetadata BuildMetadata()
   {
-    var leagueId = Stage?.Season.LeagueId ?? HomeClub.LeagueId;
     return DocumentChunkMetadata.CreateBuilder()
       .WithClubIds([HomeClubId, AwayClubId])
-      .WithLeagueId(leagueId)
+      .WithLeagueId(Stage?.Season.LeagueId)
       .Build();
   }
 }

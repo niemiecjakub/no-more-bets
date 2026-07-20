@@ -6,7 +6,7 @@ using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.GetLeagueTableDisplay;
 
-public record GetLeagueTableDisplayQuery(int LeagueId, int? ClubId = null) : IRequest<LeagueTableDto?>;
+public record GetLeagueTableDisplayQuery(int LeagueId, int SeasonId, int? ClubId = null) : IRequest<LeagueTableDto?>;
 
 public sealed class GetLeagueTableDisplayHandler(
   IUnitOfWork unitOfWork,
@@ -18,7 +18,7 @@ public sealed class GetLeagueTableDisplayHandler(
     CancellationToken cancellationToken)
   {
     var snapshot = await unitOfWork.Leagues
-      .GetLatestLeagueTableSnapshotAsync(request.LeagueId, cancellationToken)
+      .GetLatestLeagueTableSnapshotAsync(request.LeagueId, request.SeasonId, cancellationToken)
       .ConfigureAwait(false);
 
     if (snapshot == null)
@@ -41,7 +41,7 @@ public sealed class GetLeagueTableDisplayHandler(
 
     var club = await unitOfWork.Clubs.GetByIdAsync(request.ClubId.Value, cancellationToken)
       .ConfigureAwait(false);
-    if (club is null || club.LeagueId != request.LeagueId)
+    if (club is null || club.ClubSeasons.All(cs => cs.SeasonId != request.SeasonId))
       return null;
 
     var ownGroup = worldCupGroupRegistry.GetGroupForClubName(club.Name);

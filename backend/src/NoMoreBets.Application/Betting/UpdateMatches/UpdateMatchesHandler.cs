@@ -38,8 +38,7 @@ public class UpdateMatchesHandler(
       return added;
     }
 
-    var allClubs = await unitOfWork.Clubs.GetClubs(league.Id);
-    var stage = await unitOfWork.Leagues.GetCurrentStage(league.SoccerdataId);
+    var clubsBySeason = new Dictionary<int, List<Club>>();
 
     foreach (var game in upcomingGames)
     {
@@ -62,6 +61,15 @@ public class UpdateMatchesHandler(
         continue;
       }
 
+      var stage = await unitOfWork.Leagues.GetStageForDateAsync(
+        league.SoccerdataId,
+        DateOnly.FromDateTime(gameDayUtc));
+      if (!clubsBySeason.TryGetValue(stage.SeasonId, out var allClubs))
+      {
+        allClubs = await unitOfWork.Clubs.GetClubsForSeasonAsync(stage.SeasonId);
+        clubsBySeason.Add(stage.SeasonId, allClubs);
+      }
+
       Club homeClub;
       Club awayClub;
       try
@@ -79,12 +87,6 @@ public class UpdateMatchesHandler(
           ex.TeamName);
         continue;
       }
-      if (homeClub.LeagueId != awayClub.LeagueId)
-      {
-        throw new InvalidOperationException(
-          $"Matched clubs '{homeClub.Name}' and '{awayClub.Name}' belong to different leagues.");
-      }
-
       var newMatch = Match.CreateUpcomming(gameDayUtc, stage.Id, homeClub.Id, awayClub.Id);
       newMatch.BetclicUrl = game.Url;
       await unitOfWork.Matches.AddMatch(newMatch);

@@ -38,8 +38,33 @@ public class GetClubByIdHandlerTests
       Id = 5,
       Name = "Arsenal",
       Slug = "arsenal",
-      LeagueId = 1,
-      League = new League { Id = 1, Name = "Premier League", Slug = "premier-league" },
+      ClubSeasons =
+      [
+        new ClubSeason
+        {
+          SeasonId = 1,
+          Season = new Season
+          {
+            Id = 1,
+            LeagueId = 1,
+            Year = "2025-2026",
+            StartDate = new DateOnly(2025, 8, 15),
+            League = new League { Id = 1, Name = "Premier League", Slug = "premier-league" }
+          }
+        },
+        new ClubSeason
+        {
+          SeasonId = 9,
+          Season = new Season
+          {
+            Id = 9,
+            LeagueId = 2,
+            Year = "2026-2027",
+            StartDate = new DateOnly(2026, 7, 24),
+            League = new League { Id = 2, Name = "Ekstraklasa", Slug = "ekstraklasa" }
+          }
+        }
+      ]
     };
     _clubs.GetByIdAsync(5, Arg.Any<CancellationToken>()).Returns(club);
 
@@ -48,7 +73,9 @@ public class GetClubByIdHandlerTests
     result.Should().NotBeNull();
     result!.Id.Should().Be(5);
     result.Name.Should().Be("Arsenal");
-    result.LeagueName.Should().Be("Premier League");
-    result.LeagueSlug.Should().Be("premier-league");
+    result.Memberships.Should().HaveCount(2);
+    result.Memberships[0].SeasonId.Should().Be(9);
+    result.Memberships[0].LeagueName.Should().Be("Ekstraklasa");
+    result.Memberships[1].LeagueName.Should().Be("Premier League");
   }
 }

@@ -3,8 +3,9 @@ using NoMoreBets.Domain.Matches;
 namespace NoMoreBets.Domain.Clubs;
 public interface IClubRepository
 {
-  Task<IReadOnlyList<Club>> GetClubsWithLeagueOrderedByNameAsync(CancellationToken cancellationToken = default);
-  public Task<List<Club>> GetClubs(int? leagueId = null);
+  Task<IReadOnlyList<Club>> GetClubsWithMembershipsOrderedByNameAsync(CancellationToken cancellationToken = default);
+  Task<List<Club>> GetClubs();
+  Task<List<Club>> GetClubsForSeasonAsync(int seasonId);
   public Task<List<Club>> GetBySoccerdataId(IEnumerable<int> soccerdataIds);
   public Task<Club?> GetByIdAsync(int clubId, CancellationToken cancellationToken = default);
   public Task<ClubLeagueStats?> GetCurrentClubLeagueStatsAsync(int clubId, DateOnly? date = null, CancellationToken cancellationToken = default);

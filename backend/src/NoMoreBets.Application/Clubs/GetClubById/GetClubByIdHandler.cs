@@ -1,5 +1,6 @@
 using MediatR;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Common.Dto.Clubs;
 
 namespace NoMoreBets.Application.Clubs.GetClubById;
 
@@ -22,9 +23,18 @@ public sealed class GetClubByIdHandler(IUnitOfWork unitOfWork)
     return new ClubDetailDto(
       club.Id,
       club.Name,
-      club.LeagueId,
-      club.League.Name,
       club.Slug,
-      club.League.Slug);
+      club.ClubSeasons
+        .OrderByDescending(cs => cs.Season.StartDate ?? DateOnly.MinValue)
+        .ThenByDescending(cs => cs.Season.Id)
+        .Select(cs => new ClubSeasonMembershipDto(
+          cs.SeasonId,
+          cs.Season.Year,
+          cs.Season.StartDate,
+          cs.Season.EndDate,
+          cs.Season.LeagueId,
+          cs.Season.League.Name,
+          cs.Season.League.Slug))
+        .ToList());
   }
 }

@@ -41,18 +41,17 @@ public class DocumentChunkSourceTests
   }
 
   [Fact]
-  public void BuildEmbeddingText_MatchWithoutSeason_IncludesLeagueOnly()
+  public void BuildEmbeddingText_MatchWithoutSeason_OmitsLeague()
   {
     // Arrange
     var match = CreateMatch(homeGoals: 1, awayGoals: 0);
     match.Stage = null;
-    match.HomeClub.League = new League { Id = 7, Name = "Premier League", Slug = "premier-league" };
 
     // Act
     var text = match.BuildEmbeddingText();
 
     // Assert
-    text.Should().Be("Premier League | Arsenal vs Chelsea | 2026-03-15 | Finished | 1-0");
+    text.Should().Be("Arsenal vs Chelsea | 2026-03-15 | Finished | 1-0");
   }
 
   [Fact]
@@ -210,8 +209,8 @@ public class DocumentChunkSourceTests
           League = new League { Id = 7, Name = "Premier League", Slug = "premier-league" }
         }
       },
-      HomeClub = new ClubEntity { Id = 10, Name = "Arsenal", LeagueId = 7 },
-      AwayClub = new ClubEntity { Id = 20, Name = "Chelsea", LeagueId = 7 },
+      HomeClub = new ClubEntity { Id = 10, Name = "Arsenal" },
+      AwayClub = new ClubEntity { Id = 20, Name = "Chelsea" },
       MatchDate = new DateTime(2026, 3, 15, 15, 0, 0, DateTimeKind.Utc),
       MatchStatus = MatchStatus.Finished,
       HomeGoals = homeGoals,

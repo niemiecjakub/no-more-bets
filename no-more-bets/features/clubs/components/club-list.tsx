@@ -25,9 +25,19 @@ export function ClubList({ clubs }: ClubListProps) {
             <SlugIcon kind="club" slug={club.slug} alt={club.name} />
             <span className="truncate">{club.name}</span>
           </span>
-          <span className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <SlugIcon kind="league" slug={club.leagueSlug} alt={club.leagueName} />
-            <span className="truncate">{club.leagueName}</span>
+          <span className="flex flex-wrap items-center justify-end gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+            {club.memberships.length > 0 ? (
+              club.memberships.map((membership) => (
+                <span key={membership.seasonId} className="flex items-center gap-2">
+                  <SlugIcon kind="league" slug={membership.leagueSlug} alt={membership.leagueName} />
+                  <span className="truncate">
+                    {membership.leagueName} {membership.seasonYear}
+                  </span>
+                </span>
+              ))
+            ) : (
+              <span>No season memberships</span>
+            )}
           </span>
         </li>
       ))}

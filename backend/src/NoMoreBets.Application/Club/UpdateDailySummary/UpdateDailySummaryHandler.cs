@@ -32,7 +32,7 @@ public class UpdateDailySummaryHandler(
       return Unit.Value;
     }
 
-    if (club.League?.Slug == League.FifaWorldCupSlug)
+    if (club.ClubSeasons.Any(cs => cs.Season.League.Slug == League.FifaWorldCupSlug))
     {
       logger.LogInformation(
         "Handler {HandlerName} skipping daily summary for national team ClubId={ClubId} ({ClubName})",
