@@ -12,6 +12,8 @@ export interface BetSlipListItem {
   statusName: string;
   selections: BetSelectionItem[];
   agentSessionId: number | null;
+  rationale?: string | null;
+  estimatedWinProbability?: number | null;
 }
 
 /**
@@ -77,6 +79,8 @@ export interface BetSlipSummaryDto {
   potentialPayout: number;
   status: BetStatusId | 0;
   selections: BetSelectionSummaryDto[];
+  rationale?: string | null;
+  estimatedWinProbability?: number | null;
 }
 
 export interface BetSelectionSummaryDto {
@@ -190,4 +194,6 @@ export interface BankrollEntryBetDetailsDto {
   statusName: string;
   agentSessionId: number | null;
   selections: BetSelectionItem[];
+  rationale?: string | null;
+  estimatedWinProbability?: number | null;
 }

@@ -9,4 +9,6 @@ public record BetSlipListItemDto(
   int StatusId,
   string StatusName,
   IReadOnlyList<BetSelectionItemDto> Selections,
-  int? AgentSessionId);
+  int? AgentSessionId,
+  string? Rationale,
+  decimal? EstimatedWinProbability);

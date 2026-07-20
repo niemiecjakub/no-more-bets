@@ -34,5 +34,7 @@ public static class BetSlipListItemMapper
           sel.StatusId,
           sel.BetStatusEntity.Name))
         .ToList(),
-      slip.AgentSessionId);
+      slip.AgentSessionId,
+      slip.Rationale,
+      slip.EstimatedWinProbability);
 }

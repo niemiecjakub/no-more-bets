@@ -105,6 +105,25 @@ export function AgentBankrollRelatedBet({
           </div>
         </div>
 
+        {details.estimatedWinProbability != null || details.rationale ? (
+          <div className="space-y-2 border-b border-zinc-100 px-4 py-3 text-sm dark:border-zinc-800/80">
+            {details.estimatedWinProbability != null ? (
+              <div>
+                <span className="text-zinc-500 dark:text-zinc-400">Est. win probability</span>
+                <p className="font-semibold tabular-nums text-foreground">
+                  {(details.estimatedWinProbability * 100).toFixed(0)}%
+                </p>
+              </div>
+            ) : null}
+            {details.rationale ? (
+              <div>
+                <span className="text-zinc-500 dark:text-zinc-400">Rationale</span>
+                <p className="mt-0.5 whitespace-pre-wrap text-foreground">{details.rationale}</p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
         <ul className="px-4 py-3">
           {details.selections.map((selection, idx) => {
             const homeLogoSlug = clubLogoSlugSegment(

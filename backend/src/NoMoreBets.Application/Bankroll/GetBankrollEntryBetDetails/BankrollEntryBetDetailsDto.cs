@@ -12,4 +12,6 @@ public record BankrollEntryBetDetailsDto(
   int StatusId,
   string StatusName,
   int? AgentSessionId,
-  IReadOnlyList<BetSelectionItemDto> Selections);
+  IReadOnlyList<BetSelectionItemDto> Selections,
+  string? Rationale,
+  decimal? EstimatedWinProbability);

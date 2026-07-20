@@ -32,6 +32,8 @@ public sealed class GetBankrollEntryBetDetailsHandler(IUnitOfWork unitOfWork)
       listItem.StatusId,
       listItem.StatusName,
       listItem.AgentSessionId,
-      listItem.Selections);
+      listItem.Selections,
+      listItem.Rationale,
+      listItem.EstimatedWinProbability);
   }
 }
