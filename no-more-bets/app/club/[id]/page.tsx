@@ -40,10 +40,15 @@ function resolveRequestedTab(searchParams: URLSearchParams): ClubTab | null {
   return null;
 }
 
+function isKnownMembership(membership: ClubSeasonMembership): boolean {
+  return membership.leagueSlug !== "unknown" && membership.leagueName !== "Unknown";
+}
+
 function resolveDefaultMembership(memberships: ClubSeasonMembership[]): ClubSeasonMembership | null {
+  const known = memberships.filter(isKnownMembership);
   const today = new Date().toISOString().slice(0, 10);
-  return memberships.find((membership) => !membership.startDate || membership.startDate <= today)
-    ?? memberships.at(-1)
+  return known.find((membership) => !membership.startDate || membership.startDate <= today)
+    ?? known.at(-1)
     ?? null;
 }
 
@@ -259,7 +264,8 @@ export default function ClubPage() {
   const [nextMatch, setNextMatch] = useState<ClubNextMatch | null | undefined>();
   const [betStats, setBetStats] = useState<ClubBetSelectionStats | undefined>();
   const requestedSeasonId = Number(searchParams.get("seasonId"));
-  const selectedMembership = club?.memberships.find(
+  const knownMemberships = club?.memberships.filter(isKnownMembership) ?? [];
+  const selectedMembership = knownMemberships.find(
     (membership) => membership.seasonId === requestedSeasonId,
   ) ?? (club ? resolveDefaultMembership(club.memberships) : null);
   const displayedLeagueTable = leagueTable?.seasonId === selectedMembership?.seasonId
@@ -328,7 +334,7 @@ export default function ClubPage() {
       .then((data) => {
         if (!isMounted) return;
         setClub(data);
-        if (data.memberships.length === 0) {
+        if (data.memberships.filter(isKnownMembership).length === 0) {
           setSectionLoading((prev) => ({ ...prev, leagueTable: false }));
         }
         setClubError(null);
@@ -497,7 +503,7 @@ export default function ClubPage() {
                 onChange={(event) => handleSeasonChange(Number(event.target.value))}
                 className="max-w-full rounded-md border border-zinc-200 bg-white px-2 py-1 text-sm text-foreground dark:border-zinc-700 dark:bg-zinc-900"
               >
-                {club.memberships.map((membership) => (
+                {knownMemberships.map((membership) => (
                   <option key={membership.seasonId} value={membership.seasonId}>
                     {membership.leagueName} {membership.seasonYear}
                   </option>

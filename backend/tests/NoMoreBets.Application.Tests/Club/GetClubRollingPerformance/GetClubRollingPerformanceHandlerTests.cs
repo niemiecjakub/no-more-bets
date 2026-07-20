@@ -66,7 +66,6 @@ public class GetClubRollingPerformanceHandlerTests
     result.TopPlayers[0].AvgRating.Should().Be(8.5);
     result.TopPlayers[1].Player.Should().Be("Low");
     result.TopPlayers[1].AvgRating.Should().Be(6.5);
-    result.Matches.Should().BeEmpty();
   }
 
   [Fact]

@@ -25,8 +25,7 @@ public sealed class GetClubRollingPerformanceHandler(IUnitOfWork unitOfWork, ILo
         TopPlayers: Array.Empty<PlayerRecentRatings>(),
         RecentTeamRatings: Array.Empty<double>(),
         AvgTeamRating: 0,
-        Formations: Array.Empty<string>(),
-        Matches: Array.Empty<TeamPerformanceMatchStats>());
+        Formations: Array.Empty<string>());
     }
 
     var matchesByDateAsc = matches.OrderBy(m => m.MatchDate).ToList();
@@ -88,7 +87,6 @@ public sealed class GetClubRollingPerformanceHandler(IUnitOfWork unitOfWork, ILo
       TopPlayers: topPlayers,
       RecentTeamRatings: recentTeamRatings,
       AvgTeamRating: avgTeamRating,
-      Formations: formations,
-      Matches: Array.Empty<TeamPerformanceMatchStats>());
+      Formations: formations);
   }
 }
