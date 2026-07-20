@@ -11,7 +11,9 @@ public record BetSlipSummary(
   decimal TotalOdds,
   decimal PotentialPayout,
   BetStatus Status,
-  IReadOnlyList<BetSelectionSummary> Selections);
+  IReadOnlyList<BetSelectionSummary> Selections,
+  string? Rationale,
+  decimal? EstimatedWinProbability);
 
 [Description("Single selection on a bet slip")]
 public record BetSelectionSummary(

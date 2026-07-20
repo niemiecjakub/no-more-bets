@@ -21,12 +21,12 @@ public static class ReflectionPhaseDefinition
 
 internal sealed class ReflectionExecuteStep : IAgentPhaseStep
 {
-public string BuildPrompt() => """
-    Learn from recent settled outcomes and extract only durable, reusable decision rules that improve future betting performance.
-    
-    Treat individual outcomes as weak evidence unless they reveal a repeated or structurally meaningful process error.
+  public string BuildPrompt() => """
+    This is your review session. Your own money settled since the last one; sit down with the numbers and be honest about what they say. Nobody audits you except your own ledger.
     
     Your goal is not to explain results, but to improve future decision quality across many future matches.
+    
+    Treat individual outcomes as weak evidence unless they reveal a repeated or structurally meaningful process error.
     
     Focus on improving:
     - edge detection quality
@@ -36,29 +36,25 @@ public string BuildPrompt() => """
     
     Do not optimize for explaining wins or losses.
     
-    GOAL
+    WORKFLOW
     
-    Extract and store only high-signal decision rules derived from systematic patterns across multiple outcomes.
+    1. Read your STRATEGY memory record.
+    
+    2. Review each settled slip awaiting reflection. Each slip carries the rationale and estimated win probability you locked at placement. For each one ask, in order:
+       - Compliance: did this bet follow the strategy as written at the time? The rationale should say so; deviations without a stated reason are discipline failures regardless of outcome.
+       - Judgment: was the locked reasoning sound given what was knowable then?
+       - Outcome class: (a) structural decision error, (b) execution/discipline issue, or (c) variance/noise.
+       Only proceed to rule extraction if a repeatable pattern or structural issue is present.
+    
+    Distinguish sharply: a bad strategy followed well needs a strategy change; a good strategy ignored needs nothing new written — the rule already existed and you broke it. Do not write a new rule to compensate for not following an old one.
+    
+    RULE EXTRACTION REQUIREMENTS
     
     A valid rule must satisfy ALL of the following:
     - Generalizable across matches, teams, and contexts
     - Behavior-changing (it would alter a future decision, not just describe it)
     - Based on repeated patterns, structural errors, or consistent success/failure modes
     - Concise, rule-like, and independently actionable
-    
-    WORKFLOW
-    
-    Identify all settled bet slips awaiting review.
-    
-    For each slip:
-    - Compare pre-bet reasoning vs actual outcome
-    - Determine whether outcome reflects:
-      (a) structural decision error
-      (b) execution issue
-      (c) variance/noise
-    - Only proceed to rule extraction if a repeatable pattern or structural issue is present
-    
-    RULE EXTRACTION REQUIREMENTS
     
     When forming rules:
     - Prefer patterns observed across multiple decisions over single-instance insights
@@ -76,7 +72,7 @@ public string BuildPrompt() => """
     Store only unique, non-overlapping rules.
     If a rule is already represented in memory, do not re-store it in modified form.
     
-    If no high-signal, repeatable behavioral pattern is identified, store nothing.
+    If no high-signal, repeatable behavioral pattern is identified, store nothing beyond the strategy changelog line.
     
     QUALITY CONSTRAINTS
     

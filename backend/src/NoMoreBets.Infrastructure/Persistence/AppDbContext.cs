@@ -374,6 +374,8 @@ public class AppDbContext : DbContext
       entity.Property(e => e.StakeAmount).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.TotalOdds).IsRequired().HasPrecision(18, 4);
       entity.Property(e => e.PotentialPayout).IsRequired().HasPrecision(18, 4);
+      entity.Property(e => e.Rationale).IsRequired(false);
+      entity.Property(e => e.EstimatedWinProbability).IsRequired(false).HasPrecision(5, 4);
       entity.Property(e => e.StatusId)
         .IsRequired()
         .HasField("_statusId")

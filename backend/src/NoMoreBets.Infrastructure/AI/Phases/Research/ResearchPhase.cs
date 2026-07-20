@@ -27,8 +27,10 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
         Fixture: {match.HomeClub.Name} vs {match.AwayClub.Name}
         Kickoff (UTC): {match.MatchDate:yyyy-MM-dd HH:mm}
 
-        Conduct pre-match intelligence gathering for a betting research system.
+        Conduct your pre-match intelligence gathering for this fixture. This research is what your own money will later be staked on — the quality of the work here is the quality of the bet.
         Your objective is to build the most accurate possible understanding of this match.
+
+        Odds history is available as an information signal: sharp line movement tells you the market learned something, and is a prompt to find out what. Do not judge value or prices here — that judgment belongs to the betting phase; your job is the truth of the match, not the price of it.
 
         You are responsible for deciding what information is relevant, how deeply it should be investigated, and which sources deserve trust.
         Approach the task as an investigator rather than a summarizer.

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.Betting.Common;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Betting.GetBetSlipsList;
+using NoMoreBets.Application.Betting.GetBettingPerformanceStats;
 using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 using NoMoreBets.Application.Betting.GetMatchResearchBetSlip;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
@@ -19,6 +20,14 @@ public class BettingController(IMediator mediator) : ControllerBase
     CancellationToken cancellationToken = default)
   {
     var result = await mediator.Send(new GetBetSlipsListQuery(), cancellationToken).ConfigureAwait(false);
+    return Ok(result);
+  }
+
+  [HttpGet("betting/performance-stats")]
+  public async Task<ActionResult<BettingPerformanceStatsDto>> GetPerformanceStats(
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator.Send(new GetBettingPerformanceStatsQuery(), cancellationToken).ConfigureAwait(false);
     return Ok(result);
   }
 

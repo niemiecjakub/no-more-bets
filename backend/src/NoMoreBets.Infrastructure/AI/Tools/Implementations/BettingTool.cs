@@ -118,12 +118,28 @@ public class BettingTool
     decimal stakeAmount,
     [Description("JSON object with property betSelections: an array of selection objects. Each object must have: matchId (int, from GetAvailableMatches), eventType (string, from GetCurrentOdds eventTypeName), eventOption (string, from GetCurrentOdds option label). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
     string betSelectionsJson,
+    [Description("Why you are placing this bet: the edge you see, why this stake, and how it fits your strategy. This is locked with the slip and reviewed against the outcome during reflection.")]
+    string rationale,
+    [Description("Your honest estimated probability (0-1, exclusive) that this whole slip wins. Locked with the slip; used to score your calibration over time.")]
+    decimal estimatedWinProbability,
     CancellationToken cancellationToken = default)
   {
     if (stakeAmount <= 0m)
     {
       _logger.LogWarning("Invalid stake amount {StakeAmount} while placing a bet slip.", stakeAmount);
       throw new ArgumentException("stakeAmount must be greater than zero.", nameof(stakeAmount));
+    }
+
+    if (string.IsNullOrWhiteSpace(rationale))
+    {
+      _logger.LogWarning("Missing rationale while placing a bet slip.");
+      throw new ArgumentException("rationale is required. State the edge, the stake reasoning, and strategy fit.", nameof(rationale));
+    }
+
+    if (estimatedWinProbability is <= 0m or >= 1m)
+    {
+      _logger.LogWarning("Invalid estimated win probability {Probability} while placing a bet slip.", estimatedWinProbability);
+      throw new ArgumentException("estimatedWinProbability must be between 0 and 1 (exclusive).", nameof(estimatedWinProbability));
     }
 
     List<BetSelectionRecord>? betSelections;
@@ -175,6 +191,8 @@ public class BettingTool
       StakeAmount = stakeAmount,
       TotalOdds = totalOdds,
       PotentialPayout = stakeAmount * totalOdds,
+      Rationale = rationale.Trim(),
+      EstimatedWinProbability = estimatedWinProbability,
       StatusId = (int)BetStatus.Pending,
       CreatedAt = DateTime.UtcNow,
       Selections = new List<BetSelection>()

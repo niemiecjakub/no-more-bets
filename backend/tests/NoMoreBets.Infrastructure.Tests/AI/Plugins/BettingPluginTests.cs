@@ -200,7 +200,7 @@ public class BettingToolTests
     const string json =
       """{"betSelections":[{"matchId":1,"eventType":"bothTeamsToScore","eventOption":"bothTeamsToScore_Yes"}]}""";
 
-    var act = async () => await _sut.PlaceBetSlip(0m, json, CancellationToken.None);
+    var act = async () => await _sut.PlaceBetSlip(0m, json, "test rationale", 0.5m, CancellationToken.None);
 
     await act.Should().ThrowAsync<ArgumentException>()
       .WithMessage("*stakeAmount must be greater than zero*")
@@ -215,7 +215,7 @@ public class BettingToolTests
       """{"betSelections":[{"matchId":1,"eventType":"bothTeamsToScore","eventOption":"bothTeamsToScore_Yes"}]}""";
     _bankroll.GetCurrentBalanceAsync(Arg.Any<CancellationToken>()).Returns(40m);
 
-    var act = async () => await _sut.PlaceBetSlip(50m, json, CancellationToken.None);
+    var act = async () => await _sut.PlaceBetSlip(50m, json, "test rationale", 0.5m, CancellationToken.None);
 
     await act.Should().ThrowAsync<ArgumentException>()
       .WithMessage("*cannot exceed the current bankroll balance*");
@@ -231,13 +231,15 @@ public class BettingToolTests
     _betting.GetCurrentOddsForSelectionAsync(1, BettingEventType.BothTeamsToScore, BettingEventOption.BothTeamsToScore_Yes, Arg.Any<CancellationToken>())
       .Returns(2.0m);
 
-    await _sut.PlaceBetSlip(25m, json, CancellationToken.None);
+    await _sut.PlaceBetSlip(25m, json, "BTTS edge from research", 0.55m, CancellationToken.None);
 
     await _betting.Received(1).AddBetSlipAsync(
       Arg.Is<BetSlip>(s =>
         s.StakeAmount == 25m
         && s.TotalOdds == 2.0m
         && s.PotentialPayout == 50m
+        && s.Rationale == "BTTS edge from research"
+        && s.EstimatedWinProbability == 0.55m
         && s.Bankrolls.Count == 1
         && s.Bankrolls.Single().Amount == 25m
         && s.Bankrolls.Single().Direction == BankrollFlow.Out

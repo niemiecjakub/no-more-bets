@@ -15,6 +15,8 @@ public class BetSlip
   public decimal StakeAmount { get; set; }
   public decimal TotalOdds { get; set; }
   public decimal PotentialPayout { get; set; }
+  public string? Rationale { get; set; }
+  public decimal? EstimatedWinProbability { get; set; }
 
   public int StatusId
   {

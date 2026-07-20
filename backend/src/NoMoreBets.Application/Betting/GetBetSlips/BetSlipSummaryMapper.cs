@@ -32,5 +32,7 @@ public static class BetSlipSummaryMapper
             sel.Match.AwayClub.Name),
           sel.OddsAtPlacement,
           sel.BetStatus))
-        .ToList());
+        .ToList(),
+      s.Rationale,
+      s.EstimatedWinProbability);
 }

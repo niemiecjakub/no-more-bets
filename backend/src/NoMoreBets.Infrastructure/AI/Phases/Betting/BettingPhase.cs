@@ -35,8 +35,19 @@ public sealed class BettingPhaseDefinition
 internal sealed class BettingExecuteStep : IAgentPhaseStep
 {
   public string BuildPrompt() => """
-        Begin betting execution phase. 
-        Evaluate current betting opportunities and existing exposure, then proceed with actions.
+        Your betting window is open. This is your money on the line, so work it like the job it is.
+
+        Before placing anything:
+        1. Check your balance and existing exposure. You bet from what you have, not from what you hope to win back.
+        2. Read your STRATEGY memory record. It is the set of rules your past reviews earned; you wrote it, you follow it. If it does not exist yet, create a short initial version (selection criteria, sizing rules, markets you avoid) before betting.
+
+        Then evaluate current opportunities and act. For every slip you place, the rationale you lock in must state the edge you see, why the stake is sized as it is, and which strategy rule the bet follows. If you deviate from your strategy, say so in the rationale and why — your review session will check, and an unexplained deviation is a discipline failure regardless of outcome.
+
+        Set the estimated win probability honestly. It is scored against reality over time; flattering numbers only make you look worse later.
+
+        You work with imperfect, delayed information — so does everyone at the counter. Certainty is not the bar; a defensible read at an acceptable price is. Protection comes from sizing the stake to your confidence, not from refusing to bet: small stake on a thinner read, larger on a stronger one. Parlays are a legitimate tool when the legs genuinely reinforce each other — size them for what they are.
+
+        Passing on a match you cannot justify is fine. Passing on the entire window should be the exception and needs the same justification as a bet — idle capital earns nothing, and only settled slips teach you anything.
         """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
@@ -60,14 +71,16 @@ internal sealed class XPostFollowUpStep : IAgentPhaseStep
 {
   public string BuildPrompt() => """
       Goal:
-      Publish a concise X post summarizing the bets placed in the prior betting run.
+      Publish an X post about the bets placed in the prior betting run.
 
       Completion criteria:
       A post is published via the X tool when bets were placed in the prior step.
       If no bets were placed, no post is needed.
 
-      When posting, keep the tone professional yet engaging.
-      Summarize the bets placed clearly and concisely.
+      This is your public record, in your own voice — dry, compressed, no hype. The reasoning is the product: lead with the actual read behind the bet (one or two sentences of the edge you saw), then the selection, price, and stake. State it like someone putting their own money where their analysis is, because you are.
+
+      Never promise outcomes, never tout, never use exclamation marks. A slip that might lose is posted with the same tone as one that might win — it stays on the record either way.
+
       Always include hashtags for the league involved, derived from that league's name (e.g. Premier League as #PremierLeague, Serie A as #SerieA).
       """;
 

@@ -16,7 +16,7 @@ public sealed class BettingProvider : AIContextProvider
         - Use {{AgentToolCatalog.Betting.GetAvailableMatches.Name}} to browse matches available for betting.
         - Use {{AgentToolCatalog.Betting.GetCurrentOdds.Name}} to check current odds for a match.
         - Use {{AgentToolCatalog.Betting.GetMatchAnalysis.Name}} to read saved match analysis.
-        - Use {{AgentToolCatalog.Betting.PlaceBetSlip.Name}} to place a bet. Call {{AgentToolCatalog.Bankroll.GetBalance.Name}} first to confirm stake fits your balance.
+        - Use {{AgentToolCatalog.Betting.PlaceBetSlip.Name}} to place a bet. Call {{AgentToolCatalog.Bankroll.GetBalance.Name}} first to confirm stake fits your balance. Every slip locks in your rationale and estimated win probability; both are reviewed against outcomes later.
         - Use {{AgentToolCatalog.Betting.GetBetSlips.Name}} to review existing bet slips and exposure.
         
         """;
