@@ -355,6 +355,7 @@ public class MatchRepository : IMatchRepository
     DateTime? afterMatchDateUtc,
     int? afterId,
     MatchDateSortOrder sortOrder = MatchDateSortOrder.Descending,
+    string? search = null,
     CancellationToken cancellationToken = default)
   {
     var selectedLeagueIds = leagueIds.Distinct().ToArray();
@@ -367,6 +368,14 @@ public class MatchRepository : IMatchRepository
       matchesQuery = matchesQuery.Where(m =>
         m.Stage != null &&
         selectedLeagueIds.Contains(m.Stage.Season.LeagueId));
+
+    if (!string.IsNullOrWhiteSpace(search))
+    {
+      var term = search.Trim().ToLowerInvariant();
+      matchesQuery = matchesQuery.Where(m =>
+        m.HomeClub.Name.ToLower().Contains(term)
+        || m.AwayClub.Name.ToLower().Contains(term));
+    }
 
     if (afterMatchDateUtc is not null && afterId is not null)
     {

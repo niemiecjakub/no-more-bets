@@ -36,7 +36,15 @@ public class GetMatchesPageHandlerTests
     var cursorAt = new DateTime(2026, 5, 1, 12, 0, 0, DateTimeKind.Utc);
     var leagueIds = new[] { 1, 2 };
     _matches
-      .GetMatchesPageAsync(10, 3, leagueIds, cursorAt, 5, MatchDateSortOrder.Descending, Arg.Any<CancellationToken>())
+      .GetMatchesPageAsync(
+        10,
+        3,
+        leagueIds,
+        cursorAt,
+        5,
+        MatchDateSortOrder.Descending,
+        null,
+        Arg.Any<CancellationToken>())
       .Returns(new MatchPage(Array.Empty<DomainMatch>(), false));
     _mediator
       .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
@@ -46,7 +54,15 @@ public class GetMatchesPageHandlerTests
       new GetMatchesPageQuery(10, 3, leagueIds, cursorAt, 5),
       CancellationToken.None);
 
-    await _matches.Received(1).GetMatchesPageAsync(10, 3, leagueIds, cursorAt, 5, MatchDateSortOrder.Descending, Arg.Any<CancellationToken>());
+    await _matches.Received(1).GetMatchesPageAsync(
+      10,
+      3,
+      leagueIds,
+      cursorAt,
+      5,
+      MatchDateSortOrder.Descending,
+      null,
+      Arg.Any<CancellationToken>());
     await _embedding.DidNotReceive().EmbedAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
   }
 
@@ -55,7 +71,15 @@ public class GetMatchesPageHandlerTests
   {
     var match = CreateMatch(7, "Arsenal", "Chelsea");
     _matches
-      .GetMatchesPageAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<IReadOnlyList<int>>(), Arg.Any<DateTime?>(), Arg.Any<int?>(), Arg.Any<MatchDateSortOrder>(), Arg.Any<CancellationToken>())
+      .GetMatchesPageAsync(
+        Arg.Any<int>(),
+        Arg.Any<int?>(),
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<DateTime?>(),
+        Arg.Any<int?>(),
+        Arg.Any<MatchDateSortOrder>(),
+        Arg.Any<string?>(),
+        Arg.Any<CancellationToken>())
       .Returns(new MatchPage(new List<DomainMatch> { match }, false));
     _mediator
       .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
@@ -86,7 +110,15 @@ public class GetMatchesPageHandlerTests
     var older = CreateMatch(1, "A", "B", new DateTime(2026, 5, 1, 0, 0, 0, DateTimeKind.Utc));
     var newer = CreateMatch(2, "C", "D", new DateTime(2026, 5, 2, 0, 0, 0, DateTimeKind.Utc));
     _matches
-      .GetMatchesPageAsync(Arg.Any<int>(), Arg.Any<int?>(), Arg.Any<IReadOnlyList<int>>(), Arg.Any<DateTime?>(), Arg.Any<int?>(), Arg.Any<MatchDateSortOrder>(), Arg.Any<CancellationToken>())
+      .GetMatchesPageAsync(
+        Arg.Any<int>(),
+        Arg.Any<int?>(),
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<DateTime?>(),
+        Arg.Any<int?>(),
+        Arg.Any<MatchDateSortOrder>(),
+        Arg.Any<string?>(),
+        Arg.Any<CancellationToken>())
       .Returns(new MatchPage(new List<DomainMatch> { newer, older }, true));
     _mediator
       .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
@@ -131,6 +163,42 @@ public class GetMatchesPageHandlerTests
       Arg.Any<DateTime?>(),
       Arg.Any<int?>(),
       Arg.Any<MatchDateSortOrder>(),
+      Arg.Any<string?>(),
+      Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Handle_WhenHybridSearchFails_FallsBackToKeywordSearch()
+  {
+    var match = CreateMatch(10, "Arsenal", "Chelsea");
+    _embedding
+      .EmbedAsync("Arsenal", Arg.Any<CancellationToken>())
+      .Returns<Task<float[]>>(_ => throw new InvalidOperationException("embedding unavailable"));
+    _matches
+      .GetMatchesPageAsync(
+        10,
+        null,
+        Arg.Any<IReadOnlyList<int>>(),
+        null,
+        null,
+        MatchDateSortOrder.Descending,
+        "Arsenal",
+        Arg.Any<CancellationToken>())
+      .Returns(new MatchPage(new List<DomainMatch> { match }, false));
+    _mediator
+      .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
+      .Returns(Array.Empty<DomainMatch>());
+    StubFlagLookups();
+
+    var result = await _sut.Handle(
+      new GetMatchesPageQuery(10, null, [], null, null, Search: "Arsenal"),
+      CancellationToken.None);
+
+    result.Items.Should().ContainSingle().Which.Id.Should().Be(10);
+    await _chunkSearch.DidNotReceive().FindMatchIdsAsync(
+      Arg.Any<string>(),
+      Arg.Any<float[]>(),
+      Arg.Any<string>(),
       Arg.Any<CancellationToken>());
   }
 

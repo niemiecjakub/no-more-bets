@@ -201,9 +201,9 @@ public sealed class PreKickoffDataSyncJobService(
       return;
     }
 
-    var (homeClubSoccerdataId, awayClubSoccerdataId) = (homeSoccerdataId, awaySoccerdataId);
+    // Head2Head/Match store internal club IDs; Soccerdata ids are only for the API call.
     var h2h = await db.Head2Head
-        .ForClubs(homeClubSoccerdataId, awayClubSoccerdataId)
+        .ForClubs(homeClubId, awayClubId)
         .FirstOrDefaultAsync();
 
     bool shouldUpdate = h2h == null;
@@ -211,31 +211,35 @@ public sealed class PreKickoffDataSyncJobService(
     if (h2h != null)
     {
       var lastFinishedGameDate = await db.Match
-          .ForClubs(homeClubSoccerdataId, awayClubSoccerdataId)
+          .ForClubs(homeClubId, awayClubId)
           .Where(m => m.MatchStatus == MatchStatus.Finished)
           .OrderByDescending(m => m.MatchDate)
           .Select(m => (DateTime?)m.MatchDate)
           .FirstOrDefaultAsync();
 
-      shouldUpdate = lastFinishedGameDate > h2h.UpdatedAt;
+      // One-shot refresh for rows last updated before this cutoff (inclusive of re-fetch after H2H mapping fix).
+      var forceRefreshBefore = new DateTime(2026, 7, 21, 0, 0, 0, DateTimeKind.Utc);
+      shouldUpdate = lastFinishedGameDate > h2h.UpdatedAt || h2h.UpdatedAt < forceRefreshBefore;
     }
 
     if (shouldUpdate)
     {
-      await mediator.Send(new UpdateHeadToHeadCommand(homeClubSoccerdataId, awayClubSoccerdataId));
+      await mediator.Send(new UpdateHeadToHeadCommand(homeSoccerdataId, awaySoccerdataId));
       logger.LogInformation(
-        "Job {JobName} enqueued head-to-head refresh for clubs {HomeClubSoccerdataId} vs {AwayClubSoccerdataId}",
+        "Job {JobName} enqueued head-to-head refresh for clubs {HomeClubId} vs {AwayClubId} (Soccerdata {HomeSoccerdataId} vs {AwaySoccerdataId})",
         nameof(RefreshHead2HeadStatistics),
-        homeClubSoccerdataId,
-        awayClubSoccerdataId);
+        homeClubId,
+        awayClubId,
+        homeSoccerdataId,
+        awaySoccerdataId);
     }
     else
     {
       logger.LogInformation(
-        "Job {JobName} skipped head-to-head refresh because data is up to date for clubs {HomeClubSoccerdataId} vs {AwayClubSoccerdataId}",
+        "Job {JobName} skipped head-to-head refresh because data is up to date for clubs {HomeClubId} vs {AwayClubId}",
         nameof(RefreshHead2HeadStatistics),
-        homeClubSoccerdataId,
-        awayClubSoccerdataId);
+        homeClubId,
+        awayClubId);
     }
   }
 }

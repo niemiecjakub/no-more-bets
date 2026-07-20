@@ -1,4 +1,5 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 using NoMoreBets.Domain.Enums;
@@ -19,7 +20,8 @@ public sealed class GetMatchesPageHandler(
   IUnitOfWork unitOfWork,
   IMediator mediator,
   IEmbeddingService embeddingService,
-  IDocumentChunkSearch documentChunkSearch)
+  IDocumentChunkSearch documentChunkSearch,
+  ILogger<GetMatchesPageHandler>? logger = null)
   : IRequestHandler<GetMatchesPageQuery, Paged<MatchDto>>
 {
   public async Task<Paged<MatchDto>> Handle(
@@ -29,7 +31,7 @@ public sealed class GetMatchesPageHandler(
     MatchPage page;
     if (!string.IsNullOrWhiteSpace(request.Search))
     {
-      page = await GetHybridSearchPageAsync(request, cancellationToken).ConfigureAwait(false);
+      page = await GetSearchPageAsync(request, cancellationToken).ConfigureAwait(false);
     }
     else
     {
@@ -41,7 +43,7 @@ public sealed class GetMatchesPageHandler(
           request.AfterMatchDateUtc,
           request.AfterId,
           request.SortOrder,
-          cancellationToken)
+          cancellationToken: cancellationToken)
         .ConfigureAwait(false);
     }
 
@@ -90,6 +92,41 @@ public sealed class GetMatchesPageHandler(
 
     return PagedFactory.Create(items, page.HasMore, item => item.MatchDate, item => item.Id);
   }
+
+  private async Task<MatchPage> GetSearchPageAsync(
+    GetMatchesPageQuery request,
+    CancellationToken cancellationToken)
+  {
+    try
+    {
+      return await GetHybridSearchPageAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+    catch (OperationCanceledException)
+    {
+      throw;
+    }
+    catch (Exception ex)
+    {
+      logger?.LogWarning(
+        ex,
+        "Hybrid search failed for query {Search}; falling back to keyword search.",
+        request.Search);
+      return await GetKeywordSearchPageAsync(request, cancellationToken).ConfigureAwait(false);
+    }
+  }
+
+  private Task<MatchPage> GetKeywordSearchPageAsync(
+    GetMatchesPageQuery request,
+    CancellationToken cancellationToken) =>
+    unitOfWork.Matches.GetMatchesPageAsync(
+      request.Limit,
+      request.MatchStatusId,
+      request.LeagueIds,
+      request.AfterMatchDateUtc,
+      request.AfterId,
+      request.SortOrder,
+      request.Search,
+      cancellationToken);
 
   private async Task<MatchPage> GetHybridSearchPageAsync(
     GetMatchesPageQuery request,

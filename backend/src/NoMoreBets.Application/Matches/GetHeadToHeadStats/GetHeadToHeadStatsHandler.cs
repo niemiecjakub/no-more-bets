@@ -35,7 +35,7 @@ public sealed class GetHeadToHeadStatsHandler(IUnitOfWork unitOfWork, ILogger<Ge
 
     try
     {
-      return MapToH2H(dto, match, head2head);
+      return MapToH2H(dto, match);
     }
     catch (Exception ex)
     {
@@ -44,11 +44,13 @@ public sealed class GetHeadToHeadStatsHandler(IUnitOfWork unitOfWork, ILogger<Ge
     }
   }
 
-  private static H2H MapToH2H(HeadToHead dto, Match match, Head2Head entity)
+  private static H2H MapToH2H(HeadToHead dto, Match match)
   {
     var overall = dto.Stats.Overall;
     var totalMatches = overall.OverallGamesPlayed;
-    var homeIsTeam1 = match.HomeClubId == entity.Team1Id;
+    // JSON team1/team2 follow SoccerData API ids (request order), not Head2Head.Team1Id/Team2Id
+    // which are normalized internal club ids. Match home/away via SoccerdataId.
+    var homeIsTeam1 = match.HomeClub.SoccerdataId == dto.Team1.Id;
 
     TeamMetrics teamA;
     TeamMetrics teamB;
