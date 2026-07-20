@@ -40,6 +40,8 @@ internal static class ClubNameMatchHints
       ["RC Celta"] = "Celta Vigo",
       ["RCD Espanyol"] = "Espanyol",
       ["Levante UD"] = "Levante",
+      ["Deportivo A Coruña"] = "Deportivo La Coruna",
+      ["Deportivo A Coruna"] = "Deportivo La Coruna",
       // Latin "Larnaca" vs transliterated Greek "Larnaka" for the same club (bookmakers vs Soccerdata/FotMob).
       ["AEK Larnaca"] = "AEK Larnaka",
       // Ligue 1 providers often use full PSG name while DB seed stores short form.

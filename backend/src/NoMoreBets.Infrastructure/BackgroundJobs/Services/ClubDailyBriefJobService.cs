@@ -7,6 +7,7 @@ using NoMoreBets.Application.Clubs.UpdateDailySummary;
 using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Application.Matches.UpdateMatchDetails;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Infrastructure.Persistence;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
@@ -18,24 +19,28 @@ namespace NoMoreBets.Infrastructure.BackgroundJobs;
 public sealed class ClubDailyBriefJobService(
   IMediator mediator,
   AppDbContext db,
+  ILeagueRepository leagues,
   IFotmobConstants fotmobConstants,
   ILogger<ClubDailyBriefJobService> logger)
 {
   /// <summary>
-  /// Enqueues daily summary updates for clubs with an upcoming match within 10 days.
+  /// Enqueues daily summary updates for clubs in each league's latest season
+  /// that have an upcoming match within 10 days.
   /// Uses staggered delays so club summary and match-detail jobs do not collide.
   /// </summary>
   [AutomaticRetry(Attempts = 1)]
   public async Task UpdateClubOverview()
   {
     logger.LogInformation(
-      "Starting job {JobName} to enqueue daily summary updates for clubs with upcoming matches within 10 days",
+      "Starting job {JobName} to enqueue daily summary updates for latest-season clubs with upcoming matches within 10 days",
       nameof(UpdateClubOverview));
 
     var utcNow = DateTime.UtcNow;
     var kickoffWithinTenDaysEnd = utcNow.AddDays(10);
+    var latestSeasonIds = await leagues.GetLatestSeasonIdsAsync().ConfigureAwait(false);
 
     var clubs = await db.Club
+      .Where(c => c.ClubSeasons.Any(cs => latestSeasonIds.Contains(cs.SeasonId)))
       .Where(c => db.Match.Any(m =>
         m.MatchStatusId == (int)MatchStatus.Upcomming
         && m.MatchDate > utcNow

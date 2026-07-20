@@ -127,6 +127,7 @@ public static class DependencyInjection
     // Scrapers
     services.AddSingleton<FotmobConstants>();
     services.AddSingleton<IFotmobConstants>(sp => sp.GetRequiredService<FotmobConstants>());
+    services.AddSingleton<FotmobSeasonClubCatalog>();
     services.AddSingleton<FotmobWorldCupGroupDefinitions>();
     services.AddSingleton<WorldCupGroupRegistry>(sp =>
       new WorldCupGroupRegistry(sp.GetRequiredService<FotmobWorldCupGroupDefinitions>().Groups));

@@ -22,6 +22,33 @@ public class LeagueRepository : ILeagueRepository
       .ThenByDescending(s => s.Id)
       .FirstOrDefaultAsync();
   }
+
+  public async Task<IReadOnlyList<int>> GetLatestSeasonIdsAsync(CancellationToken cancellationToken = default)
+  {
+    // ponytail: season table is tiny (~dozens of rows); group in memory instead of a correlated SQL subquery.
+    var seasons = await _db.Season
+      .AsNoTracking()
+      .Select(s => new { s.Id, s.LeagueId, s.StartDate })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return SelectLatestSeasonIds(
+      seasons.Select(s => (s.Id, s.LeagueId, s.StartDate)).ToList());
+  }
+
+  /// <summary>
+  /// Per league: highest StartDate, then highest Id.
+  /// </summary>
+  internal static IReadOnlyList<int> SelectLatestSeasonIds(
+    IReadOnlyList<(int Id, int LeagueId, DateOnly? StartDate)> seasons) =>
+    seasons
+      .GroupBy(s => s.LeagueId)
+      .Select(g => g
+        .OrderByDescending(s => s.StartDate)
+        .ThenByDescending(s => s.Id)
+        .First().Id)
+      .ToList();
+
   public Task<bool> TableSnapshotExists(int seasonId, DateOnly date)
   {
     return _db.LeagueTableSnapshot.AnyAsync(s => s.SeasonId == seasonId && s.SnapshotDate == date);

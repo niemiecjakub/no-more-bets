@@ -34,6 +34,9 @@ public class FotmobConstants : IFotmobConstants
   public FotmobTeam Arsenal { get; } = new(9825, "Arsenal");
   public FotmobTeam LeedsUnited { get; } = new(8463, "Leeds United");
   public FotmobTeam Everton { get; } = new(8668, "Everton");
+  public FotmobTeam CoventryCity { get; } = new(8669, "Coventry City");
+  public FotmobTeam HullCity { get; } = new(8667, "Hull City");
+  public FotmobTeam IpswichTown { get; } = new(9902, "Ipswich Town");
 
   // Ekstraklasa
   public FotmobTeam ArkaGdynia { get; } = new(8322, "Arka Gdynia");
@@ -54,6 +57,9 @@ public class FotmobConstants : IFotmobConstants
   public FotmobTeam WidzewLodz { get; } = new(8024, "Widzew Lodz");
   public FotmobTeam WislaPlock { get; } = new(8243, "Wisla Plock");
   public FotmobTeam ZaglebieLubin { get; } = new(8021, "Zaglebie Lubin");
+  public FotmobTeam SlaskWroclaw { get; } = new(8025, "Slask Wroclaw");
+  public FotmobTeam WieczystaKrakow { get; } = new(1286895, "Wieczysta Krakow");
+  public FotmobTeam WislaKrakow { get; } = new(10265, "Wisla Krakow");
 
   // Bundesliga
   public FotmobTeam Augsburg { get; } = new(8406, "Augsburg");
@@ -74,6 +80,9 @@ public class FotmobConstants : IFotmobConstants
   public FotmobTeam UnionBerlin { get; } = new(8149, "Union Berlin");
   public FotmobTeam WerderBremen { get; } = new(8697, "Werder Bremen");
   public FotmobTeam Wolfsburg { get; } = new(8721, "Wolfsburg");
+  public FotmobTeam Schalke04 { get; } = new(10189, "Schalke 04");
+  public FotmobTeam Elversberg { get; } = new(8232, "Elversberg");
+  public FotmobTeam Paderborn { get; } = new(8460, "Paderborn");
 
   // LaLiga
   public FotmobTeam Alaves { get; } = new(9866, "Alaves");
@@ -96,6 +105,9 @@ public class FotmobConstants : IFotmobConstants
   public FotmobTeam Sevilla { get; } = new(8302, "Sevilla");
   public FotmobTeam Valencia { get; } = new(10267, "Valencia");
   public FotmobTeam Villarreal { get; } = new(10205, "Villarreal");
+  public FotmobTeam RacingSantander { get; } = new(8696, "Racing Santander");
+  public FotmobTeam DeportivoLaCoruna { get; } = new(9783, "Deportivo La Coruna");
+  public FotmobTeam Malaga { get; } = new(9864, "Malaga");
 
   // Serie A
   public FotmobTeam ACMilan { get; } = new(8564, "AC Milan");
@@ -118,6 +130,9 @@ public class FotmobConstants : IFotmobConstants
   public FotmobTeam Torino { get; } = new(9804, "Torino");
   public FotmobTeam Udinese { get; } = new(8600, "Udinese");
   public FotmobTeam Verona { get; } = new(9876, "Verona");
+  public FotmobTeam Frosinone { get; } = new(9891, "Frosinone");
+  public FotmobTeam Monza { get; } = new(6504, "Monza");
+  public FotmobTeam Venezia { get; } = new(7881, "Venezia");
 
   // Ligue 1
   public FotmobTeam Angers { get; } = new(8121, "Angers");
@@ -138,6 +153,8 @@ public class FotmobConstants : IFotmobConstants
   public FotmobTeam Rennes { get; } = new(9851, "Rennes");
   public FotmobTeam Strasbourg { get; } = new(9848, "Strasbourg");
   public FotmobTeam Toulouse { get; } = new(9941, "Toulouse");
+  public FotmobTeam LeMans { get; } = new(8682, "Le Mans");
+  public FotmobTeam Troyes { get; } = new(10242, "Troyes");
 
   // FIFA World Cup
   public FotmobTeam Algeria { get; } = new(6317, "Algeria");
@@ -216,18 +233,21 @@ public class FotmobConstants : IFotmobConstants
       Burnley, NottinghamForest, Brentford, Sunderland, WestHamUnited,
       BrightonHoveAlbion, Fulham, WolverhamptonWanderers, ManchesterCity, Chelsea,
       CrystalPalace, ManchesterUnited, Arsenal, LeedsUnited, Everton,
+      CoventryCity, HullCity, IpswichTown,
 
       // Ekstraklasa
       ArkaGdynia, Cracovia, GKSKatowice, GornikZabrze, JagielloniaBialystok,
       KoronaKielce, LechPoznan, LechiaGdansk, LegiaWarsaw, MotorLublin,
       Nieciecza, PiastGliwice, PogonSzczecin, RadomiakRadom, RakowCzestochowa,
       WidzewLodz, WislaPlock, ZaglebieLubin,
+      SlaskWroclaw, WieczystaKrakow, WislaKrakow,
 
       // Bundesliga
       Augsburg, BayerLeverkusen, BayernMunich, BorussiaDortmund, BorussiaMGladbach,
       EintrachtFrankfurt, FCCologne, Freiburg, Hamburg, Heidenheim,
       Hoffenheim, Mainz, RBLeipzig, StPauli, Stuttgart,
       UnionBerlin, WerderBremen, Wolfsburg,
+      Schalke04, Elversberg, Paderborn,
 
       // LaLiga
       Alaves, AthleticBilbao, AtleticoMadrid, Barcelona, CeltaVigo,
@@ -235,18 +255,21 @@ public class FotmobConstants : IFotmobConstants
       Mallorca, Osasuna, RayoVallecano, RealBetis,
       RealMadrid, RealOviedo, RealSociedad, Sevilla, Valencia,
       Villarreal,
+      RacingSantander, DeportivoLaCoruna, Malaga,
 
       // Serie A
       ACMilan, Atalanta, Bologna, Cagliari, Como,
       Cremonese, Fiorentina, Genoa, InterMilan, Juventus,
       Lazio, Lecce, Napoli, Parma, Pisa,
       Roma, Sassuolo, Torino, Udinese, Verona,
+      Frosinone, Monza, Venezia,
 
       // Ligue 1
       Angers, Auxerre, Brest, LeHavre, Lens,
       Lille, Lorient, Lyon, Marseille, Metz,
       Monaco, Nantes, Nice, ParisFC, PSG,
       Rennes, Strasbourg, Toulouse,
+      LeMans, Troyes,
 
       // FIFA World Cup
       Algeria, Argentina, Australia, Austria, Belgium,
