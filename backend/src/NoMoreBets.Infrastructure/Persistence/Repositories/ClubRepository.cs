@@ -32,13 +32,16 @@ public class ClubRepository : IClubRepository
       .ConfigureAwait(false);
   }
 
-  public async Task<ClubLeagueStats?> GetCurrentClubLeagueStatsAsync(int clubId, DateOnly? date = null, CancellationToken cancellationToken = default)
+  public async Task<ClubLeagueStats?> GetCurrentClubLeagueStatsAsync(int clubId, DateOnly? date = null, int? seasonId = null, CancellationToken cancellationToken = default)
   {
     var query = _db.LeagueTableSnapshotRow
       .Where(r => r.ClubId == clubId);
 
     if (date.HasValue)
       query = query.Where(r => r.Snapshot.SnapshotDate <= date.Value);
+
+    if (seasonId.HasValue)
+      query = query.Where(r => r.Snapshot.SeasonId == seasonId.Value);
 
     return await query
       .OrderByDescending(r => r.Snapshot.SnapshotDate)

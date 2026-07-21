@@ -23,11 +23,12 @@ public sealed class GetMatchLeagueStatisticsPairHandler(IUnitOfWork unitOfWork, 
       return null;
 
     var asOfDate = DateOnly.FromDateTime(match.MatchDate);
+    var seasonId = match.Stage?.SeasonId;
     var home = await mediator
-      .Send(new GetClubLeagueStatisticsQuery(match.HomeClubId, asOfDate), cancellationToken)
+      .Send(new GetClubLeagueStatisticsQuery(match.HomeClubId, asOfDate, seasonId), cancellationToken)
       .ConfigureAwait(false);
     var away = await mediator
-      .Send(new GetClubLeagueStatisticsQuery(match.AwayClubId, asOfDate), cancellationToken)
+      .Send(new GetClubLeagueStatisticsQuery(match.AwayClubId, asOfDate, seasonId), cancellationToken)
       .ConfigureAwait(false);
 
     return new ClubPairDto<ClubLeagueStats?>(home, away);

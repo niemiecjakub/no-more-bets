@@ -24,14 +24,14 @@ public class GetClubLeagueStatisticsHandlerTests
     // Arrange
     const int clubId = 5;
     var date = new DateOnly(2026, 3, 20);
-    _clubRepository.GetCurrentClubLeagueStatsAsync(clubId, date, Arg.Any<CancellationToken>())
+    _clubRepository.GetCurrentClubLeagueStatsAsync(clubId, date, null, Arg.Any<CancellationToken>())
       .Returns((ClubLeagueStats?)null);
 
     // Act
     await _sut.Handle(new GetClubLeagueStatisticsQuery(clubId, date), CancellationToken.None);
 
     // Assert
-    await _clubRepository.Received(1).GetCurrentClubLeagueStatsAsync(clubId, date, Arg.Any<CancellationToken>());
+    await _clubRepository.Received(1).GetCurrentClubLeagueStatsAsync(clubId, date, null, Arg.Any<CancellationToken>());
   }
 
   [Fact]
@@ -39,13 +39,30 @@ public class GetClubLeagueStatisticsHandlerTests
   {
     // Arrange
     const int clubId = 6;
-    _clubRepository.GetCurrentClubLeagueStatsAsync(clubId, null, Arg.Any<CancellationToken>())
+    _clubRepository.GetCurrentClubLeagueStatsAsync(clubId, null, null, Arg.Any<CancellationToken>())
       .Returns((ClubLeagueStats?)null);
 
     // Act
     await _sut.Handle(new GetClubLeagueStatisticsQuery(clubId), CancellationToken.None);
 
     // Assert
-    await _clubRepository.Received(1).GetCurrentClubLeagueStatsAsync(clubId, null, Arg.Any<CancellationToken>());
+    await _clubRepository.Received(1).GetCurrentClubLeagueStatsAsync(clubId, null, null, Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Handle_WithSeasonId_PassesSeasonIdToRepository()
+  {
+    // Arrange
+    const int clubId = 7;
+    const int seasonId = 42;
+    var date = new DateOnly(2026, 3, 20);
+    _clubRepository.GetCurrentClubLeagueStatsAsync(clubId, date, seasonId, Arg.Any<CancellationToken>())
+      .Returns((ClubLeagueStats?)null);
+
+    // Act
+    await _sut.Handle(new GetClubLeagueStatisticsQuery(clubId, date, seasonId), CancellationToken.None);
+
+    // Assert
+    await _clubRepository.Received(1).GetCurrentClubLeagueStatsAsync(clubId, date, seasonId, Arg.Any<CancellationToken>());
   }
 }
