@@ -23,6 +23,15 @@ public class LeagueRepository : ILeagueRepository
       .FirstOrDefaultAsync();
   }
 
+  public Task<Season?> GetLatestSeasonAsync(int leagueId, CancellationToken cancellationToken = default)
+  {
+    return _db.Season
+      .Where(s => s.LeagueId == leagueId)
+      .OrderByDescending(s => s.StartDate)
+      .ThenByDescending(s => s.Id)
+      .FirstOrDefaultAsync(cancellationToken);
+  }
+
   public async Task<IReadOnlyList<int>> GetLatestSeasonIdsAsync(CancellationToken cancellationToken = default)
   {
     // ponytail: season table is tiny (~dozens of rows); group in memory instead of a correlated SQL subquery.

@@ -2,9 +2,10 @@ using System.Globalization;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Application.Leagues;
-using NoMoreBets.Application.Common.Dto.Leagues;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.UpdateTable;
@@ -22,6 +23,8 @@ public class UpdateTableHandler(
   IMatchMatcher matchMatcher,
   ILogger<UpdateTableHandler> logger) : IRequestHandler<UpdateTableCommand, Unit>
 {
+  private const int SeasonFetchWindowDays = 7;
+
   /// <inheritdoc />
   public async Task<Unit> Handle(UpdateTableCommand request, CancellationToken cancellationToken)
   {
@@ -31,14 +34,27 @@ public class UpdateTableHandler(
       request.LeagueId);
 
     var snapshotDate = DateOnly.FromDateTime(DateTime.UtcNow);
-    var season = await unitOfWork.Leagues.GetSeasonForDateAsync(request.LeagueId, snapshotDate);
+    var season = await unitOfWork.Leagues.GetLatestSeasonAsync(request.LeagueId, cancellationToken);
 
     if (season == null)
     {
       logger.LogInformation(
-        "Handler {HandlerName} skipped league {LeagueId} because no season is active on {SnapshotDate}",
+        "Handler {HandlerName} skipped league {LeagueId} because no season exists",
+        nameof(UpdateTableHandler),
+        request.LeagueId);
+      return Unit.Value;
+    }
+
+    if (!IsWithinSeasonFetchWindow(season, snapshotDate))
+    {
+      logger.LogInformation(
+        "Handler {HandlerName} skipped league {LeagueId}: latest season {SeasonId} ({StartDate}–{EndDate}) is outside the ±{WindowDays}d fetch window on {SnapshotDate}",
         nameof(UpdateTableHandler),
         request.LeagueId,
+        season.Id,
+        season.StartDate,
+        season.EndDate,
+        SeasonFetchWindowDays,
         snapshotDate);
       return Unit.Value;
     }
@@ -73,6 +89,8 @@ public class UpdateTableHandler(
 
     var tableClubs = tableTask.Result;
     var xgStats = xgTask.Result;
+
+    EnsureCompleteSeasonTableData(request.LeagueId, domainClubs, tableClubs, xgStats);
 
     var latestSnapshot = await unitOfWork.Leagues.GetLatestTableSnapshot(season.Id) ?? new();
 
@@ -143,6 +161,81 @@ public class UpdateTableHandler(
       snapshotDate,
       snapshot.Rows.Count);
     return Unit.Value;
+  }
+
+  /// <summary>
+  /// Fetch when today is within [StartDate - 7d, EndDate + 7d]. Null bounds are open-ended.
+  /// </summary>
+  public static bool IsWithinSeasonFetchWindow(Season season, DateOnly date)
+  {
+    if (season.StartDate is { } start && date < start.AddDays(-SeasonFetchWindowDays))
+    {
+      return false;
+    }
+
+    if (season.EndDate is { } end && date > end.AddDays(SeasonFetchWindowDays))
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  private void EnsureCompleteSeasonTableData(
+    int leagueId,
+    IReadOnlyList<Club> seasonClubs,
+    IReadOnlyList<TableEntry> tableClubs,
+    IReadOnlyList<XgStats> xgStats)
+  {
+    if (seasonClubs.Count == 0)
+    {
+      throw new IncompleteLeagueTableDataException(
+        leagueId,
+        missingTableDataForClubs: ["(no clubs in active season)"],
+        missingXgDataForClubs: Array.Empty<string>(),
+        unmatchedTableTeams: Array.Empty<string>());
+    }
+
+    var tableByClubId = new Dictionary<int, TableEntry>();
+    var unmatchedTableTeams = new List<string>();
+
+    foreach (var entry in tableClubs)
+    {
+      try
+      {
+        var club = matchMatcher.FindClub(entry.TeamName, seasonClubs);
+        if (!tableByClubId.TryAdd(club.Id, entry))
+        {
+          unmatchedTableTeams.Add($"{entry.TeamName} (duplicate match for {club.Name})");
+        }
+      }
+      catch (ClubMatchNotFoundException)
+      {
+        unmatchedTableTeams.Add(entry.TeamName);
+      }
+    }
+
+    var missingTableClubs = seasonClubs
+      .Where(club => !tableByClubId.ContainsKey(club.Id))
+      .Select(club => club.Name)
+      .ToList();
+
+    var missingXgClubs = seasonClubs
+      .Where(club => tableByClubId.ContainsKey(club.Id))
+      .Where(club => matchMatcher.FindXgStats(tableByClubId[club.Id].TeamName, xgStats) == null)
+      .Select(club => club.Name)
+      .ToList();
+
+    if (missingTableClubs.Count == 0 && missingXgClubs.Count == 0 && unmatchedTableTeams.Count == 0)
+    {
+      return;
+    }
+
+    throw new IncompleteLeagueTableDataException(
+      leagueId,
+      missingTableClubs,
+      missingXgClubs,
+      unmatchedTableTeams);
   }
 
   private static int ParseGoalDifference(string value)

@@ -4,6 +4,7 @@ namespace NoMoreBets.Domain.Leagues;
 public interface ILeagueRepository
 {
   Task<Season?> GetSeasonForDateAsync(int leagueId, DateOnly date);
+  Task<Season?> GetLatestSeasonAsync(int leagueId, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<int>> GetLatestSeasonIdsAsync(CancellationToken cancellationToken = default);
   Task<bool> TableSnapshotExists(int seasonId, DateOnly date);
   Task<LeagueTableSnapshot?> GetLatestTableSnapshot(int seasonId);
