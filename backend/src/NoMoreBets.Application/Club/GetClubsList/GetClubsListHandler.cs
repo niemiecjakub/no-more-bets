@@ -1,6 +1,7 @@
 using MediatR;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto.Clubs;
+using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Clubs.GetClubsList;
 
@@ -23,7 +24,9 @@ public sealed class GetClubsListHandler(IUnitOfWork unitOfWork)
         c.Name,
         c.Slug,
         c.ClubSeasons
+          .Where(cs => cs.Season.League.Slug != League.UnknownSlug)
           .OrderByDescending(cs => cs.Season.StartDate ?? DateOnly.MinValue)
+          .ThenByDescending(cs => cs.Season.Year)
           .ThenByDescending(cs => cs.Season.Id)
           .Select(cs => new ClubSeasonMembershipDto(
             cs.SeasonId,

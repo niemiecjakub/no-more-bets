@@ -63,6 +63,18 @@ public class GetClubByIdHandlerTests
             StartDate = new DateOnly(2026, 7, 24),
             League = new League { Id = 2, Name = "Ekstraklasa", Slug = "ekstraklasa" }
           }
+        },
+        new ClubSeason
+        {
+          SeasonId = 3,
+          Season = new Season
+          {
+            Id = 3,
+            LeagueId = 99,
+            Year = "2024-2025",
+            StartDate = new DateOnly(2024, 8, 1),
+            League = new League { Id = 99, Name = "Unknown", Slug = League.UnknownSlug }
+          }
         }
       ]
     };
