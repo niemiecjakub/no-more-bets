@@ -212,7 +212,7 @@ public sealed class PreKickoffDataSyncJobService(
     {
       var lastFinishedGameDate = await db.Match
           .ForClubs(homeClubId, awayClubId)
-          .Where(m => m.MatchStatus == MatchStatus.Finished)
+          .Where(m => m.MatchStatusId == (int)MatchStatus.Finished)
           .OrderByDescending(m => m.MatchDate)
           .Select(m => (DateTime?)m.MatchDate)
           .FirstOrDefaultAsync();
