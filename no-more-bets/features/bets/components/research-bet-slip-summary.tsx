@@ -62,28 +62,28 @@ function SelectionRowDefault({ selection }: { selection: BetSelectionSummaryDto 
     <li className="border-t border-zinc-100 py-2 first:border-t-0 first:pt-0 last:pb-0 dark:border-zinc-800/80">
       <Link
         href={`/match/${selection.matchId}`}
-        className="-mx-1 flex flex-col gap-2 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-zinc-50 sm:flex-row sm:items-center sm:gap-4 dark:hover:bg-zinc-900/50"
+        className="-mx-1 flex items-center gap-3 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
       >
-        <div className="min-w-0 sm:min-w-48 sm:flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-foreground">
-            <span className="min-w-0 truncate">{selection.homeClubName}</span>
-            <SlugIcon kind="club" slug={homeLogoSlug} alt={selection.homeClubName} className="h-5 w-5" />
-            <span className="shrink-0 text-zinc-500 dark:text-zinc-400">vs</span>
-            <SlugIcon kind="club" slug={awayLogoSlug} alt={selection.awayClubName} className="h-5 w-5" />
-            <span className="min-w-0 truncate">{selection.awayClubName}</span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">
+          <div className="min-w-0 sm:min-w-48 sm:flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm font-medium text-foreground">
+              <span className="min-w-0 truncate">{selection.homeClubName}</span>
+              <SlugIcon kind="club" slug={homeLogoSlug} alt={selection.homeClubName} className="h-5 w-5" />
+              <span className="shrink-0 text-zinc-500 dark:text-zinc-400">vs</span>
+              <SlugIcon kind="club" slug={awayLogoSlug} alt={selection.awayClubName} className="h-5 w-5" />
+              <span className="min-w-0 truncate">{selection.awayClubName}</span>
+            </div>
           </div>
-        </div>
-        <div className="flex min-w-0 w-full flex-wrap items-center justify-start gap-x-3 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400 sm:flex-1 sm:justify-end">
-          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-zinc-600 dark:text-zinc-400 sm:flex-1 sm:justify-end">
             <span>{selection.eventTypeName}</span>
             <span className="font-medium text-foreground">{selection.outcomeKey}</span>
           </div>
-          <span
-            className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getStatusBadgeClass(selection.status)}`}
-          >
-            {betStatusLabel(selection.status)}
-          </span>
         </div>
+        <span
+          className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getStatusBadgeClass(selection.status)}`}
+        >
+          {betStatusLabel(selection.status)}
+        </span>
       </Link>
     </li>
   );

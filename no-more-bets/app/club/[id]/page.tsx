@@ -3,7 +3,8 @@
 import axios from "axios";
 import { notFound } from "next/navigation";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SlugIcon } from "@/components/slug-icon";
 import { ClubBetSelectionChart } from "@/features/clubs/components/club-bet-selection-chart";
 import { ClubLeagueTable } from "@/features/clubs/components/club-league-table";
@@ -41,10 +42,12 @@ function resolveRequestedTab(searchParams: URLSearchParams): ClubTab | null {
 }
 
 function resolveDefaultMembership(memberships: ClubSeasonMembership[]): ClubSeasonMembership | null {
+  if (memberships.length === 0) return null;
   const today = new Date().toISOString().slice(0, 10);
-  return memberships.find((membership) => !membership.startDate || membership.startDate <= today)
-    ?? memberships[0]
-    ?? null;
+  // Prefer a season covering today; otherwise the latest (API orders by start date desc).
+  return memberships.find(
+    (m) => (!m.startDate || m.startDate <= today) && (!m.endDate || m.endDate >= today),
+  ) ?? memberships[0];
 }
 
 function initialSectionLoading(): Record<SectionKey, boolean> {
@@ -176,7 +179,7 @@ function ChartSkeleton() {
 }
 
 const clubHeaderClassName =
-  "mb-6 flex items-center gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950 sm:gap-5 sm:px-5";
+  "mb-6 flex flex-col gap-4 rounded-xl border border-zinc-200 bg-white px-4 py-4 dark:border-zinc-800 dark:bg-zinc-950 sm:flex-row sm:items-center sm:gap-5 sm:px-5";
 
 function ClubHeaderTabs({
   active,
@@ -192,7 +195,7 @@ function ClubHeaderTabs({
 
   return (
     <div
-      className="ml-auto flex shrink-0 items-center gap-2 self-center sm:gap-2.5"
+      className="flex w-full shrink-0 items-center gap-2 sm:ml-auto sm:w-auto sm:gap-2.5"
       role="tablist"
       aria-label="Club view"
     >
@@ -204,7 +207,7 @@ function ClubHeaderTabs({
           aria-selected={active === id}
           onClick={() => onChange(id)}
           className={cn(
-            "min-w-22 rounded-lg border px-4 py-2 text-sm font-semibold tracking-tight transition-all",
+            "min-w-22 flex-1 rounded-lg border px-4 py-2 text-sm font-semibold tracking-tight transition-all sm:flex-none",
             active === id
               ? "border-zinc-300 bg-white text-foreground shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:shadow-none"
               : "border-zinc-200/80 bg-zinc-50 text-zinc-600 hover:border-zinc-300 hover:bg-white hover:text-foreground dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200",
@@ -217,20 +220,117 @@ function ClubHeaderTabs({
   );
 }
 
+function ClubSeasonSelect({
+  memberships,
+  selected,
+  onChange,
+}: {
+  memberships: ClubSeasonMembership[];
+  selected: ClubSeasonMembership;
+  onChange: (seasonId: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative inline-flex max-w-full">
+      <label id="club-season-label" className="sr-only">Season</label>
+      <button
+        type="button"
+        id="club-season"
+        aria-labelledby="club-season-label"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((value) => !value)}
+        className="inline-flex max-w-full items-center gap-2 rounded-md border border-zinc-200 bg-white py-1 pr-2 pl-2 text-sm text-foreground dark:border-zinc-700 dark:bg-zinc-900"
+      >
+        <SlugIcon
+          kind="league"
+          slug={selected.leagueSlug}
+          alt={selected.leagueName}
+          className="h-5 w-5 shrink-0"
+        />
+        <span className="truncate">
+          {selected.leagueName} {selected.seasonYear}
+        </span>
+        <ChevronDown className="size-4 shrink-0 text-zinc-500 dark:text-zinc-400" aria-hidden />
+      </button>
+      {open ? (
+        <ul
+          role="listbox"
+          aria-labelledby="club-season-label"
+          className="absolute top-full left-0 z-20 mt-1 min-w-full overflow-hidden rounded-md border border-zinc-200 bg-white py-1 shadow-md dark:border-zinc-700 dark:bg-zinc-900"
+        >
+          {memberships.map((membership) => {
+            const isSelected = membership.seasonId === selected.seasonId;
+            return (
+              <li key={membership.seasonId} role="presentation">
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  onClick={() => {
+                    onChange(membership.seasonId);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm text-foreground",
+                    isSelected
+                      ? "bg-zinc-100 dark:bg-zinc-800"
+                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800/70",
+                  )}
+                >
+                  <SlugIcon
+                    kind="league"
+                    slug={membership.leagueSlug}
+                    alt={membership.leagueName}
+                    className="h-5 w-5 shrink-0"
+                  />
+                  <span className="truncate">
+                    {membership.leagueName} {membership.seasonYear}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 function HeaderSkeleton() {
   return (
     <header className={clubHeaderClassName}>
-      <div className="h-16 w-16 shrink-0 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
-      <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 py-0.5">
-        <div className="h-8 w-56 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-        <div className="flex items-center gap-2">
-          <div className="h-5 w-5 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
-          <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+      <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
+        <div className="h-16 w-16 shrink-0 animate-pulse rounded-full bg-zinc-200 dark:bg-zinc-800" />
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 py-0.5">
+          <div className="h-8 w-56 max-w-full animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+          <div className="flex items-center gap-2">
+            <div className="h-5 w-5 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-4 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+          </div>
         </div>
       </div>
-      <div className="ml-auto flex shrink-0 gap-2 self-center sm:gap-2.5">
-        <div className="h-9 w-24 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
-        <div className="h-9 w-24 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800" />
+      <div className="flex w-full shrink-0 gap-2 sm:ml-auto sm:w-auto sm:gap-2.5">
+        <div className="h-9 flex-1 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800 sm:w-24 sm:flex-none" />
+        <div className="h-9 flex-1 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-800 sm:w-24 sm:flex-none" />
       </div>
     </header>
   );
@@ -480,34 +580,20 @@ export default function ClubPage() {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
       <header className={clubHeaderClassName}>
-        <SlugIcon kind="club" slug={club.slug} alt={club.name} className="h-16 w-16 shrink-0" />
-        <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 py-0.5">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{club.name}</h1>
-          {selectedMembership ? (
-            <div className="flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-              <SlugIcon
-                kind="league"
-                slug={selectedMembership.leagueSlug}
-                alt={selectedMembership.leagueName}
-                className="h-5 w-5 shrink-0"
+        <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-5">
+          <SlugIcon kind="club" slug={club.slug} alt={club.name} className="h-16 w-16 shrink-0" />
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-2 py-0.5">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">{club.name}</h1>
+            {selectedMembership ? (
+              <ClubSeasonSelect
+                memberships={memberships}
+                selected={selectedMembership}
+                onChange={handleSeasonChange}
               />
-              <label htmlFor="club-season" className="sr-only">Season</label>
-              <select
-                id="club-season"
-                value={selectedMembership.seasonId}
-                onChange={(event) => handleSeasonChange(Number(event.target.value))}
-                className="max-w-full rounded-md border border-zinc-200 bg-white px-2 py-1 text-sm text-foreground dark:border-zinc-700 dark:bg-zinc-900"
-              >
-                {memberships.map((membership) => (
-                  <option key={membership.seasonId} value={membership.seasonId}>
-                    {membership.leagueName} {membership.seasonYear}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">No season memberships</p>
-          )}
+            ) : (
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">No season memberships</p>
+            )}
+          </div>
         </div>
         <ClubHeaderTabs active={activeTab} onChange={handleTabChange} />
       </header>
@@ -515,6 +601,24 @@ export default function ClubPage() {
       <div className="space-y-6">
         {activeTab === "general" ? (
           <>
+            <SectionCard title="Next match" icon="📅" flush>
+              {sectionErrors.nextMatch ? (
+                <div className="px-4 py-4">
+                  <SectionError message={sectionErrors.nextMatch} />
+                </div>
+              ) : sectionLoading.nextMatch && nextMatch === undefined ? (
+                <NextMatchSkeleton />
+              ) : nextMatch ? (
+                <ClubNextMatchCard
+                  match={nextMatch}
+                  leagueName={selectedMembership?.leagueName ?? ""}
+                  leagueSlug={selectedMembership?.leagueSlug ?? ""}
+                />
+              ) : (
+                <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No upcoming match scheduled.</p>
+              )}
+            </SectionCard>
+
             <div className="grid gap-6 md:grid-cols-2 md:items-start">
               <SectionCard title="Recent matches" icon="🕒" flush>
                 {sectionErrors.recentGames ? (
@@ -528,37 +632,17 @@ export default function ClubPage() {
                 )}
               </SectionCard>
 
-              <div className="flex flex-col gap-6">
-                <SectionCard title="Next match" icon="📅" flush>
-                  {sectionErrors.nextMatch ? (
-                    <div className="px-4 py-4">
-                      <SectionError message={sectionErrors.nextMatch} />
-                    </div>
-                  ) : sectionLoading.nextMatch && nextMatch === undefined ? (
-                    <NextMatchSkeleton />
-                  ) : nextMatch ? (
-                    <ClubNextMatchCard
-                      match={nextMatch}
-                      leagueName={selectedMembership?.leagueName ?? ""}
-                      leagueSlug={selectedMembership?.leagueSlug ?? ""}
-                    />
-                  ) : (
-                    <p className="px-4 py-4 text-sm text-zinc-500 dark:text-zinc-400">No upcoming match scheduled.</p>
-                  )}
-                </SectionCard>
-
-                <SectionCard title="Research bet stats" icon="📊">
-                  {sectionErrors.betStats ? (
-                    <SectionError message={sectionErrors.betStats} />
-                  ) : sectionLoading.betStats && betStats === undefined ? (
-                    <ChartSkeleton />
-                  ) : betStats ? (
-                    <ClubBetSelectionChart stats={betStats} />
-                  ) : (
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">No betting stats available.</p>
-                  )}
-                </SectionCard>
-              </div>
+              <SectionCard title="Research bet stats" icon="📊">
+                {sectionErrors.betStats ? (
+                  <SectionError message={sectionErrors.betStats} />
+                ) : sectionLoading.betStats && betStats === undefined ? (
+                  <ChartSkeleton />
+                ) : betStats ? (
+                  <ClubBetSelectionChart stats={betStats} />
+                ) : (
+                  <p className="text-sm text-zinc-500 dark:text-zinc-400">No betting stats available.</p>
+                )}
+              </SectionCard>
             </div>
 
             <SectionCard
