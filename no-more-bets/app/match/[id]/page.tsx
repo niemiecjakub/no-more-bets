@@ -192,6 +192,8 @@ export default function MatchPage() {
     const homeLogoSlug = clubLogoSlugSegment(data.homeClubSlug, data.homeClubName);
     const awayLogoSlug = clubLogoSlugSegment(data.awayClubSlug, data.awayClubName);
     const showFinishedScore = data.matchStatusId === MATCH_STATUS.Finished && data.homeGoals != null && data.awayGoals != null;
+    const competitionLabel = [data.leagueName, data.seasonYear].filter(Boolean).join(" ");
+    const showCompetition = Boolean(competitionLabel || data.leagueSlug);
     const { home: homeEvents, away: awayEvents } = partitionMatchEventsBySide(
         insights.matchEvents ?? [],
         data.homeClubId,
@@ -203,6 +205,21 @@ export default function MatchPage() {
     return (
             <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
                 <header className="mb-6 flex flex-col items-center">
+                    {showCompetition ? (
+                        <div className="mb-3 flex min-w-0 items-center justify-center gap-2">
+                            <SlugIcon
+                                kind="league"
+                                slug={data.leagueSlug}
+                                alt={data.leagueName || "League"}
+                                className="h-5 w-5"
+                            />
+                            {competitionLabel ? (
+                                <p className="min-w-0 truncate text-sm font-bold text-zinc-950 dark:text-white">
+                                    {competitionLabel}
+                                </p>
+                            ) : null}
+                        </div>
+                    ) : null}
                     <p className="mb-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDateFormatted}</p>
                     <h1 className="w-full text-2xl font-semibold tracking-tight text-foreground">
                         <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">

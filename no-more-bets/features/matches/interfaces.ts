@@ -70,6 +70,12 @@ export interface MatchAnalysisPageDto {
   awayClubName: string;
   homeClubSlug?: string;
   awayClubSlug?: string;
+  /** Competition name from match stage / season / league (empty if unknown). */
+  leagueName: string;
+  /** Slug for `/leagues/{slug}.svg` (empty if unknown). */
+  leagueSlug: string;
+  /** Season year label e.g. `2025-2026` (empty if unknown). */
+  seasonYear: string;
   matchStatusId: number;
   homeGoals: number | null;
   awayGoals: number | null;

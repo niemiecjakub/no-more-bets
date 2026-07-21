@@ -89,12 +89,30 @@ function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
     optionalInt(r.awayClubId) ??
     optionalInt(r.AwayClubId) ??
     0;
+  const leagueName =
+    (typeof item.leagueName === "string" ? item.leagueName : undefined) ??
+    (typeof r.leagueName === "string" ? r.leagueName : undefined) ??
+    (typeof r.LeagueName === "string" ? r.LeagueName : undefined) ??
+    "";
+  const leagueSlug =
+    (typeof item.leagueSlug === "string" ? item.leagueSlug : undefined) ??
+    (typeof r.leagueSlug === "string" ? r.leagueSlug : undefined) ??
+    (typeof r.LeagueSlug === "string" ? r.LeagueSlug : undefined) ??
+    "";
+  const seasonYear =
+    (typeof item.seasonYear === "string" ? item.seasonYear : undefined) ??
+    (typeof r.seasonYear === "string" ? r.seasonYear : undefined) ??
+    (typeof r.SeasonYear === "string" ? r.SeasonYear : undefined) ??
+    "";
   return {
     ...item,
     homeClubId,
     awayClubId,
     homeClubSlug: homeSlug,
     awayClubSlug: awaySlug,
+    leagueName,
+    leagueSlug,
+    seasonYear,
     matchStatusId,
     homeGoals,
     awayGoals,

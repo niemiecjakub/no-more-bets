@@ -3,6 +3,7 @@ using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchAnalyses;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Leagues;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
 using NoMoreBets.Domain.Matches;
 using DomainMatch = NoMoreBets.Domain.Matches.Match;
@@ -45,6 +46,16 @@ public class GetMatchAnalysesHandlerTests
       MatchStatusId = (int)MatchStatus.Upcomming,
       HomeGoals = null,
       AwayGoals = null,
+      Stage = new Stage
+      {
+        Id = 3,
+        Season = new Season
+        {
+          Id = 9,
+          Year = "2025-2026",
+          League = new League { Id = 1, Name = "Premier League", Slug = "premier-league" },
+        },
+      },
     };
     _matches.GetMatchByIdAsync(5, Arg.Any<CancellationToken>()).Returns(match);
     _matches
@@ -67,6 +78,9 @@ public class GetMatchAnalysesHandlerTests
     result.HomeClubId.Should().Be(1);
     result.AwayClubId.Should().Be(2);
     result.HomeClubName.Should().Be("Arsenal");
+    result.LeagueName.Should().Be("Premier League");
+    result.LeagueSlug.Should().Be("premier-league");
+    result.SeasonYear.Should().Be("2025-2026");
     result.ResearchAgentSessionId.Should().Be(42);
     result.Analyses.Should().ContainSingle();
     result.Analyses[0].Code.Should().Be("Tactics");

@@ -39,6 +39,9 @@ public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork) : IRequestHa
         MatchAnalysisDtoMapper.MapStructured(a.TryGetStructuredAnalysis())))
       .ToList();
 
+    var league = match.Stage?.Season.League;
+    var seasonYear = match.Stage?.Season.Year ?? string.Empty;
+
     return new MatchAnalysisPageDto(
       match.Id,
       match.HomeClubId,
@@ -47,6 +50,9 @@ public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork) : IRequestHa
       match.AwayClub.Name,
       match.HomeClub.Slug,
       match.AwayClub.Slug,
+      league?.Name ?? string.Empty,
+      league?.Slug ?? string.Empty,
+      seasonYear,
       match.MatchStatusId,
       match.HomeGoals,
       match.AwayGoals,
