@@ -2,6 +2,7 @@
   "name": "no-more-bets",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "generate:logo-manifest": "node scripts/generate-logo-manifest.mjs",
     "predev": "npm run generate:logo-manifest",
