@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Infrastructure.Persistence.Repositories;
@@ -230,39 +229,6 @@ public class MatchRepository : IMatchRepository
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
   }
-
-  public async Task<IReadOnlyList<Match>> GetUpcomingMatchesReadyForPredictionAsync(CancellationToken cancellationToken = default)
-  {
-    return await FilterUpcomingWithLineupOddsAndHeadToHeadOrWorldCup(_db.Match)
-      .OrderBy(m => m.MatchDate)
-      .ToListAsync(cancellationToken)
-      .ConfigureAwait(false);
-  }
-
-  public async Task<IReadOnlyList<Match>> GetUpcomingReadyForPredictionWithoutResearchAnalysisAsync(CancellationToken cancellationToken = default)
-  {
-    return await FilterUpcomingWithLineupOddsAndHeadToHeadOrWorldCup(_db.Match)
-      .Where(m => !_db.MatchAnalysis.Any(a => a.MatchId == m.Id && a.Code == MatchAnalysis.StructuredResearchCode))
-      .OrderBy(m => m.MatchDate)
-      .Include(m => m.HomeClub)
-      .Include(m => m.AwayClub)
-      .ToListAsync(cancellationToken)
-      .ConfigureAwait(false);
-  }
-
-  private IQueryable<Match> FilterUpcomingWithLineupOddsAndHeadToHeadOrWorldCup(IQueryable<Match> query) =>
-    query
-      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
-      .Where(m => _db.Lineup.Any(l => l.MatchId == m.Id))
-      .Where(m => _db.BettingOddsSnapshot.Any(b => b.MatchId == m.Id))
-      .Where(m =>
-        (m.Stage != null
-         && m.Stage.Season != null
-         && m.Stage.Season.League != null
-         && m.Stage.Season.League.Slug == League.FifaWorldCupSlug)
-        || _db.Head2Head.Any(h =>
-          (h.Team1Id == m.HomeClubId && h.Team2Id == m.AwayClubId) ||
-          (h.Team1Id == m.AwayClubId && h.Team2Id == m.HomeClubId)));
 
   public Task<MatchPreview?> GetMatchPreview(int matchId)
   {

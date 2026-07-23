@@ -203,14 +203,14 @@ public class AppDbContext : DbContext
       entity.Property(e => e.HomeTeamJson).IsRequired().HasColumnType("jsonb");
       entity.Property(e => e.AwayTeamJson).IsRequired().HasColumnType("jsonb");
       entity.Property(e => e.UpdatedAt).IsRequired();
-      entity.HasOne(e => e.Match).WithOne(m => m.Lineup).HasForeignKey<Lineup>(e => e.MatchId);
+      entity.HasOne(e => e.Match).WithOne(m => m.Lineup).HasForeignKey<Lineup>(e => e.MatchId).OnDelete(DeleteBehavior.Cascade);
     });
 
     modelBuilder.Entity<MatchPreview>(entity =>
     {
       entity.HasKey(e => e.MatchId);
       entity.Property(e => e.PreviewContentJson).IsRequired().HasColumnType("jsonb");
-      entity.HasOne(e => e.Match).WithOne(m => m.MatchPreview).HasForeignKey<MatchPreview>(e => e.MatchId);
+      entity.HasOne(e => e.Match).WithOne(m => m.MatchPreview).HasForeignKey<MatchPreview>(e => e.MatchId).OnDelete(DeleteBehavior.Cascade);
     });
 
     modelBuilder.Entity<Head2Head>(entity =>
@@ -331,7 +331,7 @@ public class AppDbContext : DbContext
       entity.HasIndex(e => e.FotmobUrl).IsUnique().HasFilter("\"FotmobUrl\" IS NOT NULL");
       entity.Property(e => e.FotmobDetailsJson).IsRequired(false).HasColumnType("jsonb");
       entity.HasIndex(e => e.MatchId).IsUnique().HasFilter("\"MatchId\" IS NOT NULL");
-      entity.HasOne(e => e.Match).WithOne(m => m.MatchDetails).HasForeignKey<MatchDetails>(e => e.MatchId).OnDelete(DeleteBehavior.SetNull);
+      entity.HasOne(e => e.Match).WithOne(m => m.MatchDetails).HasForeignKey<MatchDetails>(e => e.MatchId).OnDelete(DeleteBehavior.Cascade);
     });
 
     modelBuilder.Entity<MatchAnalysis>(entity =>
@@ -429,7 +429,7 @@ public class AppDbContext : DbContext
       entity.HasIndex(e => e.EventOptionId);
       entity.HasIndex(e => e.StatusId);
       entity.HasOne(e => e.BetSlip).WithMany(s => s.Selections).HasForeignKey(e => e.BetSlipId).OnDelete(DeleteBehavior.Cascade);
-      entity.HasOne(e => e.Match).WithMany(m => m.BetSelections).HasForeignKey(e => e.MatchId).OnDelete(DeleteBehavior.Restrict);
+      entity.HasOne(e => e.Match).WithMany(m => m.BetSelections).HasForeignKey(e => e.MatchId).OnDelete(DeleteBehavior.Cascade);
       entity.HasOne(e => e.EventTypeEntity)
         .WithMany()
         .HasForeignKey(e => e.EventTypeId)

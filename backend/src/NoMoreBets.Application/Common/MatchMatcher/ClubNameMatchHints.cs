@@ -54,6 +54,10 @@ internal static class ClubNameMatchHints
       ["RKS Radomiak"] = "Radomiak Radom",
       ["Real Madryt"] = "Real Madrid",
       ["Bayern Monachium"] = "Bayern Munich",
+      // Premier League promoted sides: Betclic uses short names; DB/FotMob use full club names.
+      ["Coventry"] = "Coventry City",
+      ["Hull"] = "Hull City",
+      ["Ipswich"] = "Ipswich Town",
     };
 
     // FIFA World Cup (004.sql): Betclic PL, FotMob/Soccerdata, and RotoWire lineups.php naming variants.

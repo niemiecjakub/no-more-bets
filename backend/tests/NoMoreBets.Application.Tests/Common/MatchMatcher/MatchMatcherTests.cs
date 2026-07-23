@@ -346,6 +346,21 @@ public class MatchMatcherTests
     result.Name.Should().Be("Arsenal FC");
   }
 
+  [Theory]
+  [InlineData("Coventry", "Coventry City")]
+  [InlineData("Hull", "Hull City")]
+  [InlineData("Ipswich", "Ipswich Town")]
+  public void FindClub_BetclicPremierLeagueShortAlias_ReturnsDbClubName(string betclicName, string dbName)
+  {
+    var club = new ClubEntity { Id = 1, Name = dbName, SoccerdataId = 1 };
+    var clubs = new List<ClubEntity> { club };
+
+    var result = _sut.FindClub(betclicName, clubs);
+
+    result.Should().BeSameAs(club);
+    result.Name.Should().Be(dbName);
+  }
+
   [Fact]
   public void FindClub_BetclicPolishMarseilleAlias_ReturnsMarseille()
   {

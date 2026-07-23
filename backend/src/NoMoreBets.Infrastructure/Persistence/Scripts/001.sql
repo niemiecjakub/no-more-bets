@@ -291,7 +291,7 @@ CREATE TABLE "MatchDetails" (
 	"FotmobReview" text NULL,
 	CONSTRAINT "MatchDetails_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT uq_matchdetails_match UNIQUE ("MatchId"),
-	CONSTRAINT fk_matchdetails_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE SET NULL
+	CONSTRAINT fk_matchdetails_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE CASCADE
 );
 CREATE INDEX idx_matchdetails_match ON public."MatchDetails" USING btree ("MatchId");
 CREATE UNIQUE INDEX uq_matchdetails_fotmoburl ON public."MatchDetails" ("FotmobUrl") WHERE "FotmobUrl" IS NOT NULL;
@@ -370,7 +370,7 @@ CREATE TABLE "BetSelection" (
 	"UpdatedAt" timestamp NULL,
 	CONSTRAINT "BetSelection_pkey" PRIMARY KEY ("Id"),
 	CONSTRAINT fk_betselection_betslip FOREIGN KEY ("BetSlipId") REFERENCES "BetSlip"("Id") ON DELETE CASCADE,
-	CONSTRAINT fk_betselection_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE RESTRICT,
+	CONSTRAINT fk_betselection_match FOREIGN KEY ("MatchId") REFERENCES "Match"("Id") ON DELETE CASCADE,
 	CONSTRAINT fk_betselection_eventtype FOREIGN KEY ("EventTypeId") REFERENCES "BettingEventType"("Id") ON DELETE RESTRICT,
 	CONSTRAINT fk_betselection_eventoption FOREIGN KEY ("EventOptionId") REFERENCES "BettingEventOption"("Id") ON DELETE RESTRICT,
 	CONSTRAINT fk_betselection_status FOREIGN KEY ("StatusId") REFERENCES "BetStatus"("Id") ON DELETE RESTRICT
