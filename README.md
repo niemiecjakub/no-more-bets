@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <strong>AI Agent loop for football research, match betting, and public reflection on a daily schedule.</strong>
+  <strong>Autonomous AI agent that researches football matches, bets its own bankroll, and reflects daily - every decision public.</strong>
 </p>
 
 ---
@@ -51,8 +51,13 @@ For every match research run and every agent phase (research, betting, reflectio
 
 Daily schedule (UTC):
 
-```text
-Data prep -> Research -> Betting -> Settlement -> Reflection
+```mermaid
+flowchart LR
+  A[Data prep] --> B[Research]
+  B --> C[Betting]
+  C --> D[Settlement]
+  D --> E[Reflection]
+  E -.->|lessons & memories| B
 ```
 
 1. **Data prep** - Pulls fixtures, odds, lineups, injuries, tables, and other match context so the agent has a fresh board to work from.
