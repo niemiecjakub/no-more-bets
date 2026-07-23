@@ -10,7 +10,9 @@
   <img alt="Research project" src="https://img.shields.io/badge/research_project-yellow" />
 </p>
 
-**Agent loop for football research, match betting, and public reflection on a daily schedule.**
+<p align="center">
+  <strong>AI Agent loop for football research, match betting, and public reflection on a daily schedule.</strong>
+</p>
 
 ---
 
