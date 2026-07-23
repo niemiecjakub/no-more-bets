@@ -373,6 +373,10 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
         matchDate = parsed;
     }
 
+    if (TryParseTeamsFromHeader(doc, out homeTeam, out awayTeam))
+      return;
+
+    // Fallback for older Fotmob markup that put both names in the page title.
     var h1 = doc.QuerySelector("h1");
     var h1Text = h1?.TextContent?.Trim() ?? "";
     if (string.IsNullOrEmpty(h1Text))
@@ -392,6 +396,28 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
       if (!string.IsNullOrEmpty(datePart) && DateTimeOffset.TryParse(datePart, CultureInfo.InvariantCulture, DateTimeStyles.None, out var fromH1))
         matchDate = fromH1;
     }
+  }
+
+  /// <summary>
+  /// Reads home/away from MF header TeamLink anchors (<c>aria-label</c>), home first then away.
+  /// </summary>
+  private static bool TryParseTeamsFromHeader(IDocument doc, out string homeTeam, out string awayTeam)
+  {
+    homeTeam = "";
+    awayTeam = "";
+
+    var header = doc.QuerySelector("[class*='MFHeaderFullscreenHeader']")
+      ?? doc.QuerySelector("[class*='MFHeaderFullscreenSection']");
+    if (header is null)
+      return false;
+
+    var teamLinks = header.QuerySelectorAll("[class*='TeamLink'] a[aria-label]").ToArray();
+    if (teamLinks.Length < 2)
+      return false;
+
+    homeTeam = teamLinks[0].GetAttribute("aria-label")?.Trim() ?? "";
+    awayTeam = teamLinks[1].GetAttribute("aria-label")?.Trim() ?? "";
+    return !string.IsNullOrWhiteSpace(homeTeam) && !string.IsNullOrWhiteSpace(awayTeam);
   }
 
   private void ParseLineups(IDocument doc, out FotmobTeamLineup? homeLineup, out FotmobTeamLineup? awayLineup)
