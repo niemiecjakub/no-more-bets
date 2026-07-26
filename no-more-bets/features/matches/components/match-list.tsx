@@ -167,6 +167,10 @@ export function MatchList({
                   {center}
                 </time>
               );
+              const homeNameWeight =
+                showScore && match.homeGoals! >= match.awayGoals! ? "font-bold" : "font-medium";
+              const awayNameWeight =
+                showScore && match.awayGoals! >= match.homeGoals! ? "font-bold" : "font-medium";
               const hasAgentResearch = match.hasResearch || match.hasResearchBet;
               const isExpanded = expandedMatchIds.has(match.id);
               const readinessChips = [
@@ -202,7 +206,7 @@ export function MatchList({
                           href={`/match/${match.id}`}
                           className="flex min-w-0 items-center justify-end gap-2"
                         >
-                          <span className="min-w-0 truncate text-end font-medium text-foreground">
+                          <span className={`min-w-0 truncate text-end ${homeNameWeight} text-foreground`}>
                             {match.homeClubName}
                           </span>
                           <SlugIcon
@@ -228,7 +232,7 @@ export function MatchList({
                             alt={match.awayClubName}
                             className="h-7 w-7"
                           />
-                          <span className="min-w-0 truncate font-medium text-foreground">
+                          <span className={`min-w-0 truncate ${awayNameWeight} text-foreground`}>
                             {match.awayClubName}
                           </span>
                         </Link>
