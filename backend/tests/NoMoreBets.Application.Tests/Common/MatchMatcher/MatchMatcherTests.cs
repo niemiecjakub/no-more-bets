@@ -848,6 +848,28 @@ public class MatchMatcherTests
     result.Should().Be(42);
   }
 
+  [Theory]
+  [InlineData("Rakow", "Wisla Plock", "Rakow Czestochowa", "Wisla Plock")]
+  [InlineData("Legia", "Pogon Szczecin", "Legia Warsaw", "Pogon Szczecin")]
+  [InlineData("Jagiellonia", "Korona Kielce", "Jagiellonia Bialystok", "Korona Kielce")]
+  [InlineData("Zaglebie", "Piast Gliwice", "Zaglebie Lubin", "Piast Gliwice")]
+  [InlineData("Wisla", "Wieczysta Krakow", "Wisla Krakow", "Wieczysta Krakow")]
+  public void FindBestMatch_FlashscoreEkstraklasaShortNames_MatchDbClubs(
+    string flashscoreHome,
+    string flashscoreAway,
+    string dbHome,
+    string dbAway)
+  {
+    var candidates = new List<(string HomeName, string AwayName, int Value)>
+    {
+      (flashscoreHome, flashscoreAway, 42)
+    };
+
+    var result = _sut.FindBestMatch(dbHome, dbAway, candidates);
+
+    result.Should().Be(42);
+  }
+
   [Fact]
   public void FindBestMatch_NoMatch_ReturnsDefault()
   {

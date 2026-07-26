@@ -3,12 +3,14 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Betting.SettlePendingBetSelections;
+using NoMoreBets.Application.Common.Dto.Matches;
 using NoMoreBets.Application.Common.MatchMatcher;
 using NoMoreBets.Application.Common.SoccerData;
+using NoMoreBets.Application.Matches;
 using NoMoreBets.Domain.Enums;
-using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Persistence;
 using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
+using DomainMatch = NoMoreBets.Domain.Matches.Match;
 using SoccerDataMatch = NoMoreBets.Application.Common.Dto.Matches.Match;
 
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
@@ -17,6 +19,7 @@ public sealed class FinishedMatchScoreJobService(
   AppDbContext db,
   SoccerDataClient soccerDataClient,
   IMatchMatcher matchMatcher,
+  IMatchResultsProvider matchResultsProvider,
   IMediator mediator,
   ILogger<FinishedMatchScoreJobService> logger)
 {
@@ -36,6 +39,7 @@ public sealed class FinishedMatchScoreJobService(
       {
         Match = m,
         LeagueSoccerdataId = m.Stage != null ? (int?)m.Stage.Season.League.SoccerdataId : null,
+        LeagueSlug = m.Stage != null ? m.Stage.Season.League.Slug : null,
         HasEvents = m.MatchEvents.Any()
       })
       .ToListAsync();
@@ -58,6 +62,7 @@ public sealed class FinishedMatchScoreJobService(
     }
 
     var updatedScoreCount = 0;
+    var flashscoreScoreCount = 0;
     var addedEventCount = 0;
     var resolvedSoccerdataIdCount = 0;
     var matchesByLeague = dbMatchesWithLeague
@@ -125,6 +130,20 @@ public sealed class FinishedMatchScoreJobService(
       }
     }
 
+    var stillMissingScores = dbMatchesWithLeague
+      .Where(x => x.LeagueSlug is not null)
+      .Where(x => x.Match.HomeGoals is null || x.Match.AwayGoals is null)
+      .GroupBy(x => x.LeagueSlug!);
+
+    foreach (var slugGroup in stillMissingScores)
+    {
+      var filled = await FillScoresFromFlashscoreAsync(
+        slugGroup.Key,
+        slugGroup.Select(x => x.Match).ToList());
+      flashscoreScoreCount += filled;
+      updatedScoreCount += filled;
+    }
+
     if (updatedScoreCount > 0 || addedEventCount > 0 || resolvedSoccerdataIdCount > 0)
     {
       await db.SaveChangesAsync();
@@ -139,15 +158,57 @@ public sealed class FinishedMatchScoreJobService(
     }
 
     logger.LogInformation(
-      "Job {JobName} resolved SoccerdataId for {ResolvedSoccerdataIdCount} matches, updated scores for {UpdatedScoreCount} matches and added {AddedEventCount} match events",
+      "Job {JobName} resolved SoccerdataId for {ResolvedSoccerdataIdCount} matches, updated scores for {UpdatedScoreCount} matches ({FlashscoreScoreCount} via Flashscore fallback) and added {AddedEventCount} match events",
       nameof(FillMissingFinishedMatchScoresFromSoccerData),
       resolvedSoccerdataIdCount,
       updatedScoreCount,
+      flashscoreScoreCount,
       addedEventCount);
   }
 
+  private async Task<int> FillScoresFromFlashscoreAsync(string leagueSlug, IReadOnlyList<DomainMatch> candidates)
+  {
+    if (candidates.Count == 0)
+      return 0;
+
+    var results = await matchResultsProvider.GetFinishedResultsAsync(leagueSlug);
+    if (results.Count == 0)
+      return 0;
+
+    var filledCount = 0;
+    foreach (var match in candidates)
+    {
+      if (match.HomeGoals is not null && match.AwayGoals is not null)
+        continue;
+
+      var matchDate = DateOnly.FromDateTime(DateTime.SpecifyKind(match.MatchDate, DateTimeKind.Utc));
+      var dayCandidates = new List<(string HomeName, string AwayName, FinishedMatchResult Value)>();
+      foreach (var result in results)
+      {
+        if (result.MatchDate != matchDate)
+          continue;
+
+        dayCandidates.Add((result.HomeTeam, result.AwayTeam, result));
+      }
+
+      var best = matchMatcher.FindBestMatch(
+        match.HomeClub.Name,
+        match.AwayClub.Name,
+        dayCandidates);
+
+      if (best is null)
+        continue;
+
+      match.HomeGoals = best.HomeGoals;
+      match.AwayGoals = best.AwayGoals;
+      filledCount++;
+    }
+
+    return filledCount;
+  }
+
   private static SoccerDataMatch? ResolveSoccerDataMatch(
-    Match dbMatch,
+    DomainMatch dbMatch,
     IReadOnlyDictionary<int, SoccerDataMatch> soccerDataMatchesById,
     IReadOnlyList<SoccerDataMatch> allSoccerDataMatches,
     IMatchMatcher matchMatcher)

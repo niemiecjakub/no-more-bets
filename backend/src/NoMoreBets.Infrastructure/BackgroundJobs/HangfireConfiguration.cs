@@ -191,7 +191,7 @@ public static class HangfireConfiguration
       .WithId("fill-missing-finished-match-scores")
       .WithGroup(JobGroups.DataPreparation)
       .WithName("Complete finished match results")
-      .WithDescription("Backfills final scores for finished games that are still incomplete.")
+      .WithDescription("Backfills final scores (SoccerData primary, Flashscore score fallback) and events for finished games that are still incomplete.")
       .Visible()
       .WithCron("0 23 * * *")
       .Register();

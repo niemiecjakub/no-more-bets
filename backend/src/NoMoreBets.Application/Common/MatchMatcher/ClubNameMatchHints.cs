@@ -52,6 +52,12 @@ internal static class ClubNameMatchHints
       // Ekstraklasa/LaLiga localized variants seen in bookmaker feeds.
       ["Wisła Płock"] = "Wisla Plock",
       ["RKS Radomiak"] = "Radomiak Radom",
+      // Flashscore Ekstraklasa short labels (flashscore-names.html)
+      ["Jagiellonia"] = "Jagiellonia Bialystok",
+      ["Legia"] = "Legia Warsaw",
+      ["Rakow"] = "Rakow Czestochowa",
+      ["Zaglebie"] = "Zaglebie Lubin",
+      ["Wisla"] = "Wisla Krakow", // Flashscore uses full "Wisla Plock" for the other club
       ["Real Madryt"] = "Real Madrid",
       ["Bayern Monachium"] = "Bayern Munich",
       // Premier League promoted sides: Betclic uses short names; DB/FotMob use full club names.

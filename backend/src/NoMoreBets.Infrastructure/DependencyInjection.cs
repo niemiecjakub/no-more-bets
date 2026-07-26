@@ -27,6 +27,7 @@ using NoMoreBets.Infrastructure.Persistence.Repositories;
 using NoMoreBets.Infrastructure.Scraping;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using NoMoreBets.Infrastructure.Scraping.External.Betclic;
+using NoMoreBets.Infrastructure.Scraping.External.Flashscore;
 using NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 using NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
@@ -134,6 +135,7 @@ public static class DependencyInjection
     services.AddSingleton<RotowireScraper>();
     services.AddSingleton<BetclicScraper>();
     services.AddSingleton<FotmobScraper>();
+    services.AddSingleton<FlashscoreScraper>();
 
     // Provider interfaces
     services.AddTransient<IUpcommingMatchProvider>(sp => sp.GetRequiredService<SoccerDataClient>());
@@ -145,6 +147,7 @@ public static class DependencyInjection
     services.AddTransient<IMatchDetailsProvider>(sp => sp.GetRequiredService<FotmobScraper>());
     services.AddTransient<IBookmakerMatchesProvider>(sp => sp.GetRequiredService<BetclicScraper>());
     services.AddTransient<IBetEventsProvider>(sp => sp.GetRequiredService<BetclicScraper>());
+    services.AddTransient<IMatchResultsProvider>(sp => sp.GetRequiredService<FlashscoreScraper>());
 
     services.AddHttpClient<ISearchService, BraveSearch>((serviceProvider, client) =>
     {
