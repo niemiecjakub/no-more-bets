@@ -64,7 +64,7 @@ public sealed class FinishedMatchScoreJobService(
 
     var updatedScoreCount = 0;
     var flashscoreScoreCount = 0;
-    var flashscoreEventCount = 0;
+    var scheduledFlashscoreEventJobs = 0;
     var addedEventCount = 0;
     var resolvedSoccerdataIdCount = 0;
     var matchIdsWithEventsThisRun = new HashSet<int>();
@@ -150,11 +150,10 @@ public sealed class FinishedMatchScoreJobService(
         .Select(x => (x.Match, NeedsEvents: !x.HasEvents && !matchIdsWithEventsThisRun.Contains(x.Match.Id)))
         .ToList();
 
-      var (scoresFilled, eventsAdded) = await FillFromFlashscoreAsync(slugGroup.Key, candidates);
+      var (scoresFilled, scheduledEvents) = await FillFromFlashscoreAsync(slugGroup.Key, candidates);
       flashscoreScoreCount += scoresFilled;
-      flashscoreEventCount += eventsAdded;
+      scheduledFlashscoreEventJobs += scheduledEvents;
       updatedScoreCount += scoresFilled;
-      addedEventCount += eventsAdded;
     }
 
     if (updatedScoreCount > 0 || addedEventCount > 0 || resolvedSoccerdataIdCount > 0)
@@ -171,16 +170,82 @@ public sealed class FinishedMatchScoreJobService(
     }
 
     logger.LogInformation(
-      "Job {JobName} resolved SoccerdataId for {ResolvedSoccerdataIdCount} matches, updated scores for {UpdatedScoreCount} matches ({FlashscoreScoreCount} via Flashscore fallback) and added {AddedEventCount} match events ({FlashscoreEventCount} via Flashscore fallback)",
+      "Job {JobName} resolved SoccerdataId for {ResolvedSoccerdataIdCount} matches, updated scores for {UpdatedScoreCount} matches ({FlashscoreScoreCount} via Flashscore fallback), added {AddedEventCount} SoccerData match events, and scheduled {ScheduledFlashscoreEventJobs} Flashscore event jobs",
       nameof(FillMissingFinishedMatchScoresFromSoccerData),
       resolvedSoccerdataIdCount,
       updatedScoreCount,
       flashscoreScoreCount,
       addedEventCount,
-      flashscoreEventCount);
+      scheduledFlashscoreEventJobs);
   }
 
-  private async Task<(int ScoresFilled, int EventsAdded)> FillFromFlashscoreAsync(
+  /// <summary>
+  /// Fetches Flashscore match-summary incidents for one match and persists missing events.
+  /// Scheduled with a stagger so the scraper rate limiter is not slammed.
+  /// </summary>
+  [AutomaticRetry(Attempts = 3)]
+  public async Task FillMatchEventsFromFlashscore(int matchId, string detailUrl)
+  {
+    if (string.IsNullOrWhiteSpace(detailUrl))
+    {
+      logger.LogWarning(
+        "Job {JobName} skipped MatchId={MatchId}: detail URL is empty",
+        nameof(FillMatchEventsFromFlashscore),
+        matchId);
+      return;
+    }
+
+    var match = await db.Match
+      .Include(m => m.MatchEvents)
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .FirstOrDefaultAsync(m => m.Id == matchId);
+
+    if (match is null)
+    {
+      logger.LogWarning(
+        "Job {JobName} skipped: MatchId={MatchId} not found",
+        nameof(FillMatchEventsFromFlashscore),
+        matchId);
+      return;
+    }
+
+    if (match.MatchEvents.Count > 0)
+    {
+      logger.LogInformation(
+        "Job {JobName} skipped MatchId={MatchId}: events already present",
+        nameof(FillMatchEventsFromFlashscore),
+        matchId);
+      return;
+    }
+
+    var flashscoreEvents = await matchEventsProvider.GetMatchEventsAsync(detailUrl);
+    var added = await SoccerDataMatchEventSync.AddMissingEventsAsync(
+      db,
+      match,
+      flashscoreEvents,
+      logger);
+
+    if (added == 0)
+    {
+      logger.LogInformation(
+        "Job {JobName} added no events for MatchId={MatchId} from {DetailUrl}",
+        nameof(FillMatchEventsFromFlashscore),
+        matchId,
+        detailUrl);
+      return;
+    }
+
+    await db.SaveChangesAsync();
+    logger.LogInformation(
+      "Job {JobName} added {AddedEventCount} events for MatchId={MatchId} from {DetailUrl}",
+      nameof(FillMatchEventsFromFlashscore),
+      added,
+      matchId,
+      detailUrl);
+  }
+
+  private async Task<(int ScoresFilled, int EventJobsScheduled)> FillFromFlashscoreAsync(
     string leagueSlug,
     IReadOnlyList<(DomainMatch Match, bool NeedsEvents)> candidates)
   {
@@ -192,7 +257,7 @@ public sealed class FinishedMatchScoreJobService(
       return (0, 0);
 
     var scoresFilled = 0;
-    var eventsAdded = 0;
+    var eventJobsScheduled = 0;
     foreach (var (match, needsEvents) in candidates)
     {
       var needsScores = match.HomeGoals is null || match.AwayGoals is null;
@@ -226,17 +291,18 @@ public sealed class FinishedMatchScoreJobService(
 
       if (needsEvents && !string.IsNullOrWhiteSpace(best.DetailUrl))
       {
-        var flashscoreEvents = await matchEventsProvider.GetMatchEventsAsync(best.DetailUrl);
-        var added = await SoccerDataMatchEventSync.AddMissingEventsAsync(
-          db,
-          match,
-          flashscoreEvents,
-          logger);
-        eventsAdded += added;
+        // Stagger ~1–5 minutes so Flashscore detail fetches stay under the scraper rate limit.
+        var delay = TimeSpan.FromSeconds(Random.Shared.Next(60, 300));
+        var detailUrl = best.DetailUrl;
+        var matchId = match.Id;
+        BackgroundJob.Schedule<FinishedMatchScoreJobService>(
+          js => js.FillMatchEventsFromFlashscore(matchId, detailUrl),
+          delay);
+        eventJobsScheduled++;
       }
     }
 
-    return (scoresFilled, eventsAdded);
+    return (scoresFilled, eventJobsScheduled);
   }
 
   private static SoccerDataMatch? ResolveSoccerDataMatch(
