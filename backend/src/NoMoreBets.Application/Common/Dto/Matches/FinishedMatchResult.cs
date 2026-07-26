@@ -7,4 +7,5 @@ public sealed record FinishedMatchResult(
   DateOnly MatchDate,
   TimeOnly? KickoffTime,
   int HomeGoals,
-  int AwayGoals);
+  int AwayGoals,
+  string? DetailUrl = null);

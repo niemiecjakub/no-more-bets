@@ -20,6 +20,7 @@ public sealed class FinishedMatchScoreJobService(
   SoccerDataClient soccerDataClient,
   IMatchMatcher matchMatcher,
   IMatchResultsProvider matchResultsProvider,
+  IMatchEventsProvider matchEventsProvider,
   IMediator mediator,
   ILogger<FinishedMatchScoreJobService> logger)
 {
@@ -63,8 +64,10 @@ public sealed class FinishedMatchScoreJobService(
 
     var updatedScoreCount = 0;
     var flashscoreScoreCount = 0;
+    var flashscoreEventCount = 0;
     var addedEventCount = 0;
     var resolvedSoccerdataIdCount = 0;
+    var matchIdsWithEventsThisRun = new HashSet<int>();
     var matchesByLeague = dbMatchesWithLeague
       .Where(x => x.LeagueSoccerdataId.HasValue)
       .GroupBy(x => x.LeagueSoccerdataId!.Value);
@@ -121,27 +124,37 @@ public sealed class FinishedMatchScoreJobService(
 
         if (!item.HasEvents)
         {
-          addedEventCount += await SoccerDataMatchEventSync.AddMissingEventsAsync(
+          var added = await SoccerDataMatchEventSync.AddMissingEventsAsync(
             db,
             item.Match,
             soccerDataMatch.Events,
             logger);
+          addedEventCount += added;
+          if (added > 0)
+            matchIdsWithEventsThisRun.Add(item.Match.Id);
         }
       }
     }
 
-    var stillMissingScores = dbMatchesWithLeague
+    var stillNeedingFlashscore = dbMatchesWithLeague
       .Where(x => x.LeagueSlug is not null)
-      .Where(x => x.Match.HomeGoals is null || x.Match.AwayGoals is null)
+      .Where(x =>
+        x.Match.HomeGoals is null
+        || x.Match.AwayGoals is null
+        || (!x.HasEvents && !matchIdsWithEventsThisRun.Contains(x.Match.Id)))
       .GroupBy(x => x.LeagueSlug!);
 
-    foreach (var slugGroup in stillMissingScores)
+    foreach (var slugGroup in stillNeedingFlashscore)
     {
-      var filled = await FillScoresFromFlashscoreAsync(
-        slugGroup.Key,
-        slugGroup.Select(x => x.Match).ToList());
-      flashscoreScoreCount += filled;
-      updatedScoreCount += filled;
+      var candidates = slugGroup
+        .Select(x => (x.Match, NeedsEvents: !x.HasEvents && !matchIdsWithEventsThisRun.Contains(x.Match.Id)))
+        .ToList();
+
+      var (scoresFilled, eventsAdded) = await FillFromFlashscoreAsync(slugGroup.Key, candidates);
+      flashscoreScoreCount += scoresFilled;
+      flashscoreEventCount += eventsAdded;
+      updatedScoreCount += scoresFilled;
+      addedEventCount += eventsAdded;
     }
 
     if (updatedScoreCount > 0 || addedEventCount > 0 || resolvedSoccerdataIdCount > 0)
@@ -158,27 +171,32 @@ public sealed class FinishedMatchScoreJobService(
     }
 
     logger.LogInformation(
-      "Job {JobName} resolved SoccerdataId for {ResolvedSoccerdataIdCount} matches, updated scores for {UpdatedScoreCount} matches ({FlashscoreScoreCount} via Flashscore fallback) and added {AddedEventCount} match events",
+      "Job {JobName} resolved SoccerdataId for {ResolvedSoccerdataIdCount} matches, updated scores for {UpdatedScoreCount} matches ({FlashscoreScoreCount} via Flashscore fallback) and added {AddedEventCount} match events ({FlashscoreEventCount} via Flashscore fallback)",
       nameof(FillMissingFinishedMatchScoresFromSoccerData),
       resolvedSoccerdataIdCount,
       updatedScoreCount,
       flashscoreScoreCount,
-      addedEventCount);
+      addedEventCount,
+      flashscoreEventCount);
   }
 
-  private async Task<int> FillScoresFromFlashscoreAsync(string leagueSlug, IReadOnlyList<DomainMatch> candidates)
+  private async Task<(int ScoresFilled, int EventsAdded)> FillFromFlashscoreAsync(
+    string leagueSlug,
+    IReadOnlyList<(DomainMatch Match, bool NeedsEvents)> candidates)
   {
     if (candidates.Count == 0)
-      return 0;
+      return (0, 0);
 
     var results = await matchResultsProvider.GetFinishedResultsAsync(leagueSlug);
     if (results.Count == 0)
-      return 0;
+      return (0, 0);
 
-    var filledCount = 0;
-    foreach (var match in candidates)
+    var scoresFilled = 0;
+    var eventsAdded = 0;
+    foreach (var (match, needsEvents) in candidates)
     {
-      if (match.HomeGoals is not null && match.AwayGoals is not null)
+      var needsScores = match.HomeGoals is null || match.AwayGoals is null;
+      if (!needsScores && !needsEvents)
         continue;
 
       var matchDate = DateOnly.FromDateTime(DateTime.SpecifyKind(match.MatchDate, DateTimeKind.Utc));
@@ -199,12 +217,26 @@ public sealed class FinishedMatchScoreJobService(
       if (best is null)
         continue;
 
-      match.HomeGoals = best.HomeGoals;
-      match.AwayGoals = best.AwayGoals;
-      filledCount++;
+      if (needsScores)
+      {
+        match.HomeGoals = best.HomeGoals;
+        match.AwayGoals = best.AwayGoals;
+        scoresFilled++;
+      }
+
+      if (needsEvents && !string.IsNullOrWhiteSpace(best.DetailUrl))
+      {
+        var flashscoreEvents = await matchEventsProvider.GetMatchEventsAsync(best.DetailUrl);
+        var added = await SoccerDataMatchEventSync.AddMissingEventsAsync(
+          db,
+          match,
+          flashscoreEvents,
+          logger);
+        eventsAdded += added;
+      }
     }
 
-    return filledCount;
+    return (scoresFilled, eventsAdded);
   }
 
   private static SoccerDataMatch? ResolveSoccerDataMatch(

@@ -127,7 +127,8 @@ internal static class SoccerDataMatchEventSync
     SoccerDataPlayer? soccerDataPlayer,
     CancellationToken cancellationToken)
   {
-    if (soccerDataPlayer is null || soccerDataPlayer.Id <= 0 || string.IsNullOrWhiteSpace(soccerDataPlayer.Name))
+    // Id == 0 is unset; negative Ids are Flashscore synthetic SoccerdataIds.
+    if (soccerDataPlayer is null || soccerDataPlayer.Id == 0 || string.IsNullOrWhiteSpace(soccerDataPlayer.Name))
       return null;
 
     var existing = db.Player.Local.FirstOrDefault(p => p.SoccerdataId == soccerDataPlayer.Id)

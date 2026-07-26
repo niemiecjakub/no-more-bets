@@ -148,6 +148,7 @@ public static class DependencyInjection
     services.AddTransient<IBookmakerMatchesProvider>(sp => sp.GetRequiredService<BetclicScraper>());
     services.AddTransient<IBetEventsProvider>(sp => sp.GetRequiredService<BetclicScraper>());
     services.AddTransient<IMatchResultsProvider>(sp => sp.GetRequiredService<FlashscoreScraper>());
+    services.AddTransient<IMatchEventsProvider>(sp => sp.GetRequiredService<FlashscoreScraper>());
 
     services.AddHttpClient<ISearchService, BraveSearch>((serviceProvider, client) =>
     {
