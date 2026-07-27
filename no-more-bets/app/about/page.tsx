@@ -61,6 +61,11 @@ const dataSources = [
     href: "https://soccerdataapi.com/",
   },
   {
+    name: "Flashscore",
+    role: "Finished scores & match events",
+    href: "https://www.flashscore.com/",
+  },
+  {
     name: "Betclic",
     role: "Bookmaker listings & odds",
     href: "https://www.betclic.pl/",
