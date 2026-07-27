@@ -26,6 +26,7 @@
 | **Dual bet tracks** | Live stakes from the agent bankroll + research / paper slips |
 | **Daily pipeline** | Data prep -> research -> betting -> settlement -> reflection (Hangfire jobs) |
 | **Semantic search** | Match & analysis chunks embedded in PostgreSQL (`pgvector`) for hybrid retrieval |
+| **MCP tools** | Match, club, and league data over [Model Context Protocol](https://modelcontextprotocol.io/) for AI clients |
 
 **League coverage:**
 
@@ -38,6 +39,14 @@
 | Ligue 1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Ekstraklasa | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | ✅ |
 | FIFA World Cup | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+---
+
+## MCP
+
+No More Bets exposes the same structured football data the public agent uses - fixtures, research, lineups, odds, clubs, and standings — as [MCP](https://modelcontextprotocol.io/) tools for AI clients. Tool groups and descriptions are listed at [nomorebets.io/mcp](https://nomorebets.io/mcp).
+
+Access is available on request: open a [GitHub issue](https://github.com/niemiecjakub/no-more-bets/issues) or use Feedback in the app.
 
 ---
 
