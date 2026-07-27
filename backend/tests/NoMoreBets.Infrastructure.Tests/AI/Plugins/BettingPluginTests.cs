@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MediatR;
 using NSubstitute;
+using NoMoreBets.Application.Betting.GetMatchBettingOdds;
 using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Bankrolls;

@@ -1,6 +1,6 @@
 using ModelContextProtocol.Protocol;
-using NoMoreBets.Infrastructure.AI.Mcp;
 using NoMoreBets.Infrastructure.Mcp;
+using NoMoreBets.Infrastructure.Mcp.Tools;
 
 namespace NoMoreBets.Mcp;
 
@@ -30,7 +30,9 @@ public static class McpHostExtensions
       {
         options.Stateless = true;
       })
-      .WithTools<MatchMcpTools>();
+      .WithTools<MatchesMcpTools>()
+      .WithTools<LeaguesMcpTools>()
+      .WithTools<ClubsMcpTools>();
 
     return builder;
   }

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Betting.CancelBetSlip;
 using NoMoreBets.Application.Betting.GetBetSlips;
+using NoMoreBets.Application.Betting.GetMatchBettingOdds;
 using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Bankrolls;
@@ -49,60 +50,13 @@ public class BettingTool
   }
 
   [Description("Returns current odds for the match. By default returns compact markets (1X2, BTTS, double chance, O/U goals). Set includeExoticMarkets true only when you need handicap or exact-score lines.")]
-  public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(
+  public Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsAsync(
     int matchId,
     [Description("When false (default), omits Handicap and ExactScore markets to save tokens. Set true only if your intended slip uses those markets.")]
     bool includeExoticMarkets = false,
     CancellationToken cancellationToken = default)
   {
-    var snapshots = await _unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(matchId, cancellationToken).ConfigureAwait(false);
-
-    if (snapshots.Count == 0)
-    {
-      _logger.LogWarning("No current odds snapshots found for match {MatchId}.", matchId);
-      return Array.Empty<CurrentOddsMarket>();
-    }
-
-    var latest = snapshots[0];
-    var byEventType = new Dictionary<int, (string Name, List<CurrentOddsOption> Options)>();
-
-    foreach (var row in latest.Rows)
-    {
-      if (row.EventTypeEntity is null)
-      {
-        _logger.LogWarning("Skipping odds row with missing event type entity for match {MatchId}. EventTypeId={EventTypeId}", matchId, row.EventTypeId);
-        continue;
-      }
-
-      if (!includeExoticMarkets && row.EventTypeId is not (
-        (int)BettingEventType.OverUnderGoals
-        or (int)BettingEventType.DoubleChance
-        or (int)BettingEventType.BothTeamsToScore
-        or (int)BettingEventType.MatchResult))
-      {
-        continue;
-      }
-
-      var outcomeName = row.EventOptionEntity?.Name;
-      if (string.IsNullOrEmpty(outcomeName) || !row.Odds.HasValue)
-      {
-        _logger.LogWarning("Skipping odds row with incomplete data for match {MatchId}. EventTypeId={EventTypeId}", matchId, row.EventTypeId);
-        continue;
-      }
-
-      if (!byEventType.TryGetValue(row.EventTypeId, out var bucket))
-      {
-        bucket = (row.EventTypeEntity.Name, new List<CurrentOddsOption>());
-        byEventType[row.EventTypeId] = bucket;
-      }
-
-      bucket.Options.Add(new CurrentOddsOption(outcomeName, (double)row.Odds.Value));
-    }
-
-    return byEventType
-      .OrderBy(kv => kv.Key)
-      .Select(kv => new CurrentOddsMarket(kv.Key, kv.Value.Name, kv.Value.Options))
-      .ToList();
+    return _mediator.Send(new GetMatchBettingOddsQuery(matchId, includeExoticMarkets), cancellationToken);
   }
 
   [Description("Returns structured match analysis for the given match.")]
