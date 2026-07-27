@@ -1,22 +1,18 @@
-using System.Reflection;
 using FluentAssertions;
-using MediatR;
-using ModelContextProtocol.Server;
-using NSubstitute;
-using NoMoreBets.Infrastructure.Mcp.Tools;
+using NoMoreBets.Infrastructure.Mcp;
 
 namespace NoMoreBets.Infrastructure.Tests.Mcp;
 
 public class McpToolsTests
 {
-  private readonly IMediator _mediator = Substitute.For<IMediator>();
-
   [Fact]
-  public void McpTools_ExposeReadOnlyToolsPerApplicationSlice()
+  public void McpToolCatalog_ListsReadOnlyToolsPerApplicationSlice()
   {
-    var tools = BuildTools();
+    var groups = McpToolCatalog.ListGroups();
 
-    tools.Select(t => t.ProtocolTool.Name).Should().BeEquivalentTo(
+    groups.Select(g => g.Id).Should().Equal("matches", "clubs", "leagues");
+
+    groups.SelectMany(g => g.Tools).Select(t => t.Name).Should().BeEquivalentTo(
     [
       "matches_search",
       "matches_getLineups",
@@ -36,20 +32,7 @@ public class McpToolsTests
       "clubs_getRollingPerformance",
     ]);
 
-    tools.Should().OnlyContain(t => t.ProtocolTool.Annotations!.ReadOnlyHint == true);
-    tools.Should().OnlyContain(t => t.ProtocolTool.Description != null);
-  }
-
-  private List<McpServerTool> BuildTools()
-  {
-    object[] targets = [new MatchesMcpTools(_mediator), new LeaguesMcpTools(_mediator), new ClubsMcpTools(_mediator)];
-
-    return targets
-      .SelectMany(target => target.GetType()
-        .GetMethods(BindingFlags.Public | BindingFlags.Instance)
-        .Where(m => m.GetCustomAttribute<McpServerToolAttribute>() != null)
-        // Create() generates the JSON input schema, so it fails on unsupported parameter types.
-        .Select(m => McpServerTool.Create(m, target)))
-      .ToList();
+    groups.SelectMany(g => g.Tools).Should().OnlyContain(t =>
+      !string.IsNullOrWhiteSpace(t.Title) && !string.IsNullOrWhiteSpace(t.Description));
   }
 }
