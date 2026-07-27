@@ -1,18 +1,20 @@
 using Hangfire;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
 public sealed class UpcomingMatchesInternetResearchCronService(
   IAgentPhaseRunner agentPhaseRunner,
-  IUnitOfWork unitOfWork,
+  IMediator mediator,
   ILogger<UpcomingMatchesInternetResearchCronService> logger)
 {
   [AutomaticRetry(Attempts = 1)]
   public async Task RunAsync()
   {
-    var upcomingMatches = await unitOfWork.Matches
-      .GetUpcomingMatchesAsync(CancellationToken.None)
+    var upcomingMatches = await mediator
+      .Send(new GetUpcomingMatchesReadyForPredictionQuery(ExcludeWithExistingResearch: false), CancellationToken.None)
       .ConfigureAwait(false);
 
     if (upcomingMatches.Count == 0)

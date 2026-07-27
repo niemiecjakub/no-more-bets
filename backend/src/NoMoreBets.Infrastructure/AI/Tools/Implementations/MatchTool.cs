@@ -15,6 +15,7 @@ using NoMoreBets.Application.Matches.GetHeadToHeadStats;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
+using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
@@ -125,7 +126,9 @@ public class MatchTool
   [Description("Returns a list with upcomming matches.")]
   public async Task<IReadOnlyList<AvailableMatch>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default)
   {
-    var matches = await _unitOfWork.Matches.GetUpcomingMatchesAsync(cancellationToken).ConfigureAwait(false);
+    var matches = await _mediator
+      .Send(new GetUpcomingMatchesReadyForPredictionQuery(ExcludeWithExistingResearch: false), cancellationToken)
+      .ConfigureAwait(false);
 
     return matches
       .Select(m => new AvailableMatch(m.Id, m.HomeClub.Name, m.AwayClub.Name, m.MatchDate))
