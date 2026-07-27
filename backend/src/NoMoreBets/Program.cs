@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using NoMoreBets.Application;
 using NoMoreBets.Infrastructure;
 using NoMoreBets.Infrastructure.Persistence;
+using NoMoreBets.Mcp;
 using NoMoreBets.OpenTelemetry;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +15,7 @@ builder.AddOpenTelemetryObservability();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddHangfireConfiguration(builder.Configuration);
+builder.AddNoMoreBetsMcp();
 builder.Services.AddControllers()
   .AddJsonOptions(options =>
   {
@@ -83,4 +85,5 @@ app.UseHttpsRedirection();
 app.UseCors("AllowFrontend");
 app.UseAuthorization();
 app.MapControllers();
+app.MapNoMoreBetsMcp();
 app.Run();
