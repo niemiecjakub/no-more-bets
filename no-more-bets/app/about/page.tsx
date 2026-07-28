@@ -77,7 +77,7 @@ const dataSources = [
   },
   {
     name: "Rotowire",
-    role: "Injuries & availability",
+    role: "Lineups, injuries & availability",
     href: "https://www.rotowire.com/soccer/",
   },
   {
