@@ -69,7 +69,7 @@ public class UpdateTableHandlerTests
   [InlineData(-50, 50)]  // mid-season
   [InlineData(-100, 0)]  // season end
   [InlineData(-100, 7)]  // last day of post-end window
-  public void IsWithinSeasonFetchWindow_WhenDateInWindow_ReturnsTrue(int startOffsetDays, int endOffsetDays)
+  public void SeasonFetchWindow_WhenDateInWindow_ReturnsTrue(int startOffsetDays, int endOffsetDays)
   {
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
     var season = new Season
@@ -78,13 +78,13 @@ public class UpdateTableHandlerTests
       EndDate = today.AddDays(endOffsetDays)
     };
 
-    UpdateTableHandler.IsWithinSeasonFetchWindow(season, today).Should().BeTrue();
+    SeasonFetchWindow.Contains(season, today).Should().BeTrue();
   }
 
   [Theory]
   [InlineData(8, 100)]  // more than 7 days before start
   [InlineData(-100, -8)] // more than 7 days after end
-  public void IsWithinSeasonFetchWindow_WhenDateOutsideWindow_ReturnsFalse(int startOffsetDays, int endOffsetDays)
+  public void SeasonFetchWindow_WhenDateOutsideWindow_ReturnsFalse(int startOffsetDays, int endOffsetDays)
   {
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
     var season = new Season
@@ -93,7 +93,7 @@ public class UpdateTableHandlerTests
       EndDate = today.AddDays(endOffsetDays)
     };
 
-    UpdateTableHandler.IsWithinSeasonFetchWindow(season, today).Should().BeFalse();
+    SeasonFetchWindow.Contains(season, today).Should().BeFalse();
   }
 
   [Fact]

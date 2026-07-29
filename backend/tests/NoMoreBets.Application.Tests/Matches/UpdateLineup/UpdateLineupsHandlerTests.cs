@@ -8,7 +8,6 @@ using NoMoreBets.Application.Matches.UpdateLineup;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Domain.Clubs;
 using ClubEntity = NoMoreBets.Domain.Clubs.Club;
 
 namespace NoMoreBets.Application.Tests.Matches.UpdateLineup;
@@ -43,6 +42,20 @@ public class UpdateLineupsHandlerTests
     _sut = new UpdateLineupsHandler(_lineupProvider, _matchMatcher, _unitOfWork, _logger);
   }
 
+  private void SetupInWindowSeason()
+  {
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    _leagueRepository.GetLatestSeasonAsync(SupportedLeagueId, Arg.Any<CancellationToken>())
+      .Returns(new Season
+      {
+        Id = 1,
+        LeagueId = SupportedLeagueId,
+        Year = "2025",
+        StartDate = today.AddDays(-30),
+        EndDate = today.AddDays(100)
+      });
+  }
+
   private static GameLineup CreateLineup(DateTime date, string home = "Arsenal", string away = "Chelsea")
   {
     var homeTeam = new TeamLineup { LineupType = LineupType.Predicted, Players = Array.Empty<PlayerInLineup>() };
@@ -58,8 +71,64 @@ public class UpdateLineupsHandlerTests
   }
 
   [Fact]
+  public async Task Handle_WhenNoSeasonExists_SkipsScrape()
+  {
+    _leagueRepository.GetLatestSeasonAsync(SupportedLeagueId, Arg.Any<CancellationToken>())
+      .Returns((Season?)null);
+
+    await _sut.Handle(new UpdateLineupsCommand(SupportedLeagueId), CancellationToken.None);
+
+    await _lineupProvider.DidNotReceive()
+      .GetSoccerLineupsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Handle_WhenLatestSeasonOutsideFetchWindow_SkipsScrape()
+  {
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    _leagueRepository.GetLatestSeasonAsync(SupportedLeagueId, Arg.Any<CancellationToken>())
+      .Returns(new Season
+      {
+        Id = 1,
+        LeagueId = SupportedLeagueId,
+        Year = "2025",
+        StartDate = today.AddDays(14),
+        EndDate = today.AddDays(200)
+      });
+
+    await _sut.Handle(new UpdateLineupsCommand(SupportedLeagueId), CancellationToken.None);
+
+    await _lineupProvider.DidNotReceive()
+      .GetSoccerLineupsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
+  public async Task Handle_WhenSeasonEndedYesterday_SkipsScrape()
+  {
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    _leagueRepository.GetLatestSeasonAsync(SupportedLeagueId, Arg.Any<CancellationToken>())
+      .Returns(new Season
+      {
+        Id = 1,
+        LeagueId = SupportedLeagueId,
+        Year = "2025",
+        StartDate = today.AddDays(-200),
+        EndDate = today.AddDays(-1)
+      });
+
+    await _sut.Handle(new UpdateLineupsCommand(SupportedLeagueId), CancellationToken.None);
+
+    await _lineupProvider.DidNotReceive()
+      .GetSoccerLineupsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
+    await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
   public async Task Handle_WhenNoLineups_CompletesWithoutAddOrUpdate()
   {
+    SetupInWindowSeason();
     _lineupProvider.GetSoccerLineupsAsync(SupportedLeagueSlug, Arg.Any<CancellationToken>())
       .Returns(Array.Empty<GameLineup>());
 
@@ -72,6 +141,7 @@ public class UpdateLineupsHandlerTests
   [Fact]
   public async Task Handle_WhenAllLineupsUnmatched_CompletesWithoutInsert()
   {
+    SetupInWindowSeason();
     var date = new DateTime(2026, 1, 15, 14, 0, 0, DateTimeKind.Utc);
     _lineupProvider.GetSoccerLineupsAsync(SupportedLeagueSlug, Arg.Any<CancellationToken>())
       .Returns(new[] { CreateLineup(date) });
@@ -87,6 +157,7 @@ public class UpdateLineupsHandlerTests
   [Fact]
   public async Task Handle_WhenOneMatchFound_NoExistingLineup_AddsLineupAndSaveChanges()
   {
+    SetupInWindowSeason();
     var date = new DateTime(2026, 1, 15, 14, 0, 0, DateTimeKind.Utc);
     var lineup = CreateLineup(date);
     _lineupProvider.GetSoccerLineupsAsync(SupportedLeagueSlug, Arg.Any<CancellationToken>())
@@ -106,6 +177,7 @@ public class UpdateLineupsHandlerTests
   [Fact]
   public async Task Handle_WhenOneMatchFound_ExistingLineup_UpdatesJsonAndSaveChanges()
   {
+    SetupInWindowSeason();
     var date = new DateTime(2026, 1, 15, 14, 0, 0, DateTimeKind.Utc);
     var lineup = CreateLineup(date);
     _lineupProvider.GetSoccerLineupsAsync(SupportedLeagueSlug, Arg.Any<CancellationToken>())

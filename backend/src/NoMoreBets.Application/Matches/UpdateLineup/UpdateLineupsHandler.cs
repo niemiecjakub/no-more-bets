@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
+using NoMoreBets.Application.Leagues;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.UpdateLineup;
@@ -49,6 +50,32 @@ public class UpdateLineupsHandler(
         request.LeagueId,
         league.Slug,
         string.Join(", ", supported));
+      return Unit.Value;
+    }
+
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
+    var season = await unitOfWork.Leagues.GetLatestSeasonAsync(request.LeagueId, cancellationToken).ConfigureAwait(false);
+    if (season == null)
+    {
+      logger.LogInformation(
+        "Handler {HandlerName} skipped league {LeagueId} because no season exists",
+        nameof(UpdateLineupsHandler),
+        request.LeagueId);
+      return Unit.Value;
+    }
+
+    // Lineups: only StartDate - 7d grace (no post-end cushion — unlike league table ±7d).
+    if (!SeasonFetchWindow.Contains(season, today, daysBeforeStart: SeasonFetchWindow.Days, daysAfterEnd: 0))
+    {
+      logger.LogInformation(
+        "Handler {HandlerName} skipped league {LeagueId}: latest season {SeasonId} ({StartDate}–{EndDate}) is outside the fetch window (StartDate-{WindowDays}d .. EndDate) on {Today}",
+        nameof(UpdateLineupsHandler),
+        request.LeagueId,
+        season.Id,
+        season.StartDate,
+        season.EndDate,
+        SeasonFetchWindow.Days,
+        today);
       return Unit.Value;
     }
 

@@ -23,8 +23,6 @@ public class UpdateTableHandler(
   IMatchMatcher matchMatcher,
   ILogger<UpdateTableHandler> logger) : IRequestHandler<UpdateTableCommand, Unit>
 {
-  private const int SeasonFetchWindowDays = 7;
-
   /// <inheritdoc />
   public async Task<Unit> Handle(UpdateTableCommand request, CancellationToken cancellationToken)
   {
@@ -45,7 +43,7 @@ public class UpdateTableHandler(
       return Unit.Value;
     }
 
-    if (!IsWithinSeasonFetchWindow(season, snapshotDate))
+    if (!SeasonFetchWindow.Contains(season, snapshotDate))
     {
       logger.LogInformation(
         "Handler {HandlerName} skipped league {LeagueId}: latest season {SeasonId} ({StartDate}–{EndDate}) is outside the ±{WindowDays}d fetch window on {SnapshotDate}",
@@ -54,7 +52,7 @@ public class UpdateTableHandler(
         season.Id,
         season.StartDate,
         season.EndDate,
-        SeasonFetchWindowDays,
+        SeasonFetchWindow.Days,
         snapshotDate);
       return Unit.Value;
     }
@@ -161,24 +159,6 @@ public class UpdateTableHandler(
       snapshotDate,
       snapshot.Rows.Count);
     return Unit.Value;
-  }
-
-  /// <summary>
-  /// Fetch when today is within [StartDate - 7d, EndDate + 7d]. Null bounds are open-ended.
-  /// </summary>
-  public static bool IsWithinSeasonFetchWindow(Season season, DateOnly date)
-  {
-    if (season.StartDate is { } start && date < start.AddDays(-SeasonFetchWindowDays))
-    {
-      return false;
-    }
-
-    if (season.EndDate is { } end && date > end.AddDays(SeasonFetchWindowDays))
-    {
-      return false;
-    }
-
-    return true;
   }
 
   private void EnsureCompleteSeasonTableData(
