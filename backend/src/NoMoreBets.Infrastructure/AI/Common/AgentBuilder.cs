@@ -66,17 +66,20 @@ public sealed class AgentBuilder
     CancellationToken cancellationToken = default)
   {
     var credential = new ApiKeyCredential(_openAi.ApiKey);
-    var responsesClient = new OpenAIClient(credential).GetResponsesClient(_openAi.ModelId);
+    // OpenAI 2.9+: model moved off GetResponsesClient onto AsAIAgent.
+    var responsesClient = new OpenAIClient(credential).GetResponsesClient();
     var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
     var chatOptions = defaultRunOptions.ChatOptions?.Clone() ?? new ChatOptions();
     chatOptions.Instructions = Instructions;
 
-    var baseAgent = responsesClient.AsAIAgent(new ChatClientAgentOptions
-    {
-      Name = "BettingAgent",
-      ChatOptions = chatOptions,
-      AIContextProviders = contextProviders as IList<AIContextProvider> ?? contextProviders.ToList(),
-    });
+    var baseAgent = responsesClient.AsAIAgent(
+      new ChatClientAgentOptions
+      {
+        Name = "BettingAgent",
+        ChatOptions = chatOptions,
+        AIContextProviders = contextProviders as IList<AIContextProvider> ?? contextProviders.ToList(),
+      },
+      _openAi.ModelId);
 
     var agent = baseAgent
       .AsBuilder()
