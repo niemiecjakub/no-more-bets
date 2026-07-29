@@ -162,7 +162,7 @@ public sealed class PreKickoffDataSyncJobService(
       soccerdataMatchId);
   }
 
-  [AutomaticRetry(Attempts = 3)]
+  [AutomaticRetry(Attempts = 0)]
   public async Task RefreshHead2HeadStatistics(int homeClubId, int awayClubId)
   {
     logger.LogInformation(

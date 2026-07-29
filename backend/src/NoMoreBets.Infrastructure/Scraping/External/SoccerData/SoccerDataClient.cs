@@ -94,7 +94,7 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
   }
 
   /// <inheritdoc />
-  public async Task<HeadToHead> GetHeadToHeadAsync(int team1Id, int team2Id, CancellationToken cancellationToken = default)
+  public async Task<HeadToHead?> GetHeadToHeadAsync(int team1Id, int team2Id, CancellationToken cancellationToken = default)
   {
     var endpoint = "/head-to-head/";
     var queryParams = new Dictionary<string, object?>
@@ -104,7 +104,13 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
     };
     var element = await FetchAsync(endpoint, queryParams, cancellationToken).ConfigureAwait(false);
     if (element is null)
-      throw new SoccerDataException($"No response for head-to-head {team1Id} vs {team2Id}");
+    {
+      _logger.LogWarning(
+        "SoccerData returned no head-to-head for {Team1Id} vs {Team2Id}",
+        team1Id,
+        team2Id);
+      return null;
+    }
 
     var headToHead = element.Value.Deserialize<HeadToHead>(JsonOptions);
     if (headToHead is null)
@@ -197,6 +203,15 @@ public class SoccerDataClient : IHeadToHeadProvider, IMatchPreviewProvider, IUpc
           "SoccerData endpoint returned 404. Endpoint: {Endpoint}",
           endpoint);
         throw new SoccerDataNotFoundException($"Endpoint not found (404): {endpoint}");
+      }
+
+      // SoccerData returns 400 when a resource is unavailable for the given ids (e.g. no H2H).
+      if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+      {
+        _logger.LogWarning(
+          "SoccerData endpoint returned 400 Bad Request. Endpoint: {Endpoint}",
+          endpoint);
+        return null;
       }
 
       response.EnsureSuccessStatusCode();

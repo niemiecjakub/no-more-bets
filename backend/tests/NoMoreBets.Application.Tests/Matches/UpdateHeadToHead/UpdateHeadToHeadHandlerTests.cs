@@ -56,6 +56,21 @@ public class UpdateHeadToHeadHandlerTests
   }
 
   [Fact]
+  public async Task Handle_WhenProviderReturnsNull_ReturnsWithoutSaving()
+  {
+    // Arrange
+    _headToHeadProvider.GetHeadToHeadAsync(1, 2, Arg.Any<CancellationToken>()).Returns((HeadToHead?)null);
+
+    // Act
+    var result = await _sut.Handle(new UpdateHeadToHeadCommand(1, 2), CancellationToken.None);
+
+    // Assert
+    result.Should().Be(Unit.Value);
+    await _unitOfWork.Clubs.DidNotReceive().GetBySoccerdataId(Arg.Any<IEnumerable<int>>());
+    await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+  }
+
+  [Fact]
   public async Task Handle_WhenBothClubsFound_NoExistingHead2Head_AddsAndSaveChanges()
   {
     _headToHeadProvider.GetHeadToHeadAsync(1, 2, Arg.Any<CancellationToken>()).Returns(CreateHeadToHeadDto());

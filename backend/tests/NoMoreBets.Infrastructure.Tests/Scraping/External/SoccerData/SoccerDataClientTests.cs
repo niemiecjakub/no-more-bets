@@ -86,10 +86,25 @@ public class SoccerDataClientTests
 
     // Assert
     result.Should().NotBeNull();
-    result.Team1.Id.Should().Be(2916);
+    result!.Team1.Id.Should().Be(2916);
     result.Team2.Id.Should().Be(4148);
     result.Team1.Name.Should().Be("Chelsea");
     result.Team2.Name.Should().Be("Brentford");
+  }
+
+  [Fact]
+  public async Task GetHeadToHeadAsync_WhenHttpReturns400_ReturnsNull()
+  {
+    // Arrange
+    var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.BadRequest));
+    var httpClient = new HttpClient(handler) { BaseAddress = new Uri("https://api.soccerdataapi.com/") };
+    var sut = CreateClient(httpClient);
+
+    // Act
+    var result = await sut.GetHeadToHeadAsync(4882, 4899);
+
+    // Assert
+    result.Should().BeNull();
   }
 
   [Fact]

@@ -25,6 +25,16 @@ public class UpdateHeadToHeadHandler(
       request.Team2SoccerdataId);
 
     var headToHead = await headToHeadProvider.GetHeadToHeadAsync(request.Team1SoccerdataId, request.Team2SoccerdataId);
+    if (headToHead is null)
+    {
+      logger.LogWarning(
+        "Handler {HandlerName} skipped head-to-head update: Soccerdata returned no data for teams {Team1SoccerdataId} vs {Team2SoccerdataId}",
+        nameof(UpdateHeadToHeadHandler),
+        request.Team1SoccerdataId,
+        request.Team2SoccerdataId);
+      return Unit.Value;
+    }
+
     var clubs = await unitOfWork.Clubs.GetBySoccerdataId(
     [
       request.Team1SoccerdataId,
