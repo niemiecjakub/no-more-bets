@@ -55,6 +55,7 @@ internal static class ClubNameMatchHints
       // Flashscore Ekstraklasa short labels (flashscore-names.html)
       ["Jagiellonia"] = "Jagiellonia Bialystok",
       ["Legia"] = "Legia Warsaw",
+      ["Legia Warszawa"] = "Legia Warsaw",
       ["Rakow"] = "Rakow Czestochowa",
       ["Zaglebie"] = "Zaglebie Lubin",
       ["Wisla"] = "Wisla Krakow", // Flashscore uses full "Wisla Plock" for the other club

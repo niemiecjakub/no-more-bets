@@ -374,6 +374,18 @@ public class MatchMatcherTests
   }
 
   [Fact]
+  public void FindClub_FotmobLegiaWarszawaAlias_ReturnsLegiaWarsaw()
+  {
+    var legia = new ClubEntity { Id = 1, Name = "Legia Warsaw", SoccerdataId = 2899 };
+    var clubs = new List<ClubEntity> { legia };
+
+    var result = _sut.FindClub("Legia Warszawa", clubs);
+
+    result.Should().BeSameAs(legia);
+    result.Name.Should().Be("Legia Warsaw");
+  }
+
+  [Fact]
   public void FindClub_BetclicFcKoelnAlias_ReturnsFcCologne()
   {
     var fcCologne = new ClubEntity { Id = 1, Name = "FC Cologne", SoccerdataId = 3336 };

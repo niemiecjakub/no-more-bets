@@ -10,6 +10,7 @@ using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Scraping.BrowserAutomation;
 using System.Globalization;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
@@ -26,6 +27,12 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
   private static readonly Regex LeadingPositionRegex = new(@"^\s*(\d+)", RegexOptions.Compiled);
   private static readonly Regex OpponentFromMatchUrlRegex = new(@"/matches/([^/]+)-vs-([^/]+)/", RegexOptions.Compiled);
   private static readonly Regex TeamIdFromLogoUrlRegex = new(@"teamlogo/(\d+)", RegexOptions.Compiled);
+  private static readonly Regex NextDataScriptRegex = new(
+    """<script id="__NEXT_DATA__"[^>]*>(?<json>.*?)</script>""",
+    RegexOptions.Compiled | RegexOptions.Singleline | RegexOptions.CultureInvariant);
+  private static readonly Regex TeamSlugFromHrefRegex = new(
+    @"/teams/\d+/overview/(?<slug>[^/?#""']+)",
+    RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
   private static readonly IReadOnlyList<InteractionStep> FotmobConsentSteps =
   [
@@ -597,6 +604,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
 
   internal async Task<IReadOnlyList<TableEntry>> ParseLeagueTableClubsAsync(string html, string? sourceUrl = null)
   {
+    if (TryParseLeagueTableFromNextData(html, out var fromNextData) && fromNextData.Count > 0)
+      return fromNextData;
+
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
 
@@ -640,6 +650,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
 
   internal async Task<IReadOnlyList<XgStats>> ParseXgStatsAsync(string html, string? sourceUrl = null)
   {
+    if (TryParseXgStatsFromNextData(html, out var fromNextData) && fromNextData.Count > 0)
+      return fromNextData;
+
     var context = BrowsingContext.New(Configuration.Default);
     var doc = await context.OpenAsync(req => req.Content(html)).ConfigureAwait(false);
 
@@ -748,6 +761,246 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     doc.QuerySelector("article.TableContainer")
     ?? doc.QuerySelector("[class*='TableContainer']");
 
+  /// <summary>
+  /// FotMob embeds standings in Next.js <c>__NEXT_DATA__</c>. Prefer that when DOM team-name spans are empty.
+  /// </summary>
+  private static bool TryParseLeagueTableFromNextData(string html, out IReadOnlyList<TableEntry> clubs)
+  {
+    clubs = Array.Empty<TableEntry>();
+    if (!TryGetNextDataTableRows(html, "all", out var rows))
+      return false;
+
+    var list = new List<TableEntry>(rows.GetArrayLength());
+    foreach (var row in rows.EnumerateArray())
+    {
+      var entry = MapNextDataTableRow(row);
+      if (entry is not null)
+        list.Add(entry);
+    }
+
+    if (list.Count == 0)
+      return false;
+
+    clubs = list;
+    return true;
+  }
+
+  private static bool TryParseXgStatsFromNextData(string html, out IReadOnlyList<XgStats> stats)
+  {
+    stats = Array.Empty<XgStats>();
+    if (!TryGetNextDataTableRows(html, "xg", out var rows))
+      return false;
+
+    var list = new List<XgStats>(rows.GetArrayLength());
+    foreach (var row in rows.EnumerateArray())
+    {
+      var entry = MapNextDataXgRow(row);
+      if (entry is not null)
+        list.Add(entry);
+    }
+
+    if (list.Count == 0)
+      return false;
+
+    stats = list;
+    return true;
+  }
+
+  private static bool TryGetNextDataTableRows(string html, string tableKey, out JsonElement rows)
+  {
+    rows = default;
+    var match = NextDataScriptRegex.Match(html);
+    if (!match.Success)
+      return false;
+
+    try
+    {
+      using var doc = JsonDocument.Parse(match.Groups["json"].Value);
+      if (!doc.RootElement.TryGetProperty("props", out var props)
+          || !props.TryGetProperty("pageProps", out var pageProps)
+          || !pageProps.TryGetProperty("table", out var tableArr)
+          || tableArr.ValueKind != JsonValueKind.Array
+          || tableArr.GetArrayLength() == 0)
+      {
+        return false;
+      }
+
+      var first = tableArr[0];
+      if (!first.TryGetProperty("data", out var data)
+          || !data.TryGetProperty("table", out var table)
+          || !table.TryGetProperty(tableKey, out rows)
+          || rows.ValueKind != JsonValueKind.Array
+          || rows.GetArrayLength() == 0)
+      {
+        return false;
+      }
+
+      // Detach from disposed JsonDocument by cloning.
+      rows = rows.Clone();
+      return true;
+    }
+    catch (JsonException)
+    {
+      return false;
+    }
+  }
+
+  private static TableEntry? MapNextDataTableRow(JsonElement row)
+  {
+    var teamName = ReadJsonString(row, "name");
+    if (string.IsNullOrWhiteSpace(teamName))
+      teamName = ReadJsonString(row, "teamName");
+    if (string.IsNullOrWhiteSpace(teamName))
+      return null;
+
+    var teamId = ReadJsonInt(row, "id") ?? ReadJsonInt(row, "teamId") ?? 0;
+    var position = ReadJsonInt(row, "idx") ?? ReadJsonInt(row, "position") ?? 0;
+    if (position <= 0)
+      return null;
+
+    var scoresStr = ReadJsonString(row, "scoresStr") ?? "";
+    var goalsFor = 0;
+    var goalsAgainst = 0;
+    var goalsMatch = GoalsRegex.Match(scoresStr);
+    if (goalsMatch.Success)
+    {
+      int.TryParse(goalsMatch.Groups[1].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out goalsFor);
+      int.TryParse(goalsMatch.Groups[2].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out goalsAgainst);
+    }
+
+    var goalDiff = ReadJsonInt(row, "goalConDiff");
+    var goalDifference = goalDiff is null
+      ? ""
+      : goalDiff.Value.ToString("+0;-0;0", CultureInfo.InvariantCulture);
+
+    var shortName = ReadJsonString(row, "shortName");
+    return new TableEntry
+    {
+      Position = position,
+      TeamName = teamName,
+      TeamShortname = string.IsNullOrWhiteSpace(shortName) ? teamName : shortName,
+      TeamId = teamId,
+      TeamLogoUrl = teamId > 0
+        ? $"https://images.fotmob.com/image_resources/logo/teamlogo/{teamId}_xsmall.png"
+        : "",
+      MatchesPlayed = ReadJsonInt(row, "played") ?? 0,
+      Wins = ReadJsonInt(row, "wins") ?? 0,
+      Draws = ReadJsonInt(row, "draws") ?? 0,
+      Losses = ReadJsonInt(row, "losses") ?? 0,
+      GoalsFor = goalsFor,
+      GoalsAgainst = goalsAgainst,
+      GoalDifference = goalDifference,
+      Points = ReadJsonInt(row, "pts") ?? 0,
+      Form = Array.Empty<MatchResult>()
+    };
+  }
+
+  private static XgStats? MapNextDataXgRow(JsonElement row)
+  {
+    var teamName = ReadJsonString(row, "name")
+      ?? ReadJsonString(row, "teamName");
+    if (string.IsNullOrWhiteSpace(teamName))
+      return null;
+
+    var teamId = ReadJsonInt(row, "id") ?? ReadJsonInt(row, "teamId") ?? 0;
+    var position = ReadJsonInt(row, "position") ?? ReadJsonInt(row, "idx") ?? 0;
+    if (position <= 0)
+      return null;
+
+    if (!TryReadJsonDouble(row, "xg", out var xg)
+        || !TryReadJsonDouble(row, "xgConceded", out var xga)
+        || !TryReadJsonDouble(row, "xPoints", out var xpts))
+    {
+      return null;
+    }
+
+    var shortName = ReadJsonString(row, "shortName");
+    var xPositionDiff = ReadJsonInt(row, "xPositionDiff");
+    return new XgStats
+    {
+      Position = position,
+      PositionChange = xPositionDiff is null
+        ? null
+        : xPositionDiff.Value.ToString("+0;-0;0", CultureInfo.InvariantCulture),
+      TeamId = teamId,
+      TeamName = teamName,
+      TeamShortname = string.IsNullOrWhiteSpace(shortName) ? teamName : shortName,
+      TeamLogoUrl = teamId > 0
+        ? $"https://images.fotmob.com/image_resources/logo/teamlogo/{teamId}_xsmall.png"
+        : "",
+      Xg = xg,
+      XgDiff = FormatSignedDiff(ReadJsonDoubleOrNull(row, "xgDiff")),
+      Xga = xga,
+      XgaDiff = FormatSignedDiff(ReadJsonDoubleOrNull(row, "xgConcededDiff")),
+      Xpts = xpts,
+      XptsDiff = FormatSignedDiff(ReadJsonDoubleOrNull(row, "xPointsDiff"))
+    };
+  }
+
+  private static (string TeamName, string TeamShortname) ResolveTeamNamesFromLink(IElement teamLink, string href)
+  {
+    var teamName = teamLink.QuerySelector("span[class*='TeamName']")?.TextContent.Trim() ?? "";
+    var teamShortname = teamLink.QuerySelector("span[class*='TeamShortname']")?.TextContent.Trim() ?? "";
+
+    if (string.IsNullOrWhiteSpace(teamName))
+      teamName = teamLink.GetAttribute("aria-label")?.Trim() ?? "";
+
+    if (string.IsNullOrWhiteSpace(teamName))
+    {
+      var alt = teamLink.QuerySelector("img[class*='TeamIcon']")?.GetAttribute("alt")?.Trim();
+      if (!string.IsNullOrWhiteSpace(alt))
+        teamName = alt;
+    }
+
+    if (string.IsNullOrWhiteSpace(teamName))
+    {
+      var slugMatch = TeamSlugFromHrefRegex.Match(href);
+      if (slugMatch.Success)
+        teamName = CultureInfo.InvariantCulture.TextInfo.ToTitleCase(slugMatch.Groups["slug"].Value.Replace('-', ' '));
+    }
+
+    if (string.IsNullOrWhiteSpace(teamShortname))
+      teamShortname = teamName;
+
+    return (teamName, teamShortname);
+  }
+
+  private static string? ReadJsonString(JsonElement el, string name) =>
+    el.TryGetProperty(name, out var p) && p.ValueKind == JsonValueKind.String
+      ? p.GetString()
+      : null;
+
+  private static int? ReadJsonInt(JsonElement el, string name)
+  {
+    if (!el.TryGetProperty(name, out var p))
+      return null;
+    if (p.ValueKind == JsonValueKind.Number && p.TryGetInt32(out var i))
+      return i;
+    if (p.ValueKind == JsonValueKind.String
+        && int.TryParse(p.GetString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out i))
+      return i;
+    return null;
+  }
+
+  private static bool TryReadJsonDouble(JsonElement el, string name, out double value)
+  {
+    value = 0;
+    if (!el.TryGetProperty(name, out var p))
+      return false;
+    if (p.ValueKind == JsonValueKind.Number && p.TryGetDouble(out value))
+      return true;
+    return p.ValueKind == JsonValueKind.String
+      && double.TryParse(p.GetString(), NumberStyles.Float, CultureInfo.InvariantCulture, out value);
+  }
+
+  private static double? ReadJsonDoubleOrNull(JsonElement el, string name) =>
+    TryReadJsonDouble(el, name, out var value) ? value : null;
+
+  private static string? FormatSignedDiff(double? value) =>
+    value is null
+      ? null
+      : value.Value.ToString("+0.###;-0.###;0", CultureInfo.InvariantCulture);
+
   /// <summary>FotMob World Cup pages include a duplicate "best third-place teams" sub-table; skip it.</summary>
   private static bool IsInThirdPlaceSummarySubTable(IElement row)
   {
@@ -798,10 +1051,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
     var teamImg = teamLink.QuerySelector("img[class*='TeamIcon']");
     var teamLogoUrl = teamImg?.GetAttribute("src") ?? "";
 
-    var teamNameElem = teamLink.QuerySelector("span[class*='TeamName']");
-    var teamName = teamNameElem?.TextContent.Trim() ?? "";
-    var teamShortnameElem = teamLink.QuerySelector("span[class*='TeamShortname']");
-    var teamShortname = teamShortnameElem?.TextContent.Trim() ?? "";
+    var (teamName, teamShortname) = ResolveTeamNamesFromLink(teamLink, href);
+    if (string.IsNullOrWhiteSpace(teamName))
+      return null;
 
     // Live standings: 10 cells (no next-opponent column) or 11 when FotMob shows upcoming fixture.
     var allCells = row.Children.Where(c => c.TagName.Equals("DIV", StringComparison.OrdinalIgnoreCase)).ToArray();
@@ -961,10 +1213,9 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
 
     var teamImg = teamLink.QuerySelector("img[class*='TeamIcon']");
     var teamLogoUrl = teamImg?.GetAttribute("src") ?? "";
-    var teamNameElem = teamLink.QuerySelector("span[class*='TeamName']");
-    var teamName = teamNameElem?.TextContent.Trim() ?? "";
-    var teamShortnameElem = teamLink.QuerySelector("span[class*='TeamShortname']");
-    var teamShortname = teamShortnameElem?.TextContent.Trim() ?? "";
+    var (teamName, teamShortname) = ResolveTeamNamesFromLink(teamLink, href);
+    if (string.IsNullOrWhiteSpace(teamName))
+      return null;
 
     if (!TryExtractXgValue(xgCell, out var xg, out var xgDiff))
       return null;

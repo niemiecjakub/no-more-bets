@@ -105,6 +105,87 @@ public class FotmobScraperTests
     }
 
     [Fact]
+    public async Task ParseLeagueTableClubsAsync_WithNextData_ParsesTeamNamesAndStats()
+    {
+        // Arrange: SSR payload only (no DOM table rows) — mirrors current FotMob pages where TeamName spans are empty.
+        var html = """
+            <html><body>
+            <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"table":[{"data":{"table":{"all":[{"name":"Zagłębie Lubin","shortName":"Zagłębie Lubin","id":8021,"pageUrl":"/teams/8021/overview/zagebie-lubin","played":1,"wins":1,"draws":0,"losses":0,"scoresStr":"2-0","goalConDiff":2,"pts":3,"idx":1},{"name":"Legia Warszawa","shortName":"Legia Warszawa","id":8673,"pageUrl":"/teams/8673/overview/legia-warszawa","played":1,"wins":1,"draws":0,"losses":0,"scoresStr":"1-0","goalConDiff":1,"pts":3,"idx":2}],"xg":[]}}}]}}}</script>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseLeagueTableClubsAsync(html);
+
+        // Assert
+        result.Should().HaveCount(2);
+        result[0].TeamName.Should().Be("Zagłębie Lubin");
+        result[0].TeamId.Should().Be(8021);
+        result[0].Position.Should().Be(1);
+        result[0].Points.Should().Be(3);
+        result[0].GoalsFor.Should().Be(2);
+        result[0].GoalsAgainst.Should().Be(0);
+        result[0].GoalDifference.Should().Be("+2");
+        result[1].TeamName.Should().Be("Legia Warszawa");
+        result[1].Position.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task ParseXgStatsAsync_WithNextData_ParsesXgFields()
+    {
+        // Arrange
+        var html = """
+            <html><body>
+            <script id="__NEXT_DATA__" type="application/json">{"props":{"pageProps":{"table":[{"data":{"table":{"all":[],"xg":[{"name":"Legia Warszawa","shortName":"Legia Warszawa","id":8673,"teamId":8673,"teamName":"Legia Warszawa","xg":2.96,"xgConceded":1.01,"xPoints":2.6,"position":1,"xgDiff":-1.96,"xgConcededDiff":-1.01,"xPointsDiff":0.4,"idx":1,"xPositionDiff":6}]}}}]}}}</script>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseXgStatsAsync(html);
+
+        // Assert
+        result.Should().ContainSingle();
+        var stat = result[0];
+        stat.TeamName.Should().Be("Legia Warszawa");
+        stat.TeamId.Should().Be(8673);
+        stat.Position.Should().Be(1);
+        stat.Xg.Should().BeApproximately(2.96, 0.001);
+        stat.Xga.Should().BeApproximately(1.01, 0.001);
+        stat.Xpts.Should().BeApproximately(2.6, 0.001);
+        stat.XgDiff.Should().Be("-1.96");
+        stat.XgaDiff.Should().Be("-1.01");
+        stat.XptsDiff.Should().Be("+0.4");
+    }
+
+    [Fact]
+    public async Task ParseLeagueTableClubsAsync_WhenTeamNameSpanEmpty_FallsBackToHrefSlug()
+    {
+        // Arrange
+        var html = """
+            <html><body>
+            <article class="TableContainer">
+              <div class="TableRowCSS">
+                <div class="TablePositionCell">1</div>
+                <div class="TableTeamCell"><a class="TeamLink" href="/teams/8021/overview/zagebie-lubin"><img class="TeamIcon" src="https://images.fotmob.com/image_resources/logo/teamlogo/8021_xsmall.png"/><span class="TeamName"></span><span class="TeamShortname"></span></a></div>
+                <div>1</div><div>1</div><div>0</div><div>0</div><div>2 - 0</div><div>+2</div><div>3</div><div></div><div></div>
+              </div>
+            </article>
+            </body></html>
+            """;
+        var sut = CreateScraper();
+
+        // Act
+        var result = await sut.ParseLeagueTableClubsAsync(html);
+
+        // Assert
+        result.Should().ContainSingle();
+        result[0].TeamName.Should().Be("Zagebie Lubin");
+        result[0].TeamId.Should().Be(8021);
+    }
+
+    [Fact]
     public async Task ParseLeagueTableClubsAsync_SkipsBestThirdPlaceSummarySubTable()
     {
         var html = """
