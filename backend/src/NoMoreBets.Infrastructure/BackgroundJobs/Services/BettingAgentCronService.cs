@@ -33,7 +33,7 @@ public sealed class BettingAgentCronService(
     logger.LogInformation("Finished scheduled research agent phase");
   }
 
-  [AutomaticRetry(Attempts = 3)]
+  [AutomaticRetry(Attempts = 1)]
   public async Task RunResearchPhaseForMatchAsync(int matchId)
   {
     var match = await unitOfWork.Matches.GetMatchByIdAsync(matchId, CancellationToken.None).ConfigureAwait(false);
