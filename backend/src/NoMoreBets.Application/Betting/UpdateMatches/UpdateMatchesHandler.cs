@@ -61,6 +61,7 @@ public class UpdateMatchesHandler(
         continue;
       }
 
+      
       var stage = await unitOfWork.Leagues.GetStageForDateAsync(
         league.SoccerdataId,
         DateOnly.FromDateTime(gameDayUtc));
