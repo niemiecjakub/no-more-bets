@@ -167,12 +167,22 @@ export interface AgentDashboardBettingSummaryWidget {
 }
 
 /** GET api/agent/dashboard/research-betting-summary */
+export interface ResearchScenarioPnl {
+  stakeTotal: number;
+  profit: number;
+  roi: number;
+}
+
 export interface AgentDashboardResearchBettingSummaryWidget {
   settledSelectionsCount: number;
   wonSelectionsCount: number;
   lostSelectionsCount: number;
   winRatePercent: number;
   lossRatePercent: number;
+  unitStake: number;
+  scenarioSlipCount: number;
+  parlay: ResearchScenarioPnl;
+  singles: ResearchScenarioPnl;
 }
 
 /** GET api/agent/dashboard/betting-summary/details */

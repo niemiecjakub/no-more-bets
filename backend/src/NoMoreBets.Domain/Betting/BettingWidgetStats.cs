@@ -1,3 +1,5 @@
+using NoMoreBets.Domain.Enums;
+
 namespace NoMoreBets.Domain.Betting;
 
 public sealed record BettingPhaseSummaryStats(
@@ -10,6 +12,12 @@ public sealed record ResearchPhaseSummaryStats(
   int SettledSelectionsCount,
   int WonSelectionsCount,
   int LostSelectionsCount);
+
+/// <summary>Lightweight leg row for aggregating research-slip Parlay vs Singles P&amp;L.</summary>
+public sealed record ResearchPhaseScenarioLegRow(
+  int SlipId,
+  decimal OddsAtPlacement,
+  BetStatus Status);
 
 public sealed record BettingPhaseDetailCounts(
   int WonSlipsCount,

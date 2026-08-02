@@ -333,6 +333,40 @@ public class BettingRepository : IBettingRepository
     return new ResearchPhaseSummaryStats(settledSelections.Count, won, lost);
   }
 
+  public async Task<IReadOnlyList<ResearchPhaseScenarioLegRow>> GetResearchPhaseSettledScenarioLegsAsync(
+    IReadOnlyList<int> leagueIds,
+    CancellationToken cancellationToken = default)
+  {
+    var settledQuery = _db.BetSlip
+      .AsNoTracking()
+      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Research)
+      .Where(s => s.StatusId != (int)BetStatus.Pending);
+
+    if (leagueIds.Count > 0)
+    {
+      settledQuery = settledQuery
+        .Where(s => s.Selections.Any(sel =>
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          leagueIds.Contains(sel.Match.Stage.Season.LeagueId)));
+    }
+
+    var rows = await settledQuery
+      .SelectMany(s => s.Selections.Select(sel => new
+      {
+        SlipId = s.Id,
+        sel.OddsAtPlacement,
+        sel.StatusId,
+      }))
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return rows
+      .Select(r => new ResearchPhaseScenarioLegRow(r.SlipId, r.OddsAtPlacement, (BetStatus)r.StatusId))
+      .ToList();
+  }
+
   public async Task<BettingPhaseDetailCounts> GetBettingPhaseSettledDetailCountsAsync(
     CancellationToken cancellationToken = default)
   {

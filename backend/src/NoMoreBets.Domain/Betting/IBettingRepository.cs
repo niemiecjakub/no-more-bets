@@ -36,6 +36,14 @@ public interface IBettingRepository
   Task<ResearchPhaseSummaryStats> GetResearchPhaseSettledSummaryAsync(
     IReadOnlyList<int> leagueIds,
     CancellationToken cancellationToken = default);
+  /// <summary>
+  /// Settled research-phase slip legs for Parlay/Singles aggregation.
+  /// When <paramref name="leagueIds"/> is non-empty, includes slips that have any selection in those leagues,
+  /// and returns all legs of those slips.
+  /// </summary>
+  Task<IReadOnlyList<ResearchPhaseScenarioLegRow>> GetResearchPhaseSettledScenarioLegsAsync(
+    IReadOnlyList<int> leagueIds,
+    CancellationToken cancellationToken = default);
   Task<BettingPhaseDetailCounts> GetBettingPhaseSettledDetailCountsAsync(CancellationToken cancellationToken = default);
   Task<BetSlipIdPage> GetSettledBettingSlipIdsPageAsync(
     int limit,
