@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-slip-summary";
-import type { BetSlipSummaryDto } from "@/features/bets/interfaces";
+import type { MatchResearchBetSlipDto } from "@/features/bets/interfaces";
 import type { MatchResearchOutput } from "../interfaces";
 import {
   fetchMatchAgentResearch,
@@ -17,7 +17,7 @@ interface MatchListResearchPanelProps {
 export function MatchListResearchPanel({ matchId }: MatchListResearchPanelProps) {
   const [research, setResearch] = useState<MatchResearchOutput | null | undefined>(undefined);
   const [researchError, setResearchError] = useState<string | undefined>();
-  const [slip, setSlip] = useState<BetSlipSummaryDto | null | undefined>(undefined);
+  const [slip, setSlip] = useState<MatchResearchBetSlipDto | null | undefined>(undefined);
   const [slipError, setSlipError] = useState<string | undefined>();
 
   useEffect(() => {
@@ -75,7 +75,8 @@ export function MatchListResearchPanel({ matchId }: MatchListResearchPanelProps)
           Research bet
         </h4>
         <ResearchBetSlipSummary
-          slip={slip ?? null}
+          slip={slip?.slip ?? null}
+          scenarios={slip?.scenarios ?? null}
           isLoading={slipLoading}
           error={slipError}
           variant="matchPage"

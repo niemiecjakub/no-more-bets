@@ -24,11 +24,14 @@ public class GetMatchResearchBetSlipHandlerTests
   [Fact]
   public async Task Handle_WhenNoSlip_ReturnsNull()
   {
+    // Arrange
     _bettingRepository.GetLatestResearchBetSlipForMatchAsync(1, Arg.Any<CancellationToken>())
       .Returns((BetSlip?)null);
 
+    // Act
     var result = await _sut.Handle(new GetMatchResearchBetSlipQuery(1), CancellationToken.None);
 
+    // Assert
     result.Should().BeNull();
     await _bettingRepository.Received(1).GetLatestResearchBetSlipForMatchAsync(1, Arg.Any<CancellationToken>());
   }
@@ -36,6 +39,7 @@ public class GetMatchResearchBetSlipHandlerTests
   [Fact]
   public async Task Handle_WhenSlipExists_ReturnsSummary()
   {
+    // Arrange
     var match = new Match
     {
       Id = 5,
@@ -67,8 +71,10 @@ public class GetMatchResearchBetSlipHandlerTests
     _bettingRepository.GetLatestResearchBetSlipForMatchAsync(5, Arg.Any<CancellationToken>())
       .Returns(slip);
 
+    // Act
     var result = await _sut.Handle(new GetMatchResearchBetSlipQuery(5), CancellationToken.None);
 
+    // Assert
     result.Should().NotBeNull();
     result!.Id.Should().Be(10);
     result.Selections.Should().ContainSingle();

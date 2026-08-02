@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import type { BetSelectionSummaryDto, BetSlipSummaryDto } from "../interfaces";
+import type {
+  BetSelectionSummaryDto,
+  BetSlipSummaryDto,
+  ResearchBetScenarioStatsDto,
+} from "../interfaces";
 import { BET_STATUS } from "../interfaces";
 import { SlugIcon } from "@/components/slug-icon";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatCurrency } from "@/utils/format-currency";
 import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
 import { formatMatchDate } from "../../../utils/format-date";
@@ -38,12 +43,27 @@ function betStatusLabel(status: BetSlipSummaryDto["status"]): string {
   }
 }
 
+function profitClass(profit: number): string {
+  if (profit > 0) return "text-emerald-700 dark:text-emerald-400";
+  if (profit < 0) return "text-red-700 dark:text-red-400";
+  return "text-foreground";
+}
+
+function formatProfit(profit: number | null): string {
+  if (profit == null) return "Pending";
+  const formatted = formatCurrency(Math.abs(profit));
+  if (profit > 0) return `+${formatted}`;
+  if (profit < 0) return `−${formatted}`;
+  return formatted;
+}
+
 function SelectionRowMatchPage({ selection }: { selection: BetSelectionSummaryDto }) {
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 border-t border-zinc-100 py-2.5 text-sm first:border-t-0 first:pt-0 dark:border-zinc-800/80">
       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-zinc-600 dark:text-zinc-400">
         <span>{selection.eventTypeName}</span>
         <span className="font-medium text-foreground">{selection.outcomeKey}</span>
+        <span className="tabular-nums text-zinc-500 dark:text-zinc-400">@{selection.oddsAtPlacement.toFixed(2)}</span>
       </div>
       <span
         className={`inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getStatusBadgeClass(selection.status)}`}
@@ -89,12 +109,113 @@ function SelectionRowDefault({ selection }: { selection: BetSelectionSummaryDto 
   );
 }
 
+function formatCombinedOddsTooltip(legOdds: number[], combinedOdds: number): string {
+  if (legOdds.length === 0) {
+    return `Combined odds ${combinedOdds.toFixed(2)}`;
+  }
+  if (legOdds.length === 1) {
+    return `Single-leg parlay: ${legOdds[0].toFixed(2)}`;
+  }
+  const factors = legOdds.map((o) => o.toFixed(2)).join(" × ");
+  return `${factors} = ${combinedOdds.toFixed(2)}`;
+}
+
+function ScenarioCard({
+  title,
+  description,
+  stakeTotal,
+  stakeLabel,
+  combinedOdds,
+  legOdds,
+  profit,
+}: {
+  title: string;
+  description: string;
+  stakeTotal: number;
+  /** When set, shown instead of the total (e.g. "2 × $5.00"). */
+  stakeLabel?: string;
+  combinedOdds?: number;
+  legOdds?: number[];
+  profit: number | null;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
+      <Tooltip>
+        <TooltipTrigger className="cursor-help border-0 bg-transparent p-0 text-left">
+          <span className="font-medium text-foreground underline decoration-dotted underline-offset-2">
+            {title}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top">{description}</TooltipContent>
+      </Tooltip>
+      <span className="tabular-nums text-zinc-600 dark:text-zinc-400">
+        {stakeLabel ?? formatCurrency(stakeTotal)}
+      </span>
+      {combinedOdds != null ? (
+        <Tooltip>
+          <TooltipTrigger className="cursor-help border-0 bg-transparent p-0 text-left">
+            <span className="tabular-nums text-zinc-600 underline decoration-dotted underline-offset-2 dark:text-zinc-400">
+              @{combinedOdds.toFixed(2)}
+            </span>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {formatCombinedOddsTooltip(legOdds ?? [], combinedOdds)}
+          </TooltipContent>
+        </Tooltip>
+      ) : null}
+      <span
+        className={`ml-auto font-semibold tabular-nums ${profit == null ? "text-zinc-500 dark:text-zinc-400" : profitClass(profit)}`}
+      >
+        {formatProfit(profit)}
+      </span>
+    </div>
+  );
+}
+
+function ScenarioComparison({ scenarios }: { scenarios: ResearchBetScenarioStatsDto }) {
+  const legCount = scenarios.singles.legs.length;
+  const legOdds = scenarios.singles.legs.map((leg) => leg.odds);
+  const singlesStakeLabel =
+    legCount > 0
+      ? `${legCount} × ${formatCurrency(scenarios.unitStake)}`
+      : formatCurrency(scenarios.singles.stakeTotal);
+  return (
+    <div className="mt-4 space-y-3">
+      <div>
+        <h4 className="text-sm font-semibold text-foreground">Hypothetical result</h4>
+        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+          Equal stake comparison at {formatCurrency(scenarios.unitStake)} per selection
+          {legCount > 0 ? ` (${legCount} × ${formatCurrency(scenarios.unitStake)} = ${formatCurrency(scenarios.parlay.stakeTotal)})` : null}.
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <ScenarioCard
+          title="Parlay"
+          description="One slip - all legs must win"
+          stakeTotal={scenarios.parlay.stakeTotal}
+          combinedOdds={scenarios.parlay.combinedOdds}
+          legOdds={legOdds}
+          profit={scenarios.parlay.profit}
+        />
+        <ScenarioCard
+          title="Singles"
+          description="Each leg as its own bet"
+          stakeTotal={scenarios.singles.stakeTotal}
+          stakeLabel={singlesStakeLabel}
+          profit={scenarios.singles.profit}
+        />
+      </div>
+    </div>
+  );
+}
+
 interface ResearchBetSlipSummaryProps {
   slip: BetSlipSummaryDto | null;
   isLoading: boolean;
   error?: string;
-  /** Match page: only legs (market, pick, status); no fixture link, slip header, stake grid, or odds. */
+  /** Match page: legs + optional equal-stake scenario P&L. */
   variant?: "default" | "matchPage";
+  scenarios?: ResearchBetScenarioStatsDto | null;
 }
 
 export function ResearchBetSlipSummary({
@@ -102,6 +223,7 @@ export function ResearchBetSlipSummary({
   isLoading,
   error,
   variant = "default",
+  scenarios = null,
 }: ResearchBetSlipSummaryProps) {
   if (error) {
     return <p className="text-sm text-red-800 dark:text-red-200">{error}</p>;
@@ -119,11 +241,14 @@ export function ResearchBetSlipSummary({
 
   if (variant === "matchPage") {
     return (
-      <ul className="flex flex-col">
-        {slip.selections.map((sel, idx) => (
-          <SelectionRowMatchPage key={`${slip.id}-${sel.matchId}-${idx}`} selection={sel} />
-        ))}
-      </ul>
+      <div>
+        <ul className="flex flex-col">
+          {slip.selections.map((sel, idx) => (
+            <SelectionRowMatchPage key={`${slip.id}-${sel.matchId}-${idx}`} selection={sel} />
+          ))}
+        </ul>
+        {scenarios != null ? <ScenarioComparison scenarios={scenarios} /> : null}
+      </div>
     );
   }
 

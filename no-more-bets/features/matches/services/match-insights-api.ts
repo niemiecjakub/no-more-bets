@@ -3,6 +3,8 @@ import axiosInstance from "../../../lib/axios";
 import {
   normalizeBetStatus,
   type BetSlipSummaryDto,
+  type MatchResearchBetSlipDto,
+  type ResearchBetScenarioStatsDto,
 } from "../../bets/interfaces";
 import type {
   ClubLeagueStats,
@@ -86,6 +88,16 @@ type BetSlipSummaryApiDto = Omit<BetSlipSummaryDto, "status" | "selections"> & {
   selections: Array<Omit<BetSlipSummaryDto["selections"][number], "status"> & { status: unknown }>;
 };
 
+type MatchResearchBetSlipApiDto = {
+  slip: BetSlipSummaryApiDto;
+  scenarios: (Omit<ResearchBetScenarioStatsDto, "parlay" | "singles"> & {
+    parlay: ResearchBetScenarioStatsDto["parlay"];
+    singles: Omit<ResearchBetScenarioStatsDto["singles"], "legs"> & {
+      legs: Array<Omit<ResearchBetScenarioStatsDto["singles"]["legs"][number], "status"> & { status: unknown }>;
+    };
+  }) | null;
+};
+
 function mapBetSlipSummaryFromApi(raw: BetSlipSummaryApiDto): BetSlipSummaryDto {
   return {
     ...raw,
@@ -97,13 +109,35 @@ function mapBetSlipSummaryFromApi(raw: BetSlipSummaryApiDto): BetSlipSummaryDto 
   };
 }
 
+function mapMatchResearchBetSlipFromApi(raw: MatchResearchBetSlipApiDto): MatchResearchBetSlipDto {
+  return {
+    slip: mapBetSlipSummaryFromApi(raw.slip),
+    scenarios:
+      raw.scenarios == null
+        ? null
+        : {
+            unitStake: raw.scenarios.unitStake,
+            parlay: raw.scenarios.parlay,
+            singles: {
+              stakeTotal: raw.scenarios.singles.stakeTotal,
+              potentialPayout: raw.scenarios.singles.potentialPayout,
+              profit: raw.scenarios.singles.profit,
+              legs: raw.scenarios.singles.legs.map((leg) => ({
+                ...leg,
+                status: normalizeBetStatus(leg.status),
+              })),
+            },
+          },
+  };
+}
+
 /** Latest research-phase paper slip for the match, or null when none exists (404). */
-export async function fetchMatchResearchBetSlip(matchId: number): Promise<BetSlipSummaryDto | null> {
+export async function fetchMatchResearchBetSlip(matchId: number): Promise<MatchResearchBetSlipDto | null> {
   try {
-    const { data } = await axiosInstance.get<BetSlipSummaryApiDto>(
+    const { data } = await axiosInstance.get<MatchResearchBetSlipApiDto>(
       `/api/matchinsights/matches/${matchId}/research-bet-slip`
     );
-    return mapBetSlipSummaryFromApi(data);
+    return mapMatchResearchBetSlipFromApi(data);
   } catch (err) {
     if (axios.isAxiosError(err) && err.response?.status === 404) {
       return null;

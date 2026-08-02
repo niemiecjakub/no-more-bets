@@ -1,11 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.Betting.Common;
-using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Betting.GetBetSlipsList;
 using NoMoreBets.Application.Betting.GetBettingPerformanceStats;
 using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
-using NoMoreBets.Application.Betting.GetMatchResearchBetSlip;
+using NoMoreBets.Application.Betting.ResearchBetScenarioStats;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
 using NoMoreBets.Application.Matches.MatchExists;
 
@@ -54,12 +53,12 @@ public class BettingController(IMediator mediator) : ControllerBase
   }
 
   [HttpGet("matchinsights/matches/{matchId:int}/research-bet-slip")]
-  public async Task<ActionResult<BetSlipSummary>> GetResearchBetSlip(int matchId, CancellationToken cancellationToken = default)
+  public async Task<ActionResult<MatchResearchBetSlipDto>> GetResearchBetSlip(int matchId, CancellationToken cancellationToken = default)
   {
     if (!await mediator.Send(new MatchExistsQuery(matchId), cancellationToken).ConfigureAwait(false))
       return NotFound();
 
-    var result = await mediator.Send(new GetMatchResearchBetSlipQuery(matchId), cancellationToken).ConfigureAwait(false);
+    var result = await mediator.Send(new GetMatchResearchBetSlipWithScenariosQuery(matchId), cancellationToken).ConfigureAwait(false);
     return result is null ? NotFound() : Ok(result);
   }
 }

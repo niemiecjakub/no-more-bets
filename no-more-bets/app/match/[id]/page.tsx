@@ -28,7 +28,7 @@ import {
     type MatchEventDto,
     type MatchResearchOutput,
 } from "@/features/matches/interfaces";
-import type { BetSlipSummaryDto } from "@/features/bets/interfaces";
+import type { MatchResearchBetSlipDto } from "@/features/bets/interfaces";
 import { LazyAgentSessionTranscript } from "@/features/bets/components/lazy-agent-session-transcript";
 import { ResearchBetSlipSummary } from "@/features/bets/components/research-bet-slip-summary";
 import { MatchClubEventsList, partitionMatchEventsBySide } from "@/features/matches/components/match-club-events-list";
@@ -52,7 +52,7 @@ interface MatchInsights {
     lineups: MatchLineupResult | null;
     injuries: MatchInjuriesResult | null;
     agentResearch: MatchResearchOutput | null;
-    researchBetSlip: BetSlipSummaryDto | null;
+    researchBetSlip: MatchResearchBetSlipDto | null;
     recentGames: ClubPair<RecentMatch[] | null>;
     leagueStatistics: ClubPair<ClubLeagueStats | null>;
     headToHead: HeadToHead | null;
@@ -876,7 +876,7 @@ function AgentResearchSection({
     research?: MatchResearchOutput | null;
     researchLoading: boolean;
     researchError?: string;
-    researchSlip?: BetSlipSummaryDto | null;
+    researchSlip?: MatchResearchBetSlipDto | null;
     researchSlipLoading: boolean;
     researchSlipError?: string;
     researchAgentSessionId: number | null;
@@ -898,10 +898,22 @@ function AgentResearchSection({
                 <MatchResearchOutputView research={research} />
             )}
             {showResearchBetSlipBlock ? (
-                <div className="mt-6 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-                    <h3 className="mb-3 text-sm font-semibold text-foreground">Research bet slip</h3>
-                    <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">Fictional paper slip from the research agent (not bankroll-backed).</p>
-                    <ResearchBetSlipSummary slip={researchSlip ?? null} isLoading={false} error={researchSlipError} variant="matchPage" />
+                <div className="mt-6 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+                    <div className="border-b border-zinc-100 bg-zinc-50 px-3 py-2 dark:border-zinc-800/80 dark:bg-zinc-900/50">
+                        <h3 className="text-sm font-semibold text-foreground">Research bet slip</h3>
+                        <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                            Fictional paper slip from the research agent (not bankroll-backed).
+                        </p>
+                    </div>
+                    <div className="px-3 py-3">
+                        <ResearchBetSlipSummary
+                            slip={researchSlip?.slip ?? null}
+                            scenarios={researchSlip?.scenarios ?? null}
+                            isLoading={false}
+                            error={researchSlipError}
+                            variant="matchPage"
+                        />
+                    </div>
                 </div>
             ) : null}
             {researchAgentSessionId != null ? (

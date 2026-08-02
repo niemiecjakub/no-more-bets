@@ -69,7 +69,7 @@ export function normalizeBetStatus(status: unknown): BetStatusId | 0 {
 }
 
 /**
- * Paper slip from research phase — aligned with backend BetSlipSummary (GET …/research-bet-slip).
+ * Paper slip from research phase — aligned with backend BetSlipSummary.
  */
 export interface BetSlipSummaryDto {
   id: number;
@@ -91,6 +91,39 @@ export interface BetSelectionSummaryDto {
   outcomeKey: string;
   oddsAtPlacement: number;
   status: BetStatusId | 0;
+}
+
+/** GET …/research-bet-slip — slip + equal-stake parlay vs singles P&L (scenarios null while pending). */
+export interface MatchResearchBetSlipDto {
+  slip: BetSlipSummaryDto;
+  scenarios: ResearchBetScenarioStatsDto | null;
+}
+
+export interface ResearchBetScenarioStatsDto {
+  unitStake: number;
+  parlay: ResearchBetParlayScenarioDto;
+  singles: ResearchBetSinglesScenarioDto;
+}
+
+export interface ResearchBetParlayScenarioDto {
+  stakeTotal: number;
+  combinedOdds: number;
+  potentialPayout: number;
+  profit: number | null;
+}
+
+export interface ResearchBetSinglesScenarioDto {
+  stakeTotal: number;
+  potentialPayout: number;
+  profit: number | null;
+  legs: ResearchBetSingleLegDto[];
+}
+
+export interface ResearchBetSingleLegDto {
+  stake: number;
+  odds: number;
+  status: BetStatusId | 0;
+  profit: number | null;
 }
 
 /** GET api/Database/bankroll — BankrollRecordDto */
