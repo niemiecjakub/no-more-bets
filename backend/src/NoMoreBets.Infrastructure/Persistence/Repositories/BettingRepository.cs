@@ -299,30 +299,46 @@ public class BettingRepository : IBettingRepository
 
   public async Task<ResearchPhaseSummaryStats> GetResearchPhaseSettledSummaryAsync(
     IReadOnlyList<int> leagueIds,
+    IReadOnlyList<string> seasonYears,
     CancellationToken cancellationToken = default)
   {
+    var selectedSeasonYears = seasonYears
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
+    var hasLeagueFilter = leagueIds.Count > 0;
+    var hasSeasonYearFilter = selectedSeasonYears.Length > 0;
+
     var settledQuery = _db.BetSlip
       .AsNoTracking()
       .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Research)
       .Where(s => s.StatusId != (int)BetStatus.Pending);
 
-    if (leagueIds.Count > 0)
+    if (hasLeagueFilter || hasSeasonYearFilter)
     {
       settledQuery = settledQuery
         .Where(s => s.Selections.Any(sel =>
           sel.Match != null &&
           sel.Match.Stage != null &&
           sel.Match.Stage.Season != null &&
-          leagueIds.Contains(sel.Match.Stage.Season.LeagueId)));
+          (!hasLeagueFilter || leagueIds.Contains(sel.Match.Stage.Season.LeagueId)) &&
+          (!hasSeasonYearFilter || selectedSeasonYears.Contains(sel.Match.Stage.Season.Year))));
     }
 
     var settledSelections = await settledQuery
       .SelectMany(s => s.Selections)
-      .Where(sel => leagueIds.Count == 0 || (
-        sel.Match != null &&
-        sel.Match.Stage != null &&
-        sel.Match.Stage.Season != null &&
-        leagueIds.Contains(sel.Match.Stage.Season.LeagueId)))
+      .Where(sel =>
+        (!hasLeagueFilter || (
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          leagueIds.Contains(sel.Match.Stage.Season.LeagueId))) &&
+        (!hasSeasonYearFilter || (
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          selectedSeasonYears.Contains(sel.Match.Stage.Season.Year))))
       .Select(sel => sel.StatusId)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
@@ -335,21 +351,31 @@ public class BettingRepository : IBettingRepository
 
   public async Task<IReadOnlyList<ResearchPhaseScenarioLegRow>> GetResearchPhaseSettledScenarioLegsAsync(
     IReadOnlyList<int> leagueIds,
+    IReadOnlyList<string> seasonYears,
     CancellationToken cancellationToken = default)
   {
+    var selectedSeasonYears = seasonYears
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
+    var hasLeagueFilter = leagueIds.Count > 0;
+    var hasSeasonYearFilter = selectedSeasonYears.Length > 0;
+
     var settledQuery = _db.BetSlip
       .AsNoTracking()
       .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Research)
       .Where(s => s.StatusId != (int)BetStatus.Pending);
 
-    if (leagueIds.Count > 0)
+    if (hasLeagueFilter || hasSeasonYearFilter)
     {
       settledQuery = settledQuery
         .Where(s => s.Selections.Any(sel =>
           sel.Match != null &&
           sel.Match.Stage != null &&
           sel.Match.Stage.Season != null &&
-          leagueIds.Contains(sel.Match.Stage.Season.LeagueId)));
+          (!hasLeagueFilter || leagueIds.Contains(sel.Match.Stage.Season.LeagueId)) &&
+          (!hasSeasonYearFilter || selectedSeasonYears.Contains(sel.Match.Stage.Season.Year))));
     }
 
     var rows = await settledQuery

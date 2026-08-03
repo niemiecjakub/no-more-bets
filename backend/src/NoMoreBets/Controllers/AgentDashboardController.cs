@@ -37,6 +37,7 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
   public async Task<ActionResult<AgentDashboardResearchBettingSummaryDto>> GetResearchBettingSummaryWidget(
     [FromQuery] int[]? leagueIds,
     [FromQuery(Name = "leagueIds[]")] int[]? leagueIdsBracket,
+    [FromQuery] string[]? seasonYears,
     CancellationToken cancellationToken = default)
   {
     var selectedLeagueIds = (leagueIds ?? [])
@@ -45,8 +46,16 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
       .Distinct()
       .ToArray();
 
+    var selectedSeasonYears = (seasonYears ?? [])
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
+
     var result = await mediator
-      .Send(new GetAgentDashboardResearchBettingSummaryQuery(selectedLeagueIds), cancellationToken)
+      .Send(
+        new GetAgentDashboardResearchBettingSummaryQuery(selectedLeagueIds, selectedSeasonYears),
+        cancellationToken)
       .ConfigureAwait(false);
 
     return Ok(result);

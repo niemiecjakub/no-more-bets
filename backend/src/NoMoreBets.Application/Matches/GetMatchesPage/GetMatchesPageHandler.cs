@@ -14,7 +14,8 @@ public record GetMatchesPageQuery(
   DateTime? AfterMatchDateUtc,
   int? AfterId,
   MatchDateSortOrder SortOrder = MatchDateSortOrder.Descending,
-  string? Search = null) : IRequest<Paged<MatchDto>>;
+  string? Search = null,
+  IReadOnlyList<string>? SeasonYears = null) : IRequest<Paged<MatchDto>>;
 
 public sealed class GetMatchesPageHandler(
   IUnitOfWork unitOfWork,
@@ -43,6 +44,7 @@ public sealed class GetMatchesPageHandler(
           request.AfterMatchDateUtc,
           request.AfterId,
           request.SortOrder,
+          seasonYears: request.SeasonYears,
           cancellationToken: cancellationToken)
         .ConfigureAwait(false);
     }
@@ -126,6 +128,7 @@ public sealed class GetMatchesPageHandler(
       request.AfterId,
       request.SortOrder,
       request.Search,
+      request.SeasonYears,
       cancellationToken);
 
   private async Task<MatchPage> GetHybridSearchPageAsync(
@@ -151,6 +154,11 @@ public sealed class GetMatchesPageHandler(
     var byId = matches.ToDictionary(m => m.Id);
     var selectedLeagueIds = request.LeagueIds.Distinct().ToHashSet();
     var hasLeagueFilter = selectedLeagueIds.Count > 0;
+    var selectedSeasonYears = (request.SeasonYears ?? [])
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .ToHashSet(StringComparer.Ordinal);
+    var hasSeasonYearFilter = selectedSeasonYears.Count > 0;
 
     var ordered = rankedMatchIds
       .Where(byId.ContainsKey)
@@ -158,6 +166,8 @@ public sealed class GetMatchesPageHandler(
       .Where(m => !request.MatchStatusId.HasValue || m.MatchStatusId == request.MatchStatusId.Value)
       .Where(m => !hasLeagueFilter
         || (m.Stage != null && selectedLeagueIds.Contains(m.Stage.Season.LeagueId)))
+      .Where(m => !hasSeasonYearFilter
+        || (m.Stage != null && selectedSeasonYears.Contains(m.Stage.Season.Year)))
       .ToList();
 
     if (request.AfterId is int afterId)

@@ -27,6 +27,7 @@ public class MatchesController(IMediator mediator) : ControllerBase
     [FromQuery] int? afterId = null,
     [FromQuery] string? sortOrder = null,
     [FromQuery] string? search = null,
+    [FromQuery] string[]? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
     limit = Math.Clamp(limit, 1, 100);
@@ -42,6 +43,11 @@ public class MatchesController(IMediator mediator) : ControllerBase
       : null;
 
     var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+    var normalizedSeasonYears = (seasonYears ?? [])
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
 
     var result = await mediator.Send(
       new GetMatchesPageQuery(
@@ -51,7 +57,8 @@ public class MatchesController(IMediator mediator) : ControllerBase
         afterMatchDateUtc,
         afterId,
         parsedSortOrder,
-        normalizedSearch),
+        normalizedSearch,
+        normalizedSeasonYears),
       cancellationToken).ConfigureAwait(false);
 
     return Ok(result);

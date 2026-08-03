@@ -4,7 +4,9 @@ using NoMoreBets.Domain.Betting;
 
 namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardResearchBettingSummary;
 
-public record GetAgentDashboardResearchBettingSummaryQuery(IReadOnlyList<int> LeagueIds)
+public record GetAgentDashboardResearchBettingSummaryQuery(
+  IReadOnlyList<int> LeagueIds,
+  IReadOnlyList<string> SeasonYears)
   : IRequest<AgentDashboardResearchBettingSummaryDto>;
 
 public sealed class GetAgentDashboardResearchBettingSummaryHandler(IUnitOfWork unitOfWork)
@@ -15,11 +17,11 @@ public sealed class GetAgentDashboardResearchBettingSummaryHandler(IUnitOfWork u
     CancellationToken cancellationToken)
   {
     var stats = await unitOfWork.Betting
-      .GetResearchPhaseSettledSummaryAsync(request.LeagueIds, cancellationToken)
+      .GetResearchPhaseSettledSummaryAsync(request.LeagueIds, request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 
     var legs = await unitOfWork.Betting
-      .GetResearchPhaseSettledScenarioLegsAsync(request.LeagueIds, cancellationToken)
+      .GetResearchPhaseSettledScenarioLegsAsync(request.LeagueIds, request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 
     var scenarios = AggregateScenarios(legs);

@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sheet";
 import {
   ALL_STATUSES_ID,
+  isExplicitSeasonOverride,
   isExplicitSortOverride,
   MatchFiltersPanel,
   type MatchFiltersPanelProps,
@@ -17,10 +18,11 @@ import {
 
 type MatchFiltersMobileSheetProps = Omit<MatchFiltersPanelProps, "onFilterApplied"> & {
   sortParam: string | null;
+  latestSeasonYear: string | null;
 };
 
 export function MatchFiltersMobileSheet(props: MatchFiltersMobileSheetProps) {
-  const { sortParam, ...panelProps } = props;
+  const { sortParam, latestSeasonYear, ...panelProps } = props;
   const [open, setOpen] = useState(false);
 
   const activeFilterCount = useMemo(() => {
@@ -34,11 +36,21 @@ export function MatchFiltersMobileSheet(props: MatchFiltersMobileSheetProps) {
     if (isExplicitSortOverride(sortParam, panelProps.selectedStatusId)) {
       count += 1;
     }
+    if (isExplicitSeasonOverride(panelProps.selectedSeasonYears, latestSeasonYear)) {
+      count += 1;
+    }
     if (panelProps.searchQuery.trim().length > 0) {
       count += 1;
     }
     return count;
-  }, [panelProps.selectedLeagueIds, panelProps.selectedStatusId, panelProps.searchQuery, sortParam]);
+  }, [
+    panelProps.selectedLeagueIds,
+    panelProps.selectedStatusId,
+    panelProps.searchQuery,
+    panelProps.selectedSeasonYears,
+    sortParam,
+    latestSeasonYear,
+  ]);
 
   return (
     <>

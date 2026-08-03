@@ -34,29 +34,38 @@ public class LeagueRepository : ILeagueRepository
 
   public async Task<IReadOnlyList<int>> GetLatestSeasonIdsAsync(CancellationToken cancellationToken = default)
   {
-    // ponytail: season table is tiny (~dozens of rows); group in memory instead of a correlated SQL subquery.
     var seasons = await _db.Season
       .AsNoTracking()
       .Select(s => new { s.Id, s.LeagueId, s.StartDate })
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
 
-    return SelectLatestSeasonIds(
-      seasons.Select(s => (s.Id, s.LeagueId, s.StartDate)).ToList());
-  }
-
-  /// <summary>
-  /// Per league: highest StartDate, then highest Id.
-  /// </summary>
-  internal static IReadOnlyList<int> SelectLatestSeasonIds(
-    IReadOnlyList<(int Id, int LeagueId, DateOnly? StartDate)> seasons) =>
-    seasons
+    return seasons
       .GroupBy(s => s.LeagueId)
       .Select(g => g
         .OrderByDescending(s => s.StartDate)
         .ThenByDescending(s => s.Id)
         .First().Id)
       .ToList();
+  }
+
+  public async Task<IReadOnlyList<string>> GetSeasonYearsOrderedLatestFirstAsync(
+    CancellationToken cancellationToken = default)
+  {
+    var seasons = await _db.Season
+      .AsNoTracking()
+      .Select(s => new { s.Year, s.StartDate })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return seasons
+      .GroupBy(s => s.Year)
+      .Select(g => (Year: g.Key, MaxStartDate: g.Max(s => s.StartDate)))
+      .OrderByDescending(x => x.MaxStartDate)
+      .ThenByDescending(x => x.Year)
+      .Select(x => x.Year)
+      .ToList();
+  }
 
   public Task<bool> TableSnapshotExists(int seasonId, DateOnly date)
   {

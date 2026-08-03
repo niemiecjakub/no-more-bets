@@ -48,6 +48,7 @@ public interface IMatchRepository
     int? afterId,
     MatchDateSortOrder sortOrder = MatchDateSortOrder.Descending,
     string? search = null,
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default);
   Task<IReadOnlySet<int>> GetMatchIdsWithLineupAsync(
     IReadOnlyCollection<int> matchIds,

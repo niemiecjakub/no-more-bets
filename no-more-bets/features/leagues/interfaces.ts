@@ -11,6 +11,11 @@ export interface LeagueListItem {
   slug: string;
 }
 
+/** Distinct season year from GET /api/seasons (latest first). */
+export interface SeasonYearItem {
+  year: string;
+}
+
 export interface LeagueTableRow {
   position: number;
   clubId: number;

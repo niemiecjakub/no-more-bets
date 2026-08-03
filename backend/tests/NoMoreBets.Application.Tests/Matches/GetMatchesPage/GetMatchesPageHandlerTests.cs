@@ -44,6 +44,7 @@ public class GetMatchesPageHandlerTests
         5,
         MatchDateSortOrder.Descending,
         null,
+        Arg.Is<IReadOnlyList<string>>(years => years.SequenceEqual(new[] { "2025-2026" })),
         Arg.Any<CancellationToken>())
       .Returns(new MatchPage(Array.Empty<DomainMatch>(), false));
     _mediator
@@ -51,7 +52,7 @@ public class GetMatchesPageHandlerTests
       .Returns(Array.Empty<DomainMatch>());
 
     await _sut.Handle(
-      new GetMatchesPageQuery(10, 3, leagueIds, cursorAt, 5),
+      new GetMatchesPageQuery(10, 3, leagueIds, cursorAt, 5, SeasonYears: ["2025-2026"]),
       CancellationToken.None);
 
     await _matches.Received(1).GetMatchesPageAsync(
@@ -62,6 +63,7 @@ public class GetMatchesPageHandlerTests
       5,
       MatchDateSortOrder.Descending,
       null,
+      Arg.Is<IReadOnlyList<string>>(years => years.SequenceEqual(new[] { "2025-2026" })),
       Arg.Any<CancellationToken>());
     await _embedding.DidNotReceive().EmbedAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
   }
@@ -79,6 +81,7 @@ public class GetMatchesPageHandlerTests
         Arg.Any<int?>(),
         Arg.Any<MatchDateSortOrder>(),
         Arg.Any<string?>(),
+        Arg.Any<IReadOnlyList<string>?>(),
         Arg.Any<CancellationToken>())
       .Returns(new MatchPage(new List<DomainMatch> { match }, false));
     _mediator
@@ -118,6 +121,7 @@ public class GetMatchesPageHandlerTests
         Arg.Any<int?>(),
         Arg.Any<MatchDateSortOrder>(),
         Arg.Any<string?>(),
+        Arg.Any<IReadOnlyList<string>?>(),
         Arg.Any<CancellationToken>())
       .Returns(new MatchPage(new List<DomainMatch> { newer, older }, true));
     _mediator
@@ -164,6 +168,7 @@ public class GetMatchesPageHandlerTests
       Arg.Any<int?>(),
       Arg.Any<MatchDateSortOrder>(),
       Arg.Any<string?>(),
+      Arg.Any<IReadOnlyList<string>?>(),
       Arg.Any<CancellationToken>());
   }
 
@@ -183,6 +188,7 @@ public class GetMatchesPageHandlerTests
         null,
         MatchDateSortOrder.Descending,
         "Arsenal",
+        Arg.Any<IReadOnlyList<string>?>(),
         Arg.Any<CancellationToken>())
       .Returns(new MatchPage(new List<DomainMatch> { match }, false));
     _mediator

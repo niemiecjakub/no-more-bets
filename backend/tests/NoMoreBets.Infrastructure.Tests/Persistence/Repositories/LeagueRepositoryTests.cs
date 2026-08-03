@@ -3,48 +3,11 @@ using Microsoft.EntityFrameworkCore;
 using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
-using NoMoreBets.Infrastructure.Persistence.Repositories;
 
 namespace NoMoreBets.Infrastructure.Tests.Persistence.Repositories;
 
 public class LeagueRepositoryTests
 {
-  [Fact]
-  public void SelectLatestSeasonIds_WithMultipleSeasonsPerLeague_ReturnsLatestByStartDateThenId()
-  {
-    // Arrange
-    IReadOnlyList<(int Id, int LeagueId, DateOnly? StartDate)> seasons =
-    [
-      (1, 1, new DateOnly(2025, 8, 15)),
-      (9, 1, new DateOnly(2026, 8, 21)),
-      (2, 2, new DateOnly(2025, 7, 18)),
-      (10, 2, new DateOnly(2026, 7, 24))
-    ];
-
-    // Act
-    var latestSeasonIds = LeagueRepository.SelectLatestSeasonIds(seasons);
-
-    // Assert
-    latestSeasonIds.Should().BeEquivalentTo([9, 10]);
-  }
-
-  [Fact]
-  public void SelectLatestSeasonIds_WhenStartDatesEqual_PrefersHigherId()
-  {
-    // Arrange
-    IReadOnlyList<(int Id, int LeagueId, DateOnly? StartDate)> seasons =
-    [
-      (1, 1, new DateOnly(2025, 8, 15)),
-      (2, 1, new DateOnly(2025, 8, 15))
-    ];
-
-    // Act
-    var latestSeasonIds = LeagueRepository.SelectLatestSeasonIds(seasons);
-
-    // Assert
-    latestSeasonIds.Should().Equal(2);
-  }
-
   [Fact]
   public async Task ClubQuery_WithLatestSeasonFilter_ExcludesOlderSeasonOnlyClubs()
   {
@@ -78,11 +41,7 @@ public class LeagueRepositoryTests
       });
     await db.SaveChangesAsync();
 
-    var latestSeasonIds = LeagueRepository.SelectLatestSeasonIds(
-    [
-      (1, 1, new DateOnly(2025, 8, 15)),
-      (9, 1, new DateOnly(2026, 8, 21))
-    ]);
+    IReadOnlyList<int> latestSeasonIds = [9];
     var utcNow = DateTime.UtcNow;
     var kickoffWithinTenDaysEnd = utcNow.AddDays(10);
 

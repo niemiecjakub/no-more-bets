@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.Betting.UpdateMatches;
 using NoMoreBets.Application.Leagues.GetLeagueTableDisplay;
 using NoMoreBets.Application.Leagues.GetLeaguesList;
+using NoMoreBets.Application.Leagues.GetSeasonYearsList;
 
 namespace NoMoreBets.Controllers;
 
@@ -14,6 +15,14 @@ public class LeaguesController(IMediator mediator) : ControllerBase
   public async Task<ActionResult<IReadOnlyList<LeagueDto>>> GetLeagues(CancellationToken cancellationToken = default)
   {
     var list = await mediator.Send(new GetLeaguesListQuery(), cancellationToken).ConfigureAwait(false);
+    return Ok(list);
+  }
+
+  [HttpGet("seasons")]
+  public async Task<ActionResult<IReadOnlyList<SeasonYearDto>>> GetSeasonYears(
+    CancellationToken cancellationToken = default)
+  {
+    var list = await mediator.Send(new GetSeasonYearsListQuery(), cancellationToken).ConfigureAwait(false);
     return Ok(list);
   }
 

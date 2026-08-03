@@ -24,15 +24,21 @@ public class GetAgentDashboardResearchBettingSummaryHandlerTests
   {
     // Arrange
     _bettingRepository
-      .GetResearchPhaseSettledSummaryAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .GetResearchPhaseSettledSummaryAsync(
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<IReadOnlyList<string>>(),
+        Arg.Any<CancellationToken>())
       .Returns(new ResearchPhaseSummaryStats(0, 0, 0));
     _bettingRepository
-      .GetResearchPhaseSettledScenarioLegsAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .GetResearchPhaseSettledScenarioLegsAsync(
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<IReadOnlyList<string>>(),
+        Arg.Any<CancellationToken>())
       .Returns([]);
 
     // Act
     var result = await _sut.Handle(
-      new GetAgentDashboardResearchBettingSummaryQuery([]),
+      new GetAgentDashboardResearchBettingSummaryQuery([], []),
       CancellationToken.None);
 
     // Assert
@@ -49,10 +55,16 @@ public class GetAgentDashboardResearchBettingSummaryHandlerTests
     // Slip 1: 3-leg all won @ 2.0, 1.5, 1.8
     // Slip 2: 2-leg one lost @ 2.0 won, 1.5 lost
     _bettingRepository
-      .GetResearchPhaseSettledSummaryAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .GetResearchPhaseSettledSummaryAsync(
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<IReadOnlyList<string>>(),
+        Arg.Any<CancellationToken>())
       .Returns(new ResearchPhaseSummaryStats(5, 4, 1));
     _bettingRepository
-      .GetResearchPhaseSettledScenarioLegsAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .GetResearchPhaseSettledScenarioLegsAsync(
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<IReadOnlyList<string>>(),
+        Arg.Any<CancellationToken>())
       .Returns(
       [
         new ResearchPhaseScenarioLegRow(1, 2.0m, BetStatus.Won),
@@ -64,7 +76,7 @@ public class GetAgentDashboardResearchBettingSummaryHandlerTests
 
     // Act
     var result = await _sut.Handle(
-      new GetAgentDashboardResearchBettingSummaryQuery([]),
+      new GetAgentDashboardResearchBettingSummaryQuery([], []),
       CancellationToken.None);
 
     // Assert
@@ -95,10 +107,16 @@ public class GetAgentDashboardResearchBettingSummaryHandlerTests
   {
     // Arrange
     _bettingRepository
-      .GetResearchPhaseSettledSummaryAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .GetResearchPhaseSettledSummaryAsync(
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<IReadOnlyList<string>>(),
+        Arg.Any<CancellationToken>())
       .Returns(new ResearchPhaseSummaryStats(3, 1, 1));
     _bettingRepository
-      .GetResearchPhaseSettledScenarioLegsAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .GetResearchPhaseSettledScenarioLegsAsync(
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<IReadOnlyList<string>>(),
+        Arg.Any<CancellationToken>())
       .Returns(
       [
         new ResearchPhaseScenarioLegRow(1, 2.0m, BetStatus.Won),
@@ -108,7 +126,7 @@ public class GetAgentDashboardResearchBettingSummaryHandlerTests
 
     // Act
     var result = await _sut.Handle(
-      new GetAgentDashboardResearchBettingSummaryQuery([]),
+      new GetAgentDashboardResearchBettingSummaryQuery([], []),
       CancellationToken.None);
 
     // Assert
@@ -117,5 +135,39 @@ public class GetAgentDashboardResearchBettingSummaryHandlerTests
     result.Parlay.Profit.Should().Be(-5m);
     result.Singles.StakeTotal.Should().Be(5m);
     result.Singles.Profit.Should().Be(-5m);
+  }
+
+  [Fact]
+  public async Task Handle_PassesSeasonYearsToRepository()
+  {
+    // Arrange
+    var seasonYears = new[] { "2025-2026", "2026-2027" };
+    _bettingRepository
+      .GetResearchPhaseSettledSummaryAsync(
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<IReadOnlyList<string>>(),
+        Arg.Any<CancellationToken>())
+      .Returns(new ResearchPhaseSummaryStats(0, 0, 0));
+    _bettingRepository
+      .GetResearchPhaseSettledScenarioLegsAsync(
+        Arg.Any<IReadOnlyList<int>>(),
+        Arg.Any<IReadOnlyList<string>>(),
+        Arg.Any<CancellationToken>())
+      .Returns([]);
+
+    // Act
+    await _sut.Handle(
+      new GetAgentDashboardResearchBettingSummaryQuery([], seasonYears),
+      CancellationToken.None);
+
+    // Assert
+    await _bettingRepository.Received(1).GetResearchPhaseSettledSummaryAsync(
+      Arg.Any<IReadOnlyList<int>>(),
+      Arg.Is<IReadOnlyList<string>>(years => years.SequenceEqual(seasonYears)),
+      Arg.Any<CancellationToken>());
+    await _bettingRepository.Received(1).GetResearchPhaseSettledScenarioLegsAsync(
+      Arg.Any<IReadOnlyList<int>>(),
+      Arg.Is<IReadOnlyList<string>>(years => years.SequenceEqual(seasonYears)),
+      Arg.Any<CancellationToken>());
   }
 }

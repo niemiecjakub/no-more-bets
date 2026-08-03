@@ -18,6 +18,7 @@ import {
 import { MatchFiltersMobileSheet } from "../../features/matches/components/match-filters-mobile-sheet";
 import { useMatchStore } from "@/store/match-store";
 import { useLeagueStore } from "@/store/league-store";
+import { fetchSeasonYears } from "@/features/leagues/services/leagues-api";
 import { fetchAgentDashboardResearchBettingSummaryWidget } from "@/features/bets/services/research-dashboard-api";
 import type {
   AgentDashboardResearchBettingSummaryWidget,
@@ -106,12 +107,25 @@ export default function HomePage() {
     error: leaguesError,
     setLeagues,
   } = useLeagueStore();
+  const [seasonYears, setSeasonYears] = useState<string[]>([]);
+  const [isSeasonYearsLoading, setIsSeasonYearsLoading] = useState(true);
+  const [seasonYearsError, setSeasonYearsError] = useState<string | null>(null);
   const [summaryWidget, setSummaryWidget] =
     useState<AgentDashboardResearchBettingSummaryWidget | null>(null);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
 
-  const { selectedLeagueIds, selectedStatusId, selectedSortOrder, searchQuery, matchFilters } = useMemo(() => {
+  const latestSeasonYear = seasonYears[0] ?? null;
+
+  const {
+    selectedLeagueIds,
+    selectedStatusId,
+    selectedSortOrder,
+    searchQuery,
+    selectedSeasonYears,
+    matchFilters,
+    seasonFilterReady,
+  } = useMemo(() => {
     const statusParam = Number(searchParams.get("status"));
     const matchedStatus = statusFilters.find(
       (statusFilter) => statusFilter.id === statusParam
@@ -131,48 +145,124 @@ export default function HomePage() {
           .filter((id) => Number.isInteger(id) && id > 0)
       : [];
 
+    const seasonRaw = searchParams.get("season");
+    let parsedSeasonYears: string[];
+    if (seasonRaw === null) {
+      parsedSeasonYears = latestSeasonYear ? [latestSeasonYear] : [];
+    } else if (seasonRaw.trim() === "") {
+      parsedSeasonYears = [];
+    } else {
+      parsedSeasonYears = seasonRaw
+        .split(",")
+        .map((item) => item.trim())
+        .filter((year) => seasonYears.includes(year));
+      if (parsedSeasonYears.length === 0 && latestSeasonYear) {
+        parsedSeasonYears = [latestSeasonYear];
+      }
+    }
+
+    const seasonFilterReady = seasonRaw !== null || latestSeasonYear != null;
+
     return {
       selectedLeagueIds: parsedLeagueIds,
       selectedStatusId: parsedStatusId,
       selectedSortOrder: parsedSortOrder,
       searchQuery: parsedSearchQuery,
+      selectedSeasonYears: parsedSeasonYears,
+      seasonFilterReady,
       matchFilters: {
         matchStatusId:
           parsedStatusId === ALL_STATUSES_ID ? undefined : parsedStatusId,
         leagueIds: parsedLeagueIds.length > 0 ? parsedLeagueIds : undefined,
         sortOrder: parsedSortOrder,
         search: parsedSearchQuery || undefined,
+        seasonYears:
+          parsedSeasonYears.length > 0 ? parsedSeasonYears : undefined,
       },
     };
-  }, [searchParams]);
+  }, [searchParams, seasonYears, latestSeasonYear]);
 
   const researchStatsScopeLabel = useMemo(() => {
-    if (selectedLeagueIds.length === 0) return "All leagues";
+    const leaguesLabel =
+      selectedLeagueIds.length === 0
+        ? "All leagues"
+        : (() => {
+            const selectedNames = leagues
+              .filter((league) => selectedLeagueIds.includes(league.id))
+              .map((league) => league.name);
+            return selectedNames.length === 0
+              ? "Selected leagues"
+              : selectedNames.join(", ");
+          })();
 
-    const selectedNames = leagues
-      .filter((league) => selectedLeagueIds.includes(league.id))
-      .map((league) => league.name);
+    const seasonsLabel =
+      selectedSeasonYears.length === 0
+        ? "All seasons"
+        : selectedSeasonYears.length === 1
+          ? selectedSeasonYears[0]
+          : selectedSeasonYears.length === 2
+            ? selectedSeasonYears.join(", ")
+            : `${selectedSeasonYears.length} seasons`;
 
-    if (selectedNames.length === 0) return "Selected leagues";
-    return selectedNames.join(", ");
-  }, [leagues, selectedLeagueIds]);
+    return `${leaguesLabel} · ${seasonsLabel}`;
+  }, [leagues, selectedLeagueIds, selectedSeasonYears]);
 
   useEffect(() => {
     setLeagues();
   }, [setLeagues]);
 
   useEffect(() => {
-    setMatches(matchFilters);
-  }, [matchFilters, setMatches]);
+    let isMounted = true;
+
+    async function loadSeasonYears() {
+      setIsSeasonYearsLoading(true);
+      setSeasonYearsError(null);
+      try {
+        const items = await fetchSeasonYears();
+        if (!isMounted) return;
+        setSeasonYears(items.map((item) => item.year));
+      } catch (err) {
+        if (!isMounted) return;
+        setSeasonYearsError(handleServiceError(err, "Failed to load seasons."));
+      } finally {
+        if (isMounted) setIsSeasonYearsLoading(false);
+      }
+    }
+
+    void loadSeasonYears();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
+    if (!latestSeasonYear) return;
+    // Only default when season is absent; empty string means "all seasons".
+    if (searchParams.has("season")) return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("season", latestSeasonYear);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [latestSeasonYear, searchParams, pathname, router]);
+
+  useEffect(() => {
+    if (!seasonFilterReady) return;
+    setMatches(matchFilters);
+  }, [matchFilters, setMatches, seasonFilterReady]);
+
+  useEffect(() => {
+    if (!seasonFilterReady) return;
+
     let isMounted = true;
 
     async function loadStats() {
       setIsStatsLoading(true);
       setStatsError(null);
       try {
-        const summary = await fetchAgentDashboardResearchBettingSummaryWidget(selectedLeagueIds);
+        const summary = await fetchAgentDashboardResearchBettingSummaryWidget(
+          selectedLeagueIds,
+          selectedSeasonYears,
+        );
         if (!isMounted) return;
         setSummaryWidget(summary);
       } catch (err) {
@@ -187,12 +277,13 @@ export default function HomePage() {
     return () => {
       isMounted = false;
     };
-  }, [selectedLeagueIds]);
+  }, [selectedLeagueIds, selectedSeasonYears, seasonFilterReady]);
 
   function syncFiltersInUrl(
     nextLeagueIds: number[],
     nextStatusId: number,
     nextSortOrder?: MatchDateSortOrder,
+    nextSeasonYears?: string[],
   ) {
     const params = new URLSearchParams(searchParams.toString());
     params.set("status", String(nextStatusId));
@@ -207,6 +298,8 @@ export default function HomePage() {
     } else {
       params.delete("leagues");
     }
+    const seasonYearsForUrl = nextSeasonYears ?? selectedSeasonYears;
+    params.set("season", seasonYearsForUrl.join(","));
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
@@ -225,6 +318,15 @@ export default function HomePage() {
 
   function handleSelectSort(sortOrder: MatchDateSortOrder) {
     syncFiltersInUrl(selectedLeagueIds, selectedStatusId, sortOrder);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function handleSelectedSeasonYearsChange(years: string[]) {
+    const hasLatestSeason =
+      latestSeasonYear != null && years.includes(latestSeasonYear);
+    const nextStatusId = hasLatestSeason ? selectedStatusId : ALL_STATUSES_ID;
+    const nextSortOrder = hasLatestSeason ? selectedSortOrder : undefined;
+    syncFiltersInUrl(selectedLeagueIds, nextStatusId, nextSortOrder, years);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -247,10 +349,15 @@ export default function HomePage() {
     selectedStatusId,
     selectedSortOrder,
     searchQuery,
+    seasonYears,
+    isSeasonYearsLoading,
+    seasonYearsError,
+    selectedSeasonYears,
     onToggleLeague: handleToggleLeague,
     onSelectStatus: handleSelectStatus,
     onSelectSort: handleSelectSort,
     onSearchQueryChange: handleSearchQueryChange,
+    onSelectedSeasonYearsChange: handleSelectedSeasonYearsChange,
   };
 
   return (
@@ -260,13 +367,14 @@ export default function HomePage() {
             <MatchFiltersMobileSheet
               {...filterPanelProps}
               sortParam={searchParams.get("sort")}
+              latestSeasonYear={latestSeasonYear}
             />
           </div>
           <aside className="order-1 hidden flex-col gap-4 self-start lg:sticky lg:top-20 lg:flex">
             <MatchFiltersPanel {...filterPanelProps} />
           </aside>
           <section className="order-3 min-w-0 lg:order-2">
-            {isLoading ? (
+            {isLoading || !seasonFilterReady ? (
               <MatchesFallback />
             ) : error ? (
               <p className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-red-800 dark:text-red-200">

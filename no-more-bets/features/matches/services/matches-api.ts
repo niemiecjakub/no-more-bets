@@ -12,6 +12,7 @@ export interface FetchMatchesFilters {
   leagueIds?: number[];
   sortOrder?: MatchDateSortOrder;
   search?: string;
+  seasonYears?: string[];
 }
 
 export const MATCH_DATE_SORT = {
@@ -213,6 +214,12 @@ export async function fetchMatchesPage(
   const search = filters?.search?.trim();
   if (search) {
     queryParams.set("search", search);
+  }
+  for (const seasonYear of filters?.seasonYears ?? []) {
+    const trimmed = seasonYear.trim();
+    if (trimmed) {
+      queryParams.append("seasonYears", trimmed);
+    }
   }
   for (const leagueId of filters?.leagueIds ?? []) {
     if (Number.isInteger(leagueId) && leagueId > 0) {

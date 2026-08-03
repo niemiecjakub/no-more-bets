@@ -322,10 +322,17 @@ public class MatchRepository : IMatchRepository
     int? afterId,
     MatchDateSortOrder sortOrder = MatchDateSortOrder.Descending,
     string? search = null,
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
     var selectedLeagueIds = leagueIds.Distinct().ToArray();
     var hasLeagueFilter = selectedLeagueIds.Length > 0;
+    var selectedSeasonYears = (seasonYears ?? [])
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
+    var hasSeasonYearFilter = selectedSeasonYears.Length > 0;
 
     var matchesQuery = _db.Match.AsNoTracking().AsQueryable();
     if (matchStatusId.HasValue)
@@ -334,6 +341,10 @@ public class MatchRepository : IMatchRepository
       matchesQuery = matchesQuery.Where(m =>
         m.Stage != null &&
         selectedLeagueIds.Contains(m.Stage.Season.LeagueId));
+    if (hasSeasonYearFilter)
+      matchesQuery = matchesQuery.Where(m =>
+        m.Stage != null &&
+        selectedSeasonYears.Contains(m.Stage.Season.Year));
 
     if (!string.IsNullOrWhiteSpace(search))
     {
