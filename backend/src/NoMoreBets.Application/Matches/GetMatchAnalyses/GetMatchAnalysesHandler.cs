@@ -12,7 +12,7 @@ public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork) : IRequestHa
     GetMatchAnalysesQuery request,
     CancellationToken cancellationToken)
   {
-    var match = await unitOfWork.Matches
+     var match = await unitOfWork.Matches
       .GetMatchByIdAsync(request.MatchId, cancellationToken)
       .ConfigureAwait(false);
 

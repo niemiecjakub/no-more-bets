@@ -236,16 +236,6 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    if (!latestSeasonYear) return;
-    // Only default when season is absent; empty string means "all seasons".
-    if (searchParams.has("season")) return;
-
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("season", latestSeasonYear);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [latestSeasonYear, searchParams, pathname, router]);
-
-  useEffect(() => {
     if (!seasonFilterReady) return;
     setMatches(matchFilters);
   }, [matchFilters, setMatches, seasonFilterReady]);
@@ -298,8 +288,17 @@ export default function HomePage() {
     } else {
       params.delete("leagues");
     }
+    // Absent season = latest (implicit); empty = all seasons; otherwise explicit.
     const seasonYearsForUrl = nextSeasonYears ?? selectedSeasonYears;
-    params.set("season", seasonYearsForUrl.join(","));
+    const isLatestOnlyDefault =
+      latestSeasonYear != null &&
+      seasonYearsForUrl.length === 1 &&
+      seasonYearsForUrl[0] === latestSeasonYear;
+    if (isLatestOnlyDefault) {
+      params.delete("season");
+    } else {
+      params.set("season", seasonYearsForUrl.join(","));
+    }
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   }
 
