@@ -43,18 +43,24 @@ function betStatusLabel(status: BetSlipSummaryDto["status"]): string {
   }
 }
 
-function profitClass(profit: number): string {
-  if (profit > 0) return "text-emerald-700 dark:text-emerald-400";
-  if (profit < 0) return "text-red-700 dark:text-red-400";
+function roiClass(roi: number): string {
+  if (roi > 0) return "text-emerald-700 dark:text-emerald-400";
+  if (roi < 0) return "text-red-700 dark:text-red-400";
   return "text-foreground";
 }
 
-function formatProfit(profit: number | null): string {
-  if (profit == null) return "Pending";
-  const formatted = formatCurrency(Math.abs(profit));
-  if (profit > 0) return `+${formatted}`;
-  if (profit < 0) return `−${formatted}`;
-  return formatted;
+function formatRoi(roi: number | null): string {
+  if (roi == null) return "Pending";
+  const pct = roi * 100;
+  const body = `${Math.abs(pct).toFixed(1)}%`;
+  if (pct > 0) return `+${body}`;
+  if (pct < 0) return `−${body}`;
+  return body;
+}
+
+function scenarioRoi(profit: number | null, stakeTotal: number): number | null {
+  if (profit == null || stakeTotal <= 0) return null;
+  return profit / stakeTotal;
 }
 
 function SelectionRowMatchPage({ selection }: { selection: BetSelectionSummaryDto }) {
@@ -123,20 +129,15 @@ function formatCombinedOddsTooltip(legOdds: number[], combinedOdds: number): str
 function ScenarioCard({
   title,
   description,
-  stakeTotal,
-  stakeLabel,
   combinedOdds,
   legOdds,
-  profit,
+  roi,
 }: {
   title: string;
   description: string;
-  stakeTotal: number;
-  /** When set, shown instead of the total (e.g. "2 × $5.00"). */
-  stakeLabel?: string;
   combinedOdds?: number;
   legOdds?: number[];
-  profit: number | null;
+  roi: number | null;
 }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-800">
@@ -148,9 +149,6 @@ function ScenarioCard({
         </TooltipTrigger>
         <TooltipContent side="top">{description}</TooltipContent>
       </Tooltip>
-      <span className="tabular-nums text-zinc-600 dark:text-zinc-400">
-        {stakeLabel ?? formatCurrency(stakeTotal)}
-      </span>
       {combinedOdds != null ? (
         <Tooltip>
           <TooltipTrigger className="cursor-help border-0 bg-transparent p-0 text-left">
@@ -164,45 +162,36 @@ function ScenarioCard({
         </Tooltip>
       ) : null}
       <span
-        className={`ml-auto font-semibold tabular-nums ${profit == null ? "text-zinc-500 dark:text-zinc-400" : profitClass(profit)}`}
+        className={`ml-auto font-semibold tabular-nums ${roi == null ? "text-zinc-500 dark:text-zinc-400" : roiClass(roi)}`}
       >
-        {formatProfit(profit)}
+        {formatRoi(roi)}
       </span>
     </div>
   );
 }
 
 function ScenarioComparison({ scenarios }: { scenarios: ResearchBetScenarioStatsDto }) {
-  const legCount = scenarios.singles.legs.length;
   const legOdds = scenarios.singles.legs.map((leg) => leg.odds);
-  const singlesStakeLabel =
-    legCount > 0
-      ? `${legCount} × ${formatCurrency(scenarios.unitStake)}`
-      : formatCurrency(scenarios.singles.stakeTotal);
   return (
     <div className="mt-4 space-y-3">
       <div>
         <h4 className="text-sm font-semibold text-foreground">Hypothetical result</h4>
         <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-          Equal stake comparison at {formatCurrency(scenarios.unitStake)} per selection
-          {legCount > 0 ? ` (${legCount} × ${formatCurrency(scenarios.unitStake)} = ${formatCurrency(scenarios.parlay.stakeTotal)})` : null}.
+          Equal-stake parlay vs singles (paper).
         </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <ScenarioCard
           title="Parlay"
           description="One slip - all legs must win"
-          stakeTotal={scenarios.parlay.stakeTotal}
           combinedOdds={scenarios.parlay.combinedOdds}
           legOdds={legOdds}
-          profit={scenarios.parlay.profit}
+          roi={scenarioRoi(scenarios.parlay.profit, scenarios.parlay.stakeTotal)}
         />
         <ScenarioCard
           title="Singles"
           description="Each leg as its own bet"
-          stakeTotal={scenarios.singles.stakeTotal}
-          stakeLabel={singlesStakeLabel}
-          profit={scenarios.singles.profit}
+          roi={scenarioRoi(scenarios.singles.profit, scenarios.singles.stakeTotal)}
         />
       </div>
     </div>
