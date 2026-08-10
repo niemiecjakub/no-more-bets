@@ -70,11 +70,30 @@ public class BankrollRepository : IBankrollRepository
     DateTime? afterCreatedAtUtc,
     int? afterId,
     IReadOnlyCollection<string>? entryNames = null,
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
     var query = _db.Bankroll.AsNoTracking();
     if (entryNames is { Count: > 0 })
       query = query.Where(row => entryNames.Contains(row.Name));
+
+    var selectedSeasonYears = (seasonYears ?? [])
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
+
+    if (selectedSeasonYears.Length > 0)
+    {
+      query = query.Where(row =>
+        row.BetId != null &&
+        row.BetSlip != null &&
+        row.BetSlip.Selections.Any(sel =>
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          selectedSeasonYears.Contains(sel.Match.Stage.Season.Year)));
+    }
 
     if (afterCreatedAtUtc is not null && afterId is not null)
     {

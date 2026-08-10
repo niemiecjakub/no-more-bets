@@ -15,7 +15,9 @@ public interface IBettingRepository
   /// Bet slips from betting (and similar) sessions; excludes slips tied to <see cref="AgentSessionPhase.Research"/>.
   /// </summary>
   Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default);
-  Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsAsync(CancellationToken cancellationToken = default);
+  Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetBetSlipsByAgentSessionIdAsync(
     int agentSessionId,
     CancellationToken cancellationToken = default);
@@ -32,7 +34,9 @@ public interface IBettingRepository
   Task<IReadOnlySet<int>> GetMatchIdsWithResearchPhaseSelectionsAsync(
     IReadOnlyCollection<int> matchIds,
     CancellationToken cancellationToken = default);
-  Task<BettingPhaseSummaryStats> GetBettingPhaseSettledSummaryAsync(CancellationToken cancellationToken = default);
+  Task<BettingPhaseSummaryStats> GetBettingPhaseSettledSummaryAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default);
   Task<ResearchPhaseSummaryStats> GetResearchPhaseSettledSummaryAsync(
     IReadOnlyList<int> leagueIds,
     IReadOnlyList<string> seasonYears,
@@ -46,16 +50,21 @@ public interface IBettingRepository
     IReadOnlyList<int> leagueIds,
     IReadOnlyList<string> seasonYears,
     CancellationToken cancellationToken = default);
-  Task<BettingPhaseDetailCounts> GetBettingPhaseSettledDetailCountsAsync(CancellationToken cancellationToken = default);
+  Task<BettingPhaseDetailCounts> GetBettingPhaseSettledDetailCountsAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default);
   Task<BetSlipIdPage> GetSettledBettingSlipIdsPageAsync(
     int limit,
     DateTime? afterCreatedAtUtc,
     int? afterId,
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsByIdsAsync(
     IReadOnlyList<int> slipIds,
     CancellationToken cancellationToken = default);
-  Task<PendingBetsWidgetData> GetBettingPhasePendingBetsWidgetAsync(CancellationToken cancellationToken = default);
+  Task<PendingBetsWidgetData> GetBettingPhasePendingBetsWidgetAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default);
   Task<ClubBetSelectionStats> GetResearchPhaseSettledSelectionStatsForClubAsync(
     int clubId,
     CancellationToken cancellationToken = default);

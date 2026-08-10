@@ -85,11 +85,17 @@ public class BettingRepository : IBettingRepository
     return await MaterializeBetSlipListAsync(query, cancellationToken).ConfigureAwait(false);
   }
 
-  public async Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsAsync(CancellationToken cancellationToken = default)
+  public async Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default)
   {
-    return await _db.BetSlip
-      .AsNoTracking()
-      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting)
+    var query = ApplySeasonYearFilter(
+      _db.BetSlip
+        .AsNoTracking()
+        .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting),
+      seasonYears);
+
+    return await query
       .Include(s => s.BetStatusEntity)
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
@@ -278,10 +284,33 @@ public class BettingRepository : IBettingRepository
       .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting)
       .Where(s => s.StatusId != (int)BetStatus.Pending);
 
+  private static string[] NormalizeSeasonYears(IReadOnlyList<string>? seasonYears) =>
+    (seasonYears ?? [])
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
+
+  private static IQueryable<BetSlip> ApplySeasonYearFilter(
+    IQueryable<BetSlip> query,
+    IReadOnlyList<string>? seasonYears)
+  {
+    var selectedSeasonYears = NormalizeSeasonYears(seasonYears);
+    if (selectedSeasonYears.Length == 0)
+      return query;
+
+    return query.Where(s => s.Selections.Any(sel =>
+      sel.Match != null &&
+      sel.Match.Stage != null &&
+      sel.Match.Stage.Season != null &&
+      selectedSeasonYears.Contains(sel.Match.Stage.Season.Year)));
+  }
+
   public async Task<BettingPhaseSummaryStats> GetBettingPhaseSettledSummaryAsync(
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
-    var settled = await SettledBettingSlipsQuery()
+    var settled = await ApplySeasonYearFilter(SettledBettingSlipsQuery(), seasonYears)
       .Select(s => new { s.StatusId, SelectionsCount = s.Selections.Count })
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
@@ -394,16 +423,28 @@ public class BettingRepository : IBettingRepository
   }
 
   public async Task<BettingPhaseDetailCounts> GetBettingPhaseSettledDetailCountsAsync(
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
-    var settledSlips = SettledBettingSlipsQuery();
+    var settledSlips = ApplySeasonYearFilter(SettledBettingSlipsQuery(), seasonYears);
     var wonSlips = await settledSlips.CountAsync(s => s.StatusId == (int)BetStatus.Won, cancellationToken).ConfigureAwait(false);
     var lostSlips = await settledSlips.CountAsync(s => s.StatusId == (int)BetStatus.Lost, cancellationToken).ConfigureAwait(false);
 
+    var selectedSeasonYears = NormalizeSeasonYears(seasonYears);
     var settledSelections = _db.BetSelection
       .AsNoTracking()
       .Where(sel => sel.BetSlip.AgentSession != null && sel.BetSlip.AgentSession.Phase == AgentSessionPhase.Betting)
       .Where(sel => sel.BetSlip.StatusId == (int)BetStatus.Won || sel.BetSlip.StatusId == (int)BetStatus.Lost);
+
+    if (selectedSeasonYears.Length > 0)
+    {
+      settledSelections = settledSelections.Where(sel =>
+        sel.BetSlip.Selections.Any(slipSel =>
+          slipSel.Match != null &&
+          slipSel.Match.Stage != null &&
+          slipSel.Match.Stage.Season != null &&
+          selectedSeasonYears.Contains(slipSel.Match.Stage.Season.Year)));
+    }
 
     var wonSelections = await settledSelections.CountAsync(sel => sel.StatusId == (int)BetStatus.Won, cancellationToken).ConfigureAwait(false);
     var lostSelections = await settledSelections.CountAsync(sel => sel.StatusId == (int)BetStatus.Lost, cancellationToken).ConfigureAwait(false);
@@ -415,9 +456,10 @@ public class BettingRepository : IBettingRepository
     int limit,
     DateTime? afterCreatedAtUtc,
     int? afterId,
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
-    var query = SettledBettingSlipsQuery()
+    var query = ApplySeasonYearFilter(SettledBettingSlipsQuery(), seasonYears)
       .Where(s => s.StatusId == (int)BetStatus.Won || s.StatusId == (int)BetStatus.Lost);
 
     if (afterCreatedAtUtc is not null && afterId is not null)
@@ -472,12 +514,15 @@ public class BettingRepository : IBettingRepository
   }
 
   public async Task<PendingBetsWidgetData> GetBettingPhasePendingBetsWidgetAsync(
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
-    var pending = await _db.BetSlip
-      .AsNoTracking()
-      .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting)
-      .Where(s => s.StatusId == (int)BetStatus.Pending)
+    var pending = await ApplySeasonYearFilter(
+        _db.BetSlip
+          .AsNoTracking()
+          .Where(s => s.AgentSession != null && s.AgentSession.Phase == AgentSessionPhase.Betting)
+          .Where(s => s.StatusId == (int)BetStatus.Pending),
+        seasonYears)
       .Select(s => new { s.StakeAmount, s.PotentialPayout, s.CreatedAt })
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);

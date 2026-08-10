@@ -96,7 +96,11 @@ function SummaryDonut({
   );
 }
 
-export function AgentBettingSummaryDetailsPanel() {
+export function AgentBettingSummaryDetailsPanel({
+  selectedSeasonYears,
+}: {
+  selectedSeasonYears: string[];
+}) {
   const [summary, setSummary] = useState<AgentDashboardBettingSummaryDetails | null>(null);
   const [slips, setSlips] = useState<BetSlipListItem[]>([]);
   const [hasMore, setHasMore] = useState(false);
@@ -110,6 +114,7 @@ export function AgentBettingSummaryDetailsPanel() {
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
 
   const isLoadingMoreRef = useRef(false);
+  const seasonYearsKey = selectedSeasonYears.join(",");
 
   const applySlipsPage = useCallback(
     (page: Awaited<ReturnType<typeof fetchAgentDashboardBettingSummarySlipsPage>>, append: boolean) => {
@@ -133,8 +138,8 @@ export function AgentBettingSummaryDetailsPanel() {
     setLoadMoreError(null);
 
     Promise.all([
-      fetchAgentDashboardBettingSummaryDetails(),
-      fetchAgentDashboardBettingSummarySlipsPage(),
+      fetchAgentDashboardBettingSummaryDetails(selectedSeasonYears),
+      fetchAgentDashboardBettingSummarySlipsPage({ seasonYears: selectedSeasonYears }),
     ])
       .then(([summaryData, slipsPage]) => {
         if (cancelled) return;
@@ -156,7 +161,7 @@ export function AgentBettingSummaryDetailsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [applySlipsPage]);
+  }, [applySlipsPage, seasonYearsKey, selectedSeasonYears]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
@@ -168,6 +173,7 @@ export function AgentBettingSummaryDetailsPanel() {
     fetchAgentDashboardBettingSummarySlipsPage({
       afterCreatedAt: nextCursor.at,
       afterId: nextCursor.id,
+      seasonYears: selectedSeasonYears,
     })
       .then((page) => {
         applySlipsPage(page, true);
@@ -179,7 +185,7 @@ export function AgentBettingSummaryDetailsPanel() {
         isLoadingMoreRef.current = false;
         setIsLoadingMore(false);
       });
-  }, [applySlipsPage, hasMore, nextCursor]);
+  }, [applySlipsPage, hasMore, nextCursor, selectedSeasonYears]);
 
   if (isInitialLoading) {
     return <div className="h-72 animate-pulse rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950" />;

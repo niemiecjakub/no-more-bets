@@ -7,7 +7,8 @@ public record GetBankrollEntriesPageQuery(
   int Limit,
   DateTime? AfterCreatedAtUtc,
   int? AfterId,
-  IReadOnlyCollection<string>? EntryNames = null) : IRequest<Paged<BankrollEntryListItemDto>>;
+  IReadOnlyCollection<string>? EntryNames = null,
+  IReadOnlyList<string>? SeasonYears = null) : IRequest<Paged<BankrollEntryListItemDto>>;
 
 public sealed class GetBankrollEntriesPageHandler(IUnitOfWork unitOfWork)
   : IRequestHandler<GetBankrollEntriesPageQuery, Paged<BankrollEntryListItemDto>>
@@ -22,6 +23,7 @@ public sealed class GetBankrollEntriesPageHandler(IUnitOfWork unitOfWork)
         request.AfterCreatedAtUtc,
         request.AfterId,
         request.EntryNames,
+        request.SeasonYears,
         cancellationToken)
       .ConfigureAwait(false);
 

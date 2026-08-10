@@ -17,7 +17,7 @@ public sealed class GetBettingPerformanceStatsHandler(IUnitOfWork unitOfWork)
   {
     // ponytail: loads all betting-phase slips and aggregates in memory; fine for a single agent
     // betting daily (hundreds of slips). Move to SQL grouping if the slip count ever gets hot.
-    var slips = await unitOfWork.Betting.GetBettingPhaseBetSlipsAsync(cancellationToken).ConfigureAwait(false);
+    var slips = await unitOfWork.Betting.GetBettingPhaseBetSlipsAsync(null, cancellationToken).ConfigureAwait(false);
     var settled = slips.Where(s => s.BetStatus is BetStatus.Won or BetStatus.Lost).ToList();
 
     var byOddsBand = settled

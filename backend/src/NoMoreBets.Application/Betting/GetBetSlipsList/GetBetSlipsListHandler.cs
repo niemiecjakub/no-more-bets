@@ -4,7 +4,8 @@ using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Betting.GetBetSlipsList;
 
-public record GetBetSlipsListQuery : IRequest<IReadOnlyList<BetSlipListItemDto>>;
+public record GetBetSlipsListQuery(IReadOnlyList<string> SeasonYears)
+  : IRequest<IReadOnlyList<BetSlipListItemDto>>;
 
 public sealed class GetBetSlipsListHandler(IUnitOfWork unitOfWork)
   : IRequestHandler<GetBetSlipsListQuery, IReadOnlyList<BetSlipListItemDto>>
@@ -14,7 +15,7 @@ public sealed class GetBetSlipsListHandler(IUnitOfWork unitOfWork)
     CancellationToken cancellationToken)
   {
     var slips = await unitOfWork.Betting
-      .GetBettingPhaseBetSlipsAsync(cancellationToken)
+      .GetBettingPhaseBetSlipsAsync(request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 
     return BetSlipListItemMapper.ToListItems(slips);

@@ -37,7 +37,11 @@ function pickDefaultEntry(
   return entries.find((entry) => entry.betId !== null) ?? entries[0] ?? null;
 }
 
-export function AgentBankrollDetailsPanel() {
+export function AgentBankrollDetailsPanel({
+  selectedSeasonYears,
+}: {
+  selectedSeasonYears: string[];
+}) {
   const [entries, setEntries] = useState<BankrollEntryListItemDto[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<BankrollEntryListItemDto | null>(null);
   const [selectedBetDetails, setSelectedBetDetails] = useState<BankrollEntryBetDetailsDto | null>(null);
@@ -59,6 +63,8 @@ export function AgentBankrollDetailsPanel() {
 
   const hasActiveEntryTypeFilter = selectedEntryNames.length > 0;
   const entryNamesForRequest = hasActiveEntryTypeFilter ? selectedEntryNames : undefined;
+  const seasonYearsKey = selectedSeasonYears.join(",");
+  const hasActiveSeasonFilter = selectedSeasonYears.length > 0;
 
   selectedEntryRef.current = selectedEntry;
 
@@ -106,7 +112,10 @@ export function AgentBankrollDetailsPanel() {
     setHasMore(false);
     setNextCursor(null);
 
-    fetchBankrollEntriesPage({ entryNames: entryNamesForRequest })
+    fetchBankrollEntriesPage({
+      entryNames: entryNamesForRequest,
+      seasonYears: selectedSeasonYears,
+    })
       .then((page) => {
         if (cancelled) return;
         applyPage(page, false);
@@ -125,7 +134,7 @@ export function AgentBankrollDetailsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [applyPage, entryNamesForRequest, loadBetDetailsForEntry]);
+  }, [applyPage, entryNamesForRequest, loadBetDetailsForEntry, seasonYearsKey, selectedSeasonYears]);
 
   const loadMore = useCallback(() => {
     if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
@@ -138,6 +147,7 @@ export function AgentBankrollDetailsPanel() {
       afterCreatedAt: nextCursor.at,
       afterId: nextCursor.id,
       entryNames: entryNamesForRequest,
+      seasonYears: selectedSeasonYears,
     })
       .then((page) => {
         applyPage(page, true);
@@ -149,7 +159,7 @@ export function AgentBankrollDetailsPanel() {
         isLoadingMoreRef.current = false;
         setIsLoadingMore(false);
       });
-  }, [applyPage, entryNamesForRequest, hasMore, nextCursor]);
+  }, [applyPage, entryNamesForRequest, hasMore, nextCursor, selectedSeasonYears]);
 
   return (
     <section className="flex flex-col gap-4">
@@ -176,8 +186,8 @@ export function AgentBankrollDetailsPanel() {
                 loadMoreError={loadMoreError}
                 onRetryLoadMore={loadMore}
                 emptyMessage={
-                  hasActiveEntryTypeFilter
-                    ? "No entries match the selected types."
+                  hasActiveEntryTypeFilter || hasActiveSeasonFilter
+                    ? "No entries match the selected filters."
                     : undefined
                 }
               />

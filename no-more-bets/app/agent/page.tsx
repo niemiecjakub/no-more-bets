@@ -16,6 +16,7 @@ import {
     fetchAgentDashboardPendingBetsWidget,
     fetchAgentDashboardSessionsWidget,
 } from "@/features/bets/services/agent-dashboard-api";
+import { fetchSeasonYears } from "@/features/leagues/services/leagues-api";
 import { handleServiceError } from "@/lib/error-handler";
 import { AgentBankrollDetailsPanel } from "./_components/agent-bankroll-details-panel";
 import { AgentBettingSummaryDetailsPanel } from "./_components/agent-betting-summary-details-panel";
@@ -23,12 +24,26 @@ import { AgentMemoriesDetailsPanel } from "./_components/agent-memories-details-
 import { AgentSessionsDetailsPanel, type AgentSessionsDetailsPanelProps } from "./_components/agent-sessions-details-panel";
 import { AgentPendingBetsDetailsPanel } from "./_components/agent-pending-bets-details-panel";
 import { AgentDashboardGreeting } from "./_components/agent-dashboard-greeting";
+import { AgentSeasonFilter } from "./_components/agent-season-filter";
 import { AGENT_WIDGET_IDS, AgentWidgetNavigation, type AgentWidgetNavigationId } from "./_components/agent-widget-navigation";
 
-const WIDGET_DETAILS_PANEL_RENDERERS: Record<AgentWidgetNavigationId, (props: AgentSessionsDetailsPanelProps) => ReactNode> = {
-    [AGENT_WIDGET_IDS.BANKROLL]: () => <AgentBankrollDetailsPanel />,
-    [AGENT_WIDGET_IDS.SUMMARY]: () => <AgentBettingSummaryDetailsPanel />,
-    [AGENT_WIDGET_IDS.PENDING]: () => <AgentPendingBetsDetailsPanel />,
+interface AgentWidgetDetailsProps extends AgentSessionsDetailsPanelProps {
+    selectedSeasonYears: string[];
+}
+
+const WIDGET_DETAILS_PANEL_RENDERERS: Record<
+    AgentWidgetNavigationId,
+    (props: AgentWidgetDetailsProps) => ReactNode
+> = {
+    [AGENT_WIDGET_IDS.BANKROLL]: (props) => (
+        <AgentBankrollDetailsPanel selectedSeasonYears={props.selectedSeasonYears} />
+    ),
+    [AGENT_WIDGET_IDS.SUMMARY]: (props) => (
+        <AgentBettingSummaryDetailsPanel selectedSeasonYears={props.selectedSeasonYears} />
+    ),
+    [AGENT_WIDGET_IDS.PENDING]: (props) => (
+        <AgentPendingBetsDetailsPanel selectedSeasonYears={props.selectedSeasonYears} />
+    ),
     [AGENT_WIDGET_IDS.SESSIONS]: (props) => <AgentSessionsDetailsPanel {...props} />,
     [AGENT_WIDGET_IDS.MEMORIES]: () => <AgentMemoriesDetailsPanel />,
 };
@@ -36,7 +51,9 @@ const WIDGET_DETAILS_PANEL_RENDERERS: Record<AgentWidgetNavigationId, (props: Ag
 function resolveRequestedWidget(searchParams: URLSearchParams): AgentWidgetNavigationId | null {
     const requestedWidget = searchParams.get("widget");
     if (!requestedWidget) return null;
-    if (Object.values(AGENT_WIDGET_IDS).includes(requestedWidget as AgentWidgetNavigationId)) return requestedWidget as AgentWidgetNavigationId;
+    if (Object.values(AGENT_WIDGET_IDS).includes(requestedWidget as AgentWidgetNavigationId)) {
+        return requestedWidget as AgentWidgetNavigationId;
+    }
     return null;
 }
 
@@ -48,6 +65,9 @@ export default function AgentPage() {
         const requestedWidget = resolveRequestedWidget(new URLSearchParams(searchParams.toString()));
         return requestedWidget ?? AGENT_WIDGET_IDS.BANKROLL;
     });
+    const [seasonYears, setSeasonYears] = useState<string[]>([]);
+    const [isSeasonYearsLoading, setIsSeasonYearsLoading] = useState(true);
+    const [seasonYearsError, setSeasonYearsError] = useState<string | null>(null);
     const [bankrollWidget, setBankrollWidget] = useState<AgentDashboardBankrollWidget | null>(null);
     const [bettingSummaryWidget, setBettingSummaryWidget] = useState<AgentDashboardBettingSummaryWidget | null>(null);
     const [pendingBetsWidget, setPendingBetsWidget] = useState<AgentDashboardPendingBetsWidget | null>(null);
@@ -63,12 +83,61 @@ export default function AgentPage() {
     const [pendingBetsError, setPendingBetsError] = useState<string | null>(null);
     const [sessionsError, setSessionsError] = useState<string | null>(null);
     const [memoriesError, setMemoriesError] = useState<string | null>(null);
+
+    const latestSeasonYear = seasonYears[0] ?? null;
+
+    const { selectedSeasonYears, seasonFilterReady } = useMemo(() => {
+        const seasonRaw = searchParams.get("season");
+        let parsedSeasonYears: string[];
+        if (seasonRaw === null) {
+            parsedSeasonYears = latestSeasonYear ? [latestSeasonYear] : [];
+        } else if (seasonRaw.trim() === "") {
+            parsedSeasonYears = [];
+        } else {
+            parsedSeasonYears = seasonRaw
+                .split(",")
+                .map((item) => item.trim())
+                .filter((year) => seasonYears.includes(year));
+            if (parsedSeasonYears.length === 0 && latestSeasonYear) {
+                parsedSeasonYears = [latestSeasonYear];
+            }
+        }
+
+        return {
+            selectedSeasonYears: parsedSeasonYears,
+            seasonFilterReady: seasonRaw !== null || latestSeasonYear != null,
+        };
+    }, [searchParams, seasonYears, latestSeasonYear]);
+
     const initialSessionId = useMemo(() => {
         const rawSessionId = searchParams.get("sessionId");
         if (rawSessionId == null) return null;
         const parsed = Number.parseInt(rawSessionId, 10);
         return Number.isFinite(parsed) ? parsed : null;
     }, [searchParams]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        setIsSeasonYearsLoading(true);
+        setSeasonYearsError(null);
+        fetchSeasonYears()
+            .then((items) => {
+                if (!cancelled) setSeasonYears(items.map((item) => item.year));
+            })
+            .catch((caughtError) => {
+                if (!cancelled) {
+                    setSeasonYearsError(handleServiceError(caughtError, "Failed to load seasons."));
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setIsSeasonYearsLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     useEffect(() => {
         const requestedWidget = resolveRequestedWidget(new URLSearchParams(searchParams.toString()));
@@ -88,6 +157,23 @@ export default function AgentPage() {
         params.set("widget", activeWidget);
         router.replace(`${pathname}?${params.toString()}`);
     }, [activeWidget, pathname, router, searchParams]);
+
+    const syncSeasonInUrl = useCallback(
+        (nextSeasonYears: string[]) => {
+            const params = new URLSearchParams(searchParams.toString());
+            const isLatestOnlyDefault =
+                latestSeasonYear != null &&
+                nextSeasonYears.length === 1 &&
+                nextSeasonYears[0] === latestSeasonYear;
+            if (isLatestOnlyDefault) {
+                params.delete("season");
+            } else {
+                params.set("season", nextSeasonYears.join(","));
+            }
+            router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+        },
+        [latestSeasonYear, pathname, router, searchParams],
+    );
 
     const handleSelectWidget = useCallback(
         (widget: AgentWidgetNavigationId) => {
@@ -124,11 +210,13 @@ export default function AgentPage() {
     }, []);
 
     useEffect(() => {
+        if (!seasonFilterReady) return;
+
         let cancelled = false;
         setIsBettingSummaryLoading(true);
         setBettingSummaryError(null);
 
-        fetchAgentDashboardBettingSummaryWidget()
+        fetchAgentDashboardBettingSummaryWidget(selectedSeasonYears)
             .then((data) => {
                 if (!cancelled) setBettingSummaryWidget(data);
             })
@@ -144,14 +232,16 @@ export default function AgentPage() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [seasonFilterReady, selectedSeasonYears]);
 
     useEffect(() => {
+        if (!seasonFilterReady) return;
+
         let cancelled = false;
         setIsPendingBetsLoading(true);
         setPendingBetsError(null);
 
-        fetchAgentDashboardPendingBetsWidget()
+        fetchAgentDashboardPendingBetsWidget(selectedSeasonYears)
             .then((data) => {
                 if (!cancelled) setPendingBetsWidget(data);
             })
@@ -167,14 +257,16 @@ export default function AgentPage() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [seasonFilterReady, selectedSeasonYears]);
 
     useEffect(() => {
+        if (!seasonFilterReady) return;
+
         let cancelled = false;
         setIsSessionsLoading(true);
         setSessionsError(null);
 
-        fetchAgentDashboardSessionsWidget()
+        fetchAgentDashboardSessionsWidget(selectedSeasonYears)
             .then((data) => {
                 if (!cancelled) setSessionsWidget(data);
             })
@@ -190,7 +282,7 @@ export default function AgentPage() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [seasonFilterReady, selectedSeasonYears]);
 
     useEffect(() => {
         let cancelled = false;
@@ -216,32 +308,42 @@ export default function AgentPage() {
     }, []);
 
     return (
-            <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
-                <div className="flex flex-col gap-4">
+        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                     <AgentDashboardGreeting />
-                    <AgentWidgetNavigation
-                        bankrollWidget={bankrollWidget}
-                        bettingSummaryWidget={bettingSummaryWidget}
-                        pendingBetsWidget={pendingBetsWidget}
-                        sessionsWidget={sessionsWidget}
-                        memoriesWidget={memoriesWidget}
-                        isBankrollLoading={isBankrollLoading}
-                        isBettingSummaryLoading={isBettingSummaryLoading}
-                        isPendingBetsLoading={isPendingBetsLoading}
-                        isSessionsLoading={isSessionsLoading}
-                        isMemoriesLoading={isMemoriesLoading}
-                        bankrollError={bankrollError}
-                        bettingSummaryError={bettingSummaryError}
-                        pendingBetsError={pendingBetsError}
-                        sessionsError={sessionsError}
-                        memoriesError={memoriesError}
-                        activeWidget={activeWidget}
-                        onSelectWidget={handleSelectWidget}
+                    <AgentSeasonFilter
+                        seasonYears={seasonYears}
+                        selectedSeasonYears={selectedSeasonYears}
+                        onSelectedSeasonYearsChange={syncSeasonInUrl}
+                        isLoading={isSeasonYearsLoading}
+                        error={seasonYearsError}
                     />
-                    {WIDGET_DETAILS_PANEL_RENDERERS[activeWidget]({
-                        initialSelectedSessionId: initialSessionId,
-                    })}
                 </div>
-            </main>
+                <AgentWidgetNavigation
+                    bankrollWidget={bankrollWidget}
+                    bettingSummaryWidget={bettingSummaryWidget}
+                    pendingBetsWidget={pendingBetsWidget}
+                    sessionsWidget={sessionsWidget}
+                    memoriesWidget={memoriesWidget}
+                    isBankrollLoading={isBankrollLoading}
+                    isBettingSummaryLoading={isBettingSummaryLoading || !seasonFilterReady}
+                    isPendingBetsLoading={isPendingBetsLoading || !seasonFilterReady}
+                    isSessionsLoading={isSessionsLoading || !seasonFilterReady}
+                    isMemoriesLoading={isMemoriesLoading}
+                    bankrollError={bankrollError}
+                    bettingSummaryError={bettingSummaryError}
+                    pendingBetsError={pendingBetsError}
+                    sessionsError={sessionsError}
+                    memoriesError={memoriesError}
+                    activeWidget={activeWidget}
+                    onSelectWidget={handleSelectWidget}
+                />
+                {WIDGET_DETAILS_PANEL_RENDERERS[activeWidget]({
+                    initialSelectedSessionId: initialSessionId,
+                    selectedSeasonYears,
+                })}
+            </div>
+        </main>
     );
 }

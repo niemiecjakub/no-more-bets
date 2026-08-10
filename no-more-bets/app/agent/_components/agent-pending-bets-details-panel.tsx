@@ -6,15 +6,22 @@ import { fetchBetSlips } from "@/features/bets/services/bets-api";
 import { handleServiceError } from "@/lib/error-handler";
 import { BetSlipList } from "@/features/bets/components/bet-slip-list";
 
-export function AgentPendingBetsDetailsPanel() {
+export function AgentPendingBetsDetailsPanel({
+  selectedSeasonYears,
+}: {
+  selectedSeasonYears: string[];
+}) {
   const [slips, setSlips] = useState<BetSlipListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const seasonYearsKey = selectedSeasonYears.join(",");
 
   useEffect(() => {
     let cancelled = false;
+    setIsLoading(true);
+    setError(null);
 
-    fetchBetSlips()
+    fetchBetSlips(selectedSeasonYears)
       .then((data) => {
         if (!cancelled) setSlips(data);
       })
@@ -28,7 +35,7 @@ export function AgentPendingBetsDetailsPanel() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [seasonYearsKey, selectedSeasonYears]);
 
   const pendingSlips = useMemo(
     () => slips.filter((slip) => slip.statusId === BET_STATUS.Pending),

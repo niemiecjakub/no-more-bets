@@ -137,9 +137,13 @@ function SessionsFallback() {
 
 export interface AgentSessionsDetailsPanelProps {
     initialSelectedSessionId?: number | null;
+    selectedSeasonYears?: string[];
 }
 
-export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: AgentSessionsDetailsPanelProps) {
+export function AgentSessionsDetailsPanel({
+    initialSelectedSessionId = null,
+    selectedSeasonYears = [],
+}: AgentSessionsDetailsPanelProps) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
@@ -161,6 +165,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
     const [selectedPhaseIds, setSelectedPhaseIds] = useState<number[]>([]);
     const hasActivePhaseFilter = selectedPhaseIds.length > 0;
     const phaseIdsForRequest = hasActivePhaseFilter ? selectedPhaseIds : undefined;
+    const seasonYearsKey = selectedSeasonYears.join(",");
     const bootstrapIncludeSessionIdRef = useRef(initialSelectedSessionId);
     const lastUrlSessionIdRef = useRef(initialSelectedSessionId);
     const detailPanelRef = useRef<HTMLDivElement>(null);
@@ -191,6 +196,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         fetchAgentSessionsPage({
             includeSessionId: bootstrapIncludeSessionIdRef.current ?? undefined,
             phaseIds: phaseIdsForRequest,
+            seasonYears: selectedSeasonYears,
         })
             .then((page) => {
                 if (!cancelled) applySessionsPage(page, false);
@@ -207,7 +213,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         return () => {
             cancelled = true;
         };
-    }, [applySessionsPage, selectedPhaseIds]);
+    }, [applySessionsPage, selectedPhaseIds, seasonYearsKey, selectedSeasonYears]);
 
     useEffect(() => {
         if (initialSelectedSessionId === lastUrlSessionIdRef.current) return;
@@ -225,6 +231,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         fetchAgentSessionsPage({
             includeSessionId: initialSelectedSessionId,
             phaseIds: phaseIdsForRequest,
+            seasonYears: selectedSeasonYears,
         })
             .then((page) => {
                 if (!cancelled) {
@@ -241,7 +248,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
         return () => {
             cancelled = true;
         };
-    }, [applySessionsPage, initialSelectedSessionId, phaseIdsForRequest, sessions]);
+    }, [applySessionsPage, initialSelectedSessionId, phaseIdsForRequest, selectedSeasonYears, sessions]);
 
     const loadMore = useCallback(() => {
         if (!hasMore || !nextCursor || isLoadingMoreRef.current) return;
@@ -254,6 +261,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
             afterStartedAt: nextCursor.at,
             afterId: nextCursor.id,
             phaseIds: phaseIdsForRequest,
+            seasonYears: selectedSeasonYears,
         })
             .then((page) => {
                 applySessionsPage(page, true);
@@ -265,7 +273,7 @@ export function AgentSessionsDetailsPanel({ initialSelectedSessionId = null }: A
                 isLoadingMoreRef.current = false;
                 setIsLoadingMore(false);
             });
-    }, [applySessionsPage, hasMore, nextCursor, phaseIdsForRequest]);
+    }, [applySessionsPage, hasMore, nextCursor, phaseIdsForRequest, selectedSeasonYears]);
 
     useEffect(() => {
         let cancelled = false;

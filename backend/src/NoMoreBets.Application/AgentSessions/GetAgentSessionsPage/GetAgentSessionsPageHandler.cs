@@ -9,7 +9,8 @@ public record GetAgentSessionsPageQuery(
   DateTime? AfterStartedAtUtc,
   int? AfterId,
   int? IncludeSessionId,
-  IReadOnlyCollection<AgentSessionPhase>? PhaseIds = null) : IRequest<Paged<AgentSessionListItemDto>>;
+  IReadOnlyCollection<AgentSessionPhase>? PhaseIds = null,
+  IReadOnlyList<string>? SeasonYears = null) : IRequest<Paged<AgentSessionListItemDto>>;
 
 public sealed class GetAgentSessionsPageHandler(IUnitOfWork unitOfWork)
   : IRequestHandler<GetAgentSessionsPageQuery, Paged<AgentSessionListItemDto>>
@@ -25,6 +26,7 @@ public sealed class GetAgentSessionsPageHandler(IUnitOfWork unitOfWork)
         request.AfterId,
         request.IncludeSessionId,
         request.PhaseIds,
+        request.SeasonYears,
         cancellationToken)
       .ConfigureAwait(false);
 

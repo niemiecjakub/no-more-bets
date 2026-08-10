@@ -3,7 +3,8 @@ using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardBettingSummary;
 
-public record GetAgentDashboardBettingSummaryQuery : IRequest<AgentDashboardBettingSummaryDto>;
+public record GetAgentDashboardBettingSummaryQuery(IReadOnlyList<string> SeasonYears)
+  : IRequest<AgentDashboardBettingSummaryDto>;
 
 public sealed class GetAgentDashboardBettingSummaryHandler(IUnitOfWork unitOfWork)
   : IRequestHandler<GetAgentDashboardBettingSummaryQuery, AgentDashboardBettingSummaryDto>
@@ -13,7 +14,7 @@ public sealed class GetAgentDashboardBettingSummaryHandler(IUnitOfWork unitOfWor
     CancellationToken cancellationToken)
   {
     var stats = await unitOfWork.Betting
-      .GetBettingPhaseSettledSummaryAsync(cancellationToken)
+      .GetBettingPhaseSettledSummaryAsync(request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 
     var winRate = stats.SettledSlipsCount == 0 ? 0m : (decimal)stats.WonSlipsCount / stats.SettledSlipsCount * 100m;

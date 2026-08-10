@@ -14,6 +14,7 @@ export interface FetchBankrollEntriesPageParams {
   afterCreatedAt?: string;
   afterId?: number;
   entryNames?: string[];
+  seasonYears?: string[];
 }
 
 export async function fetchBankrollDashboard(): Promise<BankrollDashboard> {
@@ -45,6 +46,12 @@ export async function fetchBankrollEntriesPage(
   for (const entryName of params.entryNames ?? []) {
     if (entryName.trim().length > 0) {
       queryParams.append("entryNames", entryName);
+    }
+  }
+  for (const seasonYear of params.seasonYears ?? []) {
+    const trimmed = seasonYear.trim();
+    if (trimmed.length > 0) {
+      queryParams.append("seasonYears", trimmed);
     }
   }
 

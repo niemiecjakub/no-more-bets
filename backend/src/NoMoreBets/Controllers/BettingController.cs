@@ -5,6 +5,7 @@ using NoMoreBets.Application.Betting.GetBetSlipsList;
 using NoMoreBets.Application.Betting.GetBettingPerformanceStats;
 using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 using NoMoreBets.Application.Betting.ResearchBetScenarioStats;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchAgentResearch;
 using NoMoreBets.Application.Matches.MatchExists;
 
@@ -16,9 +17,12 @@ public class BettingController(IMediator mediator) : ControllerBase
 {
   [HttpGet("bet-slips")]
   public async Task<ActionResult<IReadOnlyList<BetSlipListItemDto>>> GetBetSlips(
+    [FromQuery] string[]? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
-    var result = await mediator.Send(new GetBetSlipsListQuery(), cancellationToken).ConfigureAwait(false);
+    var result = await mediator
+      .Send(new GetBetSlipsListQuery(SeasonYearQueryExtensions.Normalize(seasonYears)), cancellationToken)
+      .ConfigureAwait(false);
     return Ok(result);
   }
 

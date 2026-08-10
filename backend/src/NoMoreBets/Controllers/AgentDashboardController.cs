@@ -27,9 +27,12 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
 
   [HttpGet("betting-summary")]
   public async Task<ActionResult<AgentDashboardBettingSummaryDto>> GetBettingSummaryWidget(
+    [FromQuery] string[]? seasonYears,
     CancellationToken cancellationToken = default)
   {
-    var result = await mediator.Send(new GetAgentDashboardBettingSummaryQuery(), cancellationToken).ConfigureAwait(false);
+    var result = await mediator
+      .Send(new GetAgentDashboardBettingSummaryQuery(SeasonYearQueryExtensions.Normalize(seasonYears)), cancellationToken)
+      .ConfigureAwait(false);
     return Ok(result);
   }
 
@@ -46,15 +49,11 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
       .Distinct()
       .ToArray();
 
-    var selectedSeasonYears = (seasonYears ?? [])
-      .Where(y => !string.IsNullOrWhiteSpace(y))
-      .Select(y => y.Trim())
-      .Distinct(StringComparer.Ordinal)
-      .ToArray();
-
     var result = await mediator
       .Send(
-        new GetAgentDashboardResearchBettingSummaryQuery(selectedLeagueIds, selectedSeasonYears),
+        new GetAgentDashboardResearchBettingSummaryQuery(
+          selectedLeagueIds,
+          SeasonYearQueryExtensions.Normalize(seasonYears)),
         cancellationToken)
       .ConfigureAwait(false);
 
@@ -63,10 +62,13 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
 
   [HttpGet("betting-summary/details")]
   public async Task<ActionResult<AgentDashboardBettingSummaryDetailsDto>> GetBettingSummaryDetails(
+    [FromQuery] string[]? seasonYears,
     CancellationToken cancellationToken = default)
   {
     var result = await mediator
-      .Send(new GetAgentDashboardBettingSummaryDetailsQuery(), cancellationToken)
+      .Send(
+        new GetAgentDashboardBettingSummaryDetailsQuery(SeasonYearQueryExtensions.Normalize(seasonYears)),
+        cancellationToken)
       .ConfigureAwait(false);
     return Ok(result);
   }
@@ -76,6 +78,7 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
     [FromQuery] int limit = 10,
     [FromQuery] DateTime? afterCreatedAt = null,
     [FromQuery] int? afterId = null,
+    [FromQuery] string[]? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
     limit = Math.Clamp(limit, 1, 100);
@@ -90,7 +93,11 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
       : null;
 
     var result = await mediator.Send(
-      new GetAgentDashboardBettingSummarySlipsQuery(limit, afterCreatedAtUtc, afterId),
+      new GetAgentDashboardBettingSummarySlipsQuery(
+        limit,
+        afterCreatedAtUtc,
+        afterId,
+        SeasonYearQueryExtensions.Normalize(seasonYears)),
       cancellationToken).ConfigureAwait(false);
 
     return Ok(result);
@@ -98,17 +105,23 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
 
   [HttpGet("pending-bets")]
   public async Task<ActionResult<AgentDashboardPendingBetsDto>> GetPendingBetsWidget(
+    [FromQuery] string[]? seasonYears,
     CancellationToken cancellationToken = default)
   {
-    var result = await mediator.Send(new GetAgentDashboardPendingBetsQuery(), cancellationToken).ConfigureAwait(false);
+    var result = await mediator
+      .Send(new GetAgentDashboardPendingBetsQuery(SeasonYearQueryExtensions.Normalize(seasonYears)), cancellationToken)
+      .ConfigureAwait(false);
     return Ok(result);
   }
 
   [HttpGet("sessions")]
   public async Task<ActionResult<AgentDashboardSessionsDto>> GetSessionsWidget(
+    [FromQuery] string[]? seasonYears,
     CancellationToken cancellationToken = default)
   {
-    var result = await mediator.Send(new GetAgentDashboardSessionsQuery(), cancellationToken).ConfigureAwait(false);
+    var result = await mediator
+      .Send(new GetAgentDashboardSessionsQuery(SeasonYearQueryExtensions.Normalize(seasonYears)), cancellationToken)
+      .ConfigureAwait(false);
     return Ok(result);
   }
 

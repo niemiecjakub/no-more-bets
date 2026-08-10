@@ -3,7 +3,8 @@ using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardSessions;
 
-public record GetAgentDashboardSessionsQuery : IRequest<AgentDashboardSessionsDto>;
+public record GetAgentDashboardSessionsQuery(IReadOnlyList<string> SeasonYears)
+  : IRequest<AgentDashboardSessionsDto>;
 
 public sealed class GetAgentDashboardSessionsHandler(IUnitOfWork unitOfWork)
   : IRequestHandler<GetAgentDashboardSessionsQuery, AgentDashboardSessionsDto>
@@ -13,7 +14,7 @@ public sealed class GetAgentDashboardSessionsHandler(IUnitOfWork unitOfWork)
     CancellationToken cancellationToken)
   {
     var data = await unitOfWork.AgentSessions
-      .GetSessionsWidgetAsync(cancellationToken)
+      .GetSessionsWidgetAsync(request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 
     return new AgentDashboardSessionsDto(

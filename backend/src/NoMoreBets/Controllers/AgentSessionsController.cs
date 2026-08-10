@@ -18,6 +18,7 @@ public class AgentSessionsController(IMediator mediator) : ControllerBase
     [FromQuery] int? afterId = null,
     [FromQuery] int? includeSessionId = null,
     [FromQuery] int[]? phaseIds = null,
+    [FromQuery] string[]? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
     limit = Math.Clamp(limit, 1, 100);
@@ -47,7 +48,13 @@ public class AgentSessionsController(IMediator mediator) : ControllerBase
       : null;
 
     var result = await mediator.Send(
-      new GetAgentSessionsPageQuery(limit, afterStartedAtUtc, afterId, includeSessionId, phaseFilter),
+      new GetAgentSessionsPageQuery(
+        limit,
+        afterStartedAtUtc,
+        afterId,
+        includeSessionId,
+        phaseFilter,
+        SeasonYearQueryExtensions.Normalize(seasonYears)),
       cancellationToken);
 
     return Ok(result);

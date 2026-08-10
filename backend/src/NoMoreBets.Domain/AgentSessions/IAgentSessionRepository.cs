@@ -16,6 +16,7 @@ public interface IAgentSessionRepository
     int? afterId,
     int? includeSessionId,
     IReadOnlyCollection<AgentSessionPhase>? phaseIds = null,
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default);
   Task<IReadOnlyDictionary<int, int>> GetMatchIdsBySessionIdsAsync(
     IReadOnlyCollection<int> sessionIds,
@@ -27,5 +28,7 @@ public interface IAgentSessionRepository
   Task<IReadOnlyList<AgentSessionMessage>> GetMessagesAsync(
     int sessionId,
     CancellationToken cancellationToken = default);
-  Task<AgentSessionsWidgetData> GetSessionsWidgetAsync(CancellationToken cancellationToken = default);
+  Task<AgentSessionsWidgetData> GetSessionsWidgetAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default);
 }

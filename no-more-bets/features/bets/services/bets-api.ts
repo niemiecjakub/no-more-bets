@@ -38,9 +38,13 @@ function normalizeBetSlip(raw: unknown): BetSlipListItem {
 /**
  * Fetches all bet slips from the backend (newest first).
  */
-export async function fetchBetSlips(): Promise<BetSlipListItem[]> {
-  const { data } = await axiosInstance.get<unknown[]>(
-    "/api/bet-slips"
-  );
+export async function fetchBetSlips(seasonYears?: string[]): Promise<BetSlipListItem[]> {
+  const params = new URLSearchParams();
+  for (const seasonYear of seasonYears ?? []) {
+    const trimmed = seasonYear.trim();
+    if (trimmed.length > 0) params.append("seasonYears", trimmed);
+  }
+  const endpoint = params.size > 0 ? `/api/bet-slips?${params.toString()}` : "/api/bet-slips";
+  const { data } = await axiosInstance.get<unknown[]>(endpoint);
   return data.map(normalizeBetSlip);
 }

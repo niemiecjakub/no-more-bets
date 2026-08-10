@@ -52,13 +52,14 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
     int? afterId,
     int? includeSessionId,
     IReadOnlyCollection<AgentSessionPhase>? phaseIds = null,
+    IReadOnlyList<string>? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
     var isFirstPage = afterStartedAtUtc is null && afterId is null;
     if (!isFirstPage)
       includeSessionId = null;
 
-    var query = db.AgentSession.AsNoTracking();
+    var query = ApplySeasonYearFilter(db.AgentSession.AsNoTracking(), seasonYears);
     if (phaseIds is { Count: > 0 })
       query = query.Where(s => phaseIds.Contains(s.Phase));
 
@@ -192,10 +193,11 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
       .ConfigureAwait(false);
   }
 
-  public async Task<AgentSessionsWidgetData> GetSessionsWidgetAsync(CancellationToken cancellationToken = default)
+  public async Task<AgentSessionsWidgetData> GetSessionsWidgetAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default)
   {
-    var sessions = await db.AgentSession
-      .AsNoTracking()
+    var sessions = await ApplySeasonYearFilter(db.AgentSession.AsNoTracking(), seasonYears)
       .Select(s => new { s.StartedAt, s.Phase })
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
@@ -206,5 +208,34 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
       sessions.Count,
       latest?.StartedAt,
       latest?.Phase.ToString());
+  }
+
+  private static string[] NormalizeSeasonYears(IReadOnlyList<string>? seasonYears) =>
+    (seasonYears ?? [])
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
+
+  private static IQueryable<AgentSession> ApplySeasonYearFilter(
+    IQueryable<AgentSession> query,
+    IReadOnlyList<string>? seasonYears)
+  {
+    var selectedSeasonYears = NormalizeSeasonYears(seasonYears);
+    if (selectedSeasonYears.Length == 0)
+      return query;
+
+    return query.Where(s =>
+      s.MatchAnalyses.Any(a =>
+        a.Match != null &&
+        a.Match.Stage != null &&
+        a.Match.Stage.Season != null &&
+        selectedSeasonYears.Contains(a.Match.Stage.Season.Year))
+      || s.BetSlips.Any(slip =>
+        slip.Selections.Any(sel =>
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          selectedSeasonYears.Contains(sel.Match.Stage.Season.Year))));
   }
 }

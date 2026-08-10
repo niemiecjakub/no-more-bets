@@ -35,7 +35,7 @@ public class GetBettingPerformanceStatsHandlerTests
         .ToList()
     };
 
-    _bettingRepository.GetBettingPhaseBetSlipsAsync(Arg.Any<CancellationToken>()).Returns(
+    _bettingRepository.GetBettingPhaseBetSlipsAsync(Arg.Any<IReadOnlyList<string>?>(), Arg.Any<CancellationToken>()).Returns(
     [
       Slip(BetStatus.Won, 100m, 2.0m, 0.6m, BetStatus.Won),
       Slip(BetStatus.Lost, 50m, 3.0m, 0.6m, BetStatus.Won, BetStatus.Lost),

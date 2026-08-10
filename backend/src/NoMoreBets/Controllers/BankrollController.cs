@@ -35,6 +35,7 @@ public class BankrollController(IMediator mediator) : ControllerBase
     [FromQuery] DateTime? afterCreatedAt = null,
     [FromQuery] int? afterId = null,
     [FromQuery] string[]? entryNames = null,
+    [FromQuery] string[]? seasonYears = null,
     CancellationToken cancellationToken = default)
   {
     limit = Math.Clamp(limit, 1, 100);
@@ -64,7 +65,12 @@ public class BankrollController(IMediator mediator) : ControllerBase
       : null;
 
     var result = await mediator.Send(
-      new GetBankrollEntriesPageQuery(limit, afterCreatedAtUtc, afterId, entryNameFilter),
+      new GetBankrollEntriesPageQuery(
+        limit,
+        afterCreatedAtUtc,
+        afterId,
+        entryNameFilter,
+        SeasonYearQueryExtensions.Normalize(seasonYears)),
       cancellationToken);
 
     return Ok(result);

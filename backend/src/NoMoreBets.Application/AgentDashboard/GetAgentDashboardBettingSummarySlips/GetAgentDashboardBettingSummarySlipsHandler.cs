@@ -7,7 +7,8 @@ namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardBettingSummaryS
 public record GetAgentDashboardBettingSummarySlipsQuery(
   int Limit,
   DateTime? AfterCreatedAtUtc,
-  int? AfterId) : IRequest<Paged<BetSlipListItemDto>>;
+  int? AfterId,
+  IReadOnlyList<string> SeasonYears) : IRequest<Paged<BetSlipListItemDto>>;
 
 public sealed class GetAgentDashboardBettingSummarySlipsHandler(IUnitOfWork unitOfWork)
   : IRequestHandler<GetAgentDashboardBettingSummarySlipsQuery, Paged<BetSlipListItemDto>>
@@ -17,7 +18,12 @@ public sealed class GetAgentDashboardBettingSummarySlipsHandler(IUnitOfWork unit
     CancellationToken cancellationToken)
   {
     var page = await unitOfWork.Betting
-      .GetSettledBettingSlipIdsPageAsync(request.Limit, request.AfterCreatedAtUtc, request.AfterId, cancellationToken)
+      .GetSettledBettingSlipIdsPageAsync(
+        request.Limit,
+        request.AfterCreatedAtUtc,
+        request.AfterId,
+        request.SeasonYears,
+        cancellationToken)
       .ConfigureAwait(false);
 
     if (page.SlipIds.Count == 0)

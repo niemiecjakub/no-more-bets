@@ -10,6 +10,7 @@ export interface FetchAgentSessionsPageParams {
   afterId?: number;
   includeSessionId?: number;
   phaseIds?: number[];
+  seasonYears?: string[];
 }
 
 /**
@@ -33,6 +34,12 @@ export async function fetchAgentSessionsPage(
   for (const phaseId of params.phaseIds ?? []) {
     if (Number.isInteger(phaseId)) {
       queryParams.append("phaseIds", String(phaseId));
+    }
+  }
+  for (const seasonYear of params.seasonYears ?? []) {
+    const trimmed = seasonYear.trim();
+    if (trimmed.length > 0) {
+      queryParams.append("seasonYears", trimmed);
     }
   }
 
