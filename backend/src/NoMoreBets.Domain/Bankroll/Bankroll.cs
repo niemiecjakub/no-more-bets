@@ -8,7 +8,7 @@ public class Bankroll
 {
   public const int MaxNameLength = 200;
 
-  private const decimal SalaryAmount = 8000m;
+  private const decimal SalaryAmount = 1000m;
 
   private Bankroll()
   {
