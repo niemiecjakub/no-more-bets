@@ -19,9 +19,12 @@ public class AgentDashboardController(IMediator mediator) : ControllerBase
 {
   [HttpGet("bankroll")]
   public async Task<ActionResult<AgentDashboardBankrollDto>> GetBankrollWidget(
+    [FromQuery] string[]? seasonYears,
     CancellationToken cancellationToken = default)
   {
-    var result = await mediator.Send(new GetAgentDashboardBankrollQuery(), cancellationToken).ConfigureAwait(false);
+    var result = await mediator
+      .Send(new GetAgentDashboardBankrollQuery(SeasonYearQueryExtensions.Normalize(seasonYears)), cancellationToken)
+      .ConfigureAwait(false);
     return Ok(result);
   }
 

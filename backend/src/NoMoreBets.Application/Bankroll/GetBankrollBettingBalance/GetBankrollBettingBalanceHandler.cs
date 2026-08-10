@@ -13,7 +13,7 @@ public sealed class GetBankrollBettingBalanceHandler(IUnitOfWork unitOfWork)
     CancellationToken cancellationToken)
   {
     var balance = await unitOfWork.Bankroll
-      .GetBettingBalanceAsync(cancellationToken)
+      .GetBettingBalanceAsync(null, cancellationToken)
       .ConfigureAwait(false);
 
     return new BankrollBettingBalanceDto(balance);

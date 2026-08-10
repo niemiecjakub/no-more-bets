@@ -187,11 +187,13 @@ export default function AgentPage() {
     );
 
     useEffect(() => {
+        if (!seasonFilterReady) return;
+
         let cancelled = false;
         setIsBankrollLoading(true);
         setBankrollError(null);
 
-        fetchAgentDashboardBankrollWidget()
+        fetchAgentDashboardBankrollWidget(selectedSeasonYears)
             .then((data) => {
                 if (!cancelled) setBankrollWidget(data);
             })
@@ -207,7 +209,7 @@ export default function AgentPage() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [seasonFilterReady, selectedSeasonYears]);
 
     useEffect(() => {
         if (!seasonFilterReady) return;
@@ -326,7 +328,7 @@ export default function AgentPage() {
                     pendingBetsWidget={pendingBetsWidget}
                     sessionsWidget={sessionsWidget}
                     memoriesWidget={memoriesWidget}
-                    isBankrollLoading={isBankrollLoading}
+                    isBankrollLoading={isBankrollLoading || !seasonFilterReady}
                     isBettingSummaryLoading={isBettingSummaryLoading || !seasonFilterReady}
                     isPendingBetsLoading={isPendingBetsLoading || !seasonFilterReady}
                     isSessionsLoading={isSessionsLoading || !seasonFilterReady}

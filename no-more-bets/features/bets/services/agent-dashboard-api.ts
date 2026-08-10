@@ -26,10 +26,15 @@ export interface FetchAgentDashboardBettingSummarySlipsPageParams {
   seasonYears?: string[];
 }
 
-export async function fetchAgentDashboardBankrollWidget(): Promise<AgentDashboardBankrollWidget> {
-  const { data } = await axiosInstance.get<AgentDashboardBankrollWidget>(
-    "/api/agent/dashboard/bankroll"
-  );
+export async function fetchAgentDashboardBankrollWidget(
+  seasonYears?: string[],
+): Promise<AgentDashboardBankrollWidget> {
+  const params = new URLSearchParams();
+  appendSeasonYears(params, seasonYears);
+  const endpoint = params.size > 0
+    ? `/api/agent/dashboard/bankroll?${params.toString()}`
+    : "/api/agent/dashboard/bankroll";
+  const { data } = await axiosInstance.get<AgentDashboardBankrollWidget>(endpoint);
   return data;
 }
 

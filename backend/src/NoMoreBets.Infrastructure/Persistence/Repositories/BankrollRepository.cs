@@ -54,11 +54,32 @@ public class BankrollRepository : IBankrollRepository
       .ConfigureAwait(false)) ?? 0m;
   }
 
-  public async Task<decimal> GetBettingBalanceAsync(CancellationToken cancellationToken = default)
+  public async Task<decimal> GetBettingBalanceAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default)
   {
-    return (await _db.Bankroll
+    var query = _db.Bankroll
       .AsNoTracking()
-      .Where(record => record.BetId != null)
+      .Where(record => record.BetId != null);
+
+    var selectedSeasonYears = (seasonYears ?? [])
+      .Where(y => !string.IsNullOrWhiteSpace(y))
+      .Select(y => y.Trim())
+      .Distinct(StringComparer.Ordinal)
+      .ToArray();
+
+    if (selectedSeasonYears.Length > 0)
+    {
+      query = query.Where(record =>
+        record.BetSlip != null &&
+        record.BetSlip.Selections.Any(sel =>
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          selectedSeasonYears.Contains(sel.Match.Stage.Season.Year)));
+    }
+
+    return (await query
       .SumAsync(
         record => (decimal?)(record.Flow == BankrollFlowExtensions.InCode ? record.Amount : -record.Amount),
         cancellationToken)

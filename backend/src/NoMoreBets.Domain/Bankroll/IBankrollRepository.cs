@@ -10,7 +10,9 @@ public interface IBankrollRepository
     CancellationToken cancellationToken = default);
 
   Task AddAsync(Bankroll entity, CancellationToken cancellationToken = default);
-  Task<decimal> GetBettingBalanceAsync(CancellationToken cancellationToken = default);
+  Task<decimal> GetBettingBalanceAsync(
+    IReadOnlyList<string>? seasonYears = null,
+    CancellationToken cancellationToken = default);
   Task<decimal> GetTotalValueAsync(CancellationToken cancellationToken = default);
   Task<BankrollPage> GetEntriesPageAsync(
     int limit,

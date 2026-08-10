@@ -4,7 +4,8 @@ using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardBankroll;
 
-public record GetAgentDashboardBankrollQuery : IRequest<AgentDashboardBankrollDto>;
+public record GetAgentDashboardBankrollQuery(IReadOnlyList<string> SeasonYears)
+  : IRequest<AgentDashboardBankrollDto>;
 
 public sealed class GetAgentDashboardBankrollHandler(IUnitOfWork unitOfWork, IMediator mediator)
   : IRequestHandler<GetAgentDashboardBankrollQuery, AgentDashboardBankrollDto>
@@ -17,7 +18,7 @@ public sealed class GetAgentDashboardBankrollHandler(IUnitOfWork unitOfWork, IMe
       .GetTotalValueAsync(cancellationToken)
       .ConfigureAwait(false);
     var balance = await unitOfWork.Bankroll
-      .GetBettingBalanceAsync(cancellationToken)
+      .GetBettingBalanceAsync(request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
     var daysUntilPayday = await mediator
       .Send(new GetDaysUntilPaydayQuery(), cancellationToken)
