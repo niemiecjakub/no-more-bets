@@ -1,3 +1,10 @@
+/** Latest 1X2 (match result) prices from MatchDto.Odds / MatchWinnerOdds. */
+export interface MatchListOdds {
+  home: number | null;
+  draw: number | null;
+  away: number | null;
+}
+
 /**
  * Match list item aligned with backend MatchDto.
  * GET api/Database/matches returns an array of these.
@@ -24,8 +31,9 @@ export interface MatchListItem {
   hasResearch: boolean;
   hasResearchBet: boolean;
   hasLineup: boolean;
-  hasOdds: boolean;
   hasHeadToHead: boolean;
+  /** Latest 1X2 prices when available; null when no odds snapshot. */
+  odds: MatchListOdds | null;
 }
 
 /** MatchStatusId from backend enum: Upcomming = 1, Finished = 2 */

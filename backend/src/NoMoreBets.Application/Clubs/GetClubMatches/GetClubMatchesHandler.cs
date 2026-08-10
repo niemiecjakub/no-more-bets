@@ -38,8 +38,8 @@ public sealed class GetClubMatchesHandler(IUnitOfWork unitOfWork, IMediator medi
     var hasLineupSet = await unitOfWork.Matches
       .GetMatchIdsWithLineupAsync(matchIds, cancellationToken)
       .ConfigureAwait(false);
-    var hasOddsSet = await unitOfWork.Matches
-      .GetMatchIdsWithOddsAsync(matchIds, cancellationToken)
+    var oddsByMatch = await unitOfWork.Matches
+      .GetLatestMatchResultOddsAsync(matchIds, cancellationToken)
       .ConfigureAwait(false);
     var hasHeadToHeadSet = await unitOfWork.Matches
       .GetMatchIdsWithHeadToHeadAsync(matchIds, cancellationToken)
@@ -58,8 +58,8 @@ public sealed class GetClubMatchesHandler(IUnitOfWork unitOfWork, IMediator medi
         hasResearchSet,
         hasResearchBetSet,
         hasLineupSet,
-        hasOddsSet,
-        hasHeadToHeadSet))
+        hasHeadToHeadSet,
+        oddsByMatch))
       .ToList();
   }
 }

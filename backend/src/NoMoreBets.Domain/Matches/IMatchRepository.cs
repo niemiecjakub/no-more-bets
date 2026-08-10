@@ -53,7 +53,7 @@ public interface IMatchRepository
   Task<IReadOnlySet<int>> GetMatchIdsWithLineupAsync(
     IReadOnlyCollection<int> matchIds,
     CancellationToken cancellationToken = default);
-  Task<IReadOnlySet<int>> GetMatchIdsWithOddsAsync(
+  Task<IReadOnlyDictionary<int, MatchResultOdds>> GetLatestMatchResultOddsAsync(
     IReadOnlyCollection<int> matchIds,
     CancellationToken cancellationToken = default);
   Task<IReadOnlySet<int>> GetMatchIdsWithHeadToHeadAsync(

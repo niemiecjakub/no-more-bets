@@ -406,21 +406,76 @@ public class MatchRepository : IMatchRepository
     return ids.ToHashSet();
   }
 
-  public async Task<IReadOnlySet<int>> GetMatchIdsWithOddsAsync(
+  public async Task<IReadOnlyDictionary<int, MatchResultOdds>> GetLatestMatchResultOddsAsync(
     IReadOnlyCollection<int> matchIds,
     CancellationToken cancellationToken = default)
   {
     if (matchIds.Count == 0)
-      return new HashSet<int>();
+      return new Dictionary<int, MatchResultOdds>();
 
-    var ids = await _db.BettingOddsSnapshot
-      .Where(b => matchIds.Contains(b.MatchId))
-      .Select(b => b.MatchId)
-      .Distinct()
+    var snapshots = await _db.BettingOddsSnapshot
+      .AsNoTracking()
+      .Where(s => matchIds.Contains(s.MatchId))
+      .Select(s => new { s.Id, s.MatchId, s.SnapshotTime })
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
 
-    return ids.ToHashSet();
+    if (snapshots.Count == 0)
+      return new Dictionary<int, MatchResultOdds>();
+
+    var latestIdByMatch = snapshots
+      .GroupBy(s => s.MatchId)
+      .ToDictionary(
+        g => g.Key,
+        g => g.OrderByDescending(s => s.SnapshotTime).First().Id);
+
+    var snapshotIds = latestIdByMatch.Values.ToList();
+    var matchIdBySnapshotId = latestIdByMatch.ToDictionary(kv => kv.Value, kv => kv.Key);
+
+    const int homeOptionId = (int)BettingEventOption.MatchResult_Home;
+    const int awayOptionId = (int)BettingEventOption.MatchResult_Away;
+    const int drawOptionId = (int)BettingEventOption.MatchResult_Draw;
+
+    var rows = await _db.BettingOddsSnapshotRow
+      .AsNoTracking()
+      .Where(r =>
+        snapshotIds.Contains(r.SnapshotId)
+        && r.EventTypeId == (int)BettingEventType.MatchResult
+        && r.EventOptionId != null
+        && r.Odds != null
+        && (r.EventOptionId == homeOptionId
+          || r.EventOptionId == awayOptionId
+          || r.EventOptionId == drawOptionId))
+      .Select(r => new { r.SnapshotId, OptionId = r.EventOptionId!.Value, Odds = r.Odds!.Value })
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var result = new Dictionary<int, MatchResultOdds>();
+    foreach (var group in rows.GroupBy(r => r.SnapshotId))
+    {
+      if (!matchIdBySnapshotId.TryGetValue(group.Key, out var matchId))
+        continue;
+
+      decimal? home = null;
+      decimal? draw = null;
+      decimal? away = null;
+      foreach (var row in group)
+      {
+        if (row.OptionId == homeOptionId)
+          home = row.Odds;
+        else if (row.OptionId == drawOptionId)
+          draw = row.Odds;
+        else if (row.OptionId == awayOptionId)
+          away = row.Odds;
+      }
+
+      if (home is null && draw is null && away is null)
+        continue;
+
+      result[matchId] = new MatchResultOdds(home, draw, away);
+    }
+
+    return result;
   }
 
   public async Task<IReadOnlySet<int>> GetMatchIdsWithHeadToHeadAsync(

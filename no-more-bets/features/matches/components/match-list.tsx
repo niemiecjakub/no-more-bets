@@ -60,6 +60,20 @@ function getFutureDayDistanceLabel(date: Date): string | null {
   return `in ${dayDiff} days`;
 }
 
+function formatOddsPrice(price: number | null): string {
+  if (price == null) return "—";
+  return price.toFixed(2);
+}
+
+function winningOneXTwoOutcome(
+  homeGoals: number,
+  awayGoals: number,
+): "1" | "X" | "2" {
+  if (homeGoals > awayGoals) return "1";
+  if (homeGoals < awayGoals) return "2";
+  return "X";
+}
+
 export function MatchList({
   matches,
   hasMore = false,
@@ -175,9 +189,13 @@ export function MatchList({
               const isExpanded = expandedMatchIds.has(match.id);
               const readinessChips = [
                 { key: "lineup", label: "Lineup", isReady: match.hasLineup },
-                { key: "odds", label: "Odds", isReady: match.hasOdds },
+                { key: "odds", label: "Odds", isReady: match.odds != null },
                 { key: "h2h", label: "H2H", isReady: match.hasHeadToHead },
               ];
+              const highlightOutcome =
+                showScore && match.homeGoals != null && match.awayGoals != null
+                  ? winningOneXTwoOutcome(match.homeGoals, match.awayGoals)
+                  : null;
 
               return (
                 <li key={match.id} className="bg-white dark:bg-zinc-950">
@@ -268,6 +286,43 @@ export function MatchList({
                           ))}
                         </div>
                       )}
+                      {match.odds ? (
+                        <div
+                          className="flex items-center justify-center gap-14 text-xs tabular-nums sm:gap-20"
+                          aria-label="1X2 odds"
+                        >
+                          {(
+                            [
+                              { key: "1" as const, label: "1", price: match.odds.home },
+                              { key: "X" as const, label: "X", price: match.odds.draw },
+                              { key: "2" as const, label: "2", price: match.odds.away },
+                            ] as const
+                          ).map((outcome) => {
+                            const isWinner = highlightOutcome === outcome.key;
+                            return (
+                              <div
+                                key={outcome.key}
+                                className={`flex flex-col items-center gap-0.5 ${
+                                  isWinner
+                                    ? "font-bold text-foreground"
+                                    : "font-medium text-zinc-500 dark:text-zinc-400"
+                                }`}
+                              >
+                                <span
+                                  className={
+                                    isWinner
+                                      ? "text-[10px] uppercase tracking-wide"
+                                      : "text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500"
+                                  }
+                                >
+                                  {outcome.label}
+                                </span>
+                                <span>{formatOddsPrice(outcome.price)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : null}
                     </div>
                   </div>
                   {hasAgentResearch && isExpanded ? (

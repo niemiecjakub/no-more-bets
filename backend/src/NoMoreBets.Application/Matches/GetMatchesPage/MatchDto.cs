@@ -1,3 +1,5 @@
+using NoMoreBets.Application.Common.Dto.Matches;
+
 namespace NoMoreBets.Application.Matches.GetMatchesPage;
 
 public record MatchDto(
@@ -20,5 +22,5 @@ public record MatchDto(
   bool HasResearch = false,
   bool HasResearchBet = false,
   bool HasLineup = false,
-  bool HasOdds = false,
-  bool HasHeadToHead = false);
+  bool HasHeadToHead = false,
+  MatchWinnerOdds? Odds = null);

@@ -5,6 +5,7 @@ import {
   type MatchAnalysisPageDto,
   type MatchDetailsSummary,
   type MatchListItem,
+  type MatchListOdds,
 } from "../interfaces";
 
 export interface FetchMatchesFilters {
@@ -37,6 +38,24 @@ function optionalInt(v: unknown): number | null {
 function optionalString(v: unknown): string | null {
   if (typeof v === "string") return v;
   return null;
+}
+
+function optionalOddsPrice(v: unknown): number | null {
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  return null;
+}
+
+function normalizeMatchListOdds(raw: unknown): MatchListOdds | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  const home =
+    optionalOddsPrice(o.home) ?? optionalOddsPrice(o.Home);
+  const draw =
+    optionalOddsPrice(o.draw) ?? optionalOddsPrice(o.Draw);
+  const away =
+    optionalOddsPrice(o.away) ?? optionalOddsPrice(o.Away);
+  if (home == null && draw == null && away == null) return null;
+  return { home, draw, away };
 }
 
 function normalizeMatchDetails(raw: unknown): MatchDetailsSummary | null {
@@ -162,16 +181,15 @@ export function normalizeMatchListItem(raw: unknown): MatchListItem {
     (typeof r.hasLineup === "boolean" ? r.hasLineup : undefined) ??
     (typeof r.HasLineup === "boolean" ? r.HasLineup : undefined) ??
     false;
-  const hasOdds =
-    (typeof item.hasOdds === "boolean" ? item.hasOdds : undefined) ??
-    (typeof r.hasOdds === "boolean" ? r.hasOdds : undefined) ??
-    (typeof r.HasOdds === "boolean" ? r.HasOdds : undefined) ??
-    false;
   const hasHeadToHead =
     (typeof item.hasHeadToHead === "boolean" ? item.hasHeadToHead : undefined) ??
     (typeof r.hasHeadToHead === "boolean" ? r.hasHeadToHead : undefined) ??
     (typeof r.HasHeadToHead === "boolean" ? r.HasHeadToHead : undefined) ??
     false;
+  const odds =
+    normalizeMatchListOdds(item.odds) ??
+    normalizeMatchListOdds(r.odds) ??
+    normalizeMatchListOdds(r.Odds);
 
   return {
     ...item,
@@ -182,8 +200,8 @@ export function normalizeMatchListItem(raw: unknown): MatchListItem {
     hasResearch,
     hasResearchBet,
     hasLineup,
-    hasOdds,
     hasHeadToHead,
+    odds,
   };
 }
 

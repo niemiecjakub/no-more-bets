@@ -89,8 +89,8 @@ public class GetMatchesPageHandlerTests
       .Returns(new List<DomainMatch> { match });
     _matches.GetMatchIdsWithLineupAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
       .Returns(new HashSet<int> { 7 });
-    _matches.GetMatchIdsWithOddsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
-      .Returns(new HashSet<int>());
+    _matches.GetLatestMatchResultOddsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
+      .Returns(new Dictionary<int, MatchResultOdds>());
     _matches.GetMatchIdsWithHeadToHeadAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
       .Returns(new HashSet<int>());
     _matches.GetMatchIdsWithAnalysisCodeAsync(Arg.Any<IReadOnlyCollection<int>>(), MatchAnalysis.StructuredResearchCode, Arg.Any<CancellationToken>())
@@ -127,6 +127,7 @@ public class GetMatchesPageHandlerTests
     _mediator
       .Send(Arg.Any<GetUpcomingMatchesReadyForPredictionQuery>(), Arg.Any<CancellationToken>())
       .Returns(Array.Empty<DomainMatch>());
+    StubFlagLookups();
 
     var result = await _sut.Handle(new GetMatchesPageQuery(1, null, [], null, null), CancellationToken.None);
 
@@ -212,8 +213,8 @@ public class GetMatchesPageHandlerTests
   {
     _matches.GetMatchIdsWithLineupAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
       .Returns(new HashSet<int>());
-    _matches.GetMatchIdsWithOddsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
-      .Returns(new HashSet<int>());
+    _matches.GetLatestMatchResultOddsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
+      .Returns(new Dictionary<int, MatchResultOdds>());
     _matches.GetMatchIdsWithHeadToHeadAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
       .Returns(new HashSet<int>());
     _matches.GetMatchIdsWithAnalysisCodeAsync(

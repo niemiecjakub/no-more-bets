@@ -57,18 +57,18 @@ public sealed class GetMatchesPageHandler(
     var pageIds = page.Items.Select(m => m.Id).ToList();
 
     IReadOnlySet<int> hasLineupSet = new HashSet<int>();
-    IReadOnlySet<int> hasOddsSet = new HashSet<int>();
     IReadOnlySet<int> hasHeadToHeadSet = new HashSet<int>();
     IReadOnlySet<int> hasResearchSet = new HashSet<int>();
     IReadOnlySet<int> hasResearchBetSet = new HashSet<int>();
+    IReadOnlyDictionary<int, MatchResultOdds> oddsByMatch = new Dictionary<int, MatchResultOdds>();
 
     if (pageIds.Count > 0)
     {
       hasLineupSet = await unitOfWork.Matches
         .GetMatchIdsWithLineupAsync(pageIds, cancellationToken)
         .ConfigureAwait(false);
-      hasOddsSet = await unitOfWork.Matches
-        .GetMatchIdsWithOddsAsync(pageIds, cancellationToken)
+      oddsByMatch = await unitOfWork.Matches
+        .GetLatestMatchResultOddsAsync(pageIds, cancellationToken)
         .ConfigureAwait(false);
       hasHeadToHeadSet = await unitOfWork.Matches
         .GetMatchIdsWithHeadToHeadAsync(pageIds, cancellationToken)
@@ -88,8 +88,8 @@ public sealed class GetMatchesPageHandler(
         hasResearchSet,
         hasResearchBetSet,
         hasLineupSet,
-        hasOddsSet,
-        hasHeadToHeadSet))
+        hasHeadToHeadSet,
+        oddsByMatch))
       .ToList();
 
     return PagedFactory.Create(items, page.HasMore, item => item.MatchDate, item => item.Id);
