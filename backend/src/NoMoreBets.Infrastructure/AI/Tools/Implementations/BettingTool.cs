@@ -72,7 +72,7 @@ public class BettingTool
     decimal stakeAmount,
     [Description("JSON object with property betSelections: an array of selection objects. Each object must have: matchId (int, from GetAvailableMatches), eventType (string, from GetCurrentOdds eventTypeName), eventOption (string, from GetCurrentOdds option label). Example: {\"betSelections\":[{\"matchId\":39,\"eventType\":\"bothTeamsToScore\",\"eventOption\":\"bothTeamsToScore_Yes\"}]}")]
     string betSelectionsJson,
-    [Description("Why you are placing this bet: the edge you see, why this stake, and how it fits your strategy. This is locked with the slip and reviewed against the outcome during reflection.")]
+    [Description("Short public note on the edge behind this bet. Locked with the slip and reviewed against the outcome during reflection.")]
     string rationale,
     [Description("Your honest estimated probability (0-1, exclusive) that this whole slip wins. Locked with the slip; used to score your calibration over time.")]
     decimal estimatedWinProbability,
@@ -87,7 +87,7 @@ public class BettingTool
     if (string.IsNullOrWhiteSpace(rationale))
     {
       _logger.LogWarning("Missing rationale while placing a bet slip.");
-      throw new ArgumentException("rationale is required. State the edge, the stake reasoning, and strategy fit.", nameof(rationale));
+      throw new ArgumentException("rationale is required.", nameof(rationale));
     }
 
     if (estimatedWinProbability is <= 0m or >= 1m)

@@ -41,7 +41,7 @@ internal sealed class BettingExecuteStep : IAgentPhaseStep
         1. Check your balance and existing exposure. You bet from what you have, not from what you hope to win back.
         2. Read your STRATEGY memory record. It is the set of rules your past reviews earned; you wrote it, you follow it. If it does not exist yet, create a short initial version (selection criteria, sizing rules, markets you avoid) before betting.
 
-        Then evaluate current opportunities and act. For every slip you place, the rationale you lock in must state the edge you see, why the stake is sized as it is, and which strategy rule the bet follows. If you deviate from your strategy, say so in the rationale and why — your review session will check, and an unexplained deviation is a discipline failure regardless of outcome.
+        Then evaluate current opportunities and act. Follow your written strategy when deciding. If a bet breaks a written rule, say so briefly in the rationale in natural voice — your review session will check, and an unexplained deviation is a discipline failure regardless of outcome.
 
         Set the estimated win probability honestly. It is scored against reality over time; flattering numbers only make you look worse later.
 

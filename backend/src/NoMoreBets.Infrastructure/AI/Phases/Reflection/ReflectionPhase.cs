@@ -41,7 +41,7 @@ internal sealed class ReflectionExecuteStep : IAgentPhaseStep
     1. Read your STRATEGY memory record.
     
     2. Review each settled slip awaiting reflection. Each slip carries the rationale and estimated win probability you locked at placement. For each one ask, in order:
-       - Compliance: did this bet follow the strategy as written at the time? The rationale should say so; deviations without a stated reason are discipline failures regardless of outcome.
+       - Compliance: did this bet follow the strategy as written at the time? Judge by comparing the locked bet (market, structure, sizing) and the edge claimed in the rationale against the STRATEGY memory. An actual deviation from STRATEGY without a stated reason in the rationale is a discipline failure regardless of outcome.
        - Judgment: was the locked reasoning sound given what was knowable then?
        - Outcome class: (a) structural decision error, (b) execution/discipline issue, or (c) variance/noise.
        Only proceed to rule extraction if a repeatable pattern or structural issue is present.
