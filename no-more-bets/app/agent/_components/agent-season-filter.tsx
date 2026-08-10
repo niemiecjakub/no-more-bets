@@ -110,7 +110,7 @@ export function AgentSeasonFilter({
   }
 
   return (
-    <div ref={rootRef} className="relative w-full max-w-xs">
+    <div ref={rootRef} className="relative w-full lg:max-w-xs">
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Season
