@@ -15,6 +15,7 @@ import type { AgentDashboardResearchBettingSummaryWidget } from "@/features/bets
 import { ResearchBettingPanel } from "@/features/bets/components/research-betting-panel";
 import { ResearchBettingMobileSheet } from "@/features/bets/components/research-betting-mobile-sheet";
 import { handleServiceError } from "@/lib/error-handler";
+import { useRevealOnScrollUp } from "@/hooks/use-reveal-on-scroll-up";
 
 function MatchesFallback() {
     return (
@@ -71,6 +72,7 @@ export default function HomePage() {
     const [summaryWidget, setSummaryWidget] = useState<AgentDashboardResearchBettingSummaryWidget | null>(null);
     const [isStatsLoading, setIsStatsLoading] = useState(false);
     const [statsError, setStatsError] = useState<string | null>(null);
+    const isMobileChromeVisible = useRevealOnScrollUp();
 
     const latestSeasonYear = seasonYears[0] ?? null;
 
@@ -293,9 +295,13 @@ export default function HomePage() {
     };
 
     return (
-        <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6">
+        <main className="mx-auto w-full max-w-7xl px-4 pt-0 pb-8 sm:px-6 lg:py-8">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.75fr)_minmax(0,1fr)] lg:items-start">
-                <div className="order-1 flex flex-col gap-3 lg:hidden">
+                <div
+                    className={`sticky top-[var(--site-header-height)] z-40 order-1 -mx-4 flex flex-col gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-3 transition-transform duration-200 dark:border-zinc-800 dark:bg-zinc-950 sm:-mx-6 sm:px-6 motion-reduce:transition-none lg:hidden ${
+                        isMobileChromeVisible ? "translate-y-0" : "-translate-y-full"
+                    }`}
+                >
                     <MatchFiltersMobileSheet {...filterPanelProps} sortParam={searchParams.get("sort")} latestSeasonYear={latestSeasonYear} />
                     <ResearchBettingMobileSheet {...researchPanelProps} />
                 </div>
