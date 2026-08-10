@@ -72,7 +72,7 @@ internal sealed class ReflectionExecuteStep : IAgentPhaseStep
     Store only unique, non-overlapping rules.
     If a rule is already represented in memory, do not re-store it in modified form.
     
-    If no high-signal, repeatable behavioral pattern is identified, store nothing beyond the strategy changelog line.
+    If no high-signal, repeatable behavioral pattern is identified, leave STRATEGY unchanged — do not append review notes, changelog lines, or "no new rule" stamps.
     
     QUALITY CONSTRAINTS
     

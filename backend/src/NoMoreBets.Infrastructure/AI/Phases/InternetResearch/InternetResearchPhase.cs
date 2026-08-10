@@ -27,11 +27,11 @@ internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
       The purpose of this phase is to build reusable, decision-relevant intelligence about upcoming fixtures.
       Build structured understanding that your future self can directly reuse during match-level analysis and decision-making.
 
-      Before writing anything, list your existing memory records and read the relevant ones. Repeated runs of this phase must refine and extend what is already stored — never re-save an insight that is already there.
+      Before writing anything, list your existing memory records and read the relevant ones. Do not re-save an insight that is already there.
 
       PRIORITY OBJECTIVE
 
-      Transform raw information (news, context, sentiment, updates) into durable insights that change how a match should be interpreted.
+      Transform raw information (news, context, sentiment, updates) into insights that change how a match should be interpreted.
       Do not store raw information unless it directly contributes to understanding match outcomes.
 
       WORKFLOW
@@ -47,8 +47,7 @@ internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
 
       4. Synthesis into reusable insights
       Convert gathered information into:
-      - stable patterns about teams or leagues
-      - changes in expected team strength or style
+      - changes in expected strength or style for this fixture
       - new uncertainties affecting match interpretation
       - context that materially affects outcome probability
 
@@ -69,7 +68,7 @@ internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
       - Prioritized fixtures with reasoning for inclusion
       - Concise, reusable insights per fixture (not article summaries)
       - Clear separation between signal (structural insight) and noise (reporting, speculation)
-      - Distilled knowledge persisted to memory for later reuse, following the memory naming convention: durable club/league insights appended to the club or league record; time-bound notes in fixture records named with the match date
+      - Persist only time-bound, fixture-scoped notes when needed (named with the match date). Do not create or append club/league profile memories.
 
       QUALITY CONSTRAINTS
 
