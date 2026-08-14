@@ -305,7 +305,7 @@ export default function HomePage() {
                     <MatchFiltersMobileSheet {...filterPanelProps} sortParam={searchParams.get("sort")} latestSeasonYear={latestSeasonYear} />
                     <ResearchBettingMobileSheet {...researchPanelProps} />
                 </div>
-                <aside className="order-1 hidden flex-col gap-4 self-start lg:sticky lg:top-20 lg:flex">
+                <aside className="order-1 hidden min-h-0 flex-col gap-4 self-start lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100dvh-5rem-var(--site-footer-height))] lg:overflow-y-auto lg:overscroll-contain">
                     <MatchFiltersPanel {...filterPanelProps} />
                 </aside>
                 <section className="order-3 min-w-0 lg:order-2">
@@ -324,7 +324,7 @@ export default function HomePage() {
                         />
                     )}
                 </section>
-                <aside className="order-2 hidden flex-col gap-3 self-start lg:order-3 lg:sticky lg:top-20 lg:flex">
+                <aside className="order-2 hidden min-h-0 flex-col gap-3 self-start lg:order-3 lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100dvh-5rem-var(--site-footer-height))] lg:overflow-y-auto lg:overscroll-contain">
                     <ResearchBettingPanel {...researchPanelProps} />
                 </aside>
             </div>
