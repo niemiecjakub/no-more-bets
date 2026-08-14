@@ -176,7 +176,7 @@ export function MatchList({
               ) : (
                 <time
                   dateTime={match.matchDate}
-                  className="inline-block min-w-22 text-center text-2xl font-bold tabular-nums tracking-tight text-foreground"
+                  className="inline-block min-w-16 text-center text-lg font-bold tabular-nums tracking-tight text-foreground sm:min-w-22 sm:text-2xl"
                 >
                   {center}
                 </time>
@@ -219,24 +219,24 @@ export function MatchList({
                       </Link>
                     ) : null}
                     <div className="flex flex-col gap-1.5">
-                      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-4">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 sm:gap-x-4">
                         <Link
                           href={`/match/${match.id}`}
                           className="flex min-w-0 items-center justify-end gap-2"
                         >
-                          <span className={`min-w-0 truncate text-end ${homeNameWeight} text-foreground`}>
+                          <span className={`min-w-0 text-end text-pretty break-words ${homeNameWeight} text-foreground`}>
                             {match.homeClubName}
                           </span>
                           <SlugIcon
                             kind="club"
                             slug={homeLogoSlug}
                             alt={match.homeClubName}
-                            className="h-7 w-7"
+                            className="h-7 w-7 shrink-0"
                           />
                         </Link>
                         <Link
                           href={`/match/${match.id}`}
-                          className="justify-self-center px-3"
+                          className="justify-self-center px-1 sm:px-3"
                         >
                           {centerCell}
                         </Link>
@@ -248,9 +248,9 @@ export function MatchList({
                             kind="club"
                             slug={awayLogoSlug}
                             alt={match.awayClubName}
-                            className="h-7 w-7"
+                            className="h-7 w-7 shrink-0"
                           />
-                          <span className={`min-w-0 truncate ${awayNameWeight} text-foreground`}>
+                          <span className={`min-w-0 text-pretty break-words ${awayNameWeight} text-foreground`}>
                             {match.awayClubName}
                           </span>
                         </Link>

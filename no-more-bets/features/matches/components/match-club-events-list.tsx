@@ -28,15 +28,20 @@ export function partitionMatchEventsBySide(
   return { home, away };
 }
 
+const alignClassBySide = {
+  home: "items-center text-center lg:items-end lg:text-end",
+  away: "items-center text-center lg:items-start lg:text-start",
+} as const;
+
 interface MatchClubEventsListProps {
   events: MatchEventDto[];
   isLoading: boolean;
   error?: string;
-  align: "start" | "end";
+  align: keyof typeof alignClassBySide;
 }
 
 export function MatchClubEventsList({ events, isLoading, error, align }: MatchClubEventsListProps) {
-  const alignClass = align === "end" ? "items-end text-end" : "items-start text-start";
+  const alignClass = alignClassBySide[align];
   const goalEvents = events.filter((e) => GOAL_EVENT_TYPES.has(e.eventType));
 
   if (error) {

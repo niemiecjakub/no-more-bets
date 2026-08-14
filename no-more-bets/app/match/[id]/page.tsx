@@ -8,7 +8,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { SlugIcon } from "@/components/slug-icon";
 import { useMatchStore } from "@/store/match-store";
 import { clubLogoSlugSegment } from "../../../utils/club-logo-slug";
-import { formatMatchDate } from "../../../utils/format-date";
+import { formatMatchTime } from "../../../utils/format-date";
 import { handleServiceError } from "@/lib/error-handler";
 import {
     MATCH_STATUS,
@@ -188,7 +188,12 @@ export default function MatchPage() {
         return null;
     }
 
-    const matchDateFormatted = formatMatchDate(data.matchDate);
+    const matchDayFormatted = new Intl.DateTimeFormat("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+    }).format(new Date(data.matchDate));
     const homeLogoSlug = clubLogoSlugSegment(data.homeClubSlug, data.homeClubName);
     const awayLogoSlug = clubLogoSlugSegment(data.awayClubSlug, data.awayClubName);
     const showFinishedScore = data.matchStatusId === MATCH_STATUS.Finished && data.homeGoals != null && data.awayGoals != null;
@@ -220,36 +225,39 @@ export default function MatchPage() {
                             ) : null}
                         </div>
                     ) : null}
-                    <p className="mb-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDateFormatted}</p>
-                    <h1 className="w-full text-2xl font-semibold tracking-tight text-foreground">
+                    <p className="mb-2 text-center text-sm text-zinc-500 dark:text-zinc-400">{matchDayFormatted}</p>
+                    <h1 className="w-full text-foreground">
                         <div className="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-3">
-                            <div className="flex min-w-0 items-center justify-end gap-2.5">
-                                <Link
-                                    href={`/club/${data.homeClubId}`}
-                                    className="min-w-0 text-balance text-end transition-colors hover:text-red-600 dark:hover:text-red-400"
-                                >
-                                    {data.homeClubName}
-                                </Link>
-                                <SlugIcon kind="club" slug={homeLogoSlug} alt={data.homeClubName} className="h-10 w-10 shrink-0" />
-                            </div>
-                            <span
-                                className={
-                                    showFinishedScore
-                                        ? "inline-block min-w-[5.5rem] shrink-0 text-center text-2xl font-bold tabular-nums tracking-tight sm:text-3xl"
-                                        : "shrink-0 text-center text-lg font-medium text-zinc-500 dark:text-zinc-400 sm:text-2xl sm:font-semibold"
-                                }
+                            <Link
+                                href={`/club/${data.homeClubId}`}
+                                className="flex min-w-0 flex-col items-center gap-1.5 transition-colors hover:text-red-600 lg:flex-row lg:justify-end lg:gap-2.5 dark:hover:text-red-400"
                             >
-                                {showFinishedScore ? `${data.homeGoals} - ${data.awayGoals}` : "vs"}
-                            </span>
-                            <div className="flex min-w-0 items-center justify-start gap-2.5">
-                                <SlugIcon kind="club" slug={awayLogoSlug} alt={data.awayClubName} className="h-10 w-10 shrink-0" />
-                                <Link
-                                    href={`/club/${data.awayClubId}`}
-                                    className="min-w-0 text-balance text-start transition-colors hover:text-red-600 dark:hover:text-red-400"
+                                <SlugIcon kind="club" slug={homeLogoSlug} alt={data.homeClubName} className="size-10 shrink-0 lg:order-2" />
+                                <span className="min-w-0 text-center text-base font-semibold tracking-tight text-balance sm:text-xl lg:text-end lg:text-2xl">
+                                    {data.homeClubName}
+                                </span>
+                            </Link>
+                            {showFinishedScore ? (
+                                <span className="inline-block min-w-22 shrink-0 text-center text-2xl font-bold tabular-nums tracking-tight sm:text-3xl">
+                                    {data.homeGoals} - {data.awayGoals}
+                                </span>
+                            ) : (
+                                <time
+                                    dateTime={data.matchDate}
+                                    className="inline-block min-w-22 shrink-0 text-center text-2xl font-bold tabular-nums tracking-tight sm:text-3xl"
                                 >
+                                    {formatMatchTime(data.matchDate)}
+                                </time>
+                            )}
+                            <Link
+                                href={`/club/${data.awayClubId}`}
+                                className="flex min-w-0 flex-col items-center gap-1.5 transition-colors hover:text-red-600 lg:flex-row lg:justify-start lg:gap-2.5 dark:hover:text-red-400"
+                            >
+                                <SlugIcon kind="club" slug={awayLogoSlug} alt={data.awayClubName} className="size-10 shrink-0" />
+                                <span className="min-w-0 text-center text-base font-semibold tracking-tight text-balance sm:text-xl lg:text-start lg:text-2xl">
                                     {data.awayClubName}
-                                </Link>
-                            </div>
+                                </span>
+                            </Link>
                         </div>
                         <div className="mt-2 grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] gap-x-3">
                             <div className="col-start-1 min-w-0">
@@ -257,16 +265,16 @@ export default function MatchPage() {
                                     events={homeEvents}
                                     isLoading={matchEventsLoading}
                                     error={matchEventsError}
-                                    align="end"
+                                    align="home"
                                 />
                             </div>
-                            <span className="col-start-2 min-w-[5.5rem] shrink-0" aria-hidden />
+                            <span className="col-start-2 min-w-22 shrink-0" aria-hidden />
                             <div className="col-start-3 min-w-0">
                                 <MatchClubEventsList
                                     events={awayEvents}
                                     isLoading={matchEventsLoading}
                                     error={matchEventsError}
-                                    align="start"
+                                    align="away"
                                 />
                             </div>
                         </div>
