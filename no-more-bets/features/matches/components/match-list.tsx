@@ -74,6 +74,167 @@ function winningOneXTwoOutcome(
   return "X";
 }
 
+interface ReadinessChip {
+  key: string;
+  label: string;
+  isReady: boolean;
+}
+
+function LeagueLabel({ slug, name }: { slug: string; name: string }) {
+  return (
+    <>
+      <SlugIcon kind="league" slug={slug} alt={name || "League"} className="h-4 w-4" />
+      {name ? (
+        <p className="min-w-0 truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          {name}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function ClubLine({
+  href,
+  logoSlug,
+  name,
+  nameWeight,
+  className,
+}: {
+  href: string;
+  logoSlug: string;
+  name: string;
+  nameWeight: string;
+  className?: string;
+}) {
+  return (
+    <Link href={href} className={`flex min-w-0 items-center gap-3 ${className ?? ""}`}>
+      <SlugIcon kind="club" slug={logoSlug} alt={name} className="h-5 w-5 shrink-0" />
+      <span className={`min-w-0 text-pretty break-words ${nameWeight} text-foreground`}>
+        {name}
+      </span>
+    </Link>
+  );
+}
+
+function ReadinessChips({
+  chips,
+  className,
+}: {
+  chips: ReadinessChip[];
+  className?: string;
+}) {
+  return (
+    <div className={className ?? "flex flex-wrap items-center justify-center gap-1.5"}>
+      {chips.map((chip) => (
+        <span
+          key={chip.key}
+          className={
+            chip.isReady
+              ? "inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30"
+              : "inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-400/30 dark:bg-zinc-900/60 dark:text-zinc-300 dark:ring-zinc-600/40"
+          }
+        >
+          {chip.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function OddsPanel({
+  home,
+  draw,
+  away,
+  highlightOutcome,
+  stacked = false,
+}: {
+  home: number | null;
+  draw: number | null;
+  away: number | null;
+  highlightOutcome: "1" | "X" | "2" | null;
+  stacked?: boolean;
+}) {
+  const outcomes = [
+    { key: "1" as const, label: "1", price: home },
+    { key: "X" as const, label: "X", price: draw },
+    { key: "2" as const, label: "2", price: away },
+  ];
+
+  return (
+    <div
+      className={
+        stacked
+          ? "ml-auto flex w-fit shrink-0 flex-col justify-center gap-0.5 text-xs tabular-nums"
+          : "flex items-center justify-center gap-14 text-xs tabular-nums sm:gap-20"
+      }
+      aria-label="1X2 odds"
+    >
+      {outcomes.map((outcome) => {
+        const isWinner = highlightOutcome === outcome.key;
+        return (
+          <div
+            key={outcome.key}
+            className={
+              stacked
+                ? `flex items-baseline gap-1 ${
+                    isWinner
+                      ? "font-bold text-foreground"
+                      : "font-medium text-zinc-500 dark:text-zinc-400"
+                  }`
+                : `flex flex-col items-center gap-0.5 ${
+                    isWinner
+                      ? "font-bold text-foreground"
+                      : "font-medium text-zinc-500 dark:text-zinc-400"
+                  }`
+            }
+          >
+            <span
+              className={
+                isWinner
+                  ? `text-[10px] uppercase tracking-wide${stacked ? " w-3" : ""}`
+                  : `text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500${stacked ? " w-3" : ""}`
+              }
+            >
+              {outcome.label}
+            </span>
+            <span>{formatOddsPrice(outcome.price)}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function AgentResearchButton({
+  isExpanded,
+  onToggle,
+  className,
+}: {
+  isExpanded: boolean;
+  onToggle: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={isExpanded}
+      aria-label={isExpanded ? "Collapse agent research" : "Expand agent research"}
+      onClick={onToggle}
+      className={
+        className ??
+        "mx-auto inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-900 ring-1 ring-inset ring-sky-600/25 transition-colors hover:bg-sky-200/80 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-500/35 dark:hover:bg-sky-900/70"
+      }
+    >
+      <span aria-hidden>🔬</span>
+      <span>Agent Research</span>
+      <ChevronDown
+        className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+        aria-hidden
+      />
+    </button>
+  );
+}
+
 export function MatchList({
   matches,
   hasMore = false,
@@ -197,31 +358,93 @@ export function MatchList({
                   ? winningOneXTwoOutcome(match.homeGoals, match.awayGoals)
                   : null;
 
+              const matchHref = `/match/${match.id}`;
+              const hasLeague = Boolean(match.leagueName || match.leagueSlug);
+              const rowHoverClass =
+                "flex-col gap-1.5 px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900";
+              const scoreCellClass =
+                "text-end text-base font-semibold tabular-nums tracking-tight text-foreground";
+
               return (
                 <li key={match.id} className="bg-white dark:bg-zinc-950">
-                  <div className="flex flex-col gap-1.5 px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                    {match.leagueName || match.leagueSlug ? (
-                      <Link
-                        href={`/match/${match.id}`}
-                        className="flex min-w-0 items-center justify-center gap-1.5"
-                      >
-                        <SlugIcon
-                          kind="league"
-                          slug={match.leagueSlug}
-                          alt={match.leagueName || "League"}
-                          className="h-4 w-4"
+                  <div className={`flex ${rowHoverClass} lg:hidden`}>
+                    <div className="flex items-start justify-between gap-2">
+                      {hasLeague ? (
+                        <Link href={matchHref} className="flex min-w-0 items-center gap-1.5">
+                          <LeagueLabel slug={match.leagueSlug} name={match.leagueName} />
+                        </Link>
+                      ) : (
+                        <span />
+                      )}
+                      {hasAgentResearch ? (
+                        <AgentResearchButton
+                          isExpanded={isExpanded}
+                          onToggle={() => toggleExpanded(match.id)}
+                          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-900 ring-1 ring-inset ring-sky-600/25 transition-colors hover:bg-sky-200/80 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-500/35 dark:hover:bg-sky-900/70"
                         />
-                        {match.leagueName ? (
-                          <p className="min-w-0 truncate text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                            {match.leagueName}
-                          </p>
+                      ) : (
+                        <ReadinessChips
+                          chips={readinessChips}
+                          className="flex shrink-0 flex-wrap items-center justify-end gap-1.5"
+                        />
+                      )}
+                    </div>
+                    <div className="grid grid-cols-[minmax(0,1fr)_minmax(2.5rem,auto)_4.5rem] items-center gap-x-3 gap-y-2.5">
+                      <ClubLine
+                        href={matchHref}
+                        logoSlug={homeLogoSlug}
+                        name={match.homeClubName}
+                        nameWeight={homeNameWeight}
+                        className="col-start-1 row-start-1"
+                      />
+                      <ClubLine
+                        href={matchHref}
+                        logoSlug={awayLogoSlug}
+                        name={match.awayClubName}
+                        nameWeight={awayNameWeight}
+                        className="col-start-1 row-start-2"
+                      />
+                      {showScore ? (
+                        <>
+                          <Link href={matchHref} className={`${scoreCellClass} col-start-2 row-start-1`}>
+                            {match.homeGoals}
+                          </Link>
+                          <Link href={matchHref} className={`${scoreCellClass} col-start-2 row-start-2`}>
+                            {match.awayGoals}
+                          </Link>
+                        </>
+                      ) : (
+                        <Link
+                          href={matchHref}
+                          className={`col-start-2 row-start-1 row-span-2 self-center px-1 ${scoreCellClass}`}
+                        >
+                          <time dateTime={match.matchDate}>{center}</time>
+                        </Link>
+                      )}
+                      <div className="col-start-3 row-start-1 row-span-2 w-full self-center">
+                        {match.odds ? (
+                          <OddsPanel
+                            home={match.odds.home}
+                            draw={match.odds.draw}
+                            away={match.odds.away}
+                            highlightOutcome={highlightOutcome}
+                            stacked
+                          />
                         ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={`hidden ${rowHoverClass} lg:flex`}>
+                    {hasLeague ? (
+                      <Link href={matchHref} className="flex min-w-0 items-center justify-center gap-1.5">
+                        <LeagueLabel slug={match.leagueSlug} name={match.leagueName} />
                       </Link>
                     ) : null}
                     <div className="flex flex-col gap-1.5">
                       <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-2 sm:gap-x-4">
                         <Link
-                          href={`/match/${match.id}`}
+                          href={matchHref}
                           className="flex min-w-0 items-center justify-end gap-2"
                         >
                           <span className={`min-w-0 text-end text-pretty break-words ${homeNameWeight} text-foreground`}>
@@ -234,14 +457,11 @@ export function MatchList({
                             className="h-7 w-7 shrink-0"
                           />
                         </Link>
-                        <Link
-                          href={`/match/${match.id}`}
-                          className="justify-self-center px-1 sm:px-3"
-                        >
+                        <Link href={matchHref} className="justify-self-center px-1 sm:px-3">
                           {centerCell}
                         </Link>
                         <Link
-                          href={`/match/${match.id}`}
+                          href={matchHref}
                           className="flex min-w-0 items-center justify-start gap-2"
                         >
                           <SlugIcon
@@ -256,72 +476,20 @@ export function MatchList({
                         </Link>
                       </div>
                       {hasAgentResearch ? (
-                        <button
-                          type="button"
-                          aria-expanded={isExpanded}
-                          aria-label={isExpanded ? "Collapse agent research" : "Expand agent research"}
-                          onClick={() => toggleExpanded(match.id)}
-                          className="mx-auto inline-flex items-center gap-1 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-medium text-sky-900 ring-1 ring-inset ring-sky-600/25 transition-colors hover:bg-sky-200/80 dark:bg-sky-950/60 dark:text-sky-300 dark:ring-sky-500/35 dark:hover:bg-sky-900/70"
-                        >
-                          <span aria-hidden>🔬</span>
-                          <span>Agent Research</span>
-                          <ChevronDown
-                            className={`h-3 w-3 transition-transform ${isExpanded ? "rotate-180" : ""}`}
-                            aria-hidden
-                          />
-                        </button>
+                        <AgentResearchButton
+                          isExpanded={isExpanded}
+                          onToggle={() => toggleExpanded(match.id)}
+                        />
                       ) : (
-                        <div className="flex flex-wrap items-center justify-center gap-1.5">
-                          {readinessChips.map((chip) => (
-                            <span
-                              key={chip.key}
-                              className={
-                                chip.isReady
-                                  ? "inline-flex items-center rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 ring-1 ring-inset ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30"
-                                  : "inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-400/30 dark:bg-zinc-900/60 dark:text-zinc-300 dark:ring-zinc-600/40"
-                              }
-                            >
-                              {chip.label}
-                            </span>
-                          ))}
-                        </div>
+                        <ReadinessChips chips={readinessChips} />
                       )}
                       {match.odds ? (
-                        <div
-                          className="flex items-center justify-center gap-14 text-xs tabular-nums sm:gap-20"
-                          aria-label="1X2 odds"
-                        >
-                          {(
-                            [
-                              { key: "1" as const, label: "1", price: match.odds.home },
-                              { key: "X" as const, label: "X", price: match.odds.draw },
-                              { key: "2" as const, label: "2", price: match.odds.away },
-                            ] as const
-                          ).map((outcome) => {
-                            const isWinner = highlightOutcome === outcome.key;
-                            return (
-                              <div
-                                key={outcome.key}
-                                className={`flex flex-col items-center gap-0.5 ${
-                                  isWinner
-                                    ? "font-bold text-foreground"
-                                    : "font-medium text-zinc-500 dark:text-zinc-400"
-                                }`}
-                              >
-                                <span
-                                  className={
-                                    isWinner
-                                      ? "text-[10px] uppercase tracking-wide"
-                                      : "text-[10px] uppercase tracking-wide text-zinc-400 dark:text-zinc-500"
-                                  }
-                                >
-                                  {outcome.label}
-                                </span>
-                                <span>{formatOddsPrice(outcome.price)}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
+                        <OddsPanel
+                          home={match.odds.home}
+                          draw={match.odds.draw}
+                          away={match.odds.away}
+                          highlightOutcome={highlightOutcome}
+                        />
                       ) : null}
                     </div>
                   </div>
