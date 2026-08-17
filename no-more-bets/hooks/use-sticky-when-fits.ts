@@ -30,7 +30,7 @@ export function useStickyWhenFits(ref: RefObject<HTMLElement | null>): boolean {
     const lgQuery = window.matchMedia(LG_MEDIA);
 
     function update() {
-      if (!lgQuery.matches) {
+      if (!element || !lgQuery.matches) {
         setShouldStick(false);
         return;
       }
