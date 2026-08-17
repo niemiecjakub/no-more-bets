@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type {
   BankrollEntryBetDetailsDto,
   BankrollEntryListItemDto,
@@ -60,6 +60,8 @@ export function AgentBankrollDetailsPanel({
 
   const isLoadingMoreRef = useRef(false);
   const selectedEntryRef = useRef<BankrollEntryListItemDto | null>(null);
+  const detailPanelRef = useRef<HTMLElement>(null);
+  const shouldScrollToDetailRef = useRef(false);
 
   const hasActiveEntryTypeFilter = selectedEntryNames.length > 0;
   const entryNamesForRequest = hasActiveEntryTypeFilter ? selectedEntryNames : undefined;
@@ -161,6 +163,18 @@ export function AgentBankrollDetailsPanel({
       });
   }, [applyPage, entryNamesForRequest, hasMore, nextCursor, selectedSeasonYears]);
 
+  useLayoutEffect(() => {
+    if (!shouldScrollToDetailRef.current) return;
+    shouldScrollToDetailRef.current = false;
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
+    detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [selectedEntry?.id]);
+
+  function selectEntry(entry: BankrollEntryListItemDto) {
+    shouldScrollToDetailRef.current = true;
+    loadBetDetailsForEntry(entry);
+  }
+
   return (
     <section className="flex flex-col gap-4">
       <div className="grid min-h-[min(78vh,44rem)] grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
@@ -178,7 +192,7 @@ export function AgentBankrollDetailsPanel({
               <AgentBankrollEntriesList
                 entries={entries}
                 selectedEntryId={selectedEntry?.id ?? null}
-                onSelectEntry={loadBetDetailsForEntry}
+                onSelectEntry={selectEntry}
                 isLoading={isInitialLoading}
                 hasMore={hasMore}
                 isLoadingMore={isLoadingMore}
@@ -195,7 +209,10 @@ export function AgentBankrollDetailsPanel({
           )}
         </section>
 
-        <section className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+        <section
+          ref={detailPanelRef}
+          className="flex min-w-0 scroll-mt-20 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+        >
           <AgentBankrollRelatedBet
             selectedEntry={selectedEntry}
             details={selectedBetDetails}
