@@ -9,6 +9,7 @@ import { FeedbackSheetTrigger } from "@/features/feedback/components/feedback-sh
 
 const tabs = [
   { href: "/", label: "Matches" },
+  { href: "/agent", label: "Agent" },
   { href: "/mcp", label: "MCP" },
   { href: "/about", label: "About" },
 ] as const;
@@ -21,32 +22,10 @@ const agentTabs = [
   { href: "/agent?widget=memories", label: "Memories", widget: "memories" },
 ] as const;
 
-function NavbarLinks({
-  pathname,
-  isAgentRoute,
-}: {
-  pathname: string;
-  isAgentRoute: boolean;
-}) {
+function NavbarLinks({ pathname }: { pathname: string }) {
   return (
     <NavigationMenu.Root delayDuration={80} skipDelayDuration={120}>
       <NavigationMenu.List className="flex items-center gap-1">
-        <NavigationMenu.Item>
-          <NavigationMenu.Link asChild active={isAgentRoute}>
-            <Link
-              href="/agent"
-              className={cn(
-                "shrink-0 rounded-md px-4 py-2 text-sm font-bold transition-colors",
-                isAgentRoute
-                  ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
-                  : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
-              )}
-            >
-              Agent
-            </Link>
-          </NavigationMenu.Link>
-        </NavigationMenu.Item>
-
         {tabs.map(({ href, label }) => {
           const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
@@ -104,7 +83,6 @@ export function Navbar() {
   const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const activeAgentWidget = searchParams.get("widget");
-  const isAgentRoute = pathname.startsWith("/agent");
 
   useEffect(() => {
     if (!isMobileMenuOpen) return;
@@ -172,7 +150,7 @@ export function Navbar() {
 
         <div className="hidden min-h-0 min-w-0 flex-1 lg:block">
           <div className="mx-auto flex w-full max-w-7xl justify-start overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:overflow-visible">
-            <NavbarLinks pathname={pathname} isAgentRoute={isAgentRoute} />
+            <NavbarLinks pathname={pathname} />
           </div>
         </div>
 
@@ -201,45 +179,50 @@ export function Navbar() {
             isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="space-y-1">
-            <div className="pt-2">
-              <Link
-                href="/agent"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={`block rounded-md px-4 py-2 text-sm font-bold transition-colors ${
-                  pathname.startsWith("/agent")
-                    ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
-                    : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
-                }`}
-              >
-                Agent
-              </Link>
-              <div className="mt-1 space-y-1 pl-3">
-                {agentTabs.map(({ href, label, widget }) => {
-                  const isActive =
-                    pathname.startsWith("/agent") &&
-                    (activeAgentWidget === widget ||
-                      (activeAgentWidget === null && widget === "bankroll"));
-                  return (
+          <div className="space-y-1 pt-2">
+            {tabs.map(({ href, label }) => {
+              const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+
+              if (href === "/agent") {
+                return (
+                  <div key="mobile-agent">
                     <Link
-                      key={`mobile-${href}`}
-                      href={href}
+                      href="/agent"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className={`block rounded-md px-4 py-2 text-sm transition-colors ${
+                      className={`block rounded-md px-4 py-2 text-sm font-bold transition-colors ${
                         isActive
                           ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
                           : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
                       }`}
                     >
-                      {label}
+                      Agent
                     </Link>
-                  );
-                })}
-              </div>
-            </div>
+                    <div className="mt-1 space-y-1 pl-3">
+                      {agentTabs.map(({ href: agentHref, label: agentLabel, widget }) => {
+                        const isAgentTabActive =
+                          pathname.startsWith("/agent") &&
+                          (activeAgentWidget === widget ||
+                            (activeAgentWidget === null && widget === "bankroll"));
+                        return (
+                          <Link
+                            key={`mobile-${agentHref}`}
+                            href={agentHref}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`block rounded-md px-4 py-2 text-sm transition-colors ${
+                              isAgentTabActive
+                                ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                                : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+                            }`}
+                          >
+                            {agentLabel}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              }
 
-            {tabs.map(({ href, label }) => {
-              const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
               return (
                 <Link
                   key={`mobile-${href}`}
