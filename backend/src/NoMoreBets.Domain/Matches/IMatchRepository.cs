@@ -16,6 +16,9 @@ public interface IMatchRepository
   public Task<List<Match>> GetMatches(DateTime date);
   public Task<IReadOnlyList<Match>> GetUpcomingMatchesAsync(CancellationToken cancellationToken = default);
   public Task<IReadOnlyList<Match>> GetUpcomingMatchesWithOddsSnapshotsAsync(CancellationToken cancellationToken = default);
+  public Task<IReadOnlyList<Match>> GetUpcomingMatchesWithAnalysisCodeAsync(
+    string code,
+    CancellationToken cancellationToken = default);
   public Task<Lineup?> GetLineup(int matchId);
   public Task<IReadOnlyList<MatchEvent>> GetMatchEventsForMatchAsync(
     int matchId,

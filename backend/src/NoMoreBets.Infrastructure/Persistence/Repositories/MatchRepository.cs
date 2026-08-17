@@ -230,6 +230,25 @@ public class MatchRepository : IMatchRepository
       .ConfigureAwait(false);
   }
 
+  public async Task<IReadOnlyList<Match>> GetUpcomingMatchesWithAnalysisCodeAsync(
+    string code,
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.Match
+      .AsNoTracking()
+      .Where(m => m.MatchStatusId == (int)MatchStatus.Upcomming)
+      .Where(m => _db.MatchAnalysis.Any(a => a.MatchId == m.Id && a.Code == code))
+      .OrderBy(m => m.MatchDate)
+      .Include(m => m.HomeClub)
+      .Include(m => m.AwayClub)
+      .Include(m => m.MatchStatusEntity)
+      .Include(m => m.Stage)
+        .ThenInclude(s => s!.Season)
+        .ThenInclude(se => se.League)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public Task<MatchPreview?> GetMatchPreview(int matchId)
   {
     return _db.MatchPreview.FirstOrDefaultAsync(e => e.MatchId == matchId);

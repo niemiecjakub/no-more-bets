@@ -21,6 +21,7 @@ public class McpToolsTests
       "matches_getEvents",
       "matches_getCurrentOdds",
       "matches_getResearch",
+      "matches_getUpcomingResearched",
       "leagues_getList",
       "leagues_getTable",
       "leagues_getClubStatistics",

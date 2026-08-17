@@ -9,6 +9,7 @@ using NoMoreBets.Application.Matches.GetMatchEvents;
 using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchLineups;
+using NoMoreBets.Application.Matches.GetUpcomingResearchedMatches;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches.Dto;
 
@@ -116,5 +117,15 @@ public sealed class MatchesMcpTools(IMediator mediator)
     CancellationToken cancellationToken = default)
   {
     return mediator.Send(new GetMatchAgentResearchQuery(matchId), cancellationToken);
+  }
+
+  [McpServerTool(
+    Name = "matches_getUpcomingResearched",
+    Title = "List upcoming researched matches",
+    ReadOnly = true)]
+  [Description("Returns upcoming fixtures with stored research, ordered by kickoff.")]
+  public Task<IReadOnlyList<MatchDto>> GetUpcomingResearchedAsync(CancellationToken cancellationToken = default)
+  {
+    return mediator.Send(new GetUpcomingResearchedMatchesQuery(), cancellationToken);
   }
 }
