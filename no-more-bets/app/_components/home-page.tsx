@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MatchList } from "../../features/matches/components/match-list";
 import { ALL_STATUSES_ID, MatchFiltersPanel, parseSortOrderParam, statusFilters } from "../../features/matches/components/match-filters-panel";
@@ -15,7 +15,12 @@ import type { AgentDashboardResearchBettingSummaryWidget } from "@/features/bets
 import { ResearchBettingPanel } from "@/features/bets/components/research-betting-panel";
 import { ResearchBettingMobileSheet } from "@/features/bets/components/research-betting-mobile-sheet";
 import { handleServiceError } from "@/lib/error-handler";
+import { cn } from "@/lib/utils";
 import { useRevealOnScrollUp } from "@/hooks/use-reveal-on-scroll-up";
+import { useElementVisible } from "@/hooks/use-element-visible";
+import { useShowScrollToTop } from "@/hooks/use-show-scroll-to-top";
+import { ScrollToTopButton } from "@/components/scroll-to-top-button";
+import { StickyAside } from "@/components/sticky-aside";
 
 function MatchesFallback() {
     return (
@@ -73,6 +78,18 @@ export default function HomePage() {
     const [isStatsLoading, setIsStatsLoading] = useState(false);
     const [statsError, setStatsError] = useState<string | null>(null);
     const isMobileChromeVisible = useRevealOnScrollUp();
+    const filtersAsideRef = useRef<HTMLElement>(null);
+    const researchAsideRef = useRef<HTMLElement>(null);
+    const [filtersSticky, setFiltersSticky] = useState(false);
+    const [researchSticky, setResearchSticky] = useState(false);
+    const filtersVisible = useElementVisible(filtersAsideRef);
+    const researchVisible = useElementVisible(researchAsideRef);
+    const showScrollToTop = useShowScrollToTop({
+        filtersSticky,
+        filtersVisible,
+        researchSticky,
+        researchVisible,
+    });
 
     const latestSeasonYear = seasonYears[0] ?? null;
 
@@ -305,9 +322,13 @@ export default function HomePage() {
                     <MatchFiltersMobileSheet {...filterPanelProps} sortParam={searchParams.get("sort")} latestSeasonYear={latestSeasonYear} />
                     <ResearchBettingMobileSheet {...researchPanelProps} />
                 </div>
-                <aside className="order-1 hidden min-h-0 flex-col gap-4 self-start lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100dvh-5rem-var(--site-footer-height))] lg:overflow-y-auto lg:overscroll-contain">
+                <StickyAside
+                    asideRef={filtersAsideRef}
+                    onStickyChange={setFiltersSticky}
+                    className="order-1 hidden flex-col gap-4 self-start lg:flex"
+                >
                     <MatchFiltersPanel {...filterPanelProps} />
-                </aside>
+                </StickyAside>
                 <section className="order-3 min-w-0 lg:order-2">
                     {isLoading || !seasonFilterReady ? (
                         <MatchesFallback />
@@ -324,9 +345,23 @@ export default function HomePage() {
                         />
                     )}
                 </section>
-                <aside className="order-2 hidden min-h-0 flex-col gap-3 self-start lg:order-3 lg:sticky lg:top-20 lg:flex lg:max-h-[calc(100dvh-5rem-var(--site-footer-height))] lg:overflow-y-auto lg:overscroll-contain">
+                <StickyAside
+                    asideRef={researchAsideRef}
+                    onStickyChange={setResearchSticky}
+                    className="order-2 hidden flex-col gap-3 self-start lg:order-3 lg:flex"
+                >
                     <ResearchBettingPanel {...researchPanelProps} />
-                </aside>
+                </StickyAside>
+            </div>
+            <div
+                className={cn(
+                    "pointer-events-none fixed inset-x-0 bottom-[calc(var(--site-footer-height)+1rem)] z-40 hidden lg:block",
+                    showScrollToTop ? "opacity-100" : "opacity-0",
+                )}
+            >
+                <div className="mx-auto flex w-full max-w-7xl justify-end px-4 sm:px-6">
+                    <ScrollToTopButton visible={showScrollToTop} />
+                </div>
             </div>
         </main>
     );
