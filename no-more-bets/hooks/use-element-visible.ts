@@ -10,6 +10,7 @@ export function useElementVisible(ref: RefObject<HTMLElement | null>): boolean {
     if (!element) return;
 
     function update() {
+      if (!element) return;
       const rect = element.getBoundingClientRect();
       setVisible(rect.bottom > 0 && rect.top < window.innerHeight);
     }
