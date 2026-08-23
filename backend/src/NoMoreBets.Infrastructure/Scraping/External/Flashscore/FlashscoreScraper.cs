@@ -24,7 +24,7 @@ public sealed partial class FlashscoreScraper : BaseScraper, IMatchResultsProvid
       ["ligue-1"] = "https://www.flashscore.com/football/france/ligue-1/results/",
       ["premier-league"] = "https://www.flashscore.com/football/england/premier-league/results/",
       ["bundesliga"] = "https://www.flashscore.com/football/germany/bundesliga/results/",
-      ["serie-a "] = "https://www.flashscore.com/football/italy/serie-a/results/",
+      ["serie-a"] = "https://www.flashscore.com/football/italy/serie-a/results/",
       ["laliga"] = "https://www.flashscore.com/football/spain/laliga/results/",
     };
 
