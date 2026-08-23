@@ -3,6 +3,7 @@ import { SlugIcon } from "@/components/slug-icon";
 import type { ClubNextMatch } from "../interfaces";
 import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
 import { formatMatchTime } from "@/utils/format-date";
+import { matchPath } from "@/lib/paths";
 
 interface ClubNextMatchCardProps {
   match: ClubNextMatch;
@@ -18,7 +19,12 @@ export function ClubNextMatchCard({ match, leagueName, leagueSlug }: ClubNextMat
 
   return (
     <Link
-      href={`/match/${match.matchId}`}
+      href={matchPath({
+        id: match.matchId,
+        homeClubSlug: match.homeClubSlug,
+        awayClubSlug: match.awayClubSlug,
+        matchDate: match.matchDate,
+      })}
       className="flex flex-col gap-1.5 px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900"
     >
       {showLeague ? <LeagueRow leagueName={leagueName} leagueSlug={leagueSlug} /> : null}

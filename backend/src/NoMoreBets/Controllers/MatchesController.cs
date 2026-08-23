@@ -7,6 +7,7 @@ using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Application.Matches.GetMatchInjuries;
 using NoMoreBets.Application.Matches.GetMatchEvents;
 using NoMoreBets.Application.Matches.GetMatchLineups;
+using NoMoreBets.Application.Matches.GetUpcomingResearchedMatches;
 using NoMoreBets.Domain.Enums;
 using MatchInjuriesResult = NoMoreBets.Application.Matches.GetMatchInjuries.MatchInjuriesResult;
 using MatchLineupResult = NoMoreBets.Application.Matches.GetMatchLineups.MatchLineupResult;
@@ -61,6 +62,16 @@ public class MatchesController(IMediator mediator) : ControllerBase
         normalizedSeasonYears),
       cancellationToken).ConfigureAwait(false);
 
+    return Ok(result);
+  }
+
+  [HttpGet("matches/upcoming-researched")]
+  public async Task<ActionResult<IReadOnlyList<MatchDto>>> GetUpcomingResearched(
+    CancellationToken cancellationToken = default)
+  {
+    var result = await mediator
+      .Send(new GetUpcomingResearchedMatchesQuery(), cancellationToken)
+      .ConfigureAwait(false);
     return Ok(result);
   }
 

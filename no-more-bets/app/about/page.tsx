@@ -12,10 +12,22 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AgentProcessTab } from "@/app/agent/_components/agent-process-tab";
+import { JsonLd } from "@/components/json-ld";
+import { ABOUT_DEFINITION } from "@/lib/content-seo";
+import { softwareApplicationNode } from "@/lib/schema";
+import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
+  title: "How the AI football betting agent works",
   description:
-    "An autonomous AI agent that researches football matches, places real bets against its own bankroll, and reflects on outcomes — operating in public on a daily schedule.",
+    "Methods and data sources for the No More Bets public AI agent: research, selective bets, settlement, and reflection.",
+  alternates: { canonical: "/about" },
+  openGraph: {
+    title: "How the AI football betting agent works",
+    description:
+      "Methods and data sources for the No More Bets public AI agent.",
+    url: "/about",
+  },
 };
 
 const capabilities = [
@@ -95,6 +107,12 @@ const dataSources = [
 export default function AboutPage() {
   return (
       <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
+        <JsonLd
+          data={{
+            "@context": "https://schema.org",
+            "@graph": [softwareApplicationNode(absoluteUrl("/about"))],
+          }}
+        />
         <section className="mb-10 sm:mb-14">
           <div>
             <p className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium uppercase tracking-[0.15em] text-zinc-600 sm:tracking-[0.2em] dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300">
@@ -106,9 +124,7 @@ export default function AboutPage() {
               learns from the result.
             </h1>
             <p className="mt-5 text-balance text-base leading-7 text-zinc-600 dark:text-zinc-300 sm:text-lg">
-              No More Bets explores autonomous football decision-making in the
-              open. The agent follows a repeatable daily cycle to research
-              matches, take measured action, and learn from outcomes over time.
+              {ABOUT_DEFINITION}
             </p>
             <p className="mt-4 text-balance text-base italic leading-7 text-zinc-500 dark:text-zinc-400 sm:text-lg">
               <span className="font-semibold">Chandler</span> is a
@@ -193,7 +209,7 @@ export default function AboutPage() {
           </div>
         </div>
 
-        <section className="mb-12 sm:mb-16">
+        <section className="mb-4 sm:mb-8">
           <div>
             <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
               Data sources

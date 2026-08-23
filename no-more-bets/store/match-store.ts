@@ -32,6 +32,12 @@ interface MatchStore {
   loadMoreMatches: () => Promise<void>;
   retryLoadMore: () => void;
   setMatchAnalysisPage: (matchId: number) => Promise<void>;
+  seedMatches: (payload: {
+    items: MatchListItem[];
+    hasMore: boolean;
+    nextCursor: { at: string; id: number } | null;
+    filters?: FetchMatchesFilters;
+  }) => void;
 }
 
 let isLoadingMoreInFlight = false;
@@ -46,6 +52,18 @@ export const useMatchStore = create<MatchStore>((set, get) => ({
   lastFilters: undefined,
   error: null,
   loadMoreError: null,
+
+  seedMatches: ({ items, hasMore, nextCursor, filters }) => {
+    set({
+      matches: items,
+      hasMore,
+      nextCursor,
+      lastFilters: filters,
+      isLoading: false,
+      error: null,
+      loadMoreError: null,
+    });
+  },
 
   setMatches: async (filters) => {
     set({

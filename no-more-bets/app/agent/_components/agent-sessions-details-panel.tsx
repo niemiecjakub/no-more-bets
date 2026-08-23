@@ -11,6 +11,7 @@ import { fetchBetSlips } from "@/features/bets/services/bets-api";
 import { AgentSessionTranscript } from "@/features/bets/components/agent-session-transcript";
 import { fetchAgentSessionMessages, type AgentSessionMessage } from "@/features/bets/services/agent-session-api";
 import { isBettingSessionPhase, sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
+import { matchPath } from "@/lib/paths";
 import type { AgentSessionListItem, AgentSessionMatchSummary } from "@/features/sessions/interfaces";
 import { fetchAgentSessionsPage } from "@/features/sessions/services/sessions-api";
 import { handleServiceError } from "@/lib/error-handler";
@@ -84,7 +85,7 @@ function SessionMatchTeamsRow({ match }: { match: AgentSessionMatchSummary }) {
     return (
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-x-4">
             <Link
-                href={`/match/${match.matchId}`}
+                href={matchPath(match)}
                 className="flex min-w-0 items-center justify-end gap-2"
             >
                 <span className="min-w-0 truncate text-end text-sm font-medium text-foreground">
@@ -92,11 +93,11 @@ function SessionMatchTeamsRow({ match }: { match: AgentSessionMatchSummary }) {
                 </span>
                 <SlugIcon kind="club" slug={homeLogoSlug} alt={match.homeClubName} className="h-6 w-6" />
             </Link>
-            <Link href={`/match/${match.matchId}`} className="justify-self-center px-3">
+            <Link href={matchPath(match)} className="justify-self-center px-3">
                 {centerCell}
             </Link>
             <Link
-                href={`/match/${match.matchId}`}
+                href={matchPath(match)}
                 className="flex min-w-0 items-center justify-start gap-2"
             >
                 <SlugIcon kind="club" slug={awayLogoSlug} alt={match.awayClubName} className="h-6 w-6" />

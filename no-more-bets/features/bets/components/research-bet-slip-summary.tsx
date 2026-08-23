@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { formatCurrency } from "@/utils/format-currency";
 import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
 import { formatMatchDate } from "../../../utils/format-date";
+import { matchPath } from "@/lib/paths";
 
 function getStatusBadgeClass(status: BetSlipSummaryDto["status"]): string {
   switch (status) {
@@ -87,7 +88,7 @@ function SelectionRowDefault({ selection }: { selection: BetSelectionSummaryDto 
   return (
     <li className="border-t border-zinc-100 py-2 first:border-t-0 first:pt-0 last:pb-0 dark:border-zinc-800/80">
       <Link
-        href={`/match/${selection.matchId}`}
+        href={matchPath({ id: selection.matchId })}
         className="-mx-1 flex items-center gap-3 rounded-md px-1 py-0.5 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/50"
       >
         <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-center sm:gap-4">

@@ -9,6 +9,7 @@ import { MATCH_STATUS } from "../interfaces";
 import { clubLogoSlugSegment } from "../../../utils/club-logo-slug";
 import { formatMatchTime } from "../../../utils/format-date";
 import { MatchListResearchPanel } from "./match-list-research-panel";
+import { matchPath } from "@/lib/paths";
 
 interface MatchListProps {
   matches: MatchListItem[];
@@ -17,6 +18,7 @@ interface MatchListProps {
   onLoadMore?: () => void;
   loadMoreError?: string | null;
   onRetryLoadMore?: () => void;
+  nextPageHref?: string | null;
 }
 
 interface MatchDateGroup {
@@ -242,6 +244,7 @@ export function MatchList({
   onLoadMore,
   loadMoreError = null,
   onRetryLoadMore,
+  nextPageHref = null,
 }: MatchListProps) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [expandedMatchIds, setExpandedMatchIds] = useState<Set<number>>(() => new Set());
@@ -358,7 +361,7 @@ export function MatchList({
                   ? winningOneXTwoOutcome(match.homeGoals, match.awayGoals)
                   : null;
 
-              const matchHref = `/match/${match.id}`;
+              const matchHref = matchPath(match);
               const hasLeague = Boolean(match.leagueName || match.leagueSlug);
               const rowHoverClass =
                 "flex-col gap-1.5 px-4 py-3 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900";
@@ -521,6 +524,18 @@ export function MatchList({
 
       {isLoadingMore ? (
         <div className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-900" />
+      ) : null}
+
+      {hasMore && nextPageHref ? (
+        <p className="text-center text-sm">
+          <Link
+            href={nextPageHref}
+            rel="next"
+            className="font-medium text-zinc-700 underline-offset-2 hover:underline dark:text-zinc-200"
+          >
+            Next page of matches
+          </Link>
+        </p>
       ) : null}
 
       {hasMore ? <div ref={sentinelRef} className="h-1" aria-hidden /> : null}

@@ -8,12 +8,17 @@ interface LeagueStore {
   isLoading: boolean;
   error: string | null;
   setLeagues: () => Promise<void>;
+  seedLeagues: (leagues: LeagueListItem[]) => void;
 }
 
 export const useLeagueStore = create<LeagueStore>((set) => ({
   leagues: [],
   isLoading: false,
   error: null,
+
+  seedLeagues: (leagues) => {
+    set({ leagues, isLoading: false, error: null });
+  },
 
   setLeagues: async () => {
     set({ isLoading: true, error: null });

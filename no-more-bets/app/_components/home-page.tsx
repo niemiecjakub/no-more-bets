@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { MatchList } from "../../features/matches/components/match-list";
 import { ALL_STATUSES_ID, MatchFiltersPanel, parseSortOrderParam, statusFilters } from "../../features/matches/components/match-filters-panel";
-import { MATCH_STATUS } from "../../features/matches/interfaces";
-import { getDefaultSortForStatus, type MatchDateSortOrder } from "../../features/matches/services/matches-api";
+import { MATCH_STATUS, type MatchListItem } from "../../features/matches/interfaces";
+import { getDefaultSortForStatus, type FetchMatchesFilters, type MatchDateSortOrder } from "../../features/matches/services/matches-api";
+import type { LeagueListItem } from "@/features/leagues/interfaces";
 import { MatchFiltersMobileSheet } from "../../features/matches/components/match-filters-mobile-sheet";
 import { useMatchStore } from "@/store/match-store";
 import { useLeagueStore } from "@/store/league-store";
@@ -21,6 +22,15 @@ import { useElementVisible } from "@/hooks/use-element-visible";
 import { useShowScrollToTop } from "@/hooks/use-show-scroll-to-top";
 import { ScrollToTopButton } from "@/components/scroll-to-top-button";
 import { StickyAside } from "@/components/sticky-aside";
+
+interface HomePageProps {
+    initialMatches?: MatchListItem[];
+    initialHasMore?: boolean;
+    initialCursor?: { at: string; id: number } | null;
+    initialFilters?: FetchMatchesFilters;
+    initialLeagues?: LeagueListItem[];
+    initialSeasonYears?: string[];
+}
 
 function MatchesFallback() {
     return (
@@ -57,11 +67,18 @@ function MatchesFallback() {
     );
 }
 
-export default function HomePage() {
+export default function HomePage({
+    initialMatches = [],
+    initialHasMore = false,
+    initialCursor = null,
+    initialFilters,
+    initialLeagues = [],
+    initialSeasonYears = [],
+}: HomePageProps) {
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
-    const { matches, isLoading, error, hasMore, isLoadingMore, loadMoreError, setMatches, loadMoreMatches, retryLoadMore } = useMatchStore();
+    const { matches, isLoading, error, hasMore, isLoadingMore, loadMoreError, nextCursor, setMatches, loadMoreMatches, retryLoadMore, seedMatches } = useMatchStore();
 
     const handleLoadMoreMatches = useCallback(() => {
         void loadMoreMatches();
@@ -70,9 +87,9 @@ export default function HomePage() {
     const handleRetryLoadMoreMatches = useCallback(() => {
         retryLoadMore();
     }, [retryLoadMore]);
-    const { leagues, isLoading: isLeaguesLoading, error: leaguesError, setLeagues } = useLeagueStore();
-    const [seasonYears, setSeasonYears] = useState<string[]>([]);
-    const [isSeasonYearsLoading, setIsSeasonYearsLoading] = useState(true);
+    const { leagues, isLoading: isLeaguesLoading, error: leaguesError, setLeagues, seedLeagues } = useLeagueStore();
+    const [seasonYears, setSeasonYears] = useState<string[]>(initialSeasonYears);
+    const [isSeasonYearsLoading, setIsSeasonYearsLoading] = useState(initialSeasonYears.length === 0);
     const [seasonYearsError, setSeasonYearsError] = useState<string | null>(null);
     const [summaryWidget, setSummaryWidget] = useState<AgentDashboardResearchBettingSummaryWidget | null>(null);
     const [isStatsLoading, setIsStatsLoading] = useState(false);
@@ -90,6 +107,8 @@ export default function HomePage() {
         researchSticky,
         researchVisible,
     });
+
+    const skipFirstMatchFetch = useRef(true);
 
     const latestSeasonYear = seasonYears[0] ?? null;
 
@@ -165,10 +184,15 @@ export default function HomePage() {
     }, [leagues, selectedLeagueIds, selectedSeasonYears]);
 
     useEffect(() => {
+        if (initialLeagues.length > 0) {
+            seedLeagues(initialLeagues);
+            return;
+        }
         setLeagues();
-    }, [setLeagues]);
+    }, [initialLeagues, seedLeagues, setLeagues]);
 
     useEffect(() => {
+        if (initialSeasonYears.length > 0) return;
         let isMounted = true;
 
         async function loadSeasonYears() {
@@ -190,12 +214,22 @@ export default function HomePage() {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [initialSeasonYears.length]);
 
     useEffect(() => {
         if (!seasonFilterReady) return;
+        if (skipFirstMatchFetch.current) {
+            skipFirstMatchFetch.current = false;
+            seedMatches({
+                items: initialMatches,
+                hasMore: initialHasMore,
+                nextCursor: initialCursor,
+                filters: matchFilters,
+            });
+            return;
+        }
         setMatches(matchFilters);
-    }, [matchFilters, setMatches, seasonFilterReady]);
+    }, [matchFilters, setMatches, seasonFilterReady, seedMatches, initialMatches, initialHasMore, initialCursor]);
 
     useEffect(() => {
         if (!seasonFilterReady) return;
@@ -245,6 +279,8 @@ export default function HomePage() {
         } else {
             params.set("season", seasonYearsForUrl.join(","));
         }
+        params.delete("afterDate");
+        params.delete("afterId");
         router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     }
 
@@ -281,10 +317,26 @@ export default function HomePage() {
             } else {
                 params.delete("search");
             }
+            params.delete("afterDate");
+            params.delete("afterId");
             router.replace(`${pathname}?${params.toString()}`, { scroll: false });
         },
         [pathname, router, searchParams],
     );
+
+    const showingSsrList = skipFirstMatchFetch.current && matches.length === 0;
+    const listMatches = showingSsrList ? initialMatches : matches;
+    const listHasMore = showingSsrList ? initialHasMore : hasMore;
+    const listCursor = showingSsrList ? initialCursor : nextCursor;
+    const showMatchSkeleton = !showingSsrList && (isLoading || !seasonFilterReady);
+
+    const nextPageHref = useMemo(() => {
+        if (!listHasMore || !listCursor) return null;
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("afterDate", listCursor.at);
+        params.set("afterId", String(listCursor.id));
+        return `${pathname}?${params.toString()}`;
+    }, [listHasMore, listCursor, pathname, searchParams]);
 
     const filterPanelProps = {
         leagues,
@@ -330,18 +382,19 @@ export default function HomePage() {
                     <MatchFiltersPanel {...filterPanelProps} />
                 </StickyAside>
                 <section className="order-3 min-w-0 lg:order-2">
-                    {isLoading || !seasonFilterReady ? (
+                    {showMatchSkeleton ? (
                         <MatchesFallback />
                     ) : error ? (
                         <p className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 px-4 py-3 text-red-800 dark:text-red-200">{error}</p>
                     ) : (
                         <MatchList
-                            matches={matches}
-                            hasMore={hasMore}
+                            matches={listMatches}
+                            hasMore={listHasMore}
                             isLoadingMore={isLoadingMore}
                             onLoadMore={handleLoadMoreMatches}
                             loadMoreError={loadMoreError}
                             onRetryLoadMore={handleRetryLoadMoreMatches}
+                            nextPageHref={nextPageHref}
                         />
                     )}
                 </section>

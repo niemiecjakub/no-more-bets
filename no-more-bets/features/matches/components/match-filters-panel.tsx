@@ -9,12 +9,14 @@ import type { LeagueListItem } from "@/features/leagues/interfaces";
 import { cn } from "@/lib/utils";
 import { MATCH_STATUS } from "../interfaces";
 import {
+  ALL_STATUSES_ID,
   getDefaultSortForStatus,
   MATCH_DATE_SORT,
+  parseSortOrderParam,
   type MatchDateSortOrder,
 } from "../services/matches-api";
 
-export const ALL_STATUSES_ID = -1;
+export { ALL_STATUSES_ID, parseSortOrderParam };
 
 export const statusFilters = [
   { id: ALL_STATUSES_ID, label: "All" },
@@ -26,16 +28,6 @@ export const sortFilters = [
   { id: MATCH_DATE_SORT.Ascending, label: "Ascending" },
   { id: MATCH_DATE_SORT.Descending, label: "Descending" },
 ] as const;
-
-export function parseSortOrderParam(
-  value: string | null,
-  statusId: number,
-): MatchDateSortOrder {
-  if (value === MATCH_DATE_SORT.Ascending || value === MATCH_DATE_SORT.Descending) {
-    return value;
-  }
-  return getDefaultSortForStatus(statusId);
-}
 
 export function isExplicitSortOverride(
   value: string | null,

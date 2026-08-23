@@ -1,6 +1,3 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   Shield,
@@ -10,10 +7,7 @@ import {
   Wrench,
 } from "lucide-react";
 import type { McpToolGroup } from "@/features/mcp/interfaces";
-import { fetchMcpToolGroups } from "@/features/mcp/services/mcp-api";
-import { handleServiceError } from "@/lib/error-handler";
 import { McpAccessNote } from "./mcp-access-note";
-import { McpToolsSkeleton } from "./mcp-tools-skeleton";
 
 const groupPresentation: Record<
   string,
@@ -29,35 +23,13 @@ const fallbackPresentation = {
   Icon: Wrench,
 };
 
-export function McpPageContent() {
-  const [toolGroups, setToolGroups] = useState<McpToolGroup[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetchMcpToolGroups()
-      .then((groups) => {
-        if (!cancelled) {
-          setToolGroups(groups);
-          setError(null);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(handleServiceError(err, "Could not load MCP tools."));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+export function McpPageContent({
+  toolGroups,
+  error,
+}: {
+  toolGroups: McpToolGroup[];
+  error: string | null;
+}) {
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
       <section className="mb-10 sm:mb-14">
@@ -70,19 +42,21 @@ export function McpPageContent() {
             Football data tools for your AI client.
           </h1>
           <p className="mt-5 text-balance text-base leading-7 text-zinc-600 dark:text-zinc-300 sm:text-lg">
-            Connect No More Bets as an MCP server and give agents structured
-            access to matches, clubs, leagues, odds, and research - the same
+            The No More Bets MCP server is a Model Context Protocol endpoint that gives agents
+            structured football fixtures, research, lineups, odds, clubs, and standings — the same
             data the public agent uses.
           </p>
           <McpAccessNote />
         </div>
       </section>
 
-      {isLoading ? (
-        <McpToolsSkeleton />
-      ) : error ? (
+      {error ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-300">
           {error}
+        </p>
+      ) : toolGroups.length === 0 ? (
+        <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-300">
+          No MCP tools are published right now.
         </p>
       ) : (
         <>

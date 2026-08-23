@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { SlugIcon } from "@/components/slug-icon";
-import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
 import type { RecentMatch } from "../interfaces";
+import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
+import { matchPath } from "@/lib/paths";
 
 function ResultBadge({ result }: { result: string }) {
   const className =
@@ -57,7 +58,7 @@ export function RecentGamesList({ games }: { games?: RecentMatch[] | null }) {
         <li key={`${game.matchId}-${game.opponent}-${game.date}`}>
           {game.matchId > 0 ? (
             <Link
-              href={`/match/${game.matchId}`}
+              href={matchPath({ id: game.matchId })}
               className={`${rowClass} transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900`}
             >
               <GameRowContent game={game} />

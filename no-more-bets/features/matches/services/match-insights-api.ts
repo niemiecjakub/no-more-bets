@@ -109,7 +109,7 @@ function mapBetSlipSummaryFromApi(raw: BetSlipSummaryApiDto): BetSlipSummaryDto 
   };
 }
 
-function mapMatchResearchBetSlipFromApi(raw: MatchResearchBetSlipApiDto): MatchResearchBetSlipDto {
+export function mapMatchResearchBetSlipFromApi(raw: MatchResearchBetSlipApiDto): MatchResearchBetSlipDto {
   return {
     slip: mapBetSlipSummaryFromApi(raw.slip),
     scenarios:

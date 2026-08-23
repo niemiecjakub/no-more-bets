@@ -24,10 +24,22 @@ export const MATCH_DATE_SORT = {
 export type MatchDateSortOrder =
   (typeof MATCH_DATE_SORT)[keyof typeof MATCH_DATE_SORT];
 
+export const ALL_STATUSES_ID = -1;
+
 export function getDefaultSortForStatus(statusId: number): MatchDateSortOrder {
   return statusId === MATCH_STATUS.Upcoming
     ? MATCH_DATE_SORT.Ascending
     : MATCH_DATE_SORT.Descending;
+}
+
+export function parseSortOrderParam(
+  value: string | null,
+  statusId: number,
+): MatchDateSortOrder {
+  if (value === MATCH_DATE_SORT.Ascending || value === MATCH_DATE_SORT.Descending) {
+    return value;
+  }
+  return getDefaultSortForStatus(statusId);
 }
 
 function optionalInt(v: unknown): number | null {
@@ -69,7 +81,7 @@ function normalizeMatchDetails(raw: unknown): MatchDetailsSummary | null {
   };
 }
 
-function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
+export function normalizeMatchAnalysisPage(raw: unknown): MatchAnalysisPageDto {
   const r = raw as Record<string, unknown>;
   const item = raw as MatchAnalysisPageDto;
   const homeSlug =

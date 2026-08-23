@@ -10,6 +10,7 @@ type SlugIconProps = {
   slug: string | null | undefined;
   alt: string;
   className?: string;
+  size?: number;
 };
 
 export function SlugIcon({
@@ -17,6 +18,7 @@ export function SlugIcon({
   slug,
   alt,
   className = "h-6 w-6",
+  size = 24,
 }: SlugIconProps) {
   const segment = (slug ?? "").trim().toLowerCase();
   if (!segment) return null;
@@ -34,6 +36,8 @@ export function SlugIcon({
     <img
       src={src}
       alt={alt}
+      width={size}
+      height={size}
       className={`shrink-0 object-contain ${className}`}
     />
   );

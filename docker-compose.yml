@@ -66,6 +66,11 @@ services:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
     ports:
       - "3000:3000"
+    environment:
+      - API_URL=http://backend:8080
+      - SITE_URL=${SITE_URL:-https://nomorebets.io}
+    networks:
+      - backend_db
     depends_on:
       - backend
 

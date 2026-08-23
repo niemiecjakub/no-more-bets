@@ -4,6 +4,7 @@ import Link from "next/link";
 import { SlugIcon } from "@/components/slug-icon";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { LeagueTable, MatchResult } from "@/features/leagues/interfaces";
+import { clubPath } from "@/lib/paths";
 
 function TableHeaderTooltip({
   label,
@@ -136,7 +137,7 @@ export function ClubLeagueTable({ table, highlightClubId }: ClubLeagueTableProps
                 <td className="px-2 py-2 text-center tabular-nums text-zinc-600 dark:text-zinc-300">{row.position}</td>
                 <td className="max-w-44 px-2 py-2">
                   <Link
-                    href={`/club/${row.clubId}`}
+                    href={clubPath(row.clubSlug || String(row.clubId))}
                     className="flex min-w-0 items-center gap-2 font-medium text-foreground transition-colors hover:text-red-600 dark:hover:text-red-400"
                     title={row.clubName}
                   >
