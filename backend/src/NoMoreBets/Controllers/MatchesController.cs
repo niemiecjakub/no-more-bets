@@ -40,7 +40,7 @@ public class MatchesController(IMediator mediator) : ControllerBase
       return BadRequest("sortOrder must be 'asc' or 'desc'.");
 
     DateTime? afterMatchDateUtc = afterMatchDate is not null
-      ? DateTimeQueryExtensions.ToUtc(afterMatchDate.Value)
+      ? UtcDateTime.ToUtc(afterMatchDate.Value)
       : null;
 
     var normalizedSearch = string.IsNullOrWhiteSpace(search) ? null : search.Trim();

@@ -61,7 +61,7 @@ public class BankrollController(IMediator mediator) : ControllerBase
     }
 
     DateTime? afterCreatedAtUtc = afterCreatedAt is not null
-      ? DateTimeQueryExtensions.ToUtc(afterCreatedAt.Value)
+      ? UtcDateTime.ToUtc(afterCreatedAt.Value)
       : null;
 
     var result = await mediator.Send(

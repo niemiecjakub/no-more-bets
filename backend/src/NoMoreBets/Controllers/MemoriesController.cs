@@ -26,7 +26,7 @@ public class MemoriesController(IMediator mediator) : ControllerBase
     }
 
     DateTime? afterUpdatedAtUtc = afterUpdatedAt is not null
-      ? DateTimeQueryExtensions.ToUtc(afterUpdatedAt.Value)
+      ? UtcDateTime.ToUtc(afterUpdatedAt.Value)
       : null;
 
     var result = await mediator.Send(

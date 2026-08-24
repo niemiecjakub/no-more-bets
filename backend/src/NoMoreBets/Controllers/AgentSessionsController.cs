@@ -44,7 +44,7 @@ public class AgentSessionsController(IMediator mediator) : ControllerBase
     }
 
     DateTime? afterStartedAtUtc = afterStartedAt is not null
-      ? DateTimeQueryExtensions.ToUtc(afterStartedAt.Value)
+      ? UtcDateTime.ToUtc(afterStartedAt.Value)
       : null;
 
     var result = await mediator.Send(

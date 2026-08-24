@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { bankrollEntryTypeIcon } from "@/features/bets/bankroll-entry-types";
 import type { BankrollEntryListItemDto } from "@/features/bets/interfaces";
 import { formatCurrency } from "@/utils/format-currency";
+import { formatLocalDateTime, parseApiDate } from "@/utils/format-date";
 
 interface AgentBankrollEntriesListProps {
   entries: BankrollEntryListItemDto[];
@@ -19,13 +20,8 @@ interface AgentBankrollEntriesListProps {
 }
 
 function formatDateTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "-";
-  return date.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-    hour12: false,
-  });
+  if (Number.isNaN(parseApiDate(value).getTime())) return "-";
+  return formatLocalDateTime(value);
 }
 
 export function AgentBankrollEntriesList({

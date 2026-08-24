@@ -5,19 +5,8 @@ import type { MemoryListItem } from "@/features/memories/interfaces";
 import { fetchMemoriesPage } from "@/features/memories/services/memories-api";
 import { handleServiceError } from "@/lib/error-handler";
 import { cn } from "@/lib/utils";
+import { formatLocalDateTime } from "@/utils/format-date";
 import { AgentMemoriesList } from "./agent-memories-list";
-
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-      hour12: false,
-    });
-  } catch {
-    return iso;
-  }
-}
 
 function isMemoryDeleted(memory: MemoryListItem): boolean {
   return memory.deletedAt != null;
@@ -225,8 +214,8 @@ export function AgentMemoriesDetailsPanel() {
                 </h2>
                 <span className="shrink-0 whitespace-nowrap text-right text-xs font-normal text-zinc-500 dark:text-zinc-500">
                   {selectedMemoryIsDeleted && selectedMemory.deletedAt
-                    ? `Deleted ${formatDate(selectedMemory.deletedAt)}`
-                    : `Updated ${formatDate(selectedMemory.updatedAt)}`}
+                    ? `Deleted ${formatLocalDateTime(selectedMemory.deletedAt)}`
+                    : `Updated ${formatLocalDateTime(selectedMemory.updatedAt)}`}
                 </span>
               </div>
             </div>

@@ -4,6 +4,7 @@ using Hangfire.Dashboard.BasicAuthorization;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using NoMoreBets.Application;
+using NoMoreBets.Application.Common;
 using NoMoreBets.Infrastructure;
 using NoMoreBets.Infrastructure.Persistence;
 using NoMoreBets.Mcp;
@@ -20,6 +21,8 @@ builder.Services.AddControllers()
   .AddJsonOptions(options =>
   {
     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.JsonSerializerOptions.Converters.Add(new UtcDateTime.JsonConverter());
+    options.JsonSerializerOptions.Converters.Add(new UtcDateTime.NullableJsonConverter());
   });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>

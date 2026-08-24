@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
 import type { AgentSessionListItem } from "@/features/sessions/interfaces";
 import { sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
+import { formatLocalDateTime } from "@/utils/format-date";
 
 interface AgentSessionsListProps {
   sessions: AgentSessionListItem[];
@@ -15,18 +16,6 @@ interface AgentSessionsListProps {
   loadMoreError: string | null;
   onRetryLoadMore: () => void;
   emptyMessage?: string;
-}
-
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-      hour12: false,
-    });
-  } catch {
-    return iso;
-  }
 }
 
 export function AgentSessionsList({
@@ -98,7 +87,7 @@ export function AgentSessionsList({
 
   if (isLoading) {
     return (
-      <div className="h-full min-h-[min(78vh,44rem)] animate-pulse p-3">
+      <div className="min-h-[min(78vh,44rem)] flex-1 animate-pulse p-3 lg:min-h-0">
         <div className="space-y-2">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-16 rounded-md bg-zinc-100 dark:bg-zinc-900" />
@@ -110,7 +99,7 @@ export function AgentSessionsList({
 
   if (sessions.length === 0) {
     return (
-      <div className="p-4 text-sm text-zinc-500 dark:text-zinc-400">
+      <div className="flex-1 p-4 text-sm text-zinc-500 dark:text-zinc-400">
         {emptyMessage}
       </div>
     );
@@ -119,7 +108,7 @@ export function AgentSessionsList({
   return (
     <div
       ref={scrollRootRef}
-      className="h-full max-h-[min(78vh,44rem)] overflow-y-auto [scrollbar-width:thin] [scrollbar-color:var(--color-zinc-400)_transparent] dark:[scrollbar-color:var(--color-zinc-600)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:hover:bg-zinc-400 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 dark:[&::-webkit-scrollbar-thumb]:hover:bg-zinc-600"
+      className="max-h-[min(78vh,44rem)] min-h-0 flex-1 overflow-y-auto lg:max-h-none [scrollbar-width:thin] [scrollbar-color:var(--color-zinc-400)_transparent] dark:[scrollbar-color:var(--color-zinc-600)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 [&::-webkit-scrollbar-thumb]:hover:bg-zinc-400 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 dark:[&::-webkit-scrollbar-thumb]:hover:bg-zinc-600"
     >
       <ul className="w-full min-w-0 space-y-1 p-2">
         {sessions.map((session) => {
@@ -149,7 +138,7 @@ export function AgentSessionsList({
                   <span className="block min-w-0 truncate font-medium text-foreground">{session.phaseName}</span>
                   <div className="mt-1 flex min-w-0 items-center gap-2">
                     <span className="min-w-0 flex-1 truncate text-left text-xs text-zinc-500 dark:text-zinc-500">
-                      {formatDate(session.startedAt)}
+                      {formatLocalDateTime(session.startedAt)}
                     </span>
                     <span className="shrink-0 text-right text-xs font-normal tabular-nums text-zinc-500 dark:text-zinc-500">
                       Session #{session.id}

@@ -9,6 +9,7 @@ import type {
   AgentDashboardSessionsWidget,
 } from "@/features/bets/interfaces";
 import { formatCurrency } from "@/utils/format-currency";
+import { parseApiDate } from "@/utils/format-date";
 import { WidgetCard, WidgetSkeleton } from "./widget-primitives";
 
 function paydayLabel(days: number): string {
@@ -19,7 +20,7 @@ function paydayLabel(days: number): string {
 
 function formatRelativeDate(value: string | null) {
   if (!value) return "N/A";
-  const date = new Date(value);
+  const date = parseApiDate(value);
   if (Number.isNaN(date.getTime())) return "N/A";
 
   const now = new Date();

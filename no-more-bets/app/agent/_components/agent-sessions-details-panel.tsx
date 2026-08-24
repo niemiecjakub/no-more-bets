@@ -16,7 +16,7 @@ import type { AgentSessionListItem, AgentSessionMatchSummary } from "@/features/
 import { fetchAgentSessionsPage } from "@/features/sessions/services/sessions-api";
 import { handleServiceError } from "@/lib/error-handler";
 import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
-import { formatMatchTime } from "@/utils/format-date";
+import { formatLocalDateTime, formatMatchTime, parseApiDate } from "@/utils/format-date";
 import { AgentSessionPhaseFilter } from "./agent-session-phase-filter";
 import { AgentSessionsList } from "./agent-sessions-list";
 
@@ -34,21 +34,9 @@ function mergeSessions(
   return merged;
 }
 
-function formatDate(iso: string) {
-    try {
-        return new Date(iso).toLocaleString(undefined, {
-            dateStyle: "medium",
-            timeStyle: "short",
-            hour12: false,
-        });
-    } catch {
-        return iso;
-    }
-}
-
 function formatMatchDay(iso: string): string {
     try {
-        return new Date(iso).toLocaleDateString(undefined, {
+        return parseApiDate(iso).toLocaleDateString(undefined, {
             day: "2-digit",
             month: "short",
             year: "numeric",
@@ -112,7 +100,7 @@ function SessionMatchTeamsRow({ match }: { match: AgentSessionMatchSummary }) {
 function SessionsFallback() {
     return (
         <div className="grid animate-pulse grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
-            <div className="flex w-full flex-col gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
+            <div className="flex w-full flex-col gap-2 overflow-hidden rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-950 lg:h-[min(78vh,44rem)] lg:self-start">
                 {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-full rounded-md border border-zinc-100 px-3 py-2.5 dark:border-zinc-800">
                         <div className="h-4 w-3/4 rounded bg-zinc-200 dark:bg-zinc-800" />
@@ -389,7 +377,7 @@ export function AgentSessionsDetailsPanel({
 
     return (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:items-start">
-            <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:self-start">
+            <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 lg:h-[min(78vh,44rem)] lg:self-start">
                 <AgentSessionPhaseFilter
                     selectedPhaseIds={selectedPhaseIds}
                     onSelectedPhaseIdsChange={handleSelectedPhaseIdsChange}
@@ -426,7 +414,7 @@ export function AgentSessionsDetailsPanel({
                                 <div className="flex min-w-0 flex-1 items-baseline justify-between gap-3">
                                     <h2 className="min-w-0 flex-1 truncate text-lg font-semibold text-foreground">{selectedSession.phaseName}</h2>
                                     <span className="shrink-0 whitespace-nowrap text-right text-xs font-normal text-zinc-500 dark:text-zinc-500">
-                                        Session #{selectedSession.id} · {formatDate(selectedSession.startedAt)}
+                                        Session #{selectedSession.id} · {formatLocalDateTime(selectedSession.startedAt)}
                                     </span>
                                 </div>
                             </div>

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import type { MemoryListItem } from "@/features/memories/interfaces";
 import { cn } from "@/lib/utils";
+import { formatLocalDateTime } from "@/utils/format-date";
 
 interface AgentMemoriesListProps {
   memories: MemoryListItem[];
@@ -15,18 +16,6 @@ interface AgentMemoriesListProps {
   loadMoreError: string | null;
   onRetryLoadMore: () => void;
   emptyMessage?: string;
-}
-
-function formatDate(iso: string) {
-  try {
-    return new Date(iso).toLocaleString(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-      hour12: false,
-    });
-  } catch {
-    return iso;
-  }
 }
 
 function isMemoryDeleted(memory: MemoryListItem): boolean {
@@ -135,8 +124,8 @@ export function AgentMemoriesList({
                 ) : null}
                 <span className="mt-2 block min-w-0 max-w-full truncate text-xs text-zinc-500 dark:text-zinc-500">
                   {deleted && memory.deletedAt
-                    ? `Deleted ${formatDate(memory.deletedAt)}`
-                    : `Updated ${formatDate(memory.updatedAt)}`}
+                    ? `Deleted ${formatLocalDateTime(memory.deletedAt)}`
+                    : `Updated ${formatLocalDateTime(memory.updatedAt)}`}
                 </span>
               </button>
             </li>
