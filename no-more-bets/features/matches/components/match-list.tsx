@@ -7,7 +7,7 @@ import { SlugIcon } from "@/components/slug-icon";
 import type { MatchListItem } from "../interfaces";
 import { MATCH_STATUS } from "../interfaces";
 import { clubLogoSlugSegment } from "../../../utils/club-logo-slug";
-import { formatMatchTime } from "../../../utils/format-date";
+import { formatMatchTime, parseMatchKickoff } from "../../../utils/format-date";
 import { MatchListResearchPanel } from "./match-list-research-panel";
 import { matchPath } from "@/lib/paths";
 
@@ -35,7 +35,7 @@ function centerScoreOrTime(match: MatchListItem): string {
 }
 
 function toDateKey(matchDate: string): string {
-  const date = new Date(matchDate);
+  const date = parseMatchKickoff(matchDate);
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -298,7 +298,7 @@ export function MatchList({
 
     acc.push({
       key,
-      date: new Date(match.matchDate),
+      date: parseMatchKickoff(match.matchDate),
       matches: [match],
     });
     return acc;

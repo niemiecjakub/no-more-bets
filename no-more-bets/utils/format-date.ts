@@ -17,6 +17,23 @@ export function parseApiDate(isoDateString: string): Date {
 }
 
 /**
+ * Match kickoffs are wall-clock times (not UTC instants). Strip any timezone
+ * suffix so 18:00 displays as 18:00 in the user's locale.
+ */
+export function parseMatchKickoff(isoDateString: string): Date {
+  const trimmed = isoDateString.trim();
+  const wallClock = trimmed.replace(/(?:\.\d+)?(?:[zZ]|[+-]\d{2}:?\d{2})$/, "");
+  if (/^\d{4}-\d{2}-\d{2}$/.test(wallClock)) {
+    return new Date(wallClock);
+  }
+  const match = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2})?)/.exec(wallClock);
+  if (match) {
+    return new Date(`${match[1]}T${match[2]}`);
+  }
+  return new Date(wallClock);
+}
+
+/**
  * Formats an ISO date string for match display (date + time) in the user's local timezone.
  */
 export function formatMatchDate(isoDateString: string): string {
@@ -32,15 +49,26 @@ export function formatMatchDate(isoDateString: string): string {
 }
 
 /**
- * Time only (HH:MM) in the user's local timezone.
+ * Time only (HH:MM) for match kickoff (wall-clock, not UTC-adjusted).
  */
 export function formatMatchTime(isoDateString: string): string {
-  const date = parseApiDate(isoDateString);
+  const date = parseMatchKickoff(isoDateString);
   return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     hour12: false,
   }).format(date);
+}
+
+/**
+ * Date only for match kickoff headings (wall-clock).
+ */
+export function formatMatchDay(isoDateString: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(parseMatchKickoff(isoDateString));
 }
 
 /**

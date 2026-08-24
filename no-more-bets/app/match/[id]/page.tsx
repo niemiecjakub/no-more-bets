@@ -12,16 +12,9 @@ import {
 import { breadcrumbList } from "@/lib/schema";
 import { isBareNumericParam, leaguePath, matchPath, matchSlug, parseMatchParam } from "@/lib/paths";
 import { absoluteUrl } from "@/lib/site";
+import { formatMatchDay } from "@/utils/format-date";
 
 export const revalidate = 120;
-
-function formatMatchDay(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", {
-        day: "numeric",
-    month: "short",
-        year: "numeric",
-  }).format(new Date(iso));
-}
 
 export async function generateMetadata({
   params,

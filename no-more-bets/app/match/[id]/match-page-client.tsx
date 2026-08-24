@@ -6,7 +6,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { SlugIcon } from "@/components/slug-icon";
 import { clubLogoSlugSegment } from "../../../utils/club-logo-slug";
-import { formatMatchTime } from "../../../utils/format-date";
+import { formatMatchDay, formatMatchTime } from "../../../utils/format-date";
 import { handleServiceError } from "@/lib/error-handler";
 import { clubPath, leaguePath, matchPath } from "@/lib/paths";
 import {
@@ -149,12 +149,7 @@ export function MatchPageClient({
         };
     }, [matchId]);
 
-    const matchDayFormatted = new Intl.DateTimeFormat("en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-    }).format(new Date(data.matchDate));
+    const matchDayFormatted = formatMatchDay(data.matchDate);
     const homeLogoSlug = clubLogoSlugSegment(data.homeClubSlug, data.homeClubName);
     const awayLogoSlug = clubLogoSlugSegment(data.awayClubSlug, data.awayClubName);
     const showFinishedScore = data.matchStatusId === MATCH_STATUS.Finished && data.homeGoals != null && data.awayGoals != null;

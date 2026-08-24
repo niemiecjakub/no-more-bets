@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using NoMoreBets.Application.Common;
+
 namespace NoMoreBets.Application.Matches.GetMatchAnalyses;
 
 public record StructuredMatchAnalysisDto(
@@ -30,6 +33,7 @@ public record MatchAnalysisPageDto(
   int MatchStatusId,
   int? HomeGoals,
   int? AwayGoals,
+  [property: JsonConverter(typeof(WallClockDateTime.JsonConverter))]
   DateTime MatchDate,
   IReadOnlyList<MatchAnalysisItemDto> Analyses,
   int? ResearchAgentSessionId);

@@ -16,7 +16,7 @@ import type { AgentSessionListItem, AgentSessionMatchSummary } from "@/features/
 import { fetchAgentSessionsPage } from "@/features/sessions/services/sessions-api";
 import { handleServiceError } from "@/lib/error-handler";
 import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
-import { formatLocalDateTime, formatMatchTime, parseApiDate } from "@/utils/format-date";
+import { formatLocalDateTime, formatMatchDay, formatMatchTime } from "@/utils/format-date";
 import { AgentSessionPhaseFilter } from "./agent-session-phase-filter";
 import { AgentSessionsList } from "./agent-sessions-list";
 
@@ -34,13 +34,9 @@ function mergeSessions(
   return merged;
 }
 
-function formatMatchDay(iso: string): string {
+function formatMatchDayLabel(iso: string): string {
     try {
-        return parseApiDate(iso).toLocaleDateString(undefined, {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-        });
+        return formatMatchDay(iso);
     } catch {
         return iso;
     }
@@ -60,7 +56,7 @@ function SessionMatchTeamsRow({ match }: { match: AgentSessionMatchSummary }) {
             className="inline-flex flex-col items-center text-center tabular-nums tracking-tight text-foreground"
         >
             <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                {formatMatchDay(match.matchDate)}
+                {formatMatchDayLabel(match.matchDate)}
             </span>
             {showScore ? (
                 <span className="text-xl font-bold">{match.homeGoals} - {match.awayGoals}</span>

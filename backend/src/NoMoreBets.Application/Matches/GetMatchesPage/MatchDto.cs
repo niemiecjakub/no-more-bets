@@ -1,9 +1,13 @@
 using NoMoreBets.Application.Common.Dto.Matches;
 
+using System.Text.Json.Serialization;
+using NoMoreBets.Application.Common;
+
 namespace NoMoreBets.Application.Matches.GetMatchesPage;
 
 public record MatchDto(
   int Id,
+  [property: JsonConverter(typeof(WallClockDateTime.JsonConverter))]
   DateTime MatchDate,
   int HomeClubId,
   int AwayClubId,
