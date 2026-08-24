@@ -408,7 +408,7 @@ public class AppDbContext : DbContext
         .HasForeignKey(e => e.AgentSessionId)
         .OnDelete(DeleteBehavior.SetNull);
       entity.HasOne(e => e.AgentSessionReflected)
-        .WithMany()
+        .WithMany(s => s.ReflectedBetSlips)
         .HasForeignKey(e => e.AgentSessionReflectedId)
         .OnDelete(DeleteBehavior.SetNull);
     });

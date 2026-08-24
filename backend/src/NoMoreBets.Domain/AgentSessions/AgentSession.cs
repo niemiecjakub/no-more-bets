@@ -12,4 +12,5 @@ public class AgentSession
   public ICollection<AgentSessionMessage> Messages { get; set; } = new List<AgentSessionMessage>();
   public ICollection<MatchAnalysis> MatchAnalyses { get; set; } = new List<MatchAnalysis>();
   public ICollection<BetSlip> BetSlips { get; set; } = new List<BetSlip>();
+  public ICollection<BetSlip> ReflectedBetSlips { get; set; } = new List<BetSlip>();
 }

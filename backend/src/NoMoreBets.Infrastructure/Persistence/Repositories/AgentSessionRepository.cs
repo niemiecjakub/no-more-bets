@@ -217,7 +217,7 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
       .Distinct(StringComparer.Ordinal)
       .ToArray();
 
-  private static IQueryable<AgentSession> ApplySeasonYearFilter(
+  internal static IQueryable<AgentSession> ApplySeasonYearFilter(
     IQueryable<AgentSession> query,
     IReadOnlyList<string>? seasonYears)
   {
@@ -226,12 +226,20 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
       return query;
 
     return query.Where(s =>
-      s.MatchAnalyses.Any(a =>
+      s.Phase == AgentSessionPhase.InternetResearch
+      || s.Phase == AgentSessionPhase.MemoryCleanup
+      || s.MatchAnalyses.Any(a =>
         a.Match != null &&
         a.Match.Stage != null &&
         a.Match.Stage.Season != null &&
         selectedSeasonYears.Contains(a.Match.Stage.Season.Year))
       || s.BetSlips.Any(slip =>
+        slip.Selections.Any(sel =>
+          sel.Match != null &&
+          sel.Match.Stage != null &&
+          sel.Match.Stage.Season != null &&
+          selectedSeasonYears.Contains(sel.Match.Stage.Season.Year)))
+      || s.ReflectedBetSlips.Any(slip =>
         slip.Selections.Any(sel =>
           sel.Match != null &&
           sel.Match.Stage != null &&
