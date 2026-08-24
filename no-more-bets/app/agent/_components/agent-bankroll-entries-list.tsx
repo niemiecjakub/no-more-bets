@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { bankrollEntryTypeIcon } from "@/features/bets/bankroll-entry-types";
 import type { BankrollEntryListItemDto } from "@/features/bets/interfaces";
 import { formatCurrency } from "@/utils/format-currency";
 
@@ -87,26 +88,35 @@ export function AgentBankrollEntriesList({
         {entries.map((entry) => {
           const isActive = selectedEntryId === entry.id;
           const isIn = entry.flow === "In";
+          const EntryTypeIcon = bankrollEntryTypeIcon(entry.name);
           return (
             <li key={entry.id} className="w-full min-w-0">
               <button
                 type="button"
                 onClick={() => onSelectEntry(entry)}
-                className={`flex w-full min-w-0 flex-col gap-1.5 rounded-md border px-3 py-2.5 text-left transition-colors ${
+                className={`flex w-full min-w-0 gap-2.5 rounded-md border px-3 py-2.5 text-left transition-colors ${
                   isActive
                     ? "border-zinc-300 bg-zinc-100 ring-2 ring-zinc-400/30 dark:border-zinc-600 dark:bg-zinc-900 dark:ring-zinc-500/30"
                     : "border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-900/80"
                 }`}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <span className="line-clamp-2 text-sm font-medium text-foreground">{entry.name}</span>
-                  <span className={`text-sm font-semibold tabular-nums ${isIn ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
-                    {isIn ? "+" : "-"}
-                    {formatCurrency(entry.amount)}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2 text-xs text-zinc-500 dark:text-zinc-500">
-                  <span>{formatDateTime(entry.createdAt)}</span>
+                <EntryTypeIcon
+                  className={`mt-0.5 size-4 shrink-0 ${
+                    isActive ? "text-zinc-700 dark:text-zinc-300" : "text-zinc-400 dark:text-zinc-500"
+                  }`}
+                  aria-hidden
+                />
+                <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="line-clamp-2 text-sm font-medium text-foreground">{entry.name}</span>
+                    <span className={`text-sm font-semibold tabular-nums ${isIn ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                      {isIn ? "+" : "-"}
+                      {formatCurrency(entry.amount)}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs text-zinc-500 dark:text-zinc-500">
+                    <span>{formatDateTime(entry.createdAt)}</span>
+                  </div>
                 </div>
               </button>
             </li>

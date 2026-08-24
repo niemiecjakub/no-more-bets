@@ -12,13 +12,13 @@ export async function generateMetadata({
   const sp = await searchParams;
   const parameterized = Boolean(sp.widget || sp.search || sp.sessionId);
   return {
-    title: "Public bankroll and betting log",
+    title: "Agent",
     description:
       "Live bankroll, pending slips, sessions, and memories from the No More Bets football research agent.",
     alternates: { canonical: "/agent" },
     robots: parameterized ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: {
-      title: "Public bankroll and betting log",
+      title: "Agent",
       description: "Live bankroll, pending slips, sessions, and memories.",
       url: "/agent",
     },

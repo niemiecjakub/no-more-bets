@@ -1,4 +1,4 @@
-import { Banknote, RotateCcw, Ticket, TrendingUp } from "lucide-react";
+import { Banknote, RotateCcw, Ticket, TrendingUp, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface BankrollEntryTypeDefinition {
@@ -14,3 +14,9 @@ export const BANKROLL_ENTRY_TYPES: BankrollEntryTypeDefinition[] = [
   { name: "Bet stake", label: "Bet stake", icon: Ticket },
   { name: "Bet cancellation refund", label: "Cancellation refund", icon: RotateCcw },
 ];
+
+const entryIconByName = new Map(BANKROLL_ENTRY_TYPES.map((entryType) => [entryType.name, entryType.icon]));
+
+export function bankrollEntryTypeIcon(name: string): LucideIcon {
+  return entryIconByName.get(name) ?? Wallet;
+}
