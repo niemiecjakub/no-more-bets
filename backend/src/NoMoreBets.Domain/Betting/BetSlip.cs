@@ -41,6 +41,7 @@ public class BetSlip
   public AgentSession? AgentSession { get; set; }
   public AgentSession? AgentSessionReflected { get; set; }
   public BetStatusEntity BetStatusEntity { get; set; } = null!;
+  public DailyPick? DailyPick { get; set; }
   public ICollection<BetSelection> Selections { get; set; } = new List<BetSelection>();
   public ICollection<Bankroll> Bankrolls { get; set; } = new List<Bankroll>();
 

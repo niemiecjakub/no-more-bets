@@ -36,5 +36,8 @@ public static class BetSlipListItemMapper
         .ToList(),
       slip.AgentSessionId,
       slip.Rationale,
-      slip.EstimatedWinProbability);
+      slip.EstimatedWinProbability,
+      slip.DailyPick?.RiskLevelId,
+      slip.DailyPick?.RiskLevel?.Name,
+      slip.DailyPick?.SlipDate);
 }

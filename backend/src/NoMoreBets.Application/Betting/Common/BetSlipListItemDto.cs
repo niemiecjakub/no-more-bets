@@ -11,4 +11,7 @@ public record BetSlipListItemDto(
   IReadOnlyList<BetSelectionItemDto> Selections,
   int? AgentSessionId,
   string? Rationale,
-  decimal? EstimatedWinProbability);
+  decimal? EstimatedWinProbability,
+  int? RiskLevelId,
+  string? RiskLevelName,
+  DateOnly? SlipDate);

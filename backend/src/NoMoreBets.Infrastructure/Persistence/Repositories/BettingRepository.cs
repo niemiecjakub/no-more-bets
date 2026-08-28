@@ -120,6 +120,9 @@ public class BettingRepository : IBettingRepository
     return await _db.BetSlip
       .AsNoTracking()
       .Where(s => s.AgentSessionId == agentSessionId)
+      .Include(s => s.BetStatusEntity)
+      .Include(s => s.DailyPick)
+        .ThenInclude(p => p!.RiskLevel)
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
           .ThenInclude(m => m!.HomeClub)

@@ -41,8 +41,10 @@ public class AppDbContext : DbContext
   public DbSet<MatchAnalysis> MatchAnalysis { get; set; }
   public DbSet<ClubDailySummary> ClubDailySummary { get; set; }
   public DbSet<BetStatusEntity> BetStatus { get; set; }
+  public DbSet<BetRiskLevelEntity> BetRiskLevel { get; set; }
   public DbSet<BetSlip> BetSlip { get; set; }
   public DbSet<BetSelection> BetSelection { get; set; }
+  public DbSet<DailyPick> DailyPick { get; set; }
   public DbSet<Memory> Memory { get; set; }
   public DbSet<Bankroll> Bankroll { get; set; }
   public DbSet<AgentSession> AgentSession { get; set; }
@@ -378,6 +380,21 @@ public class AppDbContext : DbContext
           }));
     });
 
+    modelBuilder.Entity<BetRiskLevelEntity>(entity =>
+    {
+      entity.ToTable(BetRiskLevelEntity.TABLE_NAME);
+      entity.HasKey(e => e.Id);
+      entity.Property(e => e.Name).IsRequired().HasMaxLength(50);
+      entity.HasData(
+        Enum.GetValues(typeof(BetRiskLevel))
+          .Cast<BetRiskLevel>()
+          .Select(e => new BetRiskLevelEntity()
+          {
+            Id = (int)e,
+            Name = e.ToString()
+          }));
+    });
+
     modelBuilder.Entity<BetSlip>(entity =>
     {
       entity.HasKey(e => e.Id);
@@ -411,6 +428,23 @@ public class AppDbContext : DbContext
         .WithMany(s => s.ReflectedBetSlips)
         .HasForeignKey(e => e.AgentSessionReflectedId)
         .OnDelete(DeleteBehavior.SetNull);
+      entity.HasOne(e => e.DailyPick)
+        .WithOne(p => p.BetSlip)
+        .HasForeignKey<DailyPick>(p => p.BetSlipId)
+        .OnDelete(DeleteBehavior.Cascade);
+    });
+
+    modelBuilder.Entity<DailyPick>(entity =>
+    {
+      entity.ToTable("DailyPick");
+      entity.HasKey(e => e.BetSlipId);
+      entity.Property(e => e.RiskLevelId).IsRequired();
+      entity.Property(e => e.SlipDate).IsRequired();
+      entity.HasIndex(e => new { e.SlipDate, e.RiskLevelId }).IsUnique();
+      entity.HasOne(e => e.RiskLevel)
+        .WithMany()
+        .HasForeignKey(e => e.RiskLevelId)
+        .OnDelete(DeleteBehavior.Restrict);
     });
 
     modelBuilder.Entity<BetSelection>(entity =>
