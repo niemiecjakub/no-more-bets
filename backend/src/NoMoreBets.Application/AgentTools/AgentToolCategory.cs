@@ -10,6 +10,7 @@ public enum AgentToolCategory
   Bankroll,
   WebSearch,
   Memories,
+  DailySlip,
 }
 
 public static class AgentToolCategoryExtensions
@@ -24,6 +25,7 @@ public static class AgentToolCategoryExtensions
     AgentToolCategory.Bankroll => "bankroll",
     AgentToolCategory.WebSearch => "websearch",
     AgentToolCategory.Memories => "memories",
+    AgentToolCategory.DailySlip => "dailyslip",
     _ => "unknown",
   };
 }

@@ -29,6 +29,7 @@ public class AgentToolRegistryTests
       .AddSingleton(agentSessionContext)
       .AddScoped<MatchTool>()
       .AddScoped<BettingTool>()
+      .AddScoped<DailySlipTool>()
       .AddScoped<SocialMediaTool>()
       .BuildServiceProvider();
   }
@@ -66,6 +67,15 @@ public class AgentToolRegistryTests
 
     tools.Should().HaveCount(3);
     ToolNames(tools).Should().BeEquivalentTo(["researchbet_getMatchBasicInfo", "researchbet_getMatchEvents", "researchbet_placeBetSlip"]);
+  }
+
+  [Fact]
+  public void DailySlipPlaceTool_RegistersExpectedFunction()
+  {
+    var tools = _serviceProvider.ResolveTools([ToolRegistry.DailySlip.PlaceBetSlip]);
+
+    tools.Should().HaveCount(1);
+    ToolNames(tools).Should().BeEquivalentTo(["dailyslip_placeBetSlip"]);
   }
 
   [Fact]

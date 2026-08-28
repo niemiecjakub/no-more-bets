@@ -71,6 +71,12 @@ public static class AgentToolCatalog
       new("socialmedia_createXPost", "Post on X", AgentToolCategory.SocialMedia);
   }
 
+  public static class DailySlip
+  {
+    public static readonly AgentToolDefinition PlaceBetSlip =
+      new("dailyslip_placeBetSlip", "Place a daily paper slip", AgentToolCategory.DailySlip);
+  }
+
   public static class ResearchBet
   {
     public static readonly AgentToolDefinition GetMatchBasicInfo =
@@ -161,6 +167,7 @@ public static class AgentToolCatalog
     Betting.PlaceBetSlip,
     Betting.GetBetSlips,
     Betting.GetBetSlipsAwaitingReflection,
+    DailySlip.PlaceBetSlip,
     SocialMedia.CreateXPost,
     ResearchBet.GetMatchBasicInfo,
     ResearchBet.GetMatchEvents,

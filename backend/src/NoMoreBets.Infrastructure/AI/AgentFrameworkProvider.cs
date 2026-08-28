@@ -17,6 +17,7 @@ public static class AgentFrameworkProvider
   {
     services.AddScoped<MatchTool>();
     services.AddScoped<BettingTool>();
+    services.AddScoped<DailySlipTool>();
     services.AddScoped<SocialMediaTool>();
     services.AddScoped<AgentRunMessageCollector>();
     services.AddScoped<AgentRunToolMetadataCollector>();

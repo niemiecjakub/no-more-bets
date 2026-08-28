@@ -17,6 +17,7 @@ internal sealed class PluginToolContext(IServiceProvider serviceProvider)
 {
   private MatchTool? _match;
   private BettingTool? _betting;
+  private DailySlipTool? _dailySlip;
   private SocialMediaTool? _social;
   private readonly Dictionary<int, ResearchBetTool> _researchBets = new();
 
@@ -25,6 +26,9 @@ internal sealed class PluginToolContext(IServiceProvider serviceProvider)
 
   public BettingTool Betting =>
     _betting ??= serviceProvider.GetRequiredService<BettingTool>();
+
+  public DailySlipTool DailySlip =>
+    _dailySlip ??= serviceProvider.GetRequiredService<DailySlipTool>();
 
   public SocialMediaTool SocialMedia =>
     _social ??= serviceProvider.GetRequiredService<SocialMediaTool>();

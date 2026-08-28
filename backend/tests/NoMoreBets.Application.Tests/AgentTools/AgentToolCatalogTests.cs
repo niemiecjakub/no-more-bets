@@ -41,7 +41,7 @@ public class AgentToolCatalogTests
     names.Should().Contain(AgentToolCatalog.Bankroll.GetBalance.Name);
     names.Should().Contain(AgentToolCatalog.Todo.Add.Name);
     names.Should().Contain(AgentToolCatalog.WebSearch.SearchNews.Name);
-    names.Should().Contain(AgentToolCatalog.Memories.Read.Name);
+    names.Should().Contain(AgentToolCatalog.DailySlip.PlaceBetSlip.Name);
   }
 
   [Fact]

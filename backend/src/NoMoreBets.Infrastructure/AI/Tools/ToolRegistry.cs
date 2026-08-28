@@ -70,6 +70,12 @@ public static class ToolRegistry
       FromBetting(AgentToolCatalog.Betting.GetBetSlipsAwaitingReflection, p => p.GetBetSlipsAwaitingReflectionAsync);
   }
 
+  public static class DailySlip
+  {
+    public static readonly AgentTool PlaceBetSlip =
+      FromDailySlip(AgentToolCatalog.DailySlip.PlaceBetSlip, p => p.PlaceBetSlip);
+  }
+
   public static class SocialMedia
   {
     public static readonly AgentTool CreateXPost =
@@ -93,6 +99,9 @@ public static class ToolRegistry
 
   private static AgentTool FromBetting(AgentToolDefinition definition, Func<BettingTool, Delegate> method) =>
     new(ctx => Create(method(ctx.Betting), definition.Name));
+
+  private static AgentTool FromDailySlip(AgentToolDefinition definition, Func<DailySlipTool, Delegate> method) =>
+    new(ctx => Create(method(ctx.DailySlip), definition.Name));
 
   private static AgentTool FromSocialMedia(AgentToolDefinition definition, Func<SocialMediaTool, Delegate> method) =>
     new(ctx => Create(method(ctx.SocialMedia), definition.Name));
