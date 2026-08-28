@@ -3,8 +3,8 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
+using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
-using NoMoreBets.Infrastructure.AI.Providers.Date;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Tools;
@@ -20,39 +20,39 @@ internal sealed class MemoryCleanupExecuteStep : IAgentPhaseStep
 {
   private const int DaysCutoff = 2;
 
+  public string AgentName => "MemoryCleanupAgent";
+
+  public string AgentInstructions => """
+    Role: Records clerk for persistent agent memories.
+
+    Goal: Remove obsolete fixture-specific content while preserving durable knowledge.
+
+    Success criteria:
+    - Every candidate memory reviewed against the retention rule
+    - Stale fixture noise surgically removed, trimmed, merged, or deleted
+    - STRATEGY, BANKROLL_MANAGEMENT, REFLECTIONS, and GENERAL_KNOWLEDGE remain intact
+
+    Constraints:
+    - Decide stale vs keep from name and description first; read full content only when needed
+    - Prefer surgical edit over deleting a whole record
+    - Never wholesale-delete cross-cutting process records
+    - Delete an entire record only when the whole named record is obsolete fixture noise
+
+    Stop: Finish when all candidates are reviewed and durable records are preserved.
+    """;
+
   public string BuildPrompt()
   {
-    var today = DateOnly.FromDateTime(DateTime.UtcNow);
-    var utcCutoff = DateTime.UtcNow.AddDays(-DaysCutoff);
+    var now = DateTime.UtcNow;
+    var today = DateOnly.FromDateTime(now);
+    var utcCutoff = now.AddDays(-DaysCutoff);
 
     return $"""
-          You are running a maintenance pass: review saved memories and remove content that will no longer be useful.
-          Today is {today} (UTC calendar date).
+          Today (UTC): {today:yyyy-MM-dd}.
 
-          Retention rule for match-specific material:
-          - Fixture or match-specific content whose **match date / kickoff (interpret as UTC unless clearly local)** was **more than {DaysCutoff} days before today** is outside retention for ephemeral notes (e.g. lineups, injury snapshots, narrow "this fixture" narratives, stale pre-match hype, post-mortems that only mattered for that one game).
-          - Cutoff instant for comparisons: strictly before {utcCutoff:yyyy-MM-dd HH:mm} UTC.
-          - **Primary signal:** names usually embed the fixture or date; each listing row includes a **description** when present. Decide stale vs keep from name and description first; read full content only when that is not enough to judge safely. Match IDs and club names in the body are secondary cues.
+          Retention: fixture-specific content for kickoffs strictly before {utcCutoff:yyyy-MM-dd HH:mm} UTC (more than {DaysCutoff} days old) is outside retention for ephemeral notes (lineups, injury snapshots, single-fixture narratives, stale hype).
 
-          **Preserve** durable knowledge unless it is purely redundant with discarded fixture noise:
-          - STRATEGY, BANKROLL_MANAGEMENT, REFLECTIONS, GENERAL_KNOWLEDGE, and other cross-cutting process lessons should stay; only remove or shorten passages that are exclusively about old fixtures and no longer aid future research or betting.
-
-          Goal:
-          Safely trim or remove obsolete match-specific memory content while preserving durable knowledge.
-
-          Completion criteria:
-          All candidate memories have been reviewed against the retention rule.
-          Stale fixture-specific content has been surgically removed, trimmed, merged, or deleted as appropriate.
-          Durable strategy, bankroll, reflection, and general knowledge records remain intact.
-
-          Break the work into todos at the start, then work through them marking items complete as you finish.
-
-          Inventory saved memories and identify records that may hold match-specific or time-bound content. For each candidate, infer from name and description whether cleanup is warranted before reading full content.
-
-          For records that need cleanup, read full content only when name and description are not enough to decide safely. Prefer surgical removals over wiping entire records when only part of the content is obsolete. Replace entire bodies when that is clearer and safe. Merge related memories into one distilled record when appropriate, then remove redundant sources. Delete entire records only when the whole named record is obsolete — never wholesale-delete durable strategy or bankroll records by mistake.
-
-          ## Quality constraints
-          - Do not remove or wipe durable strategy, bankroll, or calibration lessons unless they are clearly obsolete duplicate fixture chatter
+          Infer stale vs keep from memory name and description first. Inventory candidates, then clean.
           """;
   }
 
@@ -61,7 +61,6 @@ internal sealed class MemoryCleanupExecuteStep : IAgentPhaseStep
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [
-    new DateProvider(),
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
     new AgentModeProvider(),
     new TodoProvider(),

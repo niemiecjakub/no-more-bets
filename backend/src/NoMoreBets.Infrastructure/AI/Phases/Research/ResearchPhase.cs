@@ -5,8 +5,8 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches;
+using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
-using NoMoreBets.Infrastructure.AI.Providers.Date;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
@@ -22,29 +22,32 @@ public static class ResearchPhaseDefinition
 
 internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
 {
+  public string AgentName => "ResearchAgent";
+
+  public string AgentInstructions => """
+    Role: Pre-match football intelligence analyst.
+
+    Goal: Build the most accurate, decision-ready read of how this fixture is likely played.
+
+    Success criteria:
+    - MatchOverview, KeyPoints, and RisksAndUnknowns each carry distinct content
+    - A later decision-maker can see what matters, why, what is uncertain, and load-bearing assumptions
+
+    Constraints:
+    - Do not judge value, prices, or whether to bet
+    - Odds history is a signal only — identify what moved the market, then move on
+    - Prefer causal, predictive, well-supported evidence; discount speculative, stale, or weakly connected claims
+    - Cross-check load-bearing claims; when evidence conflicts or is incomplete, state that instead of forcing a conclusion
+
+    Stop: Submit when material factors are covered or uncertainty is honestly bounded by missing evidence.
+    """;
+
   public string BuildPrompt() => $"""
-        Match ID: {match.Id}   
+        Match ID: {match.Id}
         Fixture: {match.HomeClub.Name} vs {match.AwayClub.Name}
         Kickoff (UTC): {match.MatchDate:yyyy-MM-dd HH:mm}
 
-        Conduct your pre-match intelligence gathering for this fixture. This research is what your own money will later be staked on — the quality of the work here is the quality of the bet.
-        Your objective is to build the most accurate possible understanding of this match.
-
-        Odds history is available as an information signal: sharp line movement tells you the market learned something, and is a prompt to find out what. Do not judge value or prices here — that judgment belongs to the betting phase; your job is the truth of the match, not the price of it.
-
-        You are responsible for deciding what information is relevant, how deeply it should be investigated, and which sources deserve trust.
-        Approach the task as an investigator rather than a summarizer.
-        Actively search for the factors most likely to influence the outcome of the match. Determine which factors are genuinely material to this fixture rather than following a fixed research template.
-        Distinguish signal from noise. Give more weight to information that is predictive and well-supported, and less weight to information that is speculative, anecdotal, stale, or weakly connected to match outcomes.
-        Prioritize causal drivers over descriptive facts. Explain not only what is true, but why it matters for this matchup.
-        Focus on synthesis rather than accumulation. The goal is not to gather the most information, but to identify and explain the information most likely to affect interpretation of the match.
-        When evidence is incomplete, conflicting, or uncertain, represent that uncertainty explicitly rather than forcing a conclusion.
-
-        The final output should allow a future decision-maker to quickly understand:
-        - what matters most in this match,
-        - why it matters,
-        - what remains uncertain,
-        - and which assumptions the current understanding depends on.
+        Research this fixture.
         """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
@@ -76,7 +79,6 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [
-    new DateProvider(),
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
     new WebSearchProvider(
       serviceProvider.GetRequiredService<ISearchService>(),
@@ -88,18 +90,26 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
 
 internal sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
 {
+  public string AgentName => "ResearchAgent";
+
+  public string AgentInstructions => """
+    Role: Research consistency validator.
+
+    Goal: Place a fictional slip that tests whether prior research implies coherent predictions.
+
+    Success criteria:
+    - Each selection is a distinct implication of the prior research
+    - All legs are mutually consistent with each other and the research conclusions
+
+    Constraints:
+    - Use only prior research from this session — no new facts, searches, or outside knowledge
+    - Ignore odds, pricing, and value
+
+    Stop: Place the slip once consistency is verified, or report which research conclusions conflict.
+    """;
+
   public string BuildPrompt() => """
-    Create a fictional prediction slip for this match as a research validation artifact.
-    This is not a real bet and has no financial implications.
-
-    The purpose is to test whether your prior research produces internally consistent and logically supported predictions when forced into explicit outcomes.
-    Use only information derived from your prior research. Do not introduce new facts, assumptions, or external knowledge.
-    Selections must be strictly consistent with your prior analysis.
-    Do not consider odds, market pricing, or value. These are irrelevant for this task.
-
-    Each selection should represent a distinct, logically independent implication of your prior research.
-
-    Before finalizing the slip, validate that all selections are mutually consistent with each other and with the conclusions of your prior research.
+    Validate prior research by placing a fictional prediction slip for this match.
     """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
@@ -108,13 +118,4 @@ internal sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
       ToolRegistry.ResearchBet.GetMatchEvents(matchId),
       ToolRegistry.ResearchBet.PlaceBetSlip(matchId),
     ]);
-
-  public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
-  [
-    new DateProvider(),
-    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-    new WebSearchProvider(
-      serviceProvider.GetRequiredService<ISearchService>(),
-      serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
-  ];
 }
