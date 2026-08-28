@@ -59,6 +59,7 @@ async function finishedMatchUrls(): Promise<MetadataRoute.Sitemap> {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = [
     entry("/", undefined, "hourly", 1),
+    entry("/picks", undefined, "hourly", 0.9),
     entry("/about", undefined, "monthly", 0.9),
     entry("/mcp", undefined, "monthly", 0.8),
     entry("/agent", undefined, "hourly", 0.8),

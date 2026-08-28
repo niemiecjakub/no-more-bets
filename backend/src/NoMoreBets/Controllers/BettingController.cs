@@ -39,6 +39,19 @@ public class BettingController(IMediator mediator) : ControllerBase
     return Ok(result);
   }
 
+  [HttpGet("daily-picks/pages")]
+  public async Task<ActionResult<Paged<BetSlipListItemDto>>> GetDailyPicksPage(
+    [FromQuery] int limit = 7,
+    [FromQuery] DateOnly? afterDate = null,
+    CancellationToken cancellationToken = default)
+  {
+    limit = Math.Clamp(limit, 1, 30);
+    var result = await mediator
+      .Send(new GetDailyPicksPageQuery(limit, afterDate), cancellationToken)
+      .ConfigureAwait(false);
+    return Ok(result);
+  }
+
   [HttpGet("betting/performance-stats")]
   public async Task<ActionResult<BettingPerformanceStatsDto>> GetPerformanceStats(
     CancellationToken cancellationToken = default)

@@ -14,6 +14,10 @@ public interface IBettingRepository
   Task<IReadOnlyList<BetSlip>> GetBetSlipsWithDailyPickOnDateAsync(
     DateOnly slipDate,
     CancellationToken cancellationToken = default);
+  Task<DailyPickSlipPage> GetDailyPickSlipsPageAsync(
+    int limit,
+    DateOnly? afterSlipDate,
+    CancellationToken cancellationToken = default);
   Task AddBetSlipAsync(BetSlip slip, CancellationToken cancellationToken = default);
   Task<BetSlip?> GetBetSlipWithSelectionsByIdAsync(int betSlipId, CancellationToken cancellationToken = default);
   /// <summary>

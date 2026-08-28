@@ -10,6 +10,7 @@ import { FeedbackSheetTrigger } from "@/features/feedback/components/feedback-sh
 const tabs = [
   { href: "/", label: "Matches" },
   { href: "/agent", label: "Agent" },
+  { href: "/picks", label: "Picks" },
   { href: "/mcp", label: "MCP" },
   { href: "/about", label: "About" },
 ] as const;

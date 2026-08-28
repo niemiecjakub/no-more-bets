@@ -67,6 +67,7 @@ Citation and search crawlers (GPTBot, ChatGPT-User, PerplexityBot, ClaudeBot, an
 
 ${mdLink("About", `${site}/about`, "What the project is, methods, data sources")}
 ${mdLink("Matches", `${site}/`, "Upcoming fixtures and research status")}
+${mdLink("Picks", `${site}/picks`, "Daily house slips by date")}
 ${mdLink("Agent", `${site}/agent`, "Public bankroll, pending slips, and session logs")}
 ${mdLink("MCP", `${site}/mcp`, "Football Model Context Protocol tools for AI clients")}
 ${mdLink("MCP catalog (markdown)", `${site}/mcp.md`, "Tool list, access, and example prompts")}

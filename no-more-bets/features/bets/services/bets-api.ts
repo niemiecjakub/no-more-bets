@@ -1,5 +1,6 @@
 import axiosInstance from "../../../lib/axios";
 import type { BetSelectionItem, BetSlipListItem } from "../interfaces";
+import { normalizePagedResponse, type PagedResponse } from "@/lib/paged-response";
 
 function normalizeSelection(raw: unknown): BetSelectionItem {
   const r = raw as Record<string, unknown>;
@@ -60,4 +61,15 @@ export async function fetchDailyPicks(date?: string): Promise<BetSlipListItem[]>
   const endpoint = params.size > 0 ? `/api/daily-picks?${params.toString()}` : "/api/daily-picks";
   const { data } = await axiosInstance.get<unknown[]>(endpoint);
   return data.map(normalizeBetSlip);
+}
+
+export async function fetchDailyPicksPage(params?: {
+  limit?: number;
+  afterDate?: string;
+}): Promise<PagedResponse<BetSlipListItem>> {
+  const query = new URLSearchParams();
+  query.set("limit", String(params?.limit ?? 7));
+  if (params?.afterDate) query.set("afterDate", params.afterDate);
+  const { data } = await axiosInstance.get<unknown>(`/api/daily-picks/pages?${query.toString()}`);
+  return normalizePagedResponse(data, normalizeBetSlip);
 }

@@ -76,9 +76,54 @@ public class BettingRepository : IBettingRepository
     DateOnly slipDate,
     CancellationToken cancellationToken = default)
   {
-    return await _db.BetSlip
-      .AsNoTracking()
+    return await DailyPickSlipsQuery()
       .Where(s => s.DailyPick != null && s.DailyPick.SlipDate == slipDate)
+      .OrderBy(s => s.DailyPick!.RiskLevelId)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
+  public async Task<DailyPickSlipPage> GetDailyPickSlipsPageAsync(
+    int limit,
+    DateOnly? afterSlipDate,
+    CancellationToken cancellationToken = default)
+  {
+    var datesQuery = _db.DailyPick.AsNoTracking().Select(p => p.SlipDate).Distinct();
+    if (afterSlipDate is { } after)
+    {
+      datesQuery = datesQuery.Where(d => d < after);
+    }
+
+    var dates = await datesQuery
+      .OrderByDescending(d => d)
+      .Take(limit + 1)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    var hasMore = dates.Count > limit;
+    if (hasMore)
+    {
+      dates = dates.Take(limit).ToList();
+    }
+
+    if (dates.Count == 0)
+    {
+      return new DailyPickSlipPage([], false);
+    }
+
+    var slips = await DailyPickSlipsQuery()
+      .Where(s => s.DailyPick != null && dates.Contains(s.DailyPick.SlipDate))
+      .OrderByDescending(s => s.DailyPick!.SlipDate)
+      .ThenBy(s => s.DailyPick!.RiskLevelId)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+
+    return new DailyPickSlipPage(slips, hasMore);
+  }
+
+  private IQueryable<BetSlip> DailyPickSlipsQuery() =>
+    _db.BetSlip
+      .AsNoTracking()
       .Include(s => s.BetStatusEntity)
       .Include(s => s.DailyPick)
         .ThenInclude(p => p!.RiskLevel)
@@ -89,11 +134,7 @@ public class BettingRepository : IBettingRepository
         .ThenInclude(sel => sel.Match)
           .ThenInclude(m => m!.AwayClub)
       .Include(s => s.Selections)
-        .ThenInclude(sel => sel.BetStatusEntity)
-      .OrderBy(s => s.DailyPick!.RiskLevelId)
-      .ToListAsync(cancellationToken)
-      .ConfigureAwait(false);
-  }
+        .ThenInclude(sel => sel.BetStatusEntity);
 
   public async Task AddBetSlipAsync(BetSlip slip, CancellationToken cancellationToken = default)
   {
