@@ -72,6 +72,29 @@ public class BettingRepository : IBettingRepository
       p => p.SlipDate == slipDate && p.RiskLevelId == riskLevelId,
       cancellationToken);
 
+  public async Task<IReadOnlyList<BetSlip>> GetBetSlipsWithDailyPickOnDateAsync(
+    DateOnly slipDate,
+    CancellationToken cancellationToken = default)
+  {
+    return await _db.BetSlip
+      .AsNoTracking()
+      .Where(s => s.DailyPick != null && s.DailyPick.SlipDate == slipDate)
+      .Include(s => s.BetStatusEntity)
+      .Include(s => s.DailyPick)
+        .ThenInclude(p => p!.RiskLevel)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.HomeClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.Match)
+          .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.BetStatusEntity)
+      .OrderBy(s => s.DailyPick!.RiskLevelId)
+      .ToListAsync(cancellationToken)
+      .ConfigureAwait(false);
+  }
+
   public async Task AddBetSlipAsync(BetSlip slip, CancellationToken cancellationToken = default)
   {
     await _db.BetSlip.AddAsync(slip, cancellationToken).ConfigureAwait(false);

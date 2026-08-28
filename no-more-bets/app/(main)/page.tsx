@@ -5,8 +5,10 @@ import { MATCH_STATUS } from "@/features/matches/interfaces";
 import { ALL_STATUSES_ID, parseSortOrderParam, type FetchMatchesFilters } from "@/features/matches/services/matches-api";
 import { getMatchesPage } from "@/features/matches/services/matches-server";
 import { getLeagues, getSeasonYears } from "@/features/leagues/services/leagues-server";
+import { getDailyPicks } from "@/features/bets/services/bets-server";
 import type { LeagueListItem } from "@/features/leagues/interfaces";
 import type { MatchListItem } from "@/features/matches/interfaces";
+import type { BetSlipListItem } from "@/features/bets/interfaces";
 import type { PagedResponse } from "@/lib/paged-response";
 import { matchPath } from "@/lib/paths";
 import { softwareApplicationNode } from "@/lib/schema";
@@ -60,6 +62,7 @@ export default async function Page({
   const sp = await searchParams;
   let leagues: LeagueListItem[] = [];
   let seasonYears: string[] = [];
+  let dailyPicks: BetSlipListItem[] = [];
   let matchPage: PagedResponse<MatchListItem> = {
     items: [],
     hasMore: false,
@@ -73,6 +76,12 @@ export default async function Page({
     seasonYears = seasons.map((item) => item.year);
   } catch {
     // Client will retry.
+  }
+
+  try {
+    dailyPicks = await getDailyPicks();
+  } catch {
+    // Homepage still renders without today's picks.
   }
 
   const statusParam = Number(sp.status);
@@ -147,6 +156,7 @@ export default async function Page({
         initialFilters={filters}
         initialLeagues={leagues}
         initialSeasonYears={seasonYears}
+        initialDailyPicks={dailyPicks}
       />
     </>
   );

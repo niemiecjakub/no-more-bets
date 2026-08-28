@@ -94,7 +94,7 @@ function SelectionRow({ selection }: { selection: BetSelectionItem }) {
   );
 }
 
-function BetSlipCard({
+export function BetSlipCard({
   slip,
   stackInSession,
   showSessionLink = true,

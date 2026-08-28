@@ -15,6 +15,8 @@ import { fetchAgentDashboardResearchBettingSummaryWidget } from "@/features/bets
 import type { AgentDashboardResearchBettingSummaryWidget } from "@/features/bets/interfaces";
 import { ResearchBettingPanel } from "@/features/bets/components/research-betting-panel";
 import { ResearchBettingMobileSheet } from "@/features/bets/components/research-betting-mobile-sheet";
+import { DailyPicksRow } from "@/features/bets/components/daily-picks-row";
+import type { BetSlipListItem } from "@/features/bets/interfaces";
 import { handleServiceError } from "@/lib/error-handler";
 import { cn } from "@/lib/utils";
 import { useRevealOnScrollUp } from "@/hooks/use-reveal-on-scroll-up";
@@ -30,6 +32,7 @@ interface HomePageProps {
     initialFilters?: FetchMatchesFilters;
     initialLeagues?: LeagueListItem[];
     initialSeasonYears?: string[];
+    initialDailyPicks?: BetSlipListItem[];
 }
 
 function MatchesFallback() {
@@ -74,6 +77,7 @@ export default function HomePage({
     initialFilters,
     initialLeagues = [],
     initialSeasonYears = [],
+    initialDailyPicks = [],
 }: HomePageProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -365,6 +369,7 @@ export default function HomePage({
 
     return (
         <main className="mx-auto w-full max-w-7xl px-4 pt-0 pb-8 sm:px-6 lg:py-8">
+            <DailyPicksRow slips={initialDailyPicks} />
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.75fr)_minmax(0,1fr)] lg:items-start">
                 <div
                     className={`sticky top-[var(--site-header-height)] z-40 order-1 -mx-4 flex flex-col gap-3 border-b border-zinc-200 bg-zinc-50 px-4 py-3 transition-transform duration-200 dark:border-zinc-800 dark:bg-zinc-950 sm:-mx-6 sm:px-6 motion-reduce:transition-none lg:hidden ${

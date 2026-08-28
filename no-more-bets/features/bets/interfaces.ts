@@ -43,6 +43,13 @@ export const BET_STATUS = {
   Canceled: 4,
 } as const;
 
+/** Risk IDs matching backend BetRiskLevel enum (Low=1, Medium=2, High=3). */
+export const BET_RISK_LEVEL = {
+  Low: 1,
+  Medium: 2,
+  High: 3,
+} as const;
+
 export type BetStatusId = (typeof BET_STATUS)[keyof typeof BET_STATUS];
 
 /** API may send BetStatus as enum string (JsonStringEnumConverter) or numeric id. */

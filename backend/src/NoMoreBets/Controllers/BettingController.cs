@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.Betting.Common;
 using NoMoreBets.Application.Betting.GetBetSlipsList;
 using NoMoreBets.Application.Betting.GetBettingPerformanceStats;
+using NoMoreBets.Application.Betting.GetDailyPicks;
 using NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 using NoMoreBets.Application.Betting.ResearchBetScenarioStats;
 using NoMoreBets.Application.Common;
@@ -22,6 +23,18 @@ public class BettingController(IMediator mediator) : ControllerBase
   {
     var result = await mediator
       .Send(new GetBetSlipsListQuery(SeasonYearQueryExtensions.Normalize(seasonYears)), cancellationToken)
+      .ConfigureAwait(false);
+    return Ok(result);
+  }
+
+  [HttpGet("daily-picks")]
+  public async Task<ActionResult<IReadOnlyList<BetSlipListItemDto>>> GetDailyPicks(
+    [FromQuery] DateOnly? date = null,
+    CancellationToken cancellationToken = default)
+  {
+    var slipDate = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
+    var result = await mediator
+      .Send(new GetDailyPicksQuery(slipDate), cancellationToken)
       .ConfigureAwait(false);
     return Ok(result);
   }

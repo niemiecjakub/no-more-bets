@@ -19,7 +19,7 @@ function normalizeSelection(raw: unknown): BetSelectionItem {
   };
 }
 
-function normalizeBetSlip(raw: unknown): BetSlipListItem {
+export function normalizeBetSlip(raw: unknown): BetSlipListItem {
   const r = raw as Record<string, unknown>;
   const item = raw as BetSlipListItem;
   const agentSessionIdRaw =
@@ -51,5 +51,13 @@ export async function fetchBetSlips(seasonYears?: string[]): Promise<BetSlipList
 
 export async function fetchBetSlipsBySession(sessionId: number): Promise<BetSlipListItem[]> {
   const { data } = await axiosInstance.get<unknown[]>(`/api/agent-sessions/${sessionId}/bet-slips`);
+  return data.map(normalizeBetSlip);
+}
+
+export async function fetchDailyPicks(date?: string): Promise<BetSlipListItem[]> {
+  const params = new URLSearchParams();
+  if (date) params.set("date", date);
+  const endpoint = params.size > 0 ? `/api/daily-picks?${params.toString()}` : "/api/daily-picks";
+  const { data } = await axiosInstance.get<unknown[]>(endpoint);
   return data.map(normalizeBetSlip);
 }
