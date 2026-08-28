@@ -31,32 +31,34 @@ interface DailyPicksGridProps {
 
 export function DailyPicksGrid({ slips, emptyLabel = "No pick." }: DailyPicksGridProps) {
   return (
-    <ul className="grid grid-cols-1 gap-4 lg:grid-cols-3 lg:items-start">
-      {RISK_COLUMNS.map((column) => {
-        const slip = slips.find((item) => item.riskLevelId === column.id);
-        return (
-          <li key={column.id} className="min-w-0">
-            <h3
-              className={cn(
-                "mb-2 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
-                riskBadgeClass(column.id),
+    <div className="-mx-4 overflow-x-auto px-4 [-ms-overflow-style:none] [scrollbar-width:none] sm:-mx-6 sm:px-6 lg:mx-0 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden">
+      <ul className="grid auto-cols-[66%] grid-flow-col gap-4 snap-x snap-mandatory [&>li]:snap-start md:auto-cols-[38%] lg:grid-flow-row lg:auto-cols-auto lg:grid-cols-3 lg:items-start lg:snap-none">
+        {RISK_COLUMNS.map((column) => {
+          const slip = slips.find((item) => item.riskLevelId === column.id);
+          return (
+            <li key={column.id} className="min-w-0">
+              <h3
+                className={cn(
+                  "mb-2 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset",
+                  riskBadgeClass(column.id),
+                )}
+              >
+                {column.label}
+              </h3>
+              {slip ? (
+                <ul>
+                  <BetSlipCard slip={slip} showSessionLink />
+                </ul>
+              ) : (
+                <div className="rounded-lg border border-dashed border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+                  {emptyLabel}
+                </div>
               )}
-            >
-              {column.label}
-            </h3>
-            {slip ? (
-              <ul>
-                <BetSlipCard slip={slip} showSessionLink />
-              </ul>
-            ) : (
-              <div className="rounded-lg border border-dashed border-zinc-200 bg-white px-4 py-6 text-sm text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-                {emptyLabel}
-              </div>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }
 
