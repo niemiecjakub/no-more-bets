@@ -76,7 +76,10 @@ public class BettingRepository : IBettingRepository
 
   public async Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default)
   {
-    var query = _db.BetSlip.Where(s => s.AgentSession == null || s.AgentSession.Phase != AgentSessionPhase.Research);
+    var query = _db.BetSlip.Where(s =>
+      s.AgentSession == null
+      || (s.AgentSession.Phase != AgentSessionPhase.Research
+        && s.AgentSession.Phase != AgentSessionPhase.DailySlip));
     if (slipStatus is { } status)
     {
       query = query.Where(s => s.StatusId == (int)status);
@@ -207,7 +210,9 @@ public class BettingRepository : IBettingRepository
       .Where(s =>
         s.StatusId != (int)BetStatus.Pending
         && s.AgentSessionReflectedId == null
-        && (s.AgentSession == null || s.AgentSession.Phase != AgentSessionPhase.Research))
+        && (s.AgentSession == null
+          || (s.AgentSession.Phase != AgentSessionPhase.Research
+            && s.AgentSession.Phase != AgentSessionPhase.DailySlip)))
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
           .ThenInclude(m => m!.HomeClub)

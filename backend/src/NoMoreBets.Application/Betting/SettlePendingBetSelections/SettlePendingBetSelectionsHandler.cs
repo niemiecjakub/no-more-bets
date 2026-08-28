@@ -56,7 +56,8 @@ public sealed class SettlePendingBetSelectionsHandler(IUnitOfWork unitOfWork)
 
       slip.BetStatus = next;
 
-      if (previous == BetStatus.Pending && next == BetStatus.Won && slip.AgentSession?.Phase != AgentSessionPhase.Research)
+      if (previous == BetStatus.Pending && next == BetStatus.Won
+        && slip.AgentSession?.Phase.IsPaperSlipPhase() != true)
       {
         var payout = BankrollEntry.CreateBetWin(slip.PotentialPayout, slip.Id);
         await unitOfWork.Bankroll.AddAsync(payout, cancellationToken).ConfigureAwait(false);

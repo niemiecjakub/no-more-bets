@@ -12,7 +12,8 @@ public interface IBettingRepository
   Task AddBetSlipAsync(BetSlip slip, CancellationToken cancellationToken = default);
   Task<BetSlip?> GetBetSlipWithSelectionsByIdAsync(int betSlipId, CancellationToken cancellationToken = default);
   /// <summary>
-  /// Bet slips from betting (and similar) sessions; excludes slips tied to <see cref="AgentSessionPhase.Research"/>.
+  /// Bet slips from betting (and similar) sessions; excludes paper slips tied to
+  /// <see cref="AgentSessionPhase.Research"/> or <see cref="AgentSessionPhase.DailySlip"/>.
   /// </summary>
   Task<IReadOnlyList<BetSlip>> GetBetSlipsAsync(BetStatus? slipStatus = null, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<BetSlip>> GetBettingPhaseBetSlipsAsync(
