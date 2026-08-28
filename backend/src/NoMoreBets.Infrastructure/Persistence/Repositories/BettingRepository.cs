@@ -61,6 +61,9 @@ public class BettingRepository : IBettingRepository
       .ConfigureAwait(false);
   }
 
+  public Task<bool> AnyDailyPickOnDateAsync(DateOnly slipDate, CancellationToken cancellationToken = default) =>
+    _db.DailyPick.AsNoTracking().AnyAsync(p => p.SlipDate == slipDate, cancellationToken);
+
   public async Task AddBetSlipAsync(BetSlip slip, CancellationToken cancellationToken = default)
   {
     await _db.BetSlip.AddAsync(slip, cancellationToken).ConfigureAwait(false);

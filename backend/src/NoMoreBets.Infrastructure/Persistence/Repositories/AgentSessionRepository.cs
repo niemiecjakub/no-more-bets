@@ -181,6 +181,15 @@ public sealed class AgentSessionRepository(AppDbContext db) : IAgentSessionRepos
   public Task<bool> SessionExistsAsync(int sessionId, CancellationToken cancellationToken = default) =>
     db.AgentSession.AsNoTracking().AnyAsync(s => s.Id == sessionId, cancellationToken);
 
+  public Task<bool> AnySessionInRangeAsync(
+    AgentSessionPhase phase,
+    DateTime startUtcInclusive,
+    DateTime endUtcExclusive,
+    CancellationToken cancellationToken = default) =>
+    db.AgentSession.AsNoTracking().AnyAsync(
+      s => s.Phase == phase && s.StartedAt >= startUtcInclusive && s.StartedAt < endUtcExclusive,
+      cancellationToken);
+
   public async Task<IReadOnlyList<AgentSessionMessage>> GetMessagesAsync(
     int sessionId,
     CancellationToken cancellationToken = default)

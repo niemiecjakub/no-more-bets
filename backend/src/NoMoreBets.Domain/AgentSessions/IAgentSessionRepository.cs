@@ -25,6 +25,11 @@ public interface IAgentSessionRepository
     IReadOnlyCollection<int> sessionIds,
     CancellationToken cancellationToken = default);
   Task<bool> SessionExistsAsync(int sessionId, CancellationToken cancellationToken = default);
+  Task<bool> AnySessionInRangeAsync(
+    AgentSessionPhase phase,
+    DateTime startUtcInclusive,
+    DateTime endUtcExclusive,
+    CancellationToken cancellationToken = default);
   Task<IReadOnlyList<AgentSessionMessage>> GetMessagesAsync(
     int sessionId,
     CancellationToken cancellationToken = default);

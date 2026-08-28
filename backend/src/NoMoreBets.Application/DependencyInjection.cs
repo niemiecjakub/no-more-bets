@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.AgentSessions.ToolCallDisplay;
+using NoMoreBets.Application.Betting.DailySlip;
 using NoMoreBets.Application.Betting.ResearchBetScenarioStats;
 using NoMoreBets.Application.Common.MatchMatcher;
 
@@ -13,6 +14,7 @@ public static class DependencyInjection
     services.AddSingleton<IMatchMatcher, MatchMatcher>();
     services.AddScoped<AgentToolCallDisplayFormatter>();
     services.AddScoped<IResearchBetScenarioStatsService, ResearchBetScenarioStatsService>();
+    services.AddScoped<DailySlipScheduleGate>();
 
     return services;
   }

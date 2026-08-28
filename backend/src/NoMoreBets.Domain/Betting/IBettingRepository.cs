@@ -9,6 +9,7 @@ public interface IBettingRepository
   Task<IReadOnlyList<BettingOddsSnapshot>> GetBettingOddsSnapshotsForMatchAsync(int matchId, CancellationToken cancellationToken = default);
   Task<decimal?> GetCurrentOddsForSelectionAsync(int matchId, BettingEventType eventType, BettingEventOption eventOption, CancellationToken cancellationToken = default);
   Task<IReadOnlyList<Match>> GetMatchesAvailableForBettingAsync(CancellationToken cancellationToken = default);
+  Task<bool> AnyDailyPickOnDateAsync(DateOnly slipDate, CancellationToken cancellationToken = default);
   Task AddBetSlipAsync(BetSlip slip, CancellationToken cancellationToken = default);
   Task<BetSlip?> GetBetSlipWithSelectionsByIdAsync(int betSlipId, CancellationToken cancellationToken = default);
   /// <summary>
