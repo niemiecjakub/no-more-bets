@@ -39,7 +39,7 @@ public class DailySlipTool
     _logger = logger ?? NullLogger<DailySlipTool>.Instance;
   }
 
-  [Description("Retrieves matches kicking off today (Warsaw calendar) that have research and current odds.")]
+  [Description("Retrieves matches kicking off today (UTC) that have research and current odds.")]
   public async Task<IReadOnlyList<AvailableMatch>> GetAvailableMatchesAsync(CancellationToken cancellationToken = default)
   {
     var matches = await _mediator
@@ -93,7 +93,7 @@ public class DailySlipTool
       return "At least one selection is required to place a daily slip.";
     }
 
-    var slipDate = WarsawCalendar.DateFromUtc(DateTime.UtcNow);
+    var slipDate = DateOnly.FromDateTime(DateTime.UtcNow);
     var alreadyPlaced = await _unitOfWork.Betting
       .AnyDailyPickOnDateWithRiskAsync(slipDate, (int)riskLevel, cancellationToken)
       .ConfigureAwait(false);

@@ -1,13 +1,13 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Providers.DailySlip;
 using NoMoreBets.Infrastructure.AI.Providers.Date;
+using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations;
@@ -22,7 +22,7 @@ public static class DailySlipPhaseDefinition
 internal sealed class DailySlipExecuteStep : IAgentPhaseStep
 {
   public string? AgentInstructions => """
-    You produce a daily house betting card. You are not Chandler and you do not manage a live bankroll.
+    You produce a daily house betting card. You do not manage a live bankroll.
 
     Job: from matches kicking off today, place up to three paper slips — one Low, one Medium, one High.
     Skip a tier rather than inventing filler. If nothing is backable, place nothing and say why.
@@ -33,9 +33,9 @@ internal sealed class DailySlipExecuteStep : IAgentPhaseStep
 
   public string BuildPrompt()
   {
-    var today = WarsawCalendar.DateFromUtc(DateTime.UtcNow);
+    var today = DateOnly.FromDateTime(DateTime.UtcNow);
     return $"""
-      Today's card date (Warsaw): {today:yyyy-MM-dd}.
+      Today's card date (UTC): {today:yyyy-MM-dd}.
 
       1. List today's available matches.
       2. Read research and current odds for fixtures you might use. Check form and tables when they would change a pick. Use web search when stored research is thin or stale.
@@ -59,5 +59,6 @@ internal sealed class DailySlipExecuteStep : IAgentPhaseStep
     new WebSearchProvider(
       serviceProvider.GetRequiredService<ISearchService>(),
       serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
+    new TodoProvider(),
   ];
 }

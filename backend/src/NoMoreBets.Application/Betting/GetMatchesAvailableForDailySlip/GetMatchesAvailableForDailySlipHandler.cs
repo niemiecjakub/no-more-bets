@@ -17,9 +17,9 @@ public sealed class GetMatchesAvailableForDailySlipHandler(IUnitOfWork unitOfWor
       .GetMatchesAvailableForBettingAsync(cancellationToken)
       .ConfigureAwait(false);
 
-    var cardDate = WarsawCalendar.DateFromUtc(request.UtcNow);
+    var cardDate = DateOnly.FromDateTime(request.UtcNow);
     return matches
-      .Where(m => WarsawCalendar.DateFromUtc(m.MatchDate) == cardDate)
+      .Where(m => DateOnly.FromDateTime(m.MatchDate) == cardDate)
       .ToList();
   }
 }

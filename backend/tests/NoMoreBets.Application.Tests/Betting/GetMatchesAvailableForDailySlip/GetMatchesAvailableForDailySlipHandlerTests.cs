@@ -21,12 +21,12 @@ public class GetMatchesAvailableForDailySlipHandlerTests
   }
 
   [Fact]
-  public async Task Handle_KeepsMatchesKickingOffOnWarsawToday_AndDropsTheNextDay()
+  public async Task Handle_KeepsMatchesKickingOffOnUtcToday_AndDropsTheNextDay()
   {
-    // Arrange — 06:00 UTC 28 Aug is still 28 Aug in Warsaw
+    // Arrange
     var utcNow = new DateTime(2026, 8, 28, 6, 0, 0, DateTimeKind.Utc);
     var todayKickoff = new DateTime(2026, 8, 28, 18, 0, 0, DateTimeKind.Utc);
-    var afterMidnightKickoff = new DateTime(2026, 8, 28, 22, 30, 0, DateTimeKind.Utc);
+    var afterMidnightKickoff = new DateTime(2026, 8, 29, 0, 30, 0, DateTimeKind.Utc);
 
     var todayMatch = new Match { Id = 1, MatchDate = todayKickoff, HomeClub = new ClubEntity { Name = "A" }, AwayClub = new ClubEntity { Name = "B" } };
     var nextDayMatch = new Match { Id = 2, MatchDate = afterMidnightKickoff, HomeClub = new ClubEntity { Name = "C" }, AwayClub = new ClubEntity { Name = "D" } };

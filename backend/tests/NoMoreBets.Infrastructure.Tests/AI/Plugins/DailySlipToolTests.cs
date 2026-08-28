@@ -58,7 +58,7 @@ public class DailySlipToolTests
         && s.Bankrolls.Count == 0
         && s.DailyPick != null
         && s.DailyPick.RiskLevelId == (int)BetRiskLevel.Low
-        && s.DailyPick.SlipDate == WarsawCalendar.DateFromUtc(DateTime.UtcNow)
+        && s.DailyPick.SlipDate == DateOnly.FromDateTime(DateTime.UtcNow)
         && s.Selections.Count == 1
         && s.Selections.Single().MatchId == 39),
       Arg.Any<CancellationToken>());

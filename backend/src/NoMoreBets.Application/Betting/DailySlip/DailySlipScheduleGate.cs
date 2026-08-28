@@ -18,7 +18,7 @@ public sealed class DailySlipScheduleGate(IMediator mediator, IUnitOfWork unitOf
       return "no matches available for today's card";
     }
 
-    var cardDate = WarsawCalendar.DateFromUtc(utcNow);
+    var cardDate = DateOnly.FromDateTime(utcNow);
     var hasPick = await unitOfWork.Betting
       .AnyDailyPickOnDateAsync(cardDate, cancellationToken)
       .ConfigureAwait(false);
@@ -27,7 +27,8 @@ public sealed class DailySlipScheduleGate(IMediator mediator, IUnitOfWork unitOf
       return "a daily pick already exists for today";
     }
 
-    var (startUtc, endUtc) = WarsawCalendar.UtcRangeForDate(cardDate);
+    var startUtc = DateTime.SpecifyKind(cardDate.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+    var endUtc = startUtc.AddDays(1);
     var hasSession = await unitOfWork.AgentSessions
       .AnySessionInRangeAsync(AgentSessionPhase.DailySlip, startUtc, endUtc, cancellationToken)
       .ConfigureAwait(false);
