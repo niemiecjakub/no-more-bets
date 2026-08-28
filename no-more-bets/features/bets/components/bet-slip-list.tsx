@@ -124,6 +124,11 @@ function BetSlipCard({
           >
             {slip.statusName}
           </span>
+          {slip.riskLevelName ? (
+            <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-600/20 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-500/30">
+              {slip.riskLevelName}
+            </span>
+          ) : null}
           <time
             dateTime={slip.createdAt}
             className="tabular-nums text-sm text-zinc-600 dark:text-zinc-400"

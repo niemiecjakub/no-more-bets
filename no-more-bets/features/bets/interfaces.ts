@@ -14,6 +14,9 @@ export interface BetSlipListItem {
   agentSessionId: number | null;
   rationale?: string | null;
   estimatedWinProbability?: number | null;
+  riskLevelId?: number | null;
+  riskLevelName?: string | null;
+  slipDate?: string | null;
 }
 
 /**

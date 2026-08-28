@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bot, WalletCards } from "lucide-react";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { SlugIcon } from "@/components/slug-icon";
 import { BetSlipList } from "@/features/bets/components/bet-slip-list";
 import type { BetSlipListItem } from "@/features/bets/interfaces";
-import { fetchBetSlips } from "@/features/bets/services/bets-api";
+import { fetchBetSlipsBySession } from "@/features/bets/services/bets-api";
 import { AgentSessionTranscript } from "@/features/bets/components/agent-session-transcript";
 import { fetchAgentSessionMessages, type AgentSessionMessage } from "@/features/bets/services/agent-session-api";
-import { isBettingSessionPhase, sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
+import { isSessionWithSlips, sessionPhaseIcon } from "@/features/sessions/agent-session-phases";
 import { matchPath } from "@/lib/paths";
 import type { AgentSessionListItem, AgentSessionMatchSummary } from "@/features/sessions/interfaces";
 import { fetchAgentSessionsPage } from "@/features/sessions/services/sessions-api";
@@ -141,7 +141,7 @@ export function AgentSessionsDetailsPanel({
     const [sessionsError, setSessionsError] = useState<string | null>(null);
     const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
     const isLoadingMoreRef = useRef(false);
-    const [allBetSlips, setAllBetSlips] = useState<BetSlipListItem[]>([]);
+    const [sessionBetSlips, setSessionBetSlips] = useState<BetSlipListItem[]>([]);
     const [isLoadingBetSlips, setIsLoadingBetSlips] = useState(true);
     const [betSlipsError, setBetSlipsError] = useState<string | null>(null);
     const [transcriptMessages, setTranscriptMessages] = useState<AgentSessionMessage[] | null>(null);
@@ -261,13 +261,28 @@ export function AgentSessionsDetailsPanel({
     }, [applySessionsPage, hasMore, nextCursor, phaseIdsForRequest, selectedSeasonYears]);
 
     useEffect(() => {
+        if (selectedSessionId == null) {
+            setSessionBetSlips([]);
+            setIsLoadingBetSlips(false);
+            setBetSlipsError(null);
+            return;
+        }
+
+        const session = sessions.find((s) => s.id === selectedSessionId);
+        if (!session || !isSessionWithSlips(session.phaseId)) {
+            setSessionBetSlips([]);
+            setIsLoadingBetSlips(false);
+            setBetSlipsError(null);
+            return;
+        }
+
         let cancelled = false;
         setIsLoadingBetSlips(true);
         setBetSlipsError(null);
 
-        fetchBetSlips()
+        fetchBetSlipsBySession(selectedSessionId)
             .then((data) => {
-                if (!cancelled) setAllBetSlips(data);
+                if (!cancelled) setSessionBetSlips(data);
             })
             .catch((error) => {
                 if (!cancelled) {
@@ -281,7 +296,7 @@ export function AgentSessionsDetailsPanel({
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [selectedSessionId, sessions]);
 
     useEffect(() => {
         setSelectedSessionId((previous) => {
@@ -338,10 +353,7 @@ export function AgentSessionsDetailsPanel({
 
     const selectedSession = selectedSessionId != null ? sessions.find((session) => session.id === selectedSessionId) : undefined;
     const SelectedPhaseIcon = selectedSession ? sessionPhaseIcon(selectedSession.phaseId) : Bot;
-    const selectedSessionSlips = useMemo(() => {
-        if (selectedSessionId == null) return [];
-        return allBetSlips.filter((slip) => slip.agentSessionId === selectedSessionId);
-    }, [allBetSlips, selectedSessionId]);
+    const selectedSessionSlips = sessionBetSlips;
 
     function handleSelectedPhaseIdsChange(phaseIds: number[]) {
         bootstrapIncludeSessionIdRef.current = selectedSessionId;
@@ -419,7 +431,7 @@ export function AgentSessionsDetailsPanel({
                             ) : null}
                         </div>
                         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-                            {isBettingSessionPhase(selectedSession.phaseId) ? (
+                            {isSessionWithSlips(selectedSession.phaseId) ? (
                                 <details className="group border-b border-violet-200 bg-violet-50/80 dark:border-violet-900/60 dark:bg-violet-950/30">
                                     <summary className="cursor-pointer list-none px-4 py-3 transition-colors hover:bg-zinc-100/90 dark:hover:bg-zinc-800/80">
                                         <span className="inline-flex w-full items-center justify-between gap-3">

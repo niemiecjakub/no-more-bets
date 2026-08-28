@@ -48,3 +48,8 @@ export async function fetchBetSlips(seasonYears?: string[]): Promise<BetSlipList
   const { data } = await axiosInstance.get<unknown[]>(endpoint);
   return data.map(normalizeBetSlip);
 }
+
+export async function fetchBetSlipsBySession(sessionId: number): Promise<BetSlipListItem[]> {
+  const { data } = await axiosInstance.get<unknown[]>(`/api/agent-sessions/${sessionId}/bet-slips`);
+  return data.map(normalizeBetSlip);
+}

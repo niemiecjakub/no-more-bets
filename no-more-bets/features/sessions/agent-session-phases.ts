@@ -1,4 +1,4 @@
-import { Bot, Globe, Lightbulb, Search, Ticket, Trash2 } from "lucide-react";
+import { Bot, CalendarDays, Globe, Lightbulb, Search, Ticket, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface AgentSessionPhaseDefinition {
@@ -15,6 +15,7 @@ export const AGENT_SESSION_PHASES: AgentSessionPhaseDefinition[] = [
   { id: 3, name: "Reflection", label: "Reflection", icon: Lightbulb },
   { id: 4, name: "InternetResearch", label: "Internet", icon: Globe },
   { id: 5, name: "MemoryCleanup", label: "Cleanup", icon: Trash2 },
+  { id: 6, name: "DailySlip", label: "Daily slip", icon: CalendarDays },
 ];
 
 const phaseIconById = new Map(AGENT_SESSION_PHASES.map((phase) => [phase.id, phase.icon]));
@@ -25,4 +26,8 @@ export function sessionPhaseIcon(phaseId: number): LucideIcon {
 
 export function isBettingSessionPhase(phaseId: number): boolean {
   return phaseId === 2;
+}
+
+export function isSessionWithSlips(phaseId: number): boolean {
+  return phaseId === 2 || phaseId === 6;
 }

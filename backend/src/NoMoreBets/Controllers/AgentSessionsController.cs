@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using NoMoreBets.Application.AgentSessions.GetAgentSessionMessages;
 using NoMoreBets.Application.AgentSessions.GetAgentSessionsPage;
+using NoMoreBets.Application.Betting.Common;
+using NoMoreBets.Application.Betting.GetBetSlipsByAgentSession;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 
@@ -73,5 +75,20 @@ public class AgentSessionsController(IMediator mediator) : ControllerBase
       return NotFound();
 
     return Ok(messages);
+  }
+
+  [HttpGet("agent-sessions/{sessionId:int}/bet-slips")]
+  public async Task<ActionResult<IReadOnlyList<BetSlipListItemDto>>> GetAgentSessionBetSlips(
+    int sessionId,
+    CancellationToken cancellationToken = default)
+  {
+    var slips = await mediator
+      .Send(new GetBetSlipsByAgentSessionQuery(sessionId), cancellationToken)
+      .ConfigureAwait(false);
+
+    if (slips is null)
+      return NotFound();
+
+    return Ok(slips);
   }
 }
