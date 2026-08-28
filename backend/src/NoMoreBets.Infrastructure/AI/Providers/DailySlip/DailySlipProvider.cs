@@ -10,11 +10,14 @@ public sealed class DailySlipProvider : AIContextProvider
   private static readonly string Instructions =
       $$"""
         # Daily slip
-        You build today's house card. Tools:
-        - {{AgentToolCatalog.Betting.GetAvailableMatches.Name}} — matches kicking off today that have research and odds. Use only these.
-        - {{AgentToolCatalog.Betting.GetCurrentOdds.Name}} — current prices. Copy eventTypeName and option labels exactly.
-        - {{AgentToolCatalog.Betting.GetMatchAnalysis.Name}} — stored research for a match on that list.
-        - {{AgentToolCatalog.DailySlip.PlaceBetSlip.Name}} — paper slip, stake 10, required riskLevel Low/Medium/High. One slip per tier. No bankroll.
+        You have access to daily slip tools for today's house card.
+
+        Use these tools to build today's card:
+        - Use {{AgentToolCatalog.Betting.GetAvailableMatches.Name}} to list matches kicking off today that have research and current odds. Only bet these matches.
+        - Use {{AgentToolCatalog.Betting.GetCurrentOdds.Name}} to check current odds for a match.
+        - Use {{AgentToolCatalog.Betting.GetMatchAnalysis.Name}} to read saved match analysis.
+        - Use {{AgentToolCatalog.DailySlip.PlaceBetSlip.Name}} to place one paper slip. Stake is always 10. Call once per Low, Medium, or High. There is no bankroll.
+
         """;
 
   private readonly DailySlipTool _dailySlipTool;
@@ -28,47 +31,56 @@ public sealed class DailySlipProvider : AIContextProvider
 
   protected override ValueTask<AIContext> ProvideAIContextAsync(InvokingContext context, CancellationToken cancellationToken = default)
   {
-    var serializerOptions = AgentAbstractionsJsonUtilities.DefaultOptions;
     var aiContext = new AIContext
     {
       Instructions = Instructions,
-      Tools =
-      [
-        AIFunctionFactory.Create(
-          _dailySlipTool.GetAvailableMatchesAsync,
-          new AIFunctionFactoryOptions
-          {
-            Name = AgentToolCatalog.Betting.GetAvailableMatches.Name,
-            Description = "Retrieves matches kicking off today that have research and current odds.",
-            SerializerOptions = serializerOptions,
-          }),
-        AIFunctionFactory.Create(
-          _bettingTool.GetCurrentOddsAsync,
-          new AIFunctionFactoryOptions
-          {
-            Name = AgentToolCatalog.Betting.GetCurrentOdds.Name,
-            Description = "Returns current odds for the match. Compact markets by default.",
-            SerializerOptions = serializerOptions,
-          }),
-        AIFunctionFactory.Create(
-          _bettingTool.GetMatchAnalysisAsync,
-          new AIFunctionFactoryOptions
-          {
-            Name = AgentToolCatalog.Betting.GetMatchAnalysis.Name,
-            Description = "Returns stored research for the given match.",
-            SerializerOptions = serializerOptions,
-          }),
-        AIFunctionFactory.Create(
-          _dailySlipTool.PlaceBetSlip,
-          new AIFunctionFactoryOptions
-          {
-            Name = AgentToolCatalog.DailySlip.PlaceBetSlip.Name,
-            Description = "Places one paper daily slip for a risk tier. Stake is always 10. Call once per Low/Medium/High.",
-            SerializerOptions = serializerOptions,
-          }),
-      ],
+      Tools = CreateTools(),
     };
 
     return ValueTask.FromResult(aiContext);
+  }
+
+  private AITool[] CreateTools()
+  {
+    var serializerOptions = AgentAbstractionsJsonUtilities.DefaultOptions;
+
+    return
+    [
+      AIFunctionFactory.Create(
+        _dailySlipTool.GetAvailableMatchesAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = AgentToolCatalog.Betting.GetAvailableMatches.Name,
+          Description = "Retrieves matches kicking off today that have research and current odds.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        _bettingTool.GetCurrentOddsAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = AgentToolCatalog.Betting.GetCurrentOdds.Name,
+          Description = "Returns current odds for the match. By default returns compact markets (1X2, BTTS, double chance, O/U goals). Set includeExoticMarkets true only when you need handicap or exact-score lines.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        _bettingTool.GetMatchAnalysisAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = AgentToolCatalog.Betting.GetMatchAnalysis.Name,
+          Description = "Returns structured match analysis for the given match.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        _dailySlipTool.PlaceBetSlip,
+        new AIFunctionFactoryOptions
+        {
+          Name = AgentToolCatalog.DailySlip.PlaceBetSlip.Name,
+          Description = "Places one paper daily slip for a risk tier. Stake is always 10. Call once per Low/Medium/High.",
+          SerializerOptions = serializerOptions,
+        }),
+    ];
   }
 }

@@ -22,24 +22,61 @@ public static class DailySlipPhaseDefinition
 internal sealed class DailySlipExecuteStep : IAgentPhaseStep
 {
   public string? AgentInstructions => """
-    You produce a daily house betting card. You do not manage a live bankroll.
+    You produce a daily house betting card.
 
-    Job: from matches kicking off today, place up to three paper slips — one Low, one Medium, one High.
-    Skip a tier rather than inventing filler. If nothing is backable, place nothing and say why.
+    Create up to three betting slips:
+    - Low Risk
+    - Medium Risk
+    - High Risk
 
-    Use only matches returned by the available-matches tool. Research only those. Stake is always 10.
-    Set estimated win probability honestly. Copy market and option names from current odds.
-    """;
+    Every betting slip should maximize expected value for its intended risk profile. Favor selections where the estimated chance of winning is better than the implied probability from the available odds. Do not choose selections solely because they are likely to win or solely because they offer high odds.
+
+    Risk profiles:
+
+    Low Risk:
+    - Optimize for probability of winning.
+    - Use the safest supported markets.
+    - Prefer fewer selections and lower combined odds.
+
+    Medium Risk
+    - Your strongest overall betting opinion.
+    - Balance probability and payout.
+    - If you could place only one slip, it would be this one.
+
+    High Risk
+    - Optimize for payout.
+    - Higher combined odds are expected.
+    - May include additional legs or more aggressive markets.
+    - Accept substantially lower probability of success.
+    - Never add speculative legs solely to increase odds.
+
+    Each slip should represent a different betting strategy, not simply the same slip with more selections added.
+    The same selection may appear on multiple slips if it remains a strong value play, but the slips must not be identical.
+    It is acceptable to omit a risk level if there is no defensible betting opportunity.
+    
+    For every slip:
+    - Estimate the probability that the entire slip wins (0 < p < 1).
+    - Be realistic. Do not overestimate confidence.
+    - Account for correlation between related legs.
+    - Explain why the slip is worth placing.
+    - Explain the primary reasons it could lose.
+
+    Use web search only when stored research is insufficient or when late-breaking information (injuries, lineups, suspensions, weather) could materially affect the pick.
+
+    If recent information contradicts stored research, prefer the newer evidence.
+  """;
 
   public string BuildPrompt()
   {
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
     return $"""
-      Today's card date (UTC): {today:yyyy-MM-dd}.
-
-      1. List today's available matches.
-      2. Read research and current odds for fixtures you might use. Check form and tables when they would change a pick. Use web search when stored research is thin or stale.
-      3. Place at most one Low, one Medium, and one High paper slip. Skip a tier you cannot defend.
+      Today's date (UTC): {today:yyyy-MM-dd}.
+      Use the todo list to track the work.
+      1. List today's available matches. Only bet those matches.
+      2. Read stored research and current odds for matches you might use. Start with the main markets. Check form or tables only when they would change a pick. Use web search when stored research is thin or a claim you would bet on may be out of date.
+      3. Skip matches you cannot price. Choose selections, then build slips.
+      4. Place at most one Low, one Medium, and one High paper slip. Skip a level you cannot defend. If you have nothing honest to place, place nothing.
+      5. In your closing note, name matches you considered and did not use, one line each.
       """;
   }
 
