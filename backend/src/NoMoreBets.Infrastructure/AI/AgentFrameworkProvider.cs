@@ -3,6 +3,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Phases.Betting;
+using NoMoreBets.Infrastructure.AI.Phases.DailySlip;
 using NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
 using NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
 using NoMoreBets.Infrastructure.AI.Phases.Reflection;
@@ -29,6 +30,7 @@ public static class AgentFrameworkProvider
     services.AddScoped<MemoryCleanupPhaseRunner>();
     services.AddScoped<ReflectionPhaseRunner>();
     services.AddScoped<BettingPhaseRunner>();
+    services.AddScoped<DailySlipPhaseRunner>();
     services.AddScoped<AgentPhaseRunner>();
     services.AddScoped<IAgentPhaseRunner>(sp => sp.GetRequiredService<AgentPhaseRunner>());
 

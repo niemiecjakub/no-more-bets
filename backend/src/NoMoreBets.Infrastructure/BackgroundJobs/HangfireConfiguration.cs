@@ -177,6 +177,16 @@ public static class HangfireConfiguration
       .WithCron("0 13 * * *")
       .Register();
 
+    // Runs daily at 06:00 UTC (08:00 Warsaw in summer)
+    builder.For<BettingAgentCronService>(s => s.RunDailySlipAsync())
+      .WithId("betting-agent-daily-slip")
+      .WithGroup(JobGroups.Betting)
+      .WithName("Daily slip card")
+      .WithDescription("Places up to three paper slips (low / medium / high) for matches kicking off today.")
+      .Visible()
+      .WithCron("0 6 * * *")
+      .Register();
+
     // Runs once per day at 22:30
     builder.For<BetslipSettlementJobService>(s => s.ResolveBetslipStatuses())
       .WithId("resolve-betslip-statuses")

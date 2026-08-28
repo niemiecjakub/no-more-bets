@@ -1,6 +1,7 @@
 using Hangfire;
 using MediatR;
 using Microsoft.Extensions.Logging;
+using NoMoreBets.Application.Betting.DailySlip;
 using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
@@ -13,6 +14,7 @@ public sealed class BettingAgentCronService(
   IAgentPhaseRunner agentPhaseRunner,
   IMediator mediator,
   IUnitOfWork unitOfWork,
+  DailySlipScheduleGate dailySlipScheduleGate,
   ILogger<BettingAgentCronService> logger)
 {
   [AutomaticRetry(Attempts = 1)]
@@ -62,6 +64,23 @@ public sealed class BettingAgentCronService(
     logger.LogInformation("Starting scheduled betting execution agent phase");
     await agentPhaseRunner.RunBettingExecutionPhaseAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled betting execution agent phase");
+  }
+
+  [AutomaticRetry(Attempts = 1)]
+  public async Task RunDailySlipAsync()
+  {
+    var skipReason = await dailySlipScheduleGate
+      .GetSkipReasonAsync(DateTime.UtcNow, CancellationToken.None)
+      .ConfigureAwait(false);
+    if (skipReason is not null)
+    {
+      logger.LogInformation("Skipping scheduled daily slip: {Reason}", skipReason);
+      return;
+    }
+
+    logger.LogInformation("Starting scheduled daily slip agent phase");
+    await agentPhaseRunner.RunDailySlipPhaseAsync(CancellationToken.None).ConfigureAwait(false);
+    logger.LogInformation("Finished scheduled daily slip agent phase");
   }
 
   [AutomaticRetry(Attempts = 1)]

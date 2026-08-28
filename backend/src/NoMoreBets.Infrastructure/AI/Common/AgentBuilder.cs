@@ -63,19 +63,20 @@ public sealed class AgentBuilder
   public async Task<AgentConfig> BuildForScheduledJobAsync(
     IReadOnlyList<AIContextProvider> contextProviders,
     AgentSession? existingSession = null,
-    CancellationToken cancellationToken = default)
+    CancellationToken cancellationToken = default,
+    string? instructions = null)
   {
     var credential = new ApiKeyCredential(_openAi.ApiKey);
     // OpenAI 2.9+: model moved off GetResponsesClient onto AsAIAgent.
     var responsesClient = new OpenAIClient(credential).GetResponsesClient();
     var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
     var chatOptions = defaultRunOptions.ChatOptions?.Clone() ?? new ChatOptions();
-    chatOptions.Instructions = Instructions;
+    chatOptions.Instructions = instructions ?? Instructions;
 
     var baseAgent = responsesClient.AsAIAgent(
       new ChatClientAgentOptions
       {
-        Name = "BettingAgent",
+        Name = instructions is null ? "BettingAgent" : "DailySlipAgent",
         ChatOptions = chatOptions,
         AIContextProviders = contextProviders as IList<AIContextProvider> ?? contextProviders.ToList(),
       },

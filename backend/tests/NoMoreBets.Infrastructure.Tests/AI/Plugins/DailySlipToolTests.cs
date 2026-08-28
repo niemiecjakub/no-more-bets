@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MediatR;
 using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Bankrolls;
@@ -19,11 +20,12 @@ public class DailySlipToolTests
 
   public DailySlipToolTests()
   {
+    var mediator = Substitute.For<IMediator>();
     _unitOfWork.Betting.Returns(_betting);
     _unitOfWork.Bankroll.Returns(_bankroll);
     _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
     _agentSessionContext.SessionId = 42;
-    _sut = new DailySlipTool(_unitOfWork, _agentSessionContext);
+    _sut = new DailySlipTool(_unitOfWork, mediator, _agentSessionContext);
   }
 
   [Fact]

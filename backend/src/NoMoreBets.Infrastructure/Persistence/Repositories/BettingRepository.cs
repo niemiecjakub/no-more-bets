@@ -140,6 +140,8 @@ public class BettingRepository : IBettingRepository
       .Include(s => s.Selections)
         .ThenInclude(sel => sel.Match)
           .ThenInclude(m => m!.AwayClub)
+      .Include(s => s.Selections)
+        .ThenInclude(sel => sel.BetStatusEntity)
       .ToListAsync(cancellationToken)
       .ConfigureAwait(false);
   }

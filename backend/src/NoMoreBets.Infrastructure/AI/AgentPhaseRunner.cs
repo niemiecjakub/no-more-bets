@@ -2,6 +2,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Phases.Betting;
+using NoMoreBets.Infrastructure.AI.Phases.DailySlip;
 using NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
 using NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
 using NoMoreBets.Infrastructure.AI.Phases.Reflection;
@@ -13,7 +14,8 @@ public sealed class AgentPhaseRunner(
   InternetResearchPhaseRunner internetResearch,
   MemoryCleanupPhaseRunner memoryCleanup,
   ReflectionPhaseRunner reflection,
-  BettingPhaseRunner betting) : IAgentPhaseRunner
+  BettingPhaseRunner betting,
+  DailySlipPhaseRunner dailySlip) : IAgentPhaseRunner
 {
   public Task<IReadOnlyList<IMessage>> RunResearchPhaseAsync(Match match, CancellationToken cancellationToken = default)
     => research.RunAsync(match, cancellationToken);
@@ -29,4 +31,7 @@ public sealed class AgentPhaseRunner(
 
   public Task<IReadOnlyList<IMessage>> RunBettingExecutionPhaseAsync(CancellationToken cancellationToken = default)
     => betting.RunAsync(cancellationToken);
+
+  public Task<IReadOnlyList<IMessage>> RunDailySlipPhaseAsync(CancellationToken cancellationToken = default)
+    => dailySlip.RunAsync(cancellationToken);
 }

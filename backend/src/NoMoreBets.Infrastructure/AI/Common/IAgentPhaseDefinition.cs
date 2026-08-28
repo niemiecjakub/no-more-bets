@@ -7,6 +7,7 @@ namespace NoMoreBets.Infrastructure.AI.Common;
 public interface IAgentPhaseStep
 {
   string BuildPrompt();
+  string? AgentInstructions => null;
   IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) => [];
   IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) => [];
 }

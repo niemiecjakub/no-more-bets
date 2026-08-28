@@ -1,12 +1,15 @@
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using NoMoreBets.Application.Betting.GetMatchesAvailableForDailySlip;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Infrastructure.AI.Common;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 
 namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
@@ -20,17 +23,31 @@ public class DailySlipTool
   };
 
   private readonly IUnitOfWork _unitOfWork;
+  private readonly IMediator _mediator;
   private readonly AgentSessionContext _agentSessionContext;
   private readonly ILogger<DailySlipTool> _logger;
 
   public DailySlipTool(
     IUnitOfWork unitOfWork,
+    IMediator mediator,
     AgentSessionContext agentSessionContext,
     ILogger<DailySlipTool>? logger = null)
   {
     _unitOfWork = unitOfWork;
+    _mediator = mediator;
     _agentSessionContext = agentSessionContext;
     _logger = logger ?? NullLogger<DailySlipTool>.Instance;
+  }
+
+  [Description("Retrieves matches kicking off today (Warsaw calendar) that have research and current odds.")]
+  public async Task<IReadOnlyList<AvailableMatch>> GetAvailableMatchesAsync(CancellationToken cancellationToken = default)
+  {
+    var matches = await _mediator
+      .Send(new GetMatchesAvailableForDailySlipQuery(DateTime.UtcNow), cancellationToken)
+      .ConfigureAwait(false);
+    return matches
+      .Select(m => new AvailableMatch(m.Id, m.HomeClub.Name, m.AwayClub.Name, m.MatchDate))
+      .ToList();
   }
 
   [Description("Paper daily slip: places one slip for the given risk level. Stake is always 10. Call once per risk (Low, Medium, High). Skip a tier rather than inventing a filler slip.")]

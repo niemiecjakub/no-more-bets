@@ -25,7 +25,7 @@ internal static class AgentPhaseStepExecutor
     var contextProviders = step.GetAIContextProviders(serviceProvider);
     var prompt = step.BuildPrompt();
     var config = await agentBuilder
-      .BuildForScheduledJobAsync(contextProviders, agentSession, cancellationToken)
+      .BuildForScheduledJobAsync(contextProviders, agentSession, cancellationToken, step.AgentInstructions)
       .ConfigureAwait(false);
     agentSession ??= config.Session;
     var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
