@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ChevronRight } from "lucide-react";
 import type { BetSelectionItem, BetSlipListItem } from "../interfaces";
-import { BET_STATUS } from "../interfaces";
+import { BET_RISK_LEVEL, BET_STATUS } from "../interfaces";
 import { SlugIcon } from "@/components/slug-icon";
 import { formatCurrency } from "@/utils/format-currency";
 import { clubLogoSlugSegment } from "@/utils/club-logo-slug";
@@ -32,6 +32,19 @@ function getStatusBadgeClass(statusId: number): string {
     case BET_STATUS.Won:
       return "bg-emerald-100 text-emerald-800 ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30";
     case BET_STATUS.Lost:
+      return "bg-red-100 text-red-800 ring-red-600/20 dark:bg-red-900/40 dark:text-red-400 dark:ring-red-500/30";
+    default:
+      return "bg-zinc-100 text-zinc-700 ring-zinc-600/20 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-500/30";
+  }
+}
+
+function getRiskBadgeClass(riskLevelId: number | null | undefined): string {
+  switch (riskLevelId) {
+    case BET_RISK_LEVEL.Low:
+      return "bg-emerald-100 text-emerald-800 ring-emerald-600/20 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-500/30";
+    case BET_RISK_LEVEL.Medium:
+      return "bg-sky-100 text-sky-800 ring-sky-600/20 dark:bg-sky-900/40 dark:text-sky-400 dark:ring-sky-500/30";
+    case BET_RISK_LEVEL.High:
       return "bg-red-100 text-red-800 ring-red-600/20 dark:bg-red-900/40 dark:text-red-400 dark:ring-red-500/30";
     default:
       return "bg-zinc-100 text-zinc-700 ring-zinc-600/20 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-500/30";
@@ -98,10 +111,12 @@ export function BetSlipCard({
   slip,
   stackInSession,
   showSessionLink = true,
+  compact = false,
 }: {
   slip: BetSlipListItem;
   stackInSession?: { index: number; total: number };
   showSessionLink?: boolean;
+  compact?: boolean;
 }) {
   const stackClass =
     stackInSession != null
@@ -124,20 +139,31 @@ export function BetSlipCard({
           >
             {slip.statusName}
           </span>
-          {slip.riskLevelName ? (
-            <span className="inline-flex items-center rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-inset ring-zinc-600/20 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-500/30">
+          {!compact && slip.riskLevelName ? (
+            <span
+              className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getRiskBadgeClass(slip.riskLevelId)}`}
+            >
               {slip.riskLevelName}
             </span>
           ) : null}
-          <time
-            dateTime={slip.createdAt}
-            className="tabular-nums text-sm text-zinc-600 dark:text-zinc-400"
-            title="Bet placement time"
-          >
-            Placed: {formatMatchDate(slip.createdAt)}
-          </time>
+          {!compact ? (
+            <time
+              dateTime={slip.createdAt}
+              className="tabular-nums text-sm text-zinc-600 dark:text-zinc-400"
+              title="Bet placement time"
+            >
+              Placed: {formatMatchDate(slip.createdAt)}
+            </time>
+          ) : null}
         </div>
-        {showSessionLink && slip.agentSessionId != null ? (
+        {compact && slip.riskLevelName ? (
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getRiskBadgeClass(slip.riskLevelId)}`}
+          >
+            {slip.riskLevelName}
+          </span>
+        ) : null}
+        {!compact && showSessionLink && slip.agentSessionId != null ? (
           <Link
             href={`/agent?widget=sessions&sessionId=${slip.agentSessionId}`}
             className="inline-flex shrink-0 items-center gap-1 rounded-md border border-zinc-300 bg-zinc-700 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-colors hover:bg-zinc-800 dark:border-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600"
@@ -147,25 +173,46 @@ export function BetSlipCard({
           </Link>
         ) : null}
       </div>
-      <div className="grid grid-cols-3 gap-3 border-b border-zinc-100 px-4 py-3 text-sm dark:border-zinc-800/80">
-        <div>
-          <span className="text-zinc-500 dark:text-zinc-400">Stake</span>
-          <p className="font-semibold tabular-nums text-foreground">
-            {formatCurrency(slip.stakeAmount)}
-          </p>
+      {compact ? (
+        <div
+          className={`border-b border-zinc-100 px-4 py-3 text-sm dark:border-zinc-800/80 ${
+            slip.estimatedWinProbability != null ? "grid grid-cols-2 gap-3" : ""
+          }`}
+        >
+          <div>
+            <span className="text-zinc-500 dark:text-zinc-400">Combined odds</span>
+            <p className="font-semibold tabular-nums text-foreground">{slip.totalOdds.toFixed(2)}</p>
+          </div>
+          {slip.estimatedWinProbability != null ? (
+            <div>
+              <span className="text-zinc-500 dark:text-zinc-400">Est. win probability</span>
+              <p className="font-semibold tabular-nums text-foreground">
+                {(slip.estimatedWinProbability * 100).toFixed(0)}%
+              </p>
+            </div>
+          ) : null}
         </div>
-        <div>
-          <span className="text-zinc-500 dark:text-zinc-400">Combined odds</span>
-          <p className="font-semibold tabular-nums text-foreground">{slip.totalOdds.toFixed(2)}</p>
+      ) : (
+        <div className="grid grid-cols-3 gap-3 border-b border-zinc-100 px-4 py-3 text-sm dark:border-zinc-800/80">
+          <div>
+            <span className="text-zinc-500 dark:text-zinc-400">Stake</span>
+            <p className="font-semibold tabular-nums text-foreground">
+              {formatCurrency(slip.stakeAmount)}
+            </p>
+          </div>
+          <div>
+            <span className="text-zinc-500 dark:text-zinc-400">Combined odds</span>
+            <p className="font-semibold tabular-nums text-foreground">{slip.totalOdds.toFixed(2)}</p>
+          </div>
+          <div>
+            <span className="text-zinc-500 dark:text-zinc-400">Potential payout</span>
+            <p className="font-semibold tabular-nums text-foreground">
+              {formatCurrency(slip.potentialPayout)}
+            </p>
+          </div>
         </div>
-        <div>
-          <span className="text-zinc-500 dark:text-zinc-400">Potential payout</span>
-          <p className="font-semibold tabular-nums text-foreground">
-            {formatCurrency(slip.potentialPayout)}
-          </p>
-        </div>
-      </div>
-      {slip.estimatedWinProbability != null || slip.rationale ? (
+      )}
+      {!compact && (slip.estimatedWinProbability != null || slip.rationale) ? (
         <div className="space-y-2 border-b border-zinc-100 px-4 py-3 text-sm dark:border-zinc-800/80">
           {slip.estimatedWinProbability != null ? (
             <div>
