@@ -46,7 +46,10 @@ interface DailyPicksRowProps {
 
 export function DailyPicksRow({ slips }: DailyPicksRowProps) {
   return (
-    <section className="mb-6">
+    <section className="mt-4 mb-6 flex flex-col gap-2 lg:mt-0">
+      <h3 className="px-1 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        Daily picks
+      </h3>
       <DailyPicksGrid slips={slips} emptyLabel="No pick today." />
     </section>
   );
