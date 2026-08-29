@@ -15,6 +15,7 @@ public sealed class DailySlipProvider : AIContextProvider
         Use these tools to build today's card:
         - Use {{AgentToolCatalog.Betting.GetAvailableMatches.Name}} to list matches kicking off today that have research and current odds. Only bet these matches.
         - Use {{AgentToolCatalog.Betting.GetCurrentOdds.Name}} to check current odds for a match.
+        - Use {{AgentToolCatalog.Betting.GetCurrentOddsForMarket.Name}} to check current odds for a single market.
         - Use {{AgentToolCatalog.Betting.GetMatchAnalysis.Name}} to read saved match analysis.
         - Use {{AgentToolCatalog.DailySlip.PlaceBetSlip.Name}} to place one paper slip. Stake is always 10. Call once per Low, Medium, or High. There is no bankroll.
 
@@ -61,6 +62,15 @@ public sealed class DailySlipProvider : AIContextProvider
         {
           Name = AgentToolCatalog.Betting.GetCurrentOdds.Name,
           Description = "Returns current odds for the match. By default returns compact markets (1X2, BTTS, double chance, O/U goals). Set includeExoticMarkets true only when you need handicap or exact-score lines.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        _bettingTool.GetCurrentOddsForMarketAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = AgentToolCatalog.Betting.GetCurrentOddsForMarket.Name,
+          Description = "Returns current odds for a single market on the match. Prefer this over GetCurrentOdds when you already know the market. Empty when that market has no stored odds.",
           SerializerOptions = serializerOptions,
         }),
 

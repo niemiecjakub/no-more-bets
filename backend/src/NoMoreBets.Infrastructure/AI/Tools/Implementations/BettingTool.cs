@@ -59,6 +59,19 @@ public class BettingTool
     return _mediator.Send(new GetMatchBettingOddsQuery(matchId, includeExoticMarkets), cancellationToken);
   }
 
+  [Description("Returns current odds for a single market on the match.")]
+  public async Task<IReadOnlyList<CurrentOddsMarket>> GetCurrentOddsForMarketAsync(
+    int matchId,
+    [Description("Market to return: MatchResult, BothTeamsToScore, DoubleChance, OverUnderGoals, Handicap, or ExactScore.")]
+    BettingEventType market,
+    CancellationToken cancellationToken = default)
+  {
+    var markets = await _mediator
+      .Send(new GetMatchBettingOddsQuery(matchId, true), cancellationToken)
+      .ConfigureAwait(false);
+    return markets.Where(m => m.EventTypeId == (int)market).ToList();
+  }
+
   [Description("Returns structured match analysis for the given match.")]
   public async Task<MatchResearchOutput?> GetMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
   {

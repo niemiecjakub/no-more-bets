@@ -57,6 +57,9 @@ public static class ToolRegistry
     public static readonly AgentTool GetCurrentOdds =
       FromBetting(AgentToolCatalog.Betting.GetCurrentOdds, p => p.GetCurrentOddsAsync);
 
+    public static readonly AgentTool GetCurrentOddsForMarket =
+      FromBetting(AgentToolCatalog.Betting.GetCurrentOddsForMarket, p => p.GetCurrentOddsForMarketAsync);
+
     public static readonly AgentTool GetMatchAnalysis =
       FromBetting(AgentToolCatalog.Betting.GetMatchAnalysis, p => p.GetMatchAnalysisAsync);
 

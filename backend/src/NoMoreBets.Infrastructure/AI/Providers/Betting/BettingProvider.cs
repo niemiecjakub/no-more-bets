@@ -15,6 +15,7 @@ public sealed class BettingProvider : AIContextProvider
         Use these tools to in betting phase execution:
         - Use {{AgentToolCatalog.Betting.GetAvailableMatches.Name}} to browse matches available for betting.
         - Use {{AgentToolCatalog.Betting.GetCurrentOdds.Name}} to check current odds for a match.
+        - Use {{AgentToolCatalog.Betting.GetCurrentOddsForMarket.Name}} to check current odds for a single market.
         - Use {{AgentToolCatalog.Betting.GetMatchAnalysis.Name}} to read saved match analysis.
         - Use {{AgentToolCatalog.Betting.PlaceBetSlip.Name}} to place a bet. Call {{AgentToolCatalog.Bankroll.GetBalance.Name}} first to confirm stake fits your balance. Every slip locks in your rationale and estimated win probability; both are reviewed against outcomes later.
         - Use {{AgentToolCatalog.Betting.GetBetSlips.Name}} to review existing bet slips and exposure.
@@ -60,6 +61,15 @@ public sealed class BettingProvider : AIContextProvider
         {
           Name = AgentToolCatalog.Betting.GetCurrentOdds.Name,
           Description = "Returns current odds for the match. By default returns compact markets (1X2, BTTS, double chance, O/U goals). Set includeExoticMarkets true only when you need handicap or exact-score lines.",
+          SerializerOptions = serializerOptions,
+        }),
+
+      AIFunctionFactory.Create(
+        _bettingTool.GetCurrentOddsForMarketAsync,
+        new AIFunctionFactoryOptions
+        {
+          Name = AgentToolCatalog.Betting.GetCurrentOddsForMarket.Name,
+          Description = "Returns current odds for a single market on the match. Prefer this over GetCurrentOdds when you already know the market. Empty when that market has no stored odds.",
           SerializerOptions = serializerOptions,
         }),
 

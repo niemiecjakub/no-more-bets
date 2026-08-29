@@ -180,6 +180,11 @@ public sealed class AgentToolCallDisplayFormatter(IUnitOfWork unitOfWork)
       lines.Add("Including exotic markets");
     }
 
+    var market = FunctionCallPayloadParser.ParseString(
+      FunctionCallPayloadParser.GetArgumentValue(payload, "market"));
+    if (!string.IsNullOrWhiteSpace(market))
+      lines.Add(HumanizeEnumLabel(market));
+
     if (toolDef?.UsesSessionMatch == true && lines.Count == 0)
     {
       var sessionMatch = context.SessionMatchLabel;

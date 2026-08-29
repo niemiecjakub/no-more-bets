@@ -61,6 +61,38 @@ public class AgentToolCallDisplayFormatterTests
   }
 
   [Fact]
+  public async Task BuildDisplayByMessageIdAsync_WithMarket_ShowsHumanizedMarket()
+  {
+    // Arrange
+    const int sessionId = 1;
+    const int messageId = 12;
+    const int matchId = 2776;
+    var messages = new List<AgentSessionMessage>
+    {
+      new()
+      {
+        Id = messageId,
+        Kind = AgentSessionMessageKind.FunctionCall,
+        Text = $$"""{"name":"betting_getCurrentOddsForMarket","arguments":[{"name":"matchId","value":"{{matchId}}"},{"name":"market","value":"BothTeamsToScore"}]}""",
+      },
+    };
+
+    _agentSessions.GetMatchIdsBySessionIdsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
+      .Returns(new Dictionary<int, int>());
+    _betting.GetBetSlipsByAgentSessionIdAsync(sessionId, Arg.Any<CancellationToken>())
+      .Returns(Array.Empty<BetSlip>());
+    _matches.GetMatchesByIdsAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+      .Returns([CreateMatch(matchId, "Arsenal", "Chelsea")]);
+
+    // Act
+    var result = await _sut.BuildDisplayByMessageIdAsync(sessionId, messages, CancellationToken.None);
+
+    // Assert
+    result[messageId].Label.Should().Be("Check market odds");
+    result[messageId].Details.Should().Equal("Arsenal vs Chelsea", "Both Teams To Score");
+  }
+
+  [Fact]
   public async Task BuildDisplayByMessageIdAsync_WithoutClubId_DoesNotShowClubZero()
   {
     // Arrange

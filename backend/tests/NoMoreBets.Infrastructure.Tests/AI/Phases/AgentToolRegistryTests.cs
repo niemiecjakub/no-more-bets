@@ -84,13 +84,14 @@ public class AgentToolRegistryTests
     var tools = _serviceProvider.ResolveTools([
       ToolRegistry.Betting.GetAvailableMatches,
       ToolRegistry.Betting.GetCurrentOdds,
+      ToolRegistry.Betting.GetCurrentOddsForMarket,
       ToolRegistry.Betting.GetMatchAnalysis,
       ToolRegistry.Betting.PlaceBetSlip,
       ToolRegistry.Betting.GetBetSlips,
     ]);
 
-    tools.Should().HaveCount(5);
-    ToolNames(tools).Should().Contain(["betting_getAvailableMatches", "betting_placeBetSlip", "betting_getBetSlips"]);
+    tools.Should().HaveCount(6);
+    ToolNames(tools).Should().Contain(["betting_getAvailableMatches", "betting_getCurrentOddsForMarket", "betting_placeBetSlip", "betting_getBetSlips"]);
   }
 
   [Fact]

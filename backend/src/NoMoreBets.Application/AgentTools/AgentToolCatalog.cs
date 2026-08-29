@@ -52,6 +52,9 @@ public static class AgentToolCatalog
     public static readonly AgentToolDefinition GetCurrentOdds =
       new("betting_getCurrentOdds", "Check current odds", AgentToolCategory.Betting);
 
+    public static readonly AgentToolDefinition GetCurrentOddsForMarket =
+      new("betting_getCurrentOddsForMarket", "Check market odds", AgentToolCategory.Betting);
+
     public static readonly AgentToolDefinition GetMatchAnalysis =
       new("betting_getMatchAnalysis", "Read match analysis", AgentToolCategory.Betting);
 
@@ -163,6 +166,7 @@ public static class AgentToolCatalog
     Match.GetUpcomingMatches,
     Betting.GetAvailableMatches,
     Betting.GetCurrentOdds,
+    Betting.GetCurrentOddsForMarket,
     Betting.GetMatchAnalysis,
     Betting.PlaceBetSlip,
     Betting.GetBetSlips,
