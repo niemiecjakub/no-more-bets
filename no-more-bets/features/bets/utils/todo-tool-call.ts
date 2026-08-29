@@ -9,7 +9,7 @@ import {
 export type { FunctionCallArgument, FunctionCallPayload } from "./function-call";
 export { parseFunctionCallText } from "./function-call";
 
-/** Matches tool names in TodoProvider.cs */
+/** Matches tool names in TodoListProvider.cs */
 export const TODO_TOOL_NAMES = new Set([
   "todos_add",
   "todos_complete",

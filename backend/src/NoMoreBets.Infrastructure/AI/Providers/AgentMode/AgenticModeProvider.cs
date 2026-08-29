@@ -2,7 +2,7 @@ using Microsoft.Agents.AI;
 
 namespace NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 
-public sealed class AgentModeProvider : AIContextProvider
+public sealed class AgenticModeProvider : AIContextProvider
 {
   private static readonly string Instructions =
       """

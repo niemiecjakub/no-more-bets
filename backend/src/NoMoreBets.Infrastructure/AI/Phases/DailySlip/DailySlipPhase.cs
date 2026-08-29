@@ -62,6 +62,6 @@ internal sealed class DailySlipExecuteStep : IAgentPhaseStep
     new WebSearchProvider(
       serviceProvider.GetRequiredService<ISearchService>(),
       serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
-    new TodoProvider(),
+    new TodoListProvider(),
   ];
 }

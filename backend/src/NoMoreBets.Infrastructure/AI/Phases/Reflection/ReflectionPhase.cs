@@ -51,7 +51,7 @@ internal sealed class ReflectionExecuteStep : IAgentPhaseStep
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
-    new AgentModeProvider(),
-    new TodoProvider(),
+    new AgenticModeProvider(),
+    new TodoListProvider(),
   ];
 }

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace NoMoreBets.Infrastructure.AI.Providers.Todo;
 
-public sealed class TodoProvider : AIContextProvider, IDisposable
+public sealed class TodoListProvider : AIContextProvider, IDisposable
 {
   private static readonly string Instructions =
       $$"""
@@ -30,7 +30,7 @@ public sealed class TodoProvider : AIContextProvider, IDisposable
   private readonly ConditionalWeakTable<AgentSession, SemaphoreSlim> _sessionLocks = new();
   private readonly SemaphoreSlim _nullSessionLock = new(1, 1);
 
-  public TodoProvider()
+  public TodoListProvider()
   {
     _sessionState = new ProviderSessionState<TodoState>(
         _ => new TodoState(),

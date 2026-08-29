@@ -7,8 +7,8 @@ using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
-using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
+using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
 
@@ -58,7 +58,7 @@ internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
     new WebSearchProvider(
       serviceProvider.GetRequiredService<ISearchService>(),
       serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
-    new AgentModeProvider(),
-    new TodoProvider(),
+    new AgenticModeProvider(),
+    new TodoListProvider(),
   ];
 }

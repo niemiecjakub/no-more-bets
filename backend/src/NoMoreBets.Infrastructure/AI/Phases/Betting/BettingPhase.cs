@@ -10,8 +10,8 @@ using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Bankroll;
 using NoMoreBets.Infrastructure.AI.Providers.Betting;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
-using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
+using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations;
@@ -66,8 +66,8 @@ internal sealed class BettingExecuteStep : IAgentPhaseStep
     new WebSearchProvider(
       serviceProvider.GetRequiredService<ISearchService>(),
       serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
-    new AgentModeProvider(),
-    new TodoProvider(),
+    new AgenticModeProvider(),
+    new TodoListProvider(),
   ];
 }
 
