@@ -28,7 +28,7 @@ internal sealed class DailySlipExecuteStep : IAgentPhaseStep
     Goal: Build up to three paper slips (Low, Medium, High risk) that maximize expected value for each risk profile.
 
     Success criteria:
-    - At most one slip per risk level; skip a level with no defensible opportunity
+    - At most one slip per risk level
     - Each slip has honest win probability (0 < p < 1), rationale, and primary loss risks
     - Slips represent different strategies, not the same legs repeated
     - Closing note lists considered-but-skipped matches, one line each
