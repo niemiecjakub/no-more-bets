@@ -10,6 +10,13 @@ namespace NoMoreBets.Application.Common.MatchMatcher;
 internal static class ClubNameMatchHints
 {
   private static readonly Regex CollapseWhitespace = new(@"\s+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+  private static readonly Regex TokenSplit = new(@"[^a-z0-9]+", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+  /// <summary>Legal-form / filler tokens. Identity prefixes (FSV, Eintracht, AC, United) stay significant.</summary>
+  private static readonly HashSet<string> GenericTokens = new(StringComparer.OrdinalIgnoreCase)
+  {
+    "fc", "cf", "sc", "rc", "afc", "the", "de", "of", "club", "ud", "cd", "rcd", "fk", "sk",
+  };
 
   private static readonly Dictionary<string, string> Aliases = CreateAliases();
 
@@ -159,5 +166,57 @@ internal static class ClubNameMatchHints
     }
 
     return sb.ToString().Normalize(NormalizationForm.FormC);
+  }
+
+  /// <summary>
+  /// True when both names have leftover identity tokens the other lacks (Eintracht vs FSV, United vs City).
+  /// One-sided leftovers are abbreviations or legal-form extras ("Arsenal" vs "Arsenal FC") and are not a conflict.
+  /// </summary>
+  public static bool HasConflictingIdentityTokens(string queryName, string candidateName)
+  {
+    var queryTokens = SignificantTokens(queryName);
+    var candidateTokens = SignificantTokens(candidateName);
+    var queryOnly = queryTokens.Where(t => !TokenFits(t, candidateTokens)).ToList();
+    var candidateOnly = candidateTokens.Where(t => !TokenFits(t, queryTokens)).ToList();
+    return queryOnly.Count > 0 && candidateOnly.Count > 0;
+  }
+
+  private static HashSet<string> SignificantTokens(string name)
+  {
+    var tokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    foreach (var part in TokenSplit.Split(FoldDiacritics(name).ToLowerInvariant()))
+    {
+      if (part.Length < 2 || GenericTokens.Contains(part))
+      {
+        continue;
+      }
+
+      tokens.Add(part);
+    }
+
+    return tokens;
+  }
+
+  private static bool TokenFits(string token, HashSet<string> other)
+  {
+    if (other.Contains(token))
+    {
+      return true;
+    }
+
+    foreach (var o in other)
+    {
+      if (token.Length >= 3 && o.StartsWith(token, StringComparison.OrdinalIgnoreCase))
+      {
+        return true;
+      }
+
+      if (o.Length >= 3 && token.StartsWith(o, StringComparison.OrdinalIgnoreCase))
+      {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

@@ -214,7 +214,11 @@ public sealed class MatchMatcher : IMatchMatcher
 
     var names = clubs.Select(c => ClubNameMatchHints.FoldDiacritics(c.Name)).ToArray();
     var best = Process.ExtractOne(foldedEffective, names, s => s ?? "", cutoff: FotmobScoreCutoff);
-    if (best != null && best.Score >= FotmobScoreCutoff && best.Index >= 0 && best.Index < clubs.Count)
+    if (best != null
+      && best.Score >= FotmobScoreCutoff
+      && best.Index >= 0
+      && best.Index < clubs.Count
+      && !ClubNameMatchHints.HasConflictingIdentityTokens(foldedEffective, names[best.Index]))
     {
       return DisambiguateParisClubs(trimmed, effectiveName, clubs[best.Index], clubs);
     }

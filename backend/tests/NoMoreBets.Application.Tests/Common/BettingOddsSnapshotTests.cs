@@ -20,7 +20,8 @@ public class BettingOddsSnapshotTests
 
     var act = () => snapshot.EnsureCompleteBettingEventOptionsCoverage();
 
-    act.Should().Throw<InvalidOperationException>();
+    act.Should().Throw<InvalidOperationException>()
+      .WithMessage("*Missing: MatchResult_Draw (6), BothTeamsToScore_Yes (7), BothTeamsToScore_No (8).");
   }
 
   [Fact]

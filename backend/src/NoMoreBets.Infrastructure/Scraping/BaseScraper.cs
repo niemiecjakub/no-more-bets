@@ -147,7 +147,9 @@ public abstract class BaseScraper
       MinimumThroughput = options.CircuitBreakerMinimumThroughput,
       BreakDuration = TimeSpan.FromSeconds(options.CircuitBreakerBreakDurationSeconds),
       ShouldHandle = new PredicateBuilder<string>()
-          .Handle<Exception>(ex => ex is not PermanentScraperException),
+          .Handle<Exception>(ex =>
+              ex is not PermanentScraperException &&
+              ex is not RateLimiterRejectedException),
       OnOpened = args =>
       {
         logger.LogWarning("Scraper circuit breaker opened for {Duration}s",
@@ -160,11 +162,13 @@ public abstract class BaseScraper
 
     var rateLimiter = new SlidingWindowRateLimiter(new SlidingWindowRateLimiterOptions
     {
-      // One permit per window per scraper instance; intentional to throttle fetches and reduce proxy/ban risk.
-      // Concurrency is still 3 via Hangfire workers + context pool.
+      // One permit per window per scraper instance; throttle starts, not fail them.
+      // Hangfire WorkerCount is 3 — queue extra workers until the next window instead of rejecting.
       PermitLimit = 1,
       Window = TimeSpan.FromSeconds(Math.Max(options.DelaySeconds, 0.01)),
-      SegmentsPerWindow = 1
+      SegmentsPerWindow = 1,
+      QueueLimit = 3,
+      QueueProcessingOrder = QueueProcessingOrder.OldestFirst
     });
 
     var timeoutOptions = new TimeoutStrategyOptions

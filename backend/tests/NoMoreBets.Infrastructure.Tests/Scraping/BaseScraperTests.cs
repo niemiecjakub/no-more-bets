@@ -137,4 +137,35 @@ public class BaseScraperTests
         r2.Should().Be("<html>2</html>");
         sw.Elapsed.TotalSeconds.Should().BeGreaterOrEqualTo(0.1, "rate limit window should have passed before second fetch");
     }
+
+    [Fact]
+    public async Task GetPageHtmlAsync_WhenHangfireWorkersBurst_QueuesInsteadOfOpeningCircuit()
+    {
+        // Arrange — 3 concurrent callers is Hangfire WorkerCount; rejections used to open the circuit.
+        var fetcher = PlaywrightPageFetcherMockHelper.CreateMock();
+        fetcher.GetHtmlAsync(Arg.Any<string>(), Arg.Any<TimeSpan?>(), Arg.Any<CancellationToken>())
+            .Returns(ci => Task.FromResult($"<html>{ci.ArgAt<string>(0)}</html>"));
+        var opts = DefaultOptions() with
+        {
+            DelaySeconds = 0.15,
+            RetryDelaySeconds = 0.01,
+            CircuitBreakerFailureRatio = 0.5,
+            CircuitBreakerMinimumThroughput = 3,
+            CircuitBreakerBreakDurationSeconds = 10
+        };
+        var sut = CreateSut(pageFetcher: fetcher, opts);
+
+        // Act
+        var burst = await Task.WhenAll(
+            sut.FetchAsync("https://example.com/a"),
+            sut.FetchAsync("https://example.com/b"),
+            sut.FetchAsync("https://example.com/c"));
+        await Task.Delay(TimeSpan.FromSeconds(opts.DelaySeconds + 0.05));
+        var later = await sut.FetchAsync("https://example.com/d");
+
+        // Assert
+        burst.Should().BeEquivalentTo(
+            ["<html>https://example.com/a</html>", "<html>https://example.com/b</html>", "<html>https://example.com/c</html>"]);
+        later.Should().Be("<html>https://example.com/d</html>");
+    }
 }

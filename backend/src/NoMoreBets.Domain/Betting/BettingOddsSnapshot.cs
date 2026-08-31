@@ -5,13 +5,13 @@ namespace NoMoreBets.Domain.Betting;
 
 public class BettingOddsSnapshot
 {
-  private static readonly HashSet<int> RequiredOptionIds =
+  private static readonly HashSet<BettingEventOption> RequiredOptions =
   [
-    (int)BettingEventOption.MatchResult_Home,
-    (int)BettingEventOption.MatchResult_Away,
-    (int)BettingEventOption.MatchResult_Draw,
-    (int)BettingEventOption.BothTeamsToScore_Yes,
-    (int)BettingEventOption.BothTeamsToScore_No
+    BettingEventOption.MatchResult_Home,
+    BettingEventOption.MatchResult_Away,
+    BettingEventOption.MatchResult_Draw,
+    BettingEventOption.BothTeamsToScore_Yes,
+    BettingEventOption.BothTeamsToScore_No
   ];
 
   public long Id { get; set; }
@@ -23,16 +23,21 @@ public class BettingOddsSnapshot
 
   public void EnsureCompleteBettingEventOptionsCoverage()
   {
-    var actualOptionIds = Rows
-      .Where(row => row.EventOptionId.HasValue)
-      .Select(row => row.EventOptionId!.Value)
+    var actualOptions = Rows
+      .Where(row => row.EventOption.HasValue)
+      .Select(row => row.EventOption!.Value)
       .ToHashSet();
 
-    if (!RequiredOptionIds.IsSubsetOf(actualOptionIds))
+    var missing = RequiredOptions
+      .Where(option => !actualOptions.Contains(option))
+      .OrderBy(option => (int)option)
+      .ToList();
+
+    if (missing.Count > 0)
     {
-      var missingCount = RequiredOptionIds.Count - RequiredOptionIds.Count(actualOptionIds.Contains);
+      var missingText = string.Join(", ", missing.Select(option => $"{option} ({(int)option})"));
       throw new InvalidOperationException(
-        $"Betting odds snapshot must include all required core options. Missing count: {missingCount}.");
+        $"Betting odds snapshot for match {MatchId} must include all required core options. Missing: {missingText}.");
     }
   }
 }

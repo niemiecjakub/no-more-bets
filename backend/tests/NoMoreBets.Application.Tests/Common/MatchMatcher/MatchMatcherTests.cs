@@ -512,6 +512,44 @@ public class MatchMatcherTests
   }
 
   [Fact]
+  public void FindClub_FsvFrankfurt_WhenOnlyEintrachtExists_Throws()
+  {
+    var eintracht = new ClubEntity { Id = 1, Name = "Eintracht Frankfurt", SoccerdataId = 2998 };
+    var clubs = new List<ClubEntity> { eintracht };
+
+    var act = () => _sut.FindClub("FSV Frankfurt", clubs);
+
+    act.Should().Throw<ClubMatchNotFoundException>()
+      .WithMessage("*FSV Frankfurt*");
+  }
+
+  [Fact]
+  public void FindClub_EintrachtAndFsvFrankfurt_WhenBothExist_Disambiguates()
+  {
+    var eintracht = new ClubEntity { Id = 1, Name = "Eintracht Frankfurt", SoccerdataId = 2998 };
+    var fsv = new ClubEntity { Id = 2, Name = "FSV Frankfurt", SoccerdataId = -1 };
+    var clubs = new List<ClubEntity> { eintracht, fsv };
+
+    _sut.FindClub("Eintracht Frankfurt", clubs).Should().BeSameAs(eintracht);
+    _sut.FindClub("FSV Frankfurt", clubs).Should().BeSameAs(fsv);
+  }
+
+  [Theory]
+  [InlineData("Atletico Madrid", "Real Madrid")]
+  [InlineData("Manchester City", "Manchester United")]
+  [InlineData("Inter Milan", "AC Milan")]
+  public void FindClub_CitySharingClub_WhenOnlyTheOtherExists_Throws(string queryName, string existingName)
+  {
+    var existing = new ClubEntity { Id = 1, Name = existingName, SoccerdataId = 1 };
+    var clubs = new List<ClubEntity> { existing };
+
+    var act = () => _sut.FindClub(queryName, clubs);
+
+    act.Should().Throw<ClubMatchNotFoundException>()
+      .WithMessage($"*{queryName}*");
+  }
+
+  [Fact]
   public void FindFotmobClub_ShortParisQuery_PrefersLongerTeamNameOverParisFc()
   {
     var clubs = new List<ClubDto>
