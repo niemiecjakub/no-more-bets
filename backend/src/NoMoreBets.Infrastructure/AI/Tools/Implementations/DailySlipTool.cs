@@ -50,7 +50,7 @@ public class DailySlipTool
       .ToList();
   }
 
-  [Description("Paper daily slip: places one slip for the given risk level. Stake is always 10. Call once per risk (Low, Medium, High). Skip a tier rather than inventing a filler slip.")]
+  [Description("Paper daily slip: places one slip for the given risk level. Call once per risk (Low, Medium, High). Skip a tier rather than inventing a filler slip.")]
   public async Task<string> PlaceBetSlip(
     [Description("Risk tier for this slip: Low, Medium, or High. One slip per tier per day.")]
     BetRiskLevel riskLevel,

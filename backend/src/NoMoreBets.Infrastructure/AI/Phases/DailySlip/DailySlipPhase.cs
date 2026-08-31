@@ -18,33 +18,41 @@ public static class DailySlipPhaseDefinition
   public static AgentSessionPhase Phase => AgentSessionPhase.DailySlip;
 }
 
-internal sealed class DailySlipExecuteStep : IAgentPhaseStep
+internal sealed class DailySlipExecuteStep : IAgentPhaseStep, IDisposable
 {
+  private DailySlipBackgroundAgentsHost? _childAgentHost;
+
   public string AgentName => "DailySlipAgent";
 
-  public string AgentInstructions => """
-    Role: Daily house betting card producer.
+  public bool LoopUntilBackgroundTasksComplete => true;
 
-    Goal: Build up to three paper slips (Low, Medium, High risk) that maximize expected value for each risk profile.
+  public string AgentInstructions => """
+    Role: Daily house betting card coordinator.
+
+    Goal: Produce up to three paper slips (Low, Medium, High risk) by briefing specialist agents and placing their recommendations.
+
+    Workflow:
+    1. Review today's card (matches, research, odds). Build one shared briefing: fixtures worth considering, key edges, and matches you are skipping with one-line reasons.
+    2. Start background tasks on LowRisk, MediumRisk, and HighRisk — all three before waiting — each with the same briefing.
+    3. Wait for all specialists to finish. Retrieve each result.
+    4. For each placeable JSON return, call dailyslip_placeBetSlip with the returned riskLevel, betSelections, rationale, and estimatedWinProbability. Skip unplaceable returns and honest skips without revising for overlap.
+    5. End with a short closing note listing considered-but-skipped matches not already covered.
 
     Success criteria:
-    - At most one slip per risk level
-    - Each slip has honest win probability (0 < p < 1), rationale, and primary loss risks
-    - Slips represent different strategies, not the same legs repeated
-    - Closing note lists considered-but-skipped matches, one line each
+    - At most one slip per risk level placed
+    - Each placed slip has honest win probability (0 < p < 1), rationale, and reflects the specialist's view
+    - Specialists represent different strategies; do not deconflict overlapping legs
 
     Constraints:
     - Only today's available matches with current odds; never invent markets or prices
-    - Favor selections where estimated win chance beats implied odds — not favorites alone or long shots alone
-    - Low: safer markets, fewer legs; Medium: strongest overall view; High: higher payout, lower win rate — no speculative legs just for odds
-    - Account for correlation between related legs
-    - Web search only when stored research is thin or late-breaking news (lineup, injury) could change a pick; prefer newer specific evidence over stale research
+    - You are the only agent that places slips
+    - Web search only when stored research is thin or late-breaking news could change the card
 
-    Stop: Finish when slips are placed or all levels are honestly skipped.
+    Stop: Finish when placeable slips are placed or all levels are honestly skipped.
     """;
 
   public string BuildPrompt() => """
-      Produce today's house betting card from available matches, stored research, and current odds.
+      Produce today's house betting card: build a shared briefing, delegate to LowRisk, MediumRisk, and HighRisk specialists, then place their recommendations.
       """;
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
@@ -54,14 +62,26 @@ internal sealed class DailySlipExecuteStep : IAgentPhaseStep
       ToolRegistry.Match.GetGroupTable,
     ]);
 
-  public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
-  [
-    new DailySlipProvider(
-      serviceProvider.GetRequiredService<DailySlipTool>(),
-      serviceProvider.GetRequiredService<BettingTool>()),
-    new WebSearchProvider(
-      serviceProvider.GetRequiredService<ISearchService>(),
-      serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
-    new TodoListProvider(),
-  ];
+  public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider)
+  {
+    _childAgentHost?.Dispose();
+    _childAgentHost = new DailySlipBackgroundAgentsHost(
+      serviceProvider.GetRequiredService<IServiceScopeFactory>(),
+      serviceProvider.GetRequiredService<AgentBuilder>());
+
+    return
+    [
+      new DailySlipProvider(
+        serviceProvider.GetRequiredService<DailySlipTool>(),
+        serviceProvider.GetRequiredService<BettingTool>(),
+        includePlacement: true),
+      new WebSearchProvider(
+        serviceProvider.GetRequiredService<ISearchService>(),
+        serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),
+      new TodoListProvider(),
+      _childAgentHost.Provider,
+    ];
+  }
+
+  public void Dispose() => _childAgentHost?.Dispose();
 }

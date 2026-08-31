@@ -21,32 +21,43 @@ internal static class AgentPhaseStepExecutor
     List<IMessage> messages,
     CancellationToken cancellationToken)
   {
-    var tools = step.GetTools(serviceProvider);
-    var contextProviders = step.GetAIContextProviders(serviceProvider);
-    var prompt = step.BuildPrompt();
-    var config = await agentBuilder
-      .BuildForScheduledJobAsync(
-        contextProviders,
-        step.AgentInstructions,
-        step.AgentName,
-        agentSession,
-        cancellationToken)
-      .ConfigureAwait(false);
-    agentSession ??= config.Session;
-    var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
-    runOptions.ResponseFormat = responseFormatType is not null
-      ? ChatResponseFormat.ForJsonSchema(responseFormatType)
-      : ChatResponseFormat.Text;
-    var response = await config.Agent
-      .RunAsync([new ChatMessage(ChatRole.User, prompt)], config.Session, runOptions, cancellationToken)
-      .ConfigureAwait(false);
-    var stepMessages = messageCollector.TakeMessages();
-
-    if (persistTranscript)
+    try
     {
-      messages.AddRange(stepMessages);
-    }
+      var tools = step.GetTools(serviceProvider);
+      var contextProviders = step.GetAIContextProviders(serviceProvider);
+      var prompt = step.BuildPrompt();
+      var config = await agentBuilder
+        .BuildForScheduledJobAsync(
+          contextProviders,
+          step.AgentInstructions,
+          step.AgentName,
+          agentSession,
+          step.LoopUntilBackgroundTasksComplete,
+          cancellationToken)
+        .ConfigureAwait(false);
+      agentSession ??= config.Session;
+      var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
+      runOptions.ResponseFormat = responseFormatType is not null
+        ? ChatResponseFormat.ForJsonSchema(responseFormatType)
+        : ChatResponseFormat.Text;
+      var response = await config.Agent
+        .RunAsync([new ChatMessage(ChatRole.User, prompt)], config.Session, runOptions, cancellationToken)
+        .ConfigureAwait(false);
+      var stepMessages = messageCollector.TakeMessages();
 
-    return new AgentPhaseStepResult(agentSession, response);
+      if (persistTranscript)
+      {
+        messages.AddRange(stepMessages);
+      }
+
+      return new AgentPhaseStepResult(agentSession, response);
+    }
+    finally
+    {
+      if (step is IDisposable disposable)
+      {
+        disposable.Dispose();
+      }
+    }
   }
 }
