@@ -1,13 +1,9 @@
 import Link from "next/link";
 
 const footerLinks = [
-  { href: "/about", label: "About" },
-  { href: "/picks", label: "Picks" },
-  { href: "/mcp", label: "MCP" },
-  { href: "/agent", label: "Agent" },
   { href: "/disclaimer", label: "Disclaimer" },
-  { href: "/privacy", label: "Privacy" },
   { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
 ] as const;
 
 const linkClassName =
@@ -30,14 +26,6 @@ export function SiteFooter() {
             className={linkClassName}
           >
             GitHub
-          </a>
-          <a
-            href="https://x.com/nomorebetsai"
-            target="_blank"
-            rel="noreferrer noopener"
-            className={linkClassName}
-          >
-            X
           </a>
         </nav>
         <p className="text-center text-[11px] leading-relaxed text-zinc-500 dark:text-zinc-500 sm:text-xs">
