@@ -68,6 +68,9 @@ internal static class ClubNameMatchHints
       ["Wisla"] = "Wisla Krakow", // Flashscore uses full "Wisla Plock" for the other club
       ["Real Madryt"] = "Real Madrid",
       ["Bayern Monachium"] = "Bayern Munich",
+      // FotMob Bundesliga table uses German "München"; DB seed is English "Munich".
+      ["Bayern München"] = "Bayern Munich",
+      ["Bayern Munchen"] = "Bayern Munich",
       // Premier League promoted sides: Betclic uses short names; DB/FotMob use full club names.
       ["Coventry"] = "Coventry City",
       ["Hull"] = "Hull City",
@@ -159,14 +162,31 @@ internal static class ClubNameMatchHints
     var sb = new StringBuilder(normalized.Length);
     foreach (var c in normalized)
     {
-      if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+      if (CharUnicodeInfo.GetUnicodeCategory(c) == UnicodeCategory.NonSpacingMark)
       {
-        sb.Append(c);
+        continue;
       }
+
+      sb.Append(FoldStrokeLetter(c));
     }
 
     return sb.ToString().Normalize(NormalizationForm.FormC);
   }
+
+  /// <summary>
+  /// NFD strips combining marks (ó→o) but not stroke letters (Ł, Ø, Đ), so FotMob "Widzew Łódź"
+  /// would not match the seeded "Widzew Lodz" and TokenSplit would treat Ł as a separator.
+  /// </summary>
+  private static char FoldStrokeLetter(char c) => c switch
+  {
+    'Ł' or 'Ŀ' => 'L',
+    'ł' or 'ŀ' => 'l',
+    'Ø' => 'O',
+    'ø' => 'o',
+    'Đ' or 'Ð' => 'D',
+    'đ' or 'ð' => 'd',
+    _ => c
+  };
 
   /// <summary>
   /// True when both names have leftover identity tokens the other lacks (Eintracht vs FSV, United vs City).

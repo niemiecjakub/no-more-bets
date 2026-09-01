@@ -398,6 +398,18 @@ public class MatchMatcherTests
   }
 
   [Fact]
+  public void FindClub_FotmobBayernMunchenAlias_ReturnsBayernMunich()
+  {
+    var bayern = new ClubEntity { Id = 1, Name = "Bayern Munich", SoccerdataId = 4270 };
+    var clubs = new List<ClubEntity> { bayern };
+
+    var result = _sut.FindClub("Bayern München", clubs);
+
+    result.Should().BeSameAs(bayern);
+    result.Name.Should().Be("Bayern Munich");
+  }
+
+  [Fact]
   public void FindClub_GermanOneFcKolnWithUmlaut_ReturnsFcCologne()
   {
     var fcCologne = new ClubEntity { Id = 1, Name = "FC Cologne", SoccerdataId = 3336 };
@@ -574,6 +586,19 @@ public class MatchMatcherTests
 
     result.Should().BeSameAs(club);
     result.Name.Should().Be("TSV München Test");
+  }
+
+  [Theory]
+  [InlineData("Widzew Łódź", "Widzew Lodz")]
+  [InlineData("Wisła Płock", "Wisla Plock")]
+  public void FindClub_PolishStrokeL_MatchesAsciiClubName(string queryName, string dbName)
+  {
+    var club = new ClubEntity { Id = 1, Name = dbName, SoccerdataId = 1 };
+    var clubs = new List<ClubEntity> { club };
+
+    var result = _sut.FindClub(queryName, clubs);
+
+    result.Should().BeSameAs(club);
   }
 
   [Fact]

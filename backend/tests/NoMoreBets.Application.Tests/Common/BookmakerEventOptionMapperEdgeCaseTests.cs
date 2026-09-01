@@ -36,6 +36,7 @@ public class BookmakerEventOptionMapperEdgeCaseTests
     { "RKS Radomiak", "Radomiak Radom", true },
     { "Real Madryt", "Real Madrid", true },
     { "Bayern Monachium", "Bayern Munich", true },
+    { "Bayern München", "Bayern Munich", true },
     { "", "Everton", false },
     { "Everton", "", false }
   };
