@@ -26,65 +26,31 @@ public sealed class AgentBuilder
     string instructions,
     string agentName,
     AgentSession? existingSession = null,
-    bool loopUntilBackgroundTasksComplete = false,
     CancellationToken cancellationToken = default)
   {
-    var baseAgent = CreateBaseAgent(contextProviders, instructions, agentName, tools: null);
+    var credential = new ApiKeyCredential(_openAi.ApiKey);
+    var responsesClient = new OpenAIClient(credential).GetResponsesClient();
+    var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
+    var chatOptions = defaultRunOptions.ChatOptions?.Clone() ?? new ChatOptions();
+    chatOptions.Instructions = instructions;
 
-    if (loopUntilBackgroundTasksComplete)
-    {
-      baseAgent = new LoopAgent(
-        baseAgent,
-        new BackgroundTaskCompletionLoopEvaluator(),
-        new LoopAgentOptions { MaxIterations = 4,  });
-    }
+    var baseAgent = responsesClient.AsAIAgent(
+      new ChatClientAgentOptions
+      {
+        Name = agentName,
+        ChatOptions = chatOptions,
+        AIContextProviders = contextProviders as IList<AIContextProvider> ?? contextProviders.ToList(),
+      },
+      _openAi.ModelId);
 
     var agent = baseAgent
       .AsBuilder()
       .Use(runFunc: _mappingMiddleware.InvokeAsync, runStreamingFunc: null)
       .Build();
 
-    var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
     var session = existingSession
       ?? await agent.CreateSessionAsync(cancellationToken).ConfigureAwait(false);
     return new AgentConfig(agent, session, defaultRunOptions);
-  }
-
-  public AIAgent CreateChildAgent(
-    string name,
-    string instructions,
-    string description,
-    IReadOnlyList<AIContextProvider> contextProviders,
-    IReadOnlyList<AITool> tools)
-  {
-    return CreateBaseAgent(contextProviders, instructions, name, tools, description);
-  }
-
-  private AIAgent CreateBaseAgent(
-    IReadOnlyList<AIContextProvider> contextProviders,
-    string instructions,
-    string agentName,
-    IReadOnlyList<AITool>? tools,
-    string? description = null)
-  {
-    var credential = new ApiKeyCredential(_openAi.ApiKey);
-    var responsesClient = new OpenAIClient(credential).GetResponsesClient();
-    var chatOptions = AgentRunOptionsFactory.CreateDefault().ChatOptions?.Clone() ?? new ChatOptions();
-    chatOptions.Instructions = instructions;
-    if (tools is { Count: > 0 })
-    {
-      chatOptions.Tools = tools as IList<AITool> ?? tools.ToList();
-    }
-
-    return responsesClient.AsAIAgent(
-      new ChatClientAgentOptions
-      {
-        Name = agentName,
-        Description = description,
-        ChatOptions = chatOptions,
-        AIContextProviders = contextProviders as IList<AIContextProvider> ?? contextProviders.ToList(),
-      },
-      _openAi.ModelId);
   }
 }
 

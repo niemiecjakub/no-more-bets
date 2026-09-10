@@ -7,7 +7,7 @@ namespace NoMoreBets.Infrastructure.AI.Providers.DailySlip;
 
 public sealed class DailySlipProvider : AIContextProvider
 {
-  private static string BuildInstructions(bool includePlacement) =>
+  private static readonly string Instructions =
       $$"""
         # Daily slip
         You have access to daily slip tools for today's house card.
@@ -17,31 +17,24 @@ public sealed class DailySlipProvider : AIContextProvider
         - Use {{AgentToolCatalog.Betting.GetCurrentOdds.Name}} to check current odds for a match.
         - Use {{AgentToolCatalog.Betting.GetCurrentOddsForMarket.Name}} to check current odds for a single market.
         - Use {{AgentToolCatalog.Betting.GetMatchAnalysis.Name}} to read saved match analysis.
-        {{(includePlacement
-            ? $"- Use {AgentToolCatalog.DailySlip.PlaceBetSlip.Name} to place one paper slip. Call once per Low, Medium, or High. There is no bankroll."
-            : string.Empty)}}
+        - Use {{AgentToolCatalog.DailySlip.PlaceBetSlip.Name}} to place one paper slip. Call once per Low, Medium, or High. There is no bankroll.
 
         """;
 
   private readonly DailySlipTool _dailySlipTool;
   private readonly BettingTool _bettingTool;
-  private readonly bool _includePlacement;
 
-  public DailySlipProvider(
-    DailySlipTool dailySlipTool,
-    BettingTool bettingTool,
-    bool includePlacement = true)
+  public DailySlipProvider(DailySlipTool dailySlipTool, BettingTool bettingTool)
   {
     _dailySlipTool = dailySlipTool;
     _bettingTool = bettingTool;
-    _includePlacement = includePlacement;
   }
 
   protected override ValueTask<AIContext> ProvideAIContextAsync(InvokingContext context, CancellationToken cancellationToken = default)
   {
     var aiContext = new AIContext
     {
-      Instructions = BuildInstructions(_includePlacement),
+      Instructions = Instructions,
       Tools = CreateTools(),
     };
 
@@ -55,8 +48,8 @@ public sealed class DailySlipProvider : AIContextProvider
   {
     var serializerOptions = AgentAbstractionsJsonUtilities.DefaultOptions;
 
-    var tools = new List<AITool>
-    {
+    return
+    [
       AIFunctionFactory.Create(
         _dailySlipTool.GetAvailableMatchesAsync,
         new AIFunctionFactoryOptions
@@ -92,21 +85,15 @@ public sealed class DailySlipProvider : AIContextProvider
           Description = "Returns structured match analysis for the given match.",
           SerializerOptions = serializerOptions,
         }),
-    };
 
-    if (_includePlacement)
-    {
-      tools.Add(
-        AIFunctionFactory.Create(
-          _dailySlipTool.PlaceBetSlip,
-          new AIFunctionFactoryOptions
-          {
-            Name = AgentToolCatalog.DailySlip.PlaceBetSlip.Name,
-            Description = "Places one paper daily slip for a risk tier. Call once per Low/Medium/High.",
-            SerializerOptions = serializerOptions,
-          }));
-    }
-
-    return tools.ToArray();
+      AIFunctionFactory.Create(
+        _dailySlipTool.PlaceBetSlip,
+        new AIFunctionFactoryOptions
+        {
+          Name = AgentToolCatalog.DailySlip.PlaceBetSlip.Name,
+          Description = "Places one paper daily slip for a risk tier. Call once per Low/Medium/High.",
+          SerializerOptions = serializerOptions,
+        }),
+    ];
   }
 }

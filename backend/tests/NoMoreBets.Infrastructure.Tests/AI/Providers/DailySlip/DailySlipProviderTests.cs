@@ -24,33 +24,16 @@ public class DailySlipProviderTests
   }
 
   [Fact]
-  public void GetToolNames_WhenPlacementIncluded_IncludesPlaceBetSlip()
+  public void GetToolNames_IncludesPlacementAndOddsTools()
   {
     // Arrange
-    var provider = new DailySlipProvider(_dailySlipTool, _bettingTool, includePlacement: true);
+    var provider = new DailySlipProvider(_dailySlipTool, _bettingTool);
 
     // Act
     var names = provider.GetToolNames();
 
     // Assert
     names.Should().Contain(AgentToolCatalog.DailySlip.PlaceBetSlip.Name);
-    names.Should().Contain(AgentToolCatalog.Betting.GetAvailableMatches.Name);
-    names.Should().Contain(AgentToolCatalog.Betting.GetCurrentOdds.Name);
-    names.Should().Contain(AgentToolCatalog.Betting.GetCurrentOddsForMarket.Name);
-    names.Should().Contain(AgentToolCatalog.Betting.GetMatchAnalysis.Name);
-  }
-
-  [Fact]
-  public void GetToolNames_WhenPlacementExcluded_OmitsPlaceBetSlip()
-  {
-    // Arrange
-    var provider = new DailySlipProvider(_dailySlipTool, _bettingTool, includePlacement: false);
-
-    // Act
-    var names = provider.GetToolNames();
-
-    // Assert
-    names.Should().NotContain(AgentToolCatalog.DailySlip.PlaceBetSlip.Name);
     names.Should().Contain(AgentToolCatalog.Betting.GetAvailableMatches.Name);
     names.Should().Contain(AgentToolCatalog.Betting.GetCurrentOdds.Name);
     names.Should().Contain(AgentToolCatalog.Betting.GetCurrentOddsForMarket.Name);

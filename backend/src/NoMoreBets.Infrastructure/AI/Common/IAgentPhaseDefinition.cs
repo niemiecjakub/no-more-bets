@@ -11,5 +11,4 @@ public interface IAgentPhaseStep
   string AgentInstructions { get; }
   IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) => [];
   IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) => [];
-  bool LoopUntilBackgroundTasksComplete => false;
 }
