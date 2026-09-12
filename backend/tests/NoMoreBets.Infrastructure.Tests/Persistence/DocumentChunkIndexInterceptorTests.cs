@@ -1,6 +1,8 @@
+using Hangfire;
+using Hangfire.Common;
+using Hangfire.States;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.Persistence;
 
@@ -11,12 +13,11 @@ public class DocumentChunkIndexInterceptorTests
   [Fact]
   public async Task SavedChangesAsync_MatchAdded_EnqueuesMatchIndex()
   {
-    // Arrange
-    var scheduler = Substitute.For<IDocumentChunkIndexScheduler>();
-    var interceptor = new DocumentChunkIndexInterceptor(scheduler);
+    var jobClient = Substitute.For<IBackgroundJobClient>();
+    jobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("job-1");
+    var interceptor = new DocumentChunkIndexInterceptor(jobClient);
     await using var db = CreateDb(interceptor);
 
-    // Act
     db.Matches.Add(new Match
     {
       Id = 1,
@@ -27,16 +28,21 @@ public class DocumentChunkIndexInterceptorTests
     });
     await db.SaveChangesAsync();
 
-    // Assert
-    scheduler.Received(1).Enqueue(DocumentChunkSourceType.Match, 1);
+    jobClient.Received(1).Create(
+      Arg.Is<Job>(j =>
+        j.Type == typeof(NoMoreBets.Infrastructure.BackgroundJobs.DocumentChunkIndexJobService)
+        && j.Method.Name == nameof(NoMoreBets.Infrastructure.BackgroundJobs.DocumentChunkIndexJobService.IndexAsync)
+        && (string)j.Args[0]! == DocumentChunkSourceType.Match
+        && (int)j.Args[1]! == 1),
+      Arg.Any<IState>());
   }
 
   [Fact]
   public async Task SavedChangesAsync_MatchAnalysisAndLineup_EnqueuesBothSourcesOnce()
   {
-    // Arrange
-    var scheduler = Substitute.For<IDocumentChunkIndexScheduler>();
-    var interceptor = new DocumentChunkIndexInterceptor(scheduler);
+    var jobClient = Substitute.For<IBackgroundJobClient>();
+    jobClient.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("job-1");
+    var interceptor = new DocumentChunkIndexInterceptor(jobClient);
     await using var db = CreateDb(interceptor);
 
     db.Matches.Add(new Match
@@ -48,9 +54,8 @@ public class DocumentChunkIndexInterceptorTests
       MatchStatusId = 1
     });
     await db.SaveChangesAsync();
-    scheduler.ClearReceivedCalls();
+    jobClient.ClearReceivedCalls();
 
-    // Act
     db.Analyses.Add(new MatchAnalysis
     {
       Id = 5,
@@ -67,9 +72,14 @@ public class DocumentChunkIndexInterceptorTests
     });
     await db.SaveChangesAsync();
 
-    // Assert
-    scheduler.Received(1).Enqueue(DocumentChunkSourceType.Match, 10);
-    scheduler.Received(1).Enqueue(DocumentChunkSourceType.MatchAnalysis, 5);
+    jobClient.Received(1).Create(
+      Arg.Is<Job>(j =>
+        (string)j.Args[0]! == DocumentChunkSourceType.Match && (int)j.Args[1]! == 10),
+      Arg.Any<IState>());
+    jobClient.Received(1).Create(
+      Arg.Is<Job>(j =>
+        (string)j.Args[0]! == DocumentChunkSourceType.MatchAnalysis && (int)j.Args[1]! == 5),
+      Arg.Any<IState>());
   }
 
   private static InterceptorTestDbContext CreateDb(DocumentChunkIndexInterceptor interceptor)

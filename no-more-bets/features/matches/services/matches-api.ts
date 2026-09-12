@@ -225,13 +225,10 @@ export interface FetchMatchesPageParams {
   afterId?: number;
 }
 
-/**
- * Fetches a page of matches from the backend.
- */
-export async function fetchMatchesPage(
+export function buildMatchesQuery(
   filters?: FetchMatchesFilters,
   params: FetchMatchesPageParams = {},
-): Promise<PagedResponse<MatchListItem>> {
+): string {
   const queryParams = new URLSearchParams();
   queryParams.set("limit", String(params.limit ?? MATCHES_PAGE_SIZE));
 
@@ -263,8 +260,18 @@ export async function fetchMatchesPage(
     queryParams.set("afterId", String(params.afterId));
   }
 
+  return queryParams.toString();
+}
+
+/**
+ * Fetches a page of matches from the backend.
+ */
+export async function fetchMatchesPage(
+  filters?: FetchMatchesFilters,
+  params: FetchMatchesPageParams = {},
+): Promise<PagedResponse<MatchListItem>> {
   const { data } = await axiosInstance.get<unknown>(
-    `/api/matches?${queryParams.toString()}`
+    `/api/matches?${buildMatchesQuery(filters, params)}`
   );
   return normalizePagedResponse(data, normalizeMatchListItem);
 }

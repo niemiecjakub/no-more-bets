@@ -9,7 +9,6 @@
   <ItemGroup>
     <PackageReference Include="FuzzySharp" Version="2.0.2" />
     <PackageReference Include="MediatR" Version="12.4.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.13" />
   </ItemGroup>
 
   <ItemGroup>

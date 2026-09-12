@@ -33,7 +33,9 @@ internal static class AgentPhaseStepExecutor
         cancellationToken)
       .ConfigureAwait(false);
     agentSession ??= config.Session;
-    var runOptions = AgentRunOptionsFactory.WithTools(config.DefaultRunOptions, tools);
+    var chatOptions = config.DefaultRunOptions.ChatOptions?.Clone() ?? new ChatOptions();
+    chatOptions.Tools = tools as IList<AITool> ?? tools.ToList();
+    var runOptions = new ChatClientAgentRunOptions(chatOptions);
     runOptions.ResponseFormat = responseFormatType is not null
       ? ChatResponseFormat.ForJsonSchema(responseFormatType)
       : ChatResponseFormat.Text;

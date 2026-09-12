@@ -21,7 +21,6 @@ using NoMoreBets.Domain.Memories;
 using NoMoreBets.Infrastructure.AI;
 using NoMoreBets.Infrastructure.AI.Common.Embedding;
 using NoMoreBets.Infrastructure.BackgroundJobs;
-using NoMoreBets.Infrastructure.Http;
 using NoMoreBets.Infrastructure.Persistence;
 using NoMoreBets.Infrastructure.Persistence.Repositories;
 using NoMoreBets.Infrastructure.Scraping;
@@ -33,7 +32,6 @@ using NoMoreBets.Infrastructure.Scraping.External.Rotowire;
 using NoMoreBets.Infrastructure.Scraping.External.SoccerData;
 using NoMoreBets.Infrastructure.Search;
 using NoMoreBets.Infrastructure.XApi;
-using Polly;
 using System.Net;
 using System.Net.Http.Headers;
 
@@ -48,7 +46,6 @@ public static class DependencyInjection
 
     // DbContext
     services.AddScoped<DocumentChunkIndexInterceptor>();
-    services.AddSingleton<IDocumentChunkIndexScheduler, HangfireDocumentChunkIndexScheduler>();
     services.AddDbContext<AppDbContext>((sp, options) =>
     {
       options.UseNpgsql(connectionString, o =>
@@ -114,20 +111,16 @@ public static class DependencyInjection
     services.AddScoped<IDocumentChunkSearch, DocumentChunkSearch>();
 
     //HTTP resilience & external clients
-    services.AddSingleton<ResiliencePipeline<HttpResponseMessage>>(sp =>
-      ResilienceHttpHandler.CreatePipeline(sp.GetService<ILogger<ResilienceHttpHandler>>()));
-    services.AddTransient<ResilienceHttpHandler>();
     services.AddTransient<XApiOAuth1MessageHandler>();
     services.AddHttpClient<SoccerDataClient>()
-      .AddHttpMessageHandler<ResilienceHttpHandler>()
       .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
       {
         AutomaticDecompression = DecompressionMethods.All
-      });
+      })
+      .AddStandardResilienceHandler();
 
     // Scrapers
     services.AddSingleton<FotmobConstants>();
-    services.AddSingleton<IFotmobConstants>(sp => sp.GetRequiredService<FotmobConstants>());
     services.AddSingleton<FotmobSeasonClubCatalog>();
     services.AddSingleton<FotmobWorldCupGroupDefinitions>();
     services.AddSingleton<WorldCupGroupRegistry>(sp =>
@@ -158,11 +151,11 @@ public static class DependencyInjection
       client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
       client.DefaultRequestHeaders.TryAddWithoutValidation("X-Subscription-Token", options.ApiKey);
     })
-    .AddHttpMessageHandler<ResilienceHttpHandler>()
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
     {
       AutomaticDecompression = DecompressionMethods.All
-    });
+    })
+    .AddStandardResilienceHandler();
 
     services.AddHttpClient<IXApiService, XApiClient>((_, client) =>
     {
@@ -171,11 +164,11 @@ public static class DependencyInjection
       client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     })
     .AddHttpMessageHandler<XApiOAuth1MessageHandler>()
-    .AddHttpMessageHandler<ResilienceHttpHandler>()
     .ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler
     {
       AutomaticDecompression = DecompressionMethods.All
-    });
+    })
+    .AddStandardResilienceHandler();
 
     return services;
   }

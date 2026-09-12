@@ -1,8 +1,8 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Search;
-using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Providers.DailySlip;
@@ -12,11 +12,6 @@ using NoMoreBets.Infrastructure.AI.Tools;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.DailySlip;
-
-public static class DailySlipPhaseDefinition
-{
-  public static AgentSessionPhase Phase => AgentSessionPhase.DailySlip;
-}
 
 internal sealed class DailySlipExecuteStep : IAgentPhaseStep
 {
@@ -47,12 +42,16 @@ internal sealed class DailySlipExecuteStep : IAgentPhaseStep
       Produce today's house betting card from available matches, stored research, and current odds.
       """;
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([
-      ToolRegistry.Match.GetClubRollingPerformance,
-      ToolRegistry.Match.GetLeagueTable,
-      ToolRegistry.Match.GetGroupTable,
-    ]);
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
+  {
+    var matchTool = serviceProvider.GetRequiredService<MatchTool>();
+    return
+    [
+      AiToolBind.Bind(matchTool.GetClubRollingPerformanceAsync, AgentToolCatalog.Match.GetClubRollingPerformance.Name),
+      AiToolBind.Bind(matchTool.GetLeagueTableAsync, AgentToolCatalog.Match.GetLeagueTable.Name),
+      AiToolBind.Bind(matchTool.GetGroupTableAsync, AgentToolCatalog.Match.GetGroupTable.Name),
+    ];
+  }
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [

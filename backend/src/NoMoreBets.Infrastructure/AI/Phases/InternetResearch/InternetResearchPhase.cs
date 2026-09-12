@@ -1,9 +1,9 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
-using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
@@ -11,13 +11,9 @@ using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
-
-public static class InternetResearchPhaseDefinition
-{
-  public static AgentSessionPhase Phase => AgentSessionPhase.InternetResearch;
-}
 
 internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
 {
@@ -47,10 +43,11 @@ internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
       Scout upcoming fixtures and persist reusable intelligence for match-day research.
       """;
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([
-      ToolRegistry.Match.GetUpcomingMatches,
-    ]);
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
+  {
+    var matchTool = serviceProvider.GetRequiredService<MatchTool>();
+    return [AiToolBind.Bind(matchTool.GetUpcomingMatchesAsync, AgentToolCatalog.Match.GetUpcomingMatches.Name)];
+  }
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [

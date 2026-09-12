@@ -2,7 +2,7 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Betting.GetBetEvents;
+using NoMoreBets.Application.Betting;
 using NoMoreBets.Application.Betting.UpdateMatches;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
@@ -17,6 +17,7 @@ namespace NoMoreBets.Infrastructure.BackgroundJobs;
 public sealed class BookmakerListingSyncJobService(
   IMediator mediator,
   AppDbContext db,
+  IBetEventsProvider betEventsProvider,
   ILogger<BookmakerListingSyncJobService> logger)
 {
   /// <summary>
@@ -133,7 +134,7 @@ public sealed class BookmakerListingSyncJobService(
 
     try
     {
-      var events = await mediator.Send(new GetBetclicMatchEventsQuery(gameUrl, Expand: true));
+      var events = await betEventsProvider.GetMatchEventsAsync(gameUrl, expand: true);
       if (events is null || events.Count == 0)
       {
         logger.LogWarning(

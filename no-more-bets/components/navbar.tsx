@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import * as NavigationMenu from "@radix-ui/react-navigation-menu";
 import { cn } from "@/lib/utils";
 import { FeedbackSheetTrigger } from "@/features/feedback/components/feedback-sheet";
 
@@ -25,30 +24,26 @@ const agentTabs = [
 
 function NavbarLinks({ pathname }: { pathname: string }) {
   return (
-    <NavigationMenu.Root delayDuration={80} skipDelayDuration={120}>
-      <NavigationMenu.List className="flex items-center gap-1">
-        {tabs.map(({ href, label }) => {
-          const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
-          return (
-            <NavigationMenu.Item key={href}>
-              <NavigationMenu.Link asChild active={isActive}>
-                <Link
-                  href={href}
-                  className={cn(
-                    "shrink-0 rounded-md px-4 py-2 text-sm font-bold transition-colors",
-                    isActive
-                      ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
-                      : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
-                  )}
-                >
-                  {label}
-                </Link>
-              </NavigationMenu.Link>
-            </NavigationMenu.Item>
-          );
-        })}
-      </NavigationMenu.List>
-    </NavigationMenu.Root>
+    <div className="flex items-center gap-1">
+      {tabs.map(({ href, label }) => {
+        const isActive = href === "/" ? pathname === "/" : pathname.startsWith(href);
+        return (
+          <Link
+            key={href}
+            href={href}
+            aria-current={isActive ? "page" : undefined}
+            className={cn(
+              "shrink-0 rounded-md px-4 py-2 text-sm font-bold transition-colors",
+              isActive
+                ? "bg-zinc-100 text-foreground dark:bg-zinc-800"
+                : "text-zinc-600 hover:bg-zinc-50 hover:text-foreground dark:text-zinc-400 dark:hover:bg-zinc-900"
+            )}
+          >
+            {label}
+          </Link>
+        );
+      })}
+    </div>
   );
 }
 

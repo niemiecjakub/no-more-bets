@@ -1,9 +1,9 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
-using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
@@ -12,13 +12,9 @@ using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Providers.WebSearch;
 using NoMoreBets.Infrastructure.AI.Tools;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Research;
-
-public static class ResearchPhaseDefinition
-{
-  public static AgentSessionPhase Phase => AgentSessionPhase.Research;
-}
 
 internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
 {
@@ -52,29 +48,30 @@ internal sealed class ResearchExecuteStep(Match match) : IAgentPhaseStep
 
   public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
   {
-    var tools = new List<AgentTool>
+    var matchTool = serviceProvider.GetRequiredService<MatchTool>();
+    var tools = new List<AITool>
     {
-      ToolRegistry.Match.GetLineups,
-      ToolRegistry.Match.GetInjuries,
-      ToolRegistry.Match.GetHead2HeadStats,
-      ToolRegistry.Match.GetClubRecentGames,
-      ToolRegistry.Match.GetMatchBettingOddsHistory,
-      ToolRegistry.Match.GetClubRollingPerformance,
-      ToolRegistry.Match.GetClubLeagueStatistics,
+      AiToolBind.Bind(matchTool.GetLineupsAsync, AgentToolCatalog.Match.GetLineups.Name),
+      AiToolBind.Bind(matchTool.GetInjuriesAsync, AgentToolCatalog.Match.GetInjuries.Name),
+      AiToolBind.Bind(matchTool.GetHead2HeadStatsAsync, AgentToolCatalog.Match.GetHead2HeadStats.Name),
+      AiToolBind.Bind(matchTool.GetClubRecentGamesAsync, AgentToolCatalog.Match.GetClubRecentGames.Name),
+      AiToolBind.Bind(matchTool.GetMatchBettingOddsHistoryAsync, AgentToolCatalog.Match.GetMatchBettingOddsHistory.Name),
+      AiToolBind.Bind(matchTool.GetClubRollingPerformanceAsync, AgentToolCatalog.Match.GetClubRollingPerformance.Name),
+      AiToolBind.Bind(matchTool.GetClubStatistics, AgentToolCatalog.Match.GetClubLeagueStatistics.Name),
     };
 
     // National teams have no club daily summary. World Cup uses group tables instead of a flat league table.
     if (match.IsFifaWorldCup)
     {
-      tools.Add(ToolRegistry.Match.GetGroupTable);
+      tools.Add(AiToolBind.Bind(matchTool.GetGroupTableAsync, AgentToolCatalog.Match.GetGroupTable.Name));
     }
     else
     {
-      tools.Add(ToolRegistry.Match.GetClubDailySummary);
-      tools.Add(ToolRegistry.Match.GetLeagueTable);
+      tools.Add(AiToolBind.Bind(matchTool.GetClubDailySummaryAsync, AgentToolCatalog.Match.GetClubDailySummary.Name));
+      tools.Add(AiToolBind.Bind(matchTool.GetLeagueTableAsync, AgentToolCatalog.Match.GetLeagueTable.Name));
     }
 
-    return serviceProvider.ResolveTools(tools.ToArray());
+    return tools;
   }
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
@@ -112,10 +109,14 @@ internal sealed class PaperBetFollowUpStep(int matchId) : IAgentPhaseStep
     Validate prior research by placing a fictional prediction slip for this match.
     """;
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([
-      ToolRegistry.ResearchBet.GetMatchBasicInfo(matchId),
-      ToolRegistry.ResearchBet.GetMatchEvents(matchId),
-      ToolRegistry.ResearchBet.PlaceBetSlip(matchId),
-    ]);
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
+  {
+    var researchBet = ActivatorUtilities.CreateInstance<ResearchBetTool>(serviceProvider, matchId);
+    return
+    [
+      AiToolBind.Bind(researchBet.GetMatchBasicInfoAsync, AgentToolCatalog.ResearchBet.GetMatchBasicInfo.Name),
+      AiToolBind.Bind(researchBet.GetMatchEventsAsync, AgentToolCatalog.ResearchBet.GetMatchEvents.Name),
+      AiToolBind.Bind(researchBet.PlaceBetSlip, AgentToolCatalog.ResearchBet.PlaceBetSlip.Name),
+    ];
+  }
 }

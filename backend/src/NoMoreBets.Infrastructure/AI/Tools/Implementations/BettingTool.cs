@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Betting.CancelBetSlip;
 using NoMoreBets.Application.Betting.GetBetSlips;
 using NoMoreBets.Application.Betting.GetMatchBettingOdds;
-using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
@@ -41,8 +40,8 @@ public class BettingTool
   [Description("Retrieves matches for which bets can currently be placed.")]
   public async Task<IReadOnlyList<AvailableMatch>> GetAvailableMatchesAsync(CancellationToken cancellationToken = default)
   {
-    var matches = await _mediator
-      .Send(new GetMatchesAvailableForBettingQuery(), cancellationToken)
+    var matches = await _unitOfWork.Betting
+      .GetMatchesAvailableForBettingAsync(cancellationToken)
       .ConfigureAwait(false);
     return matches
       .Select(m => new AvailableMatch(m.Id, m.HomeClub.Name, m.AwayClub.Name, m.MatchDate))

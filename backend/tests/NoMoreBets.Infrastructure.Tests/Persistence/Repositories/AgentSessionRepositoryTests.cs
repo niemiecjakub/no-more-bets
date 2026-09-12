@@ -226,6 +226,7 @@ public class AgentSessionRepositoryTests
         e.HasMany(s => s.Selections).WithOne(sel => sel.BetSlip).HasForeignKey(sel => sel.BetSlipId);
         e.Ignore(s => s.BetStatusEntity);
         e.Ignore(s => s.Bankrolls);
+        e.Ignore(s => s.DailyPick);
       });
 
       modelBuilder.Entity<BetSelection>(e =>

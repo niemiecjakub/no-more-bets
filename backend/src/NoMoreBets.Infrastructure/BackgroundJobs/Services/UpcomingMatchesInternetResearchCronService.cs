@@ -1,12 +1,13 @@
 using Hangfire;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
+using NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
+
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
 public sealed class UpcomingMatchesInternetResearchCronService(
-  IAgentPhaseRunner agentPhaseRunner,
+  InternetResearchPhaseRunner internetResearchPhaseRunner,
   IMediator mediator,
   ILogger<UpcomingMatchesInternetResearchCronService> logger)
 {
@@ -24,7 +25,7 @@ public sealed class UpcomingMatchesInternetResearchCronService(
     }
 
     logger.LogInformation("Starting scheduled upcoming matches internet research agent phase");
-    await agentPhaseRunner.RunUpcomingMatchesInternetResearchAsync(CancellationToken.None).ConfigureAwait(false);
+    await internetResearchPhaseRunner.RunAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled upcoming matches internet research agent phase");
   }
 }

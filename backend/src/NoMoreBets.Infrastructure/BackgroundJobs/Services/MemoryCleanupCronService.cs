@@ -1,18 +1,18 @@
 using Hangfire;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
 
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
 public sealed class MemoryCleanupCronService(
-  IAgentPhaseRunner agentPhaseRunner,
+  MemoryCleanupPhaseRunner memoryCleanupPhaseRunner,
   ILogger<MemoryCleanupCronService> logger)
 {
   [AutomaticRetry(Attempts = 1)]
   public async Task RunAsync()
   {
     logger.LogInformation("Starting scheduled memory cleanup agent phase");
-    await agentPhaseRunner.RunMemoryCleanupPhaseAsync(CancellationToken.None).ConfigureAwait(false);
+    await memoryCleanupPhaseRunner.RunAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled memory cleanup agent phase");
   }
 }

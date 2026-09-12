@@ -2,19 +2,12 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
-using NoMoreBets.Infrastructure.AI.Tools;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
-
-public static class MemoryCleanupPhaseDefinition
-{
-  public static AgentSessionPhase Phase => AgentSessionPhase.MemoryCleanup;
-}
 
 internal sealed class MemoryCleanupExecuteStep : IAgentPhaseStep
 {
@@ -56,8 +49,7 @@ internal sealed class MemoryCleanupExecuteStep : IAgentPhaseStep
           """;
   }
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([]);
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) => [];
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [

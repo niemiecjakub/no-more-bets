@@ -1,10 +1,11 @@
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Infrastructure.BackgroundJobs;
 
 namespace NoMoreBets.Infrastructure.Persistence;
 
-public sealed class DocumentChunkIndexInterceptor(IDocumentChunkIndexScheduler scheduler) : SaveChangesInterceptor
+public sealed class DocumentChunkIndexInterceptor(IBackgroundJobClient jobClient) : SaveChangesInterceptor
 {
   private readonly List<(string SourceType, object Entity)> _pending = [];
 
@@ -65,7 +66,7 @@ public sealed class DocumentChunkIndexInterceptor(IDocumentChunkIndexScheduler s
   private void EnqueuePending()
   {
     foreach (var (sourceType, sourceId) in DocumentChunkIndexChangeCollector.ResolveIds(_pending))
-      scheduler.Enqueue(sourceType, sourceId);
+      jobClient.Enqueue<DocumentChunkIndexJobService>(job => job.IndexAsync(sourceType, sourceId));
 
     _pending.Clear();
   }

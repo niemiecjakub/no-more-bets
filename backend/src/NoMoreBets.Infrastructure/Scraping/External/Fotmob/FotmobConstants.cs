@@ -1,9 +1,12 @@
 namespace NoMoreBets.Infrastructure.Scraping.External.Fotmob;
 
+public record FotmobTeam(int Id, string Name);
+public record FotmobLeague(int Id, string Name, string Slug);
+
 /// <summary>
 /// FotMob league and team constants. Registered as singleton.
 /// </summary>
-public class FotmobConstants : IFotmobConstants
+public class FotmobConstants
 {
   public FotmobLeague PremierLeague { get; } = new(47, "Premier League", "premier-league");
   public FotmobLeague Ekstraklasa { get; } = new(196, "Ekstraklasa", "ekstraklasa");
@@ -285,7 +288,7 @@ public class FotmobConstants : IFotmobConstants
     ];
   }
 
-  /// <inheritdoc />
+  /// <summary>Looks up a league by slug (including DB seed aliases).</summary>
   public FotmobLeague? GetLeagueBySlug(string slug)
   {
     if (string.IsNullOrWhiteSpace(slug))
@@ -295,7 +298,7 @@ public class FotmobConstants : IFotmobConstants
     return _leaguesBySlug.GetValueOrDefault(normalized);
   }
 
-  /// <inheritdoc />
+  /// <summary>Looks up a team by exact name (case-insensitive).</summary>
   public FotmobTeam? GetTeamByName(string name) =>
     _allTeams.FirstOrDefault(t => string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase));
 }

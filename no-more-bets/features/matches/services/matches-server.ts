@@ -7,6 +7,7 @@ import {
   normalizeMatchResearchOutput,
 } from "@/features/matches/services/match-insights-api";
 import {
+  buildMatchesQuery,
   MATCH_DATE_SORT,
   normalizeMatchAnalysisPage,
   normalizeMatchListItem,
@@ -16,48 +17,11 @@ import {
 } from "@/features/matches/services/matches-api";
 import { MATCH_STATUS } from "@/features/matches/interfaces";
 
-const MATCHES_PAGE_SIZE = 10;
-
-function matchesQuery(
-  filters: FetchMatchesFilters | undefined,
-  params: FetchMatchesPageParams,
-): string {
-  const queryParams = new URLSearchParams();
-  queryParams.set("limit", String(params.limit ?? MATCHES_PAGE_SIZE));
-
-  if (filters?.matchStatusId != null) {
-    queryParams.set("matchStatusId", String(filters.matchStatusId));
-  }
-  if (filters?.sortOrder != null) {
-    queryParams.set("sortOrder", filters.sortOrder);
-  }
-  const search = filters?.search?.trim();
-  if (search) {
-    queryParams.set("search", search);
-  }
-  for (const seasonYear of filters?.seasonYears ?? []) {
-    const trimmed = seasonYear.trim();
-    if (trimmed) queryParams.append("seasonYears", trimmed);
-  }
-  for (const leagueId of filters?.leagueIds ?? []) {
-    if (Number.isInteger(leagueId) && leagueId > 0) {
-      queryParams.append("leagueIds", String(leagueId));
-    }
-  }
-  if (params.afterMatchDate != null) {
-    queryParams.set("afterMatchDate", params.afterMatchDate);
-  }
-  if (params.afterId != null) {
-    queryParams.set("afterId", String(params.afterId));
-  }
-  return queryParams.toString();
-}
-
 export async function getMatchesPage(
   filters?: FetchMatchesFilters,
   params: FetchMatchesPageParams = {},
 ): Promise<PagedResponse<MatchListItem>> {
-  const raw = await apiGetJson<unknown>(`/api/matches?${matchesQuery(filters, params)}`);
+  const raw = await apiGetJson<unknown>(`/api/matches?${buildMatchesQuery(filters, params)}`);
   return normalizePagedResponse(raw ?? { items: [] }, normalizeMatchListItem);
 }
 

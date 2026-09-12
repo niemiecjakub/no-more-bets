@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
@@ -55,12 +56,13 @@ internal sealed class BettingExecuteStep : IAgentPhaseStep
 
   public string BuildPrompt() => "The betting window is open. Evaluate current opportunities.";
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([]);
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) => [];
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [
-    new BankrollProvider(serviceProvider.GetRequiredService<IMediator>()),
+    new BankrollProvider(
+      serviceProvider.GetRequiredService<IMediator>(),
+      serviceProvider.GetRequiredService<IUnitOfWork>()),
     new BettingProvider(serviceProvider.GetRequiredService<BettingTool>()),
     new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
     new WebSearchProvider(
@@ -82,6 +84,9 @@ internal sealed class XPostFollowUpStep : IAgentPhaseStep
       No outcome promises, no hype, no exclamation marks.
       """;
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([ToolRegistry.SocialMedia.CreateXPost]);
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
+  {
+    var social = serviceProvider.GetRequiredService<SocialMediaTool>();
+    return [AiToolBind.Bind(social.CreateXPostAsync, AgentToolCatalog.SocialMedia.CreateXPost.Name)];
+  }
 }

@@ -37,7 +37,7 @@ public class SocialMediaToolTests
   [Fact]
   public void CreateXPost_RegistersNamedFunction()
   {
-    var tool = ToolRegistry.Create(_sut.CreateXPostAsync, "CreateXPost");
+    var tool = AiToolBind.Bind(_sut.CreateXPostAsync, "CreateXPost");
 
     tool.Should().BeAssignableTo<AIFunction>();
     ((AIFunction)tool).Name.Should().Be("CreateXPost");

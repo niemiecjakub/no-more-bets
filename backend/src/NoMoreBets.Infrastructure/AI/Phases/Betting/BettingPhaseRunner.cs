@@ -1,5 +1,3 @@
-using Microsoft.Agents.AI;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NoMoreBets.Application.Common;
@@ -7,6 +5,7 @@ using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.XApi;
+using AgentSessionPhase = NoMoreBets.Domain.AgentSessions.AgentSessionPhase;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Betting;
 
@@ -22,84 +21,28 @@ public sealed class BettingPhaseRunner(
   public async Task<IReadOnlyList<IMessage>> RunAsync(CancellationToken cancellationToken = default)
   {
     var definition = BettingPhaseDefinition.Create(xApiOptions.Value.IsOAuthConfigured);
-    var phaseName = definition.Phase.ToString();
-    logger.LogInformation("Betting agent phase {Phase} starting", phaseName);
-
-    var startedAt = DateTime.UtcNow;
-    var sessionId = await unitOfWork.AgentSessions
-      .CreateSessionAsync(definition.Phase, startedAt, cancellationToken)
-      .ConfigureAwait(false);
-    agentSessionContext.SessionId = sessionId;
-
-    var messages = new List<IMessage>();
-    AgentSession? agentSession = null;
-    try
-    {
-      var executeResult = await AgentPhaseStepExecutor.RunAsync(
-        new BettingExecuteStep(),
-        persistTranscript: true,
-        responseFormatType: null,
-        agentBuilder,
-        messageCollector,
-        serviceProvider,
-        agentSession,
-        messages,
-        cancellationToken).ConfigureAwait(false);
-      agentSession = executeResult.Session;
-
-      if (definition.IncludeXPostFollowUp)
+    var result = await AgentPhaseSessionRunner.RunAsync(
+      AgentSessionPhase.Betting,
+      "Betting agent phase",
+      agentBuilder,
+      messageCollector,
+      unitOfWork,
+      agentSessionContext,
+      serviceProvider,
+      logger,
+      async (runStep, _, ct) =>
       {
-        executeResult = await AgentPhaseStepExecutor.RunAsync(
-          new XPostFollowUpStep(),
-          persistTranscript: false,
-          responseFormatType: null,
-          agentBuilder,
-          messageCollector,
-          serviceProvider,
-          agentSession,
-          messages,
-          cancellationToken).ConfigureAwait(false);
-        agentSession = executeResult.Session;
-      }
-    }
-    finally
-    {
-      try
-      {
-        if (messages.Count == 0)
+        var executeResult = await runStep(new BettingExecuteStep(), persistTranscript: true, null, null, ct)
+          .ConfigureAwait(false);
+
+        if (definition.IncludeXPostFollowUp)
         {
-          await unitOfWork.AgentSessions
-            .DeleteSessionAsync(sessionId, cancellationToken)
+          await runStep(new XPostFollowUpStep(), persistTranscript: false, null, executeResult.Session, ct)
             .ConfigureAwait(false);
         }
-        else
-        {
-          var rows = AgentSessionTranscriptMapper.ToEntities(messages);
-          await unitOfWork.AgentSessions
-            .AddMessagesAsync(sessionId, rows, cancellationToken)
-            .ConfigureAwait(false);
-        }
-      }
-      catch (Exception ex)
-      {
-        if (messages.Count == 0)
-        {
-          logger.LogError(ex, "Failed to delete empty agent session {SessionId}", sessionId);
-        }
-        else
-        {
-          logger.LogError(ex, "Failed to persist agent session {SessionId} transcript", sessionId);
-        }
-      }
+      },
+      cancellationToken).ConfigureAwait(false);
 
-      agentSessionContext.SessionId = null;
-    }
-
-    logger.LogInformation(
-      "Betting agent phase {Phase} completed with {MessageCount} assistant message(s)",
-      phaseName,
-      messages.Count);
-
-    return messages;
+    return result.Messages;
   }
 }

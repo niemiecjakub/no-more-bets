@@ -2,7 +2,7 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Clubs.GetOverview;
+using NoMoreBets.Application.Clubs;
 using NoMoreBets.Application.Clubs.UpdateDailySummary;
 using NoMoreBets.Application.Common.Dto.Leagues;
 using NoMoreBets.Application.Matches.UpdateMatchDetails;
@@ -20,7 +20,8 @@ public sealed class ClubDailyBriefJobService(
   IMediator mediator,
   AppDbContext db,
   ILeagueRepository leagues,
-  IFotmobConstants fotmobConstants,
+  FotmobConstants fotmobConstants,
+  IClubOverviewProvider clubOverviewProvider,
   ILogger<ClubDailyBriefJobService> logger)
 {
   /// <summary>
@@ -71,7 +72,7 @@ public sealed class ClubDailyBriefJobService(
       ClubOverview clubOverview;
       try
       {
-        clubOverview = await mediator.Send(new GetClubOverviewQuery(fotmobTeam.Id)).ConfigureAwait(false);
+        clubOverview = await clubOverviewProvider.GetClubOverviewAsync(fotmobTeam.Id).ConfigureAwait(false);
       }
       catch (Exception ex)
       {

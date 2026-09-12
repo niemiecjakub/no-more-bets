@@ -30,7 +30,16 @@ public sealed class AgentBuilder
   {
     var credential = new ApiKeyCredential(_openAi.ApiKey);
     var responsesClient = new OpenAIClient(credential).GetResponsesClient();
-    var defaultRunOptions = AgentRunOptionsFactory.CreateDefault();
+    var defaultRunOptions = new ChatClientAgentRunOptions(new ChatOptions
+    {
+      AllowMultipleToolCalls = true,
+      ToolMode = ChatToolMode.Auto,
+      Reasoning = new ReasoningOptions
+      {
+        Effort = ReasoningEffort.High,
+        Output = ReasoningOutput.Full,
+      },
+    });
     var chatOptions = defaultRunOptions.ChatOptions?.Clone() ?? new ChatOptions();
     chatOptions.Instructions = instructions;
 

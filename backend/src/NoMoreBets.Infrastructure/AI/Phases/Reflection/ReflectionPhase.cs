@@ -1,20 +1,16 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
+using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Common;
-using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
 using NoMoreBets.Infrastructure.AI.Providers.Todo;
 using NoMoreBets.Infrastructure.AI.Tools;
+using NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 namespace NoMoreBets.Infrastructure.AI.Phases.Reflection;
-
-public static class ReflectionPhaseDefinition
-{
-  public static AgentSessionPhase Phase => AgentSessionPhase.Reflection;
-}
 
 internal sealed class ReflectionExecuteStep : IAgentPhaseStep
 {
@@ -42,11 +38,16 @@ internal sealed class ReflectionExecuteStep : IAgentPhaseStep
 
   public string BuildPrompt() => "Review all settled slips awaiting reflection.";
 
-  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider) =>
-    serviceProvider.ResolveTools([
-      ToolRegistry.Betting.GetBetSlipsAwaitingReflection,
-      ToolRegistry.Match.GetMatchResearchText,
-    ]);
+  public IReadOnlyList<AITool> GetTools(IServiceProvider serviceProvider)
+  {
+    var betting = serviceProvider.GetRequiredService<BettingTool>();
+    var matchTool = serviceProvider.GetRequiredService<MatchTool>();
+    return
+    [
+      AiToolBind.Bind(betting.GetBetSlipsAwaitingReflectionAsync, AgentToolCatalog.Betting.GetBetSlipsAwaitingReflection.Name),
+      AiToolBind.Bind(matchTool.GetMatchResearchTextAsync, AgentToolCatalog.Match.GetMatchResearchText.Name),
+    ];
+  }
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [

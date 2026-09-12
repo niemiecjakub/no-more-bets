@@ -2,16 +2,23 @@ using Hangfire;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Betting.DailySlip;
-using NoMoreBets.Application.Betting.GetMatchesAvailableForBetting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
+using NoMoreBets.Infrastructure.AI.Phases.Betting;
+using NoMoreBets.Infrastructure.AI.Phases.DailySlip;
+using NoMoreBets.Infrastructure.AI.Phases.Reflection;
+using NoMoreBets.Infrastructure.AI.Phases.Research;
+
 namespace NoMoreBets.Infrastructure.BackgroundJobs;
 
 /// <summary>
 /// Hangfire entry points for the betting agent: research scheduling, execution, and reflection phases.
 /// </summary>
 public sealed class BettingAgentCronService(
-  IAgentPhaseRunner agentPhaseRunner,
+  ResearchPhaseRunner researchPhaseRunner,
+  BettingPhaseRunner bettingPhaseRunner,
+  DailySlipPhaseRunner dailySlipPhaseRunner,
+  ReflectionPhaseRunner reflectionPhaseRunner,
   IMediator mediator,
   IUnitOfWork unitOfWork,
   DailySlipScheduleGate dailySlipScheduleGate,
@@ -46,14 +53,14 @@ public sealed class BettingAgentCronService(
       return;
     }
 
-    await agentPhaseRunner.RunResearchPhaseAsync(match, CancellationToken.None).ConfigureAwait(false);
+    await researchPhaseRunner.RunResearchPhaseAsync(match, CancellationToken.None).ConfigureAwait(false);
   }
 
   [AutomaticRetry(Attempts = 1)]
   public async Task RunBettingExecutionAsync()
   {
-    var matches = await mediator
-      .Send(new GetMatchesAvailableForBettingQuery(), CancellationToken.None)
+    var matches = await unitOfWork.Betting
+      .GetMatchesAvailableForBettingAsync(CancellationToken.None)
       .ConfigureAwait(false);
     if (matches.Count == 0)
     {
@@ -62,7 +69,7 @@ public sealed class BettingAgentCronService(
     }
 
     logger.LogInformation("Starting scheduled betting execution agent phase");
-    await agentPhaseRunner.RunBettingExecutionPhaseAsync(CancellationToken.None).ConfigureAwait(false);
+    await bettingPhaseRunner.RunAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled betting execution agent phase");
   }
 
@@ -79,7 +86,7 @@ public sealed class BettingAgentCronService(
     }
 
     logger.LogInformation("Starting scheduled daily slip agent phase");
-    await agentPhaseRunner.RunDailySlipPhaseAsync(CancellationToken.None).ConfigureAwait(false);
+    await dailySlipPhaseRunner.RunAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled daily slip agent phase");
   }
 
@@ -87,7 +94,7 @@ public sealed class BettingAgentCronService(
   public async Task RunReflectionAsync()
   {
     logger.LogInformation("Starting scheduled reflection agent phase");
-    await agentPhaseRunner.RunReflectionPhaseAsync(CancellationToken.None).ConfigureAwait(false);
+    await reflectionPhaseRunner.RunAsync(CancellationToken.None).ConfigureAwait(false);
     logger.LogInformation("Finished scheduled reflection agent phase");
   }
 }

@@ -69,12 +69,12 @@ public class FotmobScraper : BaseScraper, ILeagueProvider, IClubOverviewProvider
 """;
 
   private readonly ILogger<FotmobScraper> _logger;
-  private readonly IFotmobConstants _fotmobConstants;
+  private readonly FotmobConstants _fotmobConstants;
 
   public FotmobScraper(
       PlaywrightPageFetcher pageFetcher,
       IOptions<BaseScraperOptions> baseOptions,
-      IFotmobConstants fotmobConstants,
+      FotmobConstants fotmobConstants,
       ILogger<FotmobScraper> logger)
       : base(pageFetcher, baseOptions, logger)
   {

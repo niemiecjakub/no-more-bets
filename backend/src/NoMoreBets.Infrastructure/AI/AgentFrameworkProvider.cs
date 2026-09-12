@@ -26,13 +26,12 @@ public static class AgentFrameworkProvider
     services.AddScoped<AgentBuilder>();
     services.AddScoped<AgentSessionContext>();
     services.AddScoped<ResearchPhaseRunner>();
+    services.AddScoped<IAgentPhaseRunner>(sp => sp.GetRequiredService<ResearchPhaseRunner>());
     services.AddScoped<InternetResearchPhaseRunner>();
     services.AddScoped<MemoryCleanupPhaseRunner>();
     services.AddScoped<ReflectionPhaseRunner>();
     services.AddScoped<BettingPhaseRunner>();
     services.AddScoped<DailySlipPhaseRunner>();
-    services.AddScoped<AgentPhaseRunner>();
-    services.AddScoped<IAgentPhaseRunner>(sp => sp.GetRequiredService<AgentPhaseRunner>());
 
     return services;
   }
