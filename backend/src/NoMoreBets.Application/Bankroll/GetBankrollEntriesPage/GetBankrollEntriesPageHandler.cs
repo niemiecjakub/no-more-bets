@@ -1,5 +1,6 @@
 using MediatR;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Bankrolls;
 
 namespace NoMoreBets.Application.Bankroll.GetBankrollEntriesPage;
 
@@ -10,14 +11,14 @@ public record GetBankrollEntriesPageQuery(
   IReadOnlyCollection<string>? EntryNames = null,
   IReadOnlyList<string>? SeasonYears = null) : IRequest<Paged<BankrollEntryListItemDto>>;
 
-public sealed class GetBankrollEntriesPageHandler(IUnitOfWork unitOfWork)
+public sealed class GetBankrollEntriesPageHandler(IBankrollRepository bankroll)
   : IRequestHandler<GetBankrollEntriesPageQuery, Paged<BankrollEntryListItemDto>>
 {
   public async Task<Paged<BankrollEntryListItemDto>> Handle(
     GetBankrollEntriesPageQuery request,
     CancellationToken cancellationToken)
   {
-    var page = await unitOfWork.Bankroll
+    var page = await bankroll
       .GetEntriesPageAsync(
         request.Limit,
         request.AfterCreatedAtUtc,

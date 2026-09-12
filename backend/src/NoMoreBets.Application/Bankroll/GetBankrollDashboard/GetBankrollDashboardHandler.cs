@@ -1,6 +1,6 @@
 using MediatR;
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Application.Bankroll.GetBankrollDashboard;
@@ -20,7 +20,7 @@ public record BankrollRecordDto(
   int? BetId,
   DateTime CreatedAt);
 
-public sealed class GetBankrollDashboardHandler(IUnitOfWork unitOfWork, IMediator mediator)
+public sealed class GetBankrollDashboardHandler(IBankrollRepository bankroll, IMediator mediator)
   : IRequestHandler<GetBankrollDashboardQuery, BankrollDashboardDto>
 {
   public async Task<BankrollDashboardDto> Handle(
@@ -30,10 +30,10 @@ public sealed class GetBankrollDashboardHandler(IUnitOfWork unitOfWork, IMediato
     var daysTask = mediator.Send(new GetDaysUntilPaydayQuery(), cancellationToken);
 
     // Same DbContext: do not run bankroll queries concurrently (EF Core concurrency guard).
-    var balance = await unitOfWork.Bankroll
+    var balance = await bankroll
       .GetCurrentBalanceAsync(cancellationToken)
       .ConfigureAwait(false);
-    var entities = await unitOfWork.Bankroll
+    var entities = await bankroll
       .GetAllOrderedByCreatedAtDescAsync(cancellationToken)
       .ConfigureAwait(false);
     var days = await daysTask.ConfigureAwait(false);

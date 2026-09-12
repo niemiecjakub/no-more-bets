@@ -8,14 +8,12 @@ namespace NoMoreBets.Application.Tests.Leagues.GetClubLeagueStatistics;
 
 public class GetClubLeagueStatisticsHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IClubRepository _clubRepository = Substitute.For<IClubRepository>();
   private readonly GetClubLeagueStatisticsHandler _sut;
 
   public GetClubLeagueStatisticsHandlerTests()
   {
-    _unitOfWork.Clubs.Returns(_clubRepository);
-    _sut = new GetClubLeagueStatisticsHandler(_unitOfWork);
+    _sut = new GetClubLeagueStatisticsHandler(_clubRepository);
   }
 
   [Fact]

@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
@@ -18,15 +17,13 @@ public class AgentPhaseSessionRunnerTests
     var sessions = Substitute.For<IAgentSessionRepository>();
     sessions.CreateSessionAsync(Arg.Any<AgentSessionPhase>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
       .Returns(42);
-    var unitOfWork = Substitute.For<IUnitOfWork>();
-    unitOfWork.AgentSessions.Returns(sessions);
 
     var result = await AgentPhaseSessionRunner.RunAsync(
       AgentSessionPhase.DailySlip,
       "test",
       agentBuilder: null!,
       new AgentRunMessageCollector(),
-      unitOfWork,
+      sessions,
       new AgentSessionContext(),
       Substitute.For<IServiceProvider>(),
       NullLogger.Instance,
@@ -48,15 +45,13 @@ public class AgentPhaseSessionRunnerTests
     var sessions = Substitute.For<IAgentSessionRepository>();
     sessions.CreateSessionAsync(Arg.Any<AgentSessionPhase>(), Arg.Any<DateTime>(), Arg.Any<CancellationToken>())
       .Returns(7);
-    var unitOfWork = Substitute.For<IUnitOfWork>();
-    unitOfWork.AgentSessions.Returns(sessions);
 
     var result = await AgentPhaseSessionRunner.RunAsync(
       AgentSessionPhase.MemoryCleanup,
       "test",
       agentBuilder: null!,
       new AgentRunMessageCollector(),
-      unitOfWork,
+      sessions,
       new AgentSessionContext(),
       Substitute.For<IServiceProvider>(),
       NullLogger.Instance,

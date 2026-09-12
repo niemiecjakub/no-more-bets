@@ -10,14 +10,12 @@ namespace NoMoreBets.Application.Tests.Betting.GetMatchesAvailableForDailySlip;
 
 public class GetMatchesAvailableForDailySlipHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly GetMatchesAvailableForDailySlipHandler _sut;
 
   public GetMatchesAvailableForDailySlipHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
-    _sut = new GetMatchesAvailableForDailySlipHandler(_unitOfWork);
+    _sut = new GetMatchesAvailableForDailySlipHandler(_betting);
   }
 
   [Fact]

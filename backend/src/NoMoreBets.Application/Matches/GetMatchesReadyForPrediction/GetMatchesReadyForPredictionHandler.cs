@@ -1,5 +1,4 @@
 using MediatR;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
@@ -14,7 +13,7 @@ namespace NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 /// </param>
 public record GetUpcomingMatchesReadyForPredictionQuery(bool ExcludeWithExistingResearch = true) : IRequest<IReadOnlyList<Match>>;
 
-public sealed class GetUpcomingMatchesReadyForPredictionHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetUpcomingMatchesReadyForPredictionQuery, IReadOnlyList<Match>>
+public sealed class GetUpcomingMatchesReadyForPredictionHandler(IMatchRepository matches) : IRequestHandler<GetUpcomingMatchesReadyForPredictionQuery, IReadOnlyList<Match>>
 {
   public async Task<IReadOnlyList<Match>> Handle(
     GetUpcomingMatchesReadyForPredictionQuery request,
@@ -23,7 +22,7 @@ public sealed class GetUpcomingMatchesReadyForPredictionHandler(IUnitOfWork unit
     var utcNow = DateTime.UtcNow;
     var kickoffWithinTwoDaysEnd = utcNow.AddDays(2);
 
-    var upcomingWithOdds = await unitOfWork.Matches
+    var upcomingWithOdds = await matches
       .GetUpcomingMatchesWithOddsSnapshotsAsync(cancellationToken)
       .ConfigureAwait(false);
 
@@ -36,7 +35,7 @@ public sealed class GetUpcomingMatchesReadyForPredictionHandler(IUnitOfWork unit
       return soonKickoff;
 
     var soonKickoffIds = soonKickoff.Select(m => m.Id).ToArray();
-    var researchedMatchIds = await unitOfWork.Matches
+    var researchedMatchIds = await matches
       .GetMatchIdsWithAnalysisCodeAsync(soonKickoffIds, MatchAnalysis.StructuredResearchCode, cancellationToken)
       .ConfigureAwait(false);
 

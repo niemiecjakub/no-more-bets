@@ -10,16 +10,13 @@ namespace NoMoreBets.Application.Tests.Club.GetClubRecentGames;
 
 public class GetClubRecentGamesHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IClubRepository _clubRepository = Substitute.For<IClubRepository>();
   private readonly IMatchRepository _matchRepository = Substitute.For<IMatchRepository>();
   private readonly GetClubRecentGamesHandler _sut;
 
   public GetClubRecentGamesHandlerTests()
   {
-    _unitOfWork.Clubs.Returns(_clubRepository);
-    _unitOfWork.Matches.Returns(_matchRepository);
-    _sut = new GetClubRecentGamesHandler(_unitOfWork);
+    _sut = new GetClubRecentGamesHandler(_matchRepository, _clubRepository);
   }
 
   [Fact]

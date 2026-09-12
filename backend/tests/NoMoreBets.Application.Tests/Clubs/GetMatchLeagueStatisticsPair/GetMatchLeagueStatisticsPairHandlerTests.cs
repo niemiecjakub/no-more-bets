@@ -11,15 +11,13 @@ namespace NoMoreBets.Application.Tests.Clubs.GetMatchLeagueStatisticsPair;
 
 public class GetMatchLeagueStatisticsPairHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly GetMatchLeagueStatisticsPairHandler _sut;
 
   public GetMatchLeagueStatisticsPairHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetMatchLeagueStatisticsPairHandler(_unitOfWork, _mediator);
+    _sut = new GetMatchLeagueStatisticsPairHandler(_matches, _mediator);
   }
 
   [Fact]

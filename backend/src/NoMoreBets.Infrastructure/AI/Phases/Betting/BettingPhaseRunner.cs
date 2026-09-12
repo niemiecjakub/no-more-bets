@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using NoMoreBets.Infrastructure.XApi;
@@ -12,7 +12,7 @@ namespace NoMoreBets.Infrastructure.AI.Phases.Betting;
 public sealed class BettingPhaseRunner(
   AgentBuilder agentBuilder,
   AgentRunMessageCollector messageCollector,
-  IUnitOfWork unitOfWork,
+  IAgentSessionRepository agentSessions,
   AgentSessionContext agentSessionContext,
   IServiceProvider serviceProvider,
   IOptions<XApiOptions> xApiOptions,
@@ -26,7 +26,7 @@ public sealed class BettingPhaseRunner(
       "Betting agent phase",
       agentBuilder,
       messageCollector,
-      unitOfWork,
+      agentSessions,
       agentSessionContext,
       serviceProvider,
       logger,

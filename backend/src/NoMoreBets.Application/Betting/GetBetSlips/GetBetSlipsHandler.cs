@@ -1,5 +1,5 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Application.Betting.GetBetSlips;
@@ -8,14 +8,14 @@ namespace NoMoreBets.Application.Betting.GetBetSlips;
 /// <remarks>Excludes paper slips tied to research-phase agent sessions.</remarks>
 public record GetBetSlipsQuery(BetStatus? Status = null) : IRequest<IReadOnlyList<BetSlipSummary>>;
 
-public sealed class GetBetSlipsHandler(IUnitOfWork unitOfWork)
+public sealed class GetBetSlipsHandler(IBettingRepository betting)
   : IRequestHandler<GetBetSlipsQuery, IReadOnlyList<BetSlipSummary>>
 {
   public async Task<IReadOnlyList<BetSlipSummary>> Handle(
     GetBetSlipsQuery request,
     CancellationToken cancellationToken)
   {
-    var slips = await unitOfWork.Betting
+    var slips = await betting
       .GetBetSlipsAsync(request.Status, cancellationToken)
       .ConfigureAwait(false);
 

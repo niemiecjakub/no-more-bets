@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.AI.Common;
@@ -13,6 +14,8 @@ namespace NoMoreBets.Infrastructure.AI.Phases.Research;
 public sealed class ResearchPhaseRunner(
   AgentBuilder agentBuilder,
   AgentRunMessageCollector messageCollector,
+  IMatchRepository matches,
+  IAgentSessionRepository agentSessions,
   IUnitOfWork unitOfWork,
   AgentSessionContext agentSessionContext,
   IServiceProvider serviceProvider,
@@ -27,7 +30,7 @@ public sealed class ResearchPhaseRunner(
       "Betting agent phase",
       agentBuilder,
       messageCollector,
-      unitOfWork,
+      agentSessions,
       agentSessionContext,
       serviceProvider,
       logger,
@@ -53,7 +56,7 @@ public sealed class ResearchPhaseRunner(
         else
         {
           var analysis = MatchAnalysis.CreateStructuredResearch(match.Id, agentSessionContext.SessionId!.Value, researchOutput);
-          await unitOfWork.Matches.AddMatchAnalysisAsync(analysis, ct).ConfigureAwait(false);
+          await matches.AddMatchAnalysisAsync(analysis, ct).ConfigureAwait(false);
           await unitOfWork.SaveChangesAsync(ct).ConfigureAwait(false);
         }
 

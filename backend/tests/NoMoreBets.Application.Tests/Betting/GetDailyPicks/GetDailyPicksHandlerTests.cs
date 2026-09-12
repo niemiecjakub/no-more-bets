@@ -11,15 +11,13 @@ namespace NoMoreBets.Application.Tests.Betting.GetDailyPicks;
 
 public class GetDailyPicksHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly GetDailyPicksHandler _sut;
   private static readonly DateOnly SlipDate = new(2026, 8, 28);
 
   public GetDailyPicksHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
-    _sut = new GetDailyPicksHandler(_unitOfWork);
+    _sut = new GetDailyPicksHandler(_betting);
   }
 
   [Fact]

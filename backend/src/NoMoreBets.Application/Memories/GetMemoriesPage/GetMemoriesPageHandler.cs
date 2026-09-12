@@ -10,14 +10,14 @@ public record GetMemoriesPageQuery(
   int? AfterId,
   bool IncludeDeleted = false) : IRequest<Paged<MemoryListItem>>;
 
-public sealed class GetMemoriesPageHandler(IUnitOfWork unitOfWork)
+public sealed class GetMemoriesPageHandler(IMemoryRepository memories)
   : IRequestHandler<GetMemoriesPageQuery, Paged<MemoryListItem>>
 {
   public async Task<Paged<MemoryListItem>> Handle(
     GetMemoriesPageQuery request,
     CancellationToken cancellationToken)
   {
-    var page = await unitOfWork.Memories
+    var page = await memories
       .GetPageAsync(
         request.Limit,
         request.AfterUpdatedAtUtc,

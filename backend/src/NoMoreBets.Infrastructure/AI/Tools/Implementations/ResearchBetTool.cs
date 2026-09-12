@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using NoMoreBets.Infrastructure.AI.Common;
 
@@ -14,6 +15,8 @@ public class ResearchBetTool
 {
   private const decimal ResearchStakeAmount = 10m;
 
+  private readonly IBettingRepository _betting;
+  private readonly IMatchRepository _matches;
   private readonly IUnitOfWork _unitOfWork;
   private readonly AgentSessionContext _agentSessionContext;
   private readonly int _matchId;
@@ -21,6 +24,8 @@ public class ResearchBetTool
 
   public ResearchBetTool(
     int matchId,
+    IBettingRepository betting,
+    IMatchRepository matches,
     IUnitOfWork unitOfWork,
     AgentSessionContext agentSessionContext,
     ILogger<ResearchBetTool>? logger = null)
@@ -30,6 +35,8 @@ public class ResearchBetTool
       throw new ArgumentException("matchId must be greater than zero.", nameof(matchId));
     }
 
+    _betting = betting;
+    _matches = matches;
     _unitOfWork = unitOfWork;
     _matchId = matchId;
     _agentSessionContext = agentSessionContext;
@@ -51,7 +58,7 @@ public class ResearchBetTool
     var selectionOdds = new List<decimal>(betSelections.Count);
     foreach (var record in betSelections)
     {
-      var odds = await _unitOfWork.Betting
+      var odds = await _betting
         .GetCurrentOddsForSelectionAsync(_matchId, record.EventType, record.Option, cancellationToken)
         .ConfigureAwait(false);
 
@@ -95,7 +102,7 @@ public class ResearchBetTool
       });
     }
 
-    await _unitOfWork.Betting.AddBetSlipAsync(betSlip, cancellationToken).ConfigureAwait(false);
+    await _betting.AddBetSlipAsync(betSlip, cancellationToken).ConfigureAwait(false);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return "Research bet slip placed successfully.";
   }
@@ -103,7 +110,7 @@ public class ResearchBetTool
   [Description("Lists available markets and outcome option names for this match.")]
   public async Task<IReadOnlyList<MatchEventMarket>> GetMatchEventsAsync(CancellationToken cancellationToken = default)
   {
-    var snapshots = await _unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(_matchId, cancellationToken).ConfigureAwait(false);
+    var snapshots = await _betting.GetBettingOddsSnapshotsForMatchAsync(_matchId, cancellationToken).ConfigureAwait(false);
 
     if (snapshots.Count == 0)
     {
@@ -141,7 +148,7 @@ public class ResearchBetTool
   [Description("Returns basic information for this match: home/away club ids and names.")]
   public async Task<MatchBasicInfo> GetMatchBasicInfoAsync(CancellationToken cancellationToken = default)
   {
-    var match = await _unitOfWork.Matches.GetMatchByIdAsync(_matchId, cancellationToken).ConfigureAwait(false)
+    var match = await _matches.GetMatchByIdAsync(_matchId, cancellationToken).ConfigureAwait(false)
       ?? throw new InvalidOperationException($"Match {_matchId} not found.");
 
     return new MatchBasicInfo(

@@ -1,22 +1,22 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.GetLeaguesList;
 
 public record GetLeaguesListQuery : IRequest<IReadOnlyList<LeagueDto>>;
 
-public sealed class GetLeaguesListHandler(IUnitOfWork unitOfWork)
+public sealed class GetLeaguesListHandler(ILeagueRepository leagues)
   : IRequestHandler<GetLeaguesListQuery, IReadOnlyList<LeagueDto>>
 {
   public async Task<IReadOnlyList<LeagueDto>> Handle(
     GetLeaguesListQuery request,
     CancellationToken cancellationToken)
   {
-    var leagues = await unitOfWork.Leagues
+    var leagueList = await leagues
       .GetLeaguesOrderedByNameAsync(cancellationToken)
       .ConfigureAwait(false);
 
-    return leagues
+    return leagueList
       .Select(l => new LeagueDto(l.Id, l.Name, l.Slug))
       .ToList();
   }

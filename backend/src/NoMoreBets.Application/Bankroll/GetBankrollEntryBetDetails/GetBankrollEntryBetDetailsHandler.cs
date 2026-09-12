@@ -1,19 +1,19 @@
 using MediatR;
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Application.Betting.Common;
-using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Bankroll.GetBankrollEntryBetDetails;
 
 public record GetBankrollEntryBetDetailsQuery(int EntryId) : IRequest<BankrollEntryBetDetailsDto?>;
 
-public sealed class GetBankrollEntryBetDetailsHandler(IUnitOfWork unitOfWork)
+public sealed class GetBankrollEntryBetDetailsHandler(IBankrollRepository bankroll)
   : IRequestHandler<GetBankrollEntryBetDetailsQuery, BankrollEntryBetDetailsDto?>
 {
   public async Task<BankrollEntryBetDetailsDto?> Handle(
     GetBankrollEntryBetDetailsQuery request,
     CancellationToken cancellationToken)
   {
-    var slip = await unitOfWork.Bankroll
+    var slip = await bankroll
       .GetBettingPhaseBetSlipForEntryAsync(request.EntryId, cancellationToken)
       .ConfigureAwait(false);
 

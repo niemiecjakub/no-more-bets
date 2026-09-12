@@ -15,6 +15,8 @@ namespace NoMoreBets.Application.Tests.Leagues.UpdateTable;
 
 public class UpdateTableHandlerTests
 {
+  private readonly IClubRepository _clubs = Substitute.For<IClubRepository>();
+  private readonly ILeagueRepository _leagues = Substitute.For<ILeagueRepository>();
   private readonly ILeagueProvider _leagueProvider;
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMatchMatcher _matchMatcher;
@@ -27,13 +29,13 @@ public class UpdateTableHandlerTests
     _unitOfWork = Substitute.For<IUnitOfWork>();
     _matchMatcher = Substitute.For<IMatchMatcher>();
     _logger = Substitute.For<ILogger<UpdateTableHandler>>();
-    _sut = new UpdateTableHandler(_leagueProvider, _unitOfWork, _matchMatcher, _logger);
+    _sut = new UpdateTableHandler(_leagueProvider, _clubs, _leagues, _unitOfWork, _matchMatcher, _logger);
   }
 
   [Fact]
   public async Task Handle_WhenNoSeasonExists_SkipsUpdate()
   {
-    _unitOfWork.Leagues.GetLatestSeasonAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns((Season?)null);
+    _leagues.GetLatestSeasonAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns((Season?)null);
 
     var result = await _sut.Handle(new UpdateTableCommand(42), CancellationToken.None);
 
@@ -46,7 +48,7 @@ public class UpdateTableHandlerTests
   public async Task Handle_WhenLatestSeasonOutsideFetchWindow_SkipsUpdate()
   {
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
-    _unitOfWork.Leagues.GetLatestSeasonAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+    _leagues.GetLatestSeasonAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
       .Returns(new Season
       {
         Id = 1,
@@ -60,7 +62,7 @@ public class UpdateTableHandlerTests
 
     result.Should().Be(Unit.Value);
     await _leagueProvider.DidNotReceive().GetLeagueTableAsync(Arg.Any<string>(), Arg.Any<CancellationToken>());
-    await _unitOfWork.Leagues.DidNotReceive().TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>());
+    await _leagues.DidNotReceive().TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>());
   }
 
   [Theory]
@@ -100,7 +102,7 @@ public class UpdateTableHandlerTests
   public async Task Handle_WhenSnapshotAlreadyExists_ReturnsWithoutCallingProvider()
   {
     SetupInWindowSeason();
-    _unitOfWork.Leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(true);
+    _leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(true);
 
     var result = await _sut.Handle(new UpdateTableCommand(1), CancellationToken.None);
 
@@ -113,12 +115,12 @@ public class UpdateTableHandlerTests
   public async Task Handle_WhenTableDataMissingForSeasonClub_ThrowsWithMissingDetails()
   {
     SetupInWindowSeason();
-    _unitOfWork.Leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
-    _unitOfWork.Leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
+    _leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
+    _leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
 
     var arsenal = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
     var chelsea = new ClubEntity { Id = 2, Name = "Chelsea", SoccerdataId = 2 };
-    _unitOfWork.Clubs.GetClubsForSeasonAsync(Arg.Any<int>()).Returns(Task.FromResult(new List<ClubEntity> { arsenal, chelsea }));
+    _clubs.GetClubsForSeasonAsync(Arg.Any<int>()).Returns(Task.FromResult(new List<ClubEntity> { arsenal, chelsea }));
 
     var tableEntry = new TableEntry
     {
@@ -149,17 +151,17 @@ public class UpdateTableHandlerTests
     ex.Which.MissingTableDataForClubs.Should().ContainSingle().Which.Should().Be("Chelsea");
     ex.Which.MissingXgDataForClubs.Should().BeEmpty();
     ex.Which.UnmatchedTableTeams.Should().BeEmpty();
-    await _unitOfWork.Leagues.DidNotReceive().AddLeagueTableSnapshot(Arg.Any<LeagueTableSnapshot>());
+    await _leagues.DidNotReceive().AddLeagueTableSnapshot(Arg.Any<LeagueTableSnapshot>());
   }
 
   [Fact]
   public async Task Handle_WhenFindClubThrowsForOneTableClub_ThrowsWithMissingDetails()
   {
     SetupInWindowSeason();
-    _unitOfWork.Leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
-    _unitOfWork.Leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
+    _leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
+    _leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
     var domainClubs = new List<ClubEntity> { new() { Id = 1, Name = "Arsenal", SoccerdataId = 1 } };
-    _unitOfWork.Clubs.GetClubsForSeasonAsync(Arg.Any<int>()).Returns(Task.FromResult(domainClubs));
+    _clubs.GetClubsForSeasonAsync(Arg.Any<int>()).Returns(Task.FromResult(domainClubs));
 
     var tableEntry = new TableEntry
     {
@@ -185,18 +187,18 @@ public class UpdateTableHandlerTests
     var ex = await act.Should().ThrowAsync<IncompleteLeagueTableDataException>();
     ex.Which.MissingTableDataForClubs.Should().ContainSingle().Which.Should().Be("Arsenal");
     ex.Which.UnmatchedTableTeams.Should().ContainSingle().Which.Should().Be("Unknown Team");
-    await _unitOfWork.Leagues.DidNotReceive().AddLeagueTableSnapshot(Arg.Any<LeagueTableSnapshot>());
+    await _leagues.DidNotReceive().AddLeagueTableSnapshot(Arg.Any<LeagueTableSnapshot>());
   }
 
   [Fact]
   public async Task Handle_WhenXgDataMissingForSeasonClub_ThrowsWithMissingDetails()
   {
     SetupInWindowSeason();
-    _unitOfWork.Leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
-    _unitOfWork.Leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
+    _leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
+    _leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
 
     var club = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
-    _unitOfWork.Clubs.GetClubsForSeasonAsync(Arg.Any<int>()).Returns(Task.FromResult(new List<ClubEntity> { club }));
+    _clubs.GetClubsForSeasonAsync(Arg.Any<int>()).Returns(Task.FromResult(new List<ClubEntity> { club }));
 
     var tableEntry = new TableEntry
     {
@@ -221,18 +223,18 @@ public class UpdateTableHandlerTests
 
     var ex = await act.Should().ThrowAsync<IncompleteLeagueTableDataException>();
     ex.Which.MissingXgDataForClubs.Should().ContainSingle().Which.Should().Be("Arsenal");
-    await _unitOfWork.Leagues.DidNotReceive().AddLeagueTableSnapshot(Arg.Any<LeagueTableSnapshot>());
+    await _leagues.DidNotReceive().AddLeagueTableSnapshot(Arg.Any<LeagueTableSnapshot>());
   }
 
   [Fact]
   public async Task Handle_WhenAllMatchesPlayedUnchanged_SkipsSnapshotCreation()
   {
     SetupInWindowSeason();
-    _unitOfWork.Leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
-    _unitOfWork.Leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
+    _leagues.TableSnapshotExists(Arg.Any<int>(), Arg.Any<DateOnly>()).Returns(false);
+    _leagues.GetLeagues().Returns(new List<League> { new() { Id = 1, Name = "Premier League", Slug = "premier-league", SoccerdataId = 228 } });
 
     var club = new ClubEntity { Id = 1, Name = "Arsenal", SoccerdataId = 1 };
-    _unitOfWork.Clubs.GetClubsForSeasonAsync(Arg.Any<int>()).Returns(Task.FromResult(new List<ClubEntity> { club }));
+    _clubs.GetClubsForSeasonAsync(Arg.Any<int>()).Returns(Task.FromResult(new List<ClubEntity> { club }));
 
     var tableEntry = new TableEntry
     {
@@ -255,7 +257,7 @@ public class UpdateTableHandlerTests
 
     var latestSnapshot = new LeagueTableSnapshot { Id = 1, LeagueId = 1, SeasonId = 1 };
     latestSnapshot.Rows.Add(new LeagueTableSnapshotRow { ClubId = 1, MatchesPlayed = 10 });
-    _unitOfWork.Leagues.GetLatestTableSnapshot(Arg.Any<int>()).Returns(latestSnapshot);
+    _leagues.GetLatestTableSnapshot(Arg.Any<int>()).Returns(latestSnapshot);
 
     _matchMatcher.FindClub("Arsenal", Arg.Any<IReadOnlyList<ClubEntity>>()).Returns(club);
     _matchMatcher.FindXgStats("Arsenal", Arg.Any<IReadOnlyList<XgStats>>())
@@ -264,13 +266,13 @@ public class UpdateTableHandlerTests
     var result = await _sut.Handle(new UpdateTableCommand(1), CancellationToken.None);
 
     result.Should().Be(Unit.Value);
-    await _unitOfWork.Leagues.DidNotReceive().AddLeagueTableSnapshot(Arg.Any<LeagueTableSnapshot>());
+    await _leagues.DidNotReceive().AddLeagueTableSnapshot(Arg.Any<LeagueTableSnapshot>());
   }
 
   private void SetupInWindowSeason()
   {
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
-    _unitOfWork.Leagues.GetLatestSeasonAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
+    _leagues.GetLatestSeasonAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
       .Returns(new Season
       {
         Id = 1,

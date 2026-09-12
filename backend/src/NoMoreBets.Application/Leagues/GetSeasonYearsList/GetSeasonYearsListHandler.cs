@@ -1,5 +1,5 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Leagues;
 
 namespace NoMoreBets.Application.Leagues.GetSeasonYearsList;
 
@@ -7,14 +7,14 @@ public record SeasonYearDto(string Year);
 
 public record GetSeasonYearsListQuery : IRequest<IReadOnlyList<SeasonYearDto>>;
 
-public sealed class GetSeasonYearsListHandler(IUnitOfWork unitOfWork)
+public sealed class GetSeasonYearsListHandler(ILeagueRepository leagues)
   : IRequestHandler<GetSeasonYearsListQuery, IReadOnlyList<SeasonYearDto>>
 {
   public async Task<IReadOnlyList<SeasonYearDto>> Handle(
     GetSeasonYearsListQuery request,
     CancellationToken cancellationToken)
   {
-    var years = await unitOfWork.Leagues
+    var years = await leagues
       .GetSeasonYearsOrderedLatestFirstAsync(cancellationToken)
       .ConfigureAwait(false);
 

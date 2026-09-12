@@ -2,8 +2,9 @@ using Hangfire;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Betting.DailySlip;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
+using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Phases.Betting;
 using NoMoreBets.Infrastructure.AI.Phases.DailySlip;
 using NoMoreBets.Infrastructure.AI.Phases.Reflection;
@@ -20,7 +21,8 @@ public sealed class BettingAgentCronService(
   DailySlipPhaseRunner dailySlipPhaseRunner,
   ReflectionPhaseRunner reflectionPhaseRunner,
   IMediator mediator,
-  IUnitOfWork unitOfWork,
+  IMatchRepository matches,
+  IBettingRepository betting,
   DailySlipScheduleGate dailySlipScheduleGate,
   ILogger<BettingAgentCronService> logger)
 {
@@ -45,7 +47,7 @@ public sealed class BettingAgentCronService(
   [AutomaticRetry(Attempts = 1)]
   public async Task RunResearchPhaseForMatchAsync(int matchId)
   {
-    var match = await unitOfWork.Matches.GetMatchByIdAsync(matchId, CancellationToken.None).ConfigureAwait(false);
+    var match = await matches.GetMatchByIdAsync(matchId, CancellationToken.None).ConfigureAwait(false);
 
     if (match is null)
     {
@@ -59,7 +61,7 @@ public sealed class BettingAgentCronService(
   [AutomaticRetry(Attempts = 1)]
   public async Task RunBettingExecutionAsync()
   {
-    var matches = await unitOfWork.Betting
+    var matches = await betting
       .GetMatchesAvailableForBettingAsync(CancellationToken.None)
       .ConfigureAwait(false);
     if (matches.Count == 0)

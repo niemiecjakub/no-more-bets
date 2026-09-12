@@ -19,6 +19,7 @@ public class BettingToolTests
 {
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
+  private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly IBankrollRepository _bankroll = Substitute.For<IBankrollRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly AgentSessionContext _agentSessionContext = new();
@@ -26,10 +27,8 @@ public class BettingToolTests
 
   public BettingToolTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
-    _unitOfWork.Bankroll.Returns(_bankroll);
     _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
-    _sut = new BettingTool(_unitOfWork, _mediator, _agentSessionContext);
+    _sut = new BettingTool(_betting, _matches, _bankroll, _unitOfWork, _mediator, _agentSessionContext);
   }
 
   [Fact]

@@ -12,14 +12,14 @@ public record GetAgentSessionsPageQuery(
   IReadOnlyCollection<AgentSessionPhase>? PhaseIds = null,
   IReadOnlyList<string>? SeasonYears = null) : IRequest<Paged<AgentSessionListItemDto>>;
 
-public sealed class GetAgentSessionsPageHandler(IUnitOfWork unitOfWork)
+public sealed class GetAgentSessionsPageHandler(IAgentSessionRepository agentSessions)
   : IRequestHandler<GetAgentSessionsPageQuery, Paged<AgentSessionListItemDto>>
 {
   public async Task<Paged<AgentSessionListItemDto>> Handle(
     GetAgentSessionsPageQuery request,
     CancellationToken cancellationToken)
   {
-    var page = await unitOfWork.AgentSessions
+    var page = await agentSessions
       .GetSessionsPageAsync(
         request.Limit,
         request.AfterStartedAtUtc,
@@ -30,7 +30,7 @@ public sealed class GetAgentSessionsPageHandler(IUnitOfWork unitOfWork)
         cancellationToken)
       .ConfigureAwait(false);
 
-    var matchSummaryBySessionId = await unitOfWork.AgentSessions
+    var matchSummaryBySessionId = await agentSessions
       .GetMatchSummariesBySessionIdsAsync(page.Items.Select(r => r.Id).ToList(), cancellationToken)
       .ConfigureAwait(false);
 

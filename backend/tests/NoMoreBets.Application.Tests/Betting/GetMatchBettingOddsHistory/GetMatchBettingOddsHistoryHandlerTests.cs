@@ -10,18 +10,15 @@ namespace NoMoreBets.Application.Tests.Betting.GetMatchBettingOddsHistory;
 
 public class GetMatchBettingOddsHistoryHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _bettingRepository = Substitute.For<IBettingRepository>();
   private readonly IMatchRepository _matchRepository = Substitute.For<IMatchRepository>();
   private readonly GetMatchBettingOddsHistoryHandler _sut;
 
   public GetMatchBettingOddsHistoryHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_bettingRepository);
-    _unitOfWork.Matches.Returns(_matchRepository);
     _matchRepository.GetMatchByIdAsync(Arg.Any<int>(), Arg.Any<CancellationToken>())
       .Returns(Task.FromResult<Match?>(null));
-    _sut = new GetMatchBettingOddsHistoryHandler(_unitOfWork);
+    _sut = new GetMatchBettingOddsHistoryHandler(_bettingRepository, _matchRepository);
   }
 
   [Fact]

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using AgentSessionPhase = NoMoreBets.Domain.AgentSessions.AgentSessionPhase;
@@ -10,7 +10,7 @@ namespace NoMoreBets.Infrastructure.AI.Phases.InternetResearch;
 public sealed class InternetResearchPhaseRunner(
   AgentBuilder agentBuilder,
   AgentRunMessageCollector messageCollector,
-  IUnitOfWork unitOfWork,
+  IAgentSessionRepository agentSessions,
   AgentSessionContext agentSessionContext,
   IServiceProvider serviceProvider,
   ILogger<InternetResearchPhaseRunner> logger)
@@ -22,7 +22,7 @@ public sealed class InternetResearchPhaseRunner(
       "Betting agent phase",
       agentBuilder,
       messageCollector,
-      unitOfWork,
+      agentSessions,
       agentSessionContext,
       serviceProvider,
       logger,

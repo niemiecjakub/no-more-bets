@@ -13,7 +13,6 @@ namespace NoMoreBets.Application.Tests.Leagues.GetLeagueTableDisplay;
 
 public class GetLeagueTableDisplayHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly ILeagueRepository _leagues = Substitute.For<ILeagueRepository>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly IClubRepository _clubs = Substitute.For<IClubRepository>();
@@ -22,10 +21,7 @@ public class GetLeagueTableDisplayHandlerTests
 
   public GetLeagueTableDisplayHandlerTests()
   {
-    _unitOfWork.Leagues.Returns(_leagues);
-    _unitOfWork.Matches.Returns(_matches);
-    _unitOfWork.Clubs.Returns(_clubs);
-    _sut = new GetLeagueTableDisplayHandler(_unitOfWork, _worldCupGroupRegistry);
+    _sut = new GetLeagueTableDisplayHandler(_matches, _clubs, _leagues, _worldCupGroupRegistry);
   }
 
   [Fact]
@@ -179,7 +175,7 @@ public class GetLeagueTableDisplayHandlerTests
   {
     var groupA = new WorldCupGroupDefinition("A", "Grp. A", [6710, 7804, 8496, 6316], ["Mexico", "Korea Republic", "Czechia", "South Africa"]);
     var groupB = new WorldCupGroupDefinition("B", "Grp. B", [6717, 5810, 10106, 5902], ["Switzerland", "Canada", "Bosnia-Herzegovina", "Qatar"]);
-    var sut = new GetLeagueTableDisplayHandler(_unitOfWork, new WorldCupGroupRegistry([groupA, groupB]));
+    var sut = new GetLeagueTableDisplayHandler(_matches, _clubs, _leagues, new WorldCupGroupRegistry([groupA, groupB]));
 
     var club = new ClubEntity
     {

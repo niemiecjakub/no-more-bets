@@ -18,6 +18,8 @@ namespace NoMoreBets.Application.Tests.Matches.UpdateUpcomming;
 
 public class UpdateUpcommingMatchesHandlerTests
 {
+  private readonly IClubRepository _clubs = Substitute.For<IClubRepository>();
+  private readonly ILeagueRepository _leagues = Substitute.For<ILeagueRepository>();
   private readonly IUpcommingMatchProvider _upcommingMatchProvider;
   private readonly IMatchMatcher _matchMatcher;
   private readonly IUnitOfWork _unitOfWork;
@@ -32,7 +34,7 @@ public class UpdateUpcommingMatchesHandlerTests
     _unitOfWork = Substitute.For<IUnitOfWork>();
     _matchRepository = Substitute.For<IMatchRepository>();
     _logger = Substitute.For<ILogger<UpdateUpcommingMatchesHandler>>();
-    _sut = new UpdateUpcommingMatchesHandler(_upcommingMatchProvider, _matchMatcher, _unitOfWork, _matchRepository, _logger);
+    _sut = new UpdateUpcommingMatchesHandler(_upcommingMatchProvider, _matchMatcher, _matchRepository, _clubs, _leagues, _unitOfWork, _logger);
   }
 
   [Fact]
@@ -61,9 +63,9 @@ public class UpdateUpcommingMatchesHandlerTests
     _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
 
     var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
-    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity>()));
-    _unitOfWork.Leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
+    _leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity>()));
+    _leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
       .Returns(Task.FromResult(new DomainStage { Id = 1, SeasonId = 1 }));
     _matchRepository.GetMatches(Arg.Any<DateTime>()).Returns(_ => Task.FromResult(new List<DomainMatch>()));
 
@@ -72,7 +74,7 @@ public class UpdateUpcommingMatchesHandlerTests
 
     // Assert
     result.Should().BeEmpty();
-    await _unitOfWork.Matches.DidNotReceive().AddMatch(Arg.Any<DomainMatch>());
+    await _matchRepository.DidNotReceive().AddMatch(Arg.Any<DomainMatch>());
   }
 
   [Fact]
@@ -101,8 +103,8 @@ public class UpdateUpcommingMatchesHandlerTests
     _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
 
     var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
-    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).ReturnsForAnyArgs(Task.FromResult(new List<ClubEntity>()));
+    _leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).ReturnsForAnyArgs(Task.FromResult(new List<ClubEntity>()));
 
     // Act
     var result = await _sut.Handle(new UpdateUpcommingMatchesCommand(null), CancellationToken.None);
@@ -137,14 +139,14 @@ public class UpdateUpcommingMatchesHandlerTests
     _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
 
     var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
-    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    _leagues.GetLeagues().Returns(Task.FromResult(leagues));
     var clubs = new List<ClubEntity>
     {
       new() { Id = 10, Name = "Arsenal", SoccerdataId = 1, ClubSeasons = [new ClubSeason { SeasonId = 1 }] },
       new() { Id = 20, Name = "Chelsea", SoccerdataId = 2, ClubSeasons = [new ClubSeason { SeasonId = 2 }] }
     };
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(clubs));
-    _unitOfWork.Leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(clubs));
+    _leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
       .Returns(Task.FromResult(new DomainStage { Id = 1, SeasonId = 1 }));
     _matchRepository.GetMatches(Arg.Any<DateTime>()).Returns(_ => Task.FromResult(new List<DomainMatch>()));
     _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, DomainMatch Value)>>()).Returns((DomainMatch?)null);
@@ -154,7 +156,7 @@ public class UpdateUpcommingMatchesHandlerTests
 
     // Assert
     result.Should().BeEmpty();
-    await _unitOfWork.Matches.DidNotReceive().AddMatch(Arg.Any<DomainMatch>());
+    await _matchRepository.DidNotReceive().AddMatch(Arg.Any<DomainMatch>());
   }
 
   [Fact]
@@ -182,11 +184,11 @@ public class UpdateUpcommingMatchesHandlerTests
     _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
 
     var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
-    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    _leagues.GetLeagues().Returns(Task.FromResult(leagues));
     var homeClub = new ClubEntity { Id = 10, Name = "Arsenal", SoccerdataId = 1, ClubSeasons = [new ClubSeason { SeasonId = 1 }] };
     var awayClub = new ClubEntity { Id = 20, Name = "Chelsea", SoccerdataId = 2, ClubSeasons = [new ClubSeason { SeasonId = 1 }] };
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
-    _unitOfWork.Leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    _leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
       .Returns(Task.FromResult(new DomainStage { Id = 5, SeasonId = 1 }));
     _matchRepository.GetMatches(Arg.Any<DateTime>()).Returns(_ => Task.FromResult(new List<DomainMatch>()));
     _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, DomainMatch Value)>>()).Returns((DomainMatch?)null);
@@ -222,11 +224,11 @@ public class UpdateUpcommingMatchesHandlerTests
     _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
 
     var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
-    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    _leagues.GetLeagues().Returns(Task.FromResult(leagues));
     var homeClub = new ClubEntity { Id = 10, Name = "Arsenal", SoccerdataId = 1, ClubSeasons = [new ClubSeason { SeasonId = 1 }] };
     var awayClub = new ClubEntity { Id = 20, Name = "Chelsea", SoccerdataId = 2, ClubSeasons = [new ClubSeason { SeasonId = 1 }] };
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
-    _unitOfWork.Leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    _leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
       .Returns(Task.FromResult(new DomainStage { Id = 5, SeasonId = 1 }));
     _matchRepository.GetMatches(Arg.Any<DateTime>()).Returns(_ => Task.FromResult(new List<DomainMatch>()));
     _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, DomainMatch Value)>>()).Returns((DomainMatch?)null);
@@ -263,11 +265,11 @@ public class UpdateUpcommingMatchesHandlerTests
     _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
 
     var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
-    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    _leagues.GetLeagues().Returns(Task.FromResult(leagues));
     var homeClub = new ClubEntity { Id = 10, Name = "Arsenal", SoccerdataId = 1, ClubSeasons = [new ClubSeason { SeasonId = 1 }] };
     var awayClub = new ClubEntity { Id = 20, Name = "Chelsea", SoccerdataId = 2, ClubSeasons = [new ClubSeason { SeasonId = 1 }] };
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
-    _unitOfWork.Leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity> { homeClub, awayClub }));
+    _leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
       .Returns(Task.FromResult(new DomainStage { Id = 5, SeasonId = 1 }));
     _matchRepository.GetMatches(Arg.Any<DateTime>()).Returns(_ => Task.FromResult(new List<DomainMatch>()));
     _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, DomainMatch Value)>>()).Returns((DomainMatch?)null);
@@ -281,7 +283,7 @@ public class UpdateUpcommingMatchesHandlerTests
     result[0].HomeClubId.Should().Be(10);
     result[0].AwayClubId.Should().Be(20);
     result[0].StageId.Should().Be(5);
-    await _unitOfWork.Matches.Received(1).AddMatch(Arg.Is<DomainMatch>(m => m.SoccerdataId == 100));
+    await _matchRepository.Received(1).AddMatch(Arg.Is<DomainMatch>(m => m.SoccerdataId == 100));
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
@@ -310,9 +312,9 @@ public class UpdateUpcommingMatchesHandlerTests
     };
     _upcommingMatchProvider.GetMatchPreviewsUpcomingAsync(Arg.Any<int?>(), Arg.Any<CancellationToken>()).Returns(Task.FromResult<IReadOnlyList<LeagueMatchPreviews>>(previews));
     var leagues = new List<League> { new() { Id = 1, Name = "PL", SoccerdataId = 228 } };
-    _unitOfWork.Leagues.GetLeagues().Returns(Task.FromResult(leagues));
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity>()));
-    _unitOfWork.Leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
+    _leagues.GetLeagues().Returns(Task.FromResult(leagues));
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(Task.FromResult(new List<ClubEntity>()));
+    _leagues.GetStageForDateAsync(228, Arg.Any<DateOnly>())
       .Returns(Task.FromResult(new DomainStage { Id = 1, SeasonId = 1 }));
 
     // Act

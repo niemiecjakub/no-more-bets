@@ -1,4 +1,5 @@
 using MediatR;
+using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Betting;
@@ -9,14 +10,14 @@ namespace NoMoreBets.Application.Betting.SettlePendingBetSelections;
 
 public record SettlePendingBetSelectionsCommand : IRequest<Unit>;
 
-public sealed class SettlePendingBetSelectionsHandler(IUnitOfWork unitOfWork)
+public sealed class SettlePendingBetSelectionsHandler(IBettingRepository betting, IBankrollRepository bankroll, IUnitOfWork unitOfWork)
   : IRequestHandler<SettlePendingBetSelectionsCommand, Unit>
 {
   public async Task<Unit> Handle(
     SettlePendingBetSelectionsCommand request,
     CancellationToken cancellationToken)
   {
-    var pendingWithScores = await unitOfWork.Betting
+    var pendingWithScores = await betting
       .GetPendingSelectionsWithBothScoresAsync(cancellationToken)
       .ConfigureAwait(false);
 
@@ -60,7 +61,7 @@ public sealed class SettlePendingBetSelectionsHandler(IUnitOfWork unitOfWork)
         && slip.AgentSession?.Phase.IsPaperSlipPhase() != true)
       {
         var payout = BankrollEntry.CreateBetWin(slip.PotentialPayout, slip.Id);
-        await unitOfWork.Bankroll.AddAsync(payout, cancellationToken).ConfigureAwait(false);
+        await bankroll.AddAsync(payout, cancellationToken).ConfigureAwait(false);
       }
     }
 

@@ -1,24 +1,25 @@
 using MediatR;
+using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Matches;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Clubs.GetClubRollingPerformance;
 
 public record GetClubRollingPerformanceQuery(int ClubId, DateOnly? Date = null) : IRequest<TeamPerformanceResult?>;
 
-public sealed class GetClubRollingPerformanceHandler(IUnitOfWork unitOfWork, ILogger<GetClubRollingPerformanceHandler>? logger = null) : IRequestHandler<GetClubRollingPerformanceQuery, TeamPerformanceResult?>
+public sealed class GetClubRollingPerformanceHandler(IMatchRepository matches, IClubRepository clubs, ILogger<GetClubRollingPerformanceHandler>? logger = null) : IRequestHandler<GetClubRollingPerformanceQuery, TeamPerformanceResult?>
 {
   public async Task<TeamPerformanceResult?> Handle(GetClubRollingPerformanceQuery request, CancellationToken cancellationToken)
   {
-    var club = await unitOfWork.Clubs.GetByIdAsync(request.ClubId, cancellationToken).ConfigureAwait(false);
+    var club = await clubs.GetByIdAsync(request.ClubId, cancellationToken).ConfigureAwait(false);
     if (club == null)
     {
       logger?.LogWarning("Club {ClubId} not found while querying rolling performance.", request.ClubId);
       return null;
     }
 
-    var matches = await unitOfWork.Matches.GetRecentMatchesForClubAsync(request.ClubId, 5, request.Date, cancellationToken).ConfigureAwait(false);
-    if (matches.Count == 0)
+    var recentMatchList = await matches.GetRecentMatchesForClubAsync(request.ClubId, 5, request.Date, cancellationToken).ConfigureAwait(false);
+    if (recentMatchList.Count == 0)
     {
       logger?.LogWarning("No recent matches found for rolling performance query up to date {Date}. ClubId={ClubId}", request.Date, request.ClubId);
       return new TeamPerformanceResult(
@@ -28,14 +29,14 @@ public sealed class GetClubRollingPerformanceHandler(IUnitOfWork unitOfWork, ILo
         Formations: Array.Empty<string>());
     }
 
-    var matchesByDateAsc = matches.OrderBy(m => m.MatchDate).ToList();
+    var matchesByDateAsc = recentMatchList.OrderBy(m => m.MatchDate).ToList();
     var playerToRatingsAndDates = new Dictionary<string, List<(double Rating, DateTime MatchDate)>>(StringComparer.Ordinal);
     var teamRatingsAndDates = new List<(double Rating, DateTime MatchDate)>();
     var formationsByDate = new List<(string Formation, DateTime MatchDate)>();
 
     foreach (var match in matchesByDateAsc)
     {
-      var details = await unitOfWork.Matches.GetMatchDetailsByMatchIdAsync(match.Id, cancellationToken).ConfigureAwait(false);
+      var details = await matches.GetMatchDetailsByMatchIdAsync(match.Id, cancellationToken).ConfigureAwait(false);
       var payload = details?.GetFotmobDetails();
       if (payload == null)
         continue;

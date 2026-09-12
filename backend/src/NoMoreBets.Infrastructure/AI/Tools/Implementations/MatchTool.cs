@@ -30,17 +30,20 @@ namespace NoMoreBets.Infrastructure.AI.Tools.Implementations;
 
 public class MatchTool
 {
+  private readonly IMatchRepository _matches;
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
   private readonly AgentSessionContext _agentSessionContext;
   private readonly ILogger<MatchTool> _logger;
 
   public MatchTool(
+    IMatchRepository matches,
     IUnitOfWork unitOfWork,
     IMediator mediator,
     AgentSessionContext agentSessionContext,
     ILogger<MatchTool>? logger = null)
   {
+    _matches = matches;
     _unitOfWork = unitOfWork;
     _mediator = mediator;
     _agentSessionContext = agentSessionContext;
@@ -94,7 +97,7 @@ public class MatchTool
   [Description("Returns the full league table for the league of the match.")]
   public async Task<IReadOnlyList<LeagueTableStanding>?> GetLeagueTableAsync(int matchId, CancellationToken cancellationToken = default)
   {
-    var match = await _unitOfWork.Matches.GetMatchByIdAsync(matchId, cancellationToken).ConfigureAwait(false);
+    var match = await _matches.GetMatchByIdAsync(matchId, cancellationToken).ConfigureAwait(false);
 
     if (match?.Stage?.Season?.League is not { } league)
     {
@@ -158,7 +161,7 @@ public class MatchTool
       Content = normalizedContent
     };
 
-    await _unitOfWork.Matches.AddMatchAnalysisAsync(analysis, cancellationToken).ConfigureAwait(false);
+    await _matches.AddMatchAnalysisAsync(analysis, cancellationToken).ConfigureAwait(false);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return "Match research saved";
   }

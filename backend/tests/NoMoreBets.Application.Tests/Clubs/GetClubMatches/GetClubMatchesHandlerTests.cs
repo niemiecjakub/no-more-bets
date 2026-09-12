@@ -1,6 +1,7 @@
 using FluentAssertions;
 using MediatR;
 using NSubstitute;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Application.Clubs.GetClubMatches;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
@@ -12,7 +13,7 @@ namespace NoMoreBets.Application.Tests.Clubs.GetClubMatches;
 
 public class GetClubMatchesHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+  private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly IClubRepository _clubRepository = Substitute.For<IClubRepository>();
   private readonly IMatchRepository _matchRepository = Substitute.For<IMatchRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
@@ -20,9 +21,7 @@ public class GetClubMatchesHandlerTests
 
   public GetClubMatchesHandlerTests()
   {
-    _unitOfWork.Clubs.Returns(_clubRepository);
-    _unitOfWork.Matches.Returns(_matchRepository);
-    _sut = new GetClubMatchesHandler(_unitOfWork, _mediator);
+    _sut = new GetClubMatchesHandler(_betting, _matchRepository, _clubRepository, _mediator);
   }
 
   [Fact]

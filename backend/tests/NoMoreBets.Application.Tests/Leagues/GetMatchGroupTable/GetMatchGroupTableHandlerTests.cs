@@ -12,7 +12,6 @@ namespace NoMoreBets.Application.Tests.Leagues.GetMatchGroupTable;
 
 public class GetMatchGroupTableHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly ILeagueRepository _leagues = Substitute.For<ILeagueRepository>();
   private readonly WorldCupGroupRegistry _worldCupGroupRegistry = new(
@@ -24,9 +23,7 @@ public class GetMatchGroupTableHandlerTests
 
   public GetMatchGroupTableHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _unitOfWork.Leagues.Returns(_leagues);
-    _sut = new GetMatchGroupTableHandler(_unitOfWork, _worldCupGroupRegistry);
+    _sut = new GetMatchGroupTableHandler(_matches, _leagues, _worldCupGroupRegistry);
   }
 
   [Fact]

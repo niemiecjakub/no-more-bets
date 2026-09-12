@@ -8,14 +8,12 @@ namespace NoMoreBets.Application.Tests.Leagues.GetLeagueTable;
 
 public class GetLeagueTableHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly ILeagueRepository _leagues = Substitute.For<ILeagueRepository>();
   private readonly GetLeagueTableHandler _sut;
 
   public GetLeagueTableHandlerTests()
   {
-    _unitOfWork.Leagues.Returns(_leagues);
-    _sut = new GetLeagueTableHandler(_unitOfWork);
+    _sut = new GetLeagueTableHandler(_leagues);
   }
 
   [Fact]

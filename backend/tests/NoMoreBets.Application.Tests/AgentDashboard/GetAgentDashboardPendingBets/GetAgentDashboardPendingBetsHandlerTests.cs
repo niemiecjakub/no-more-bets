@@ -8,14 +8,12 @@ namespace NoMoreBets.Application.Tests.AgentDashboard.GetAgentDashboardPendingBe
 
 public class GetAgentDashboardPendingBetsHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _bettingRepository = Substitute.For<IBettingRepository>();
   private readonly GetAgentDashboardPendingBetsHandler _sut;
 
   public GetAgentDashboardPendingBetsHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_bettingRepository);
-    _sut = new GetAgentDashboardPendingBetsHandler(_unitOfWork);
+    _sut = new GetAgentDashboardPendingBetsHandler(_bettingRepository);
   }
 
   [Fact]

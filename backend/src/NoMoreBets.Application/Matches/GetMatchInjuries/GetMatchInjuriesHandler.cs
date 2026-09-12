@@ -1,16 +1,16 @@
 using MediatR;
+using NoMoreBets.Domain.Matches;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Matches.GetMatchInjuries;
 
 public record GetMatchInjuriesQuery(int MatchId) : IRequest<MatchInjuriesResult?>;
 
-public sealed class GetMatchInjuriesHandler(IUnitOfWork unitOfWork, ILogger<GetMatchInjuriesHandler>? logger = null) : IRequestHandler<GetMatchInjuriesQuery, MatchInjuriesResult?>
+public sealed class GetMatchInjuriesHandler(IMatchRepository matches, ILogger<GetMatchInjuriesHandler>? logger = null) : IRequestHandler<GetMatchInjuriesQuery, MatchInjuriesResult?>
 {
   public async Task<MatchInjuriesResult?> Handle(GetMatchInjuriesQuery request, CancellationToken cancellationToken)
   {
-    var lineup = await unitOfWork.Matches.GetLineup(request.MatchId).ConfigureAwait(false);
+    var lineup = await matches.GetLineup(request.MatchId).ConfigureAwait(false);
     if (lineup == null)
     {
       logger?.LogWarning("No injuries data found because lineup is missing for match {MatchId}.", request.MatchId);

@@ -11,16 +11,13 @@ namespace NoMoreBets.Application.Tests.Clubs.GetClubNextMatch;
 
 public class GetClubNextMatchHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IClubRepository _clubs = Substitute.For<IClubRepository>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly GetClubNextMatchHandler _sut;
 
   public GetClubNextMatchHandlerTests()
   {
-    _unitOfWork.Clubs.Returns(_clubs);
-    _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetClubNextMatchHandler(_unitOfWork);
+    _sut = new GetClubNextMatchHandler(_matches, _clubs);
   }
 
   [Fact]

@@ -12,14 +12,12 @@ namespace NoMoreBets.Application.Tests.Matches.GetUpcomingResearchedMatches;
 
 public class GetUpcomingResearchedMatchesHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly GetUpcomingResearchedMatchesHandler _sut;
 
   public GetUpcomingResearchedMatchesHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetUpcomingResearchedMatchesHandler(_unitOfWork);
+    _sut = new GetUpcomingResearchedMatchesHandler(_matches);
   }
 
   [Fact]

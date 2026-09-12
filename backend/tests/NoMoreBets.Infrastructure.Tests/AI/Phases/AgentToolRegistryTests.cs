@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.SocialMedia;
+using NoMoreBets.Domain.Bankrolls;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Phases.Betting;
@@ -25,12 +27,18 @@ public class AgentToolRegistryTests
   public AgentToolRegistryTests()
   {
     var unitOfWork = Substitute.For<IUnitOfWork>();
+    var matches = Substitute.For<IMatchRepository>();
+    var betting = Substitute.For<IBettingRepository>();
+    var bankroll = Substitute.For<IBankrollRepository>();
     var mediator = Substitute.For<IMediator>();
     var xApiService = Substitute.For<IXApiService>();
     var agentSessionContext = new AgentSessionContext();
 
     _serviceProvider = new ServiceCollection()
       .AddSingleton(unitOfWork)
+      .AddSingleton(matches)
+      .AddSingleton(betting)
+      .AddSingleton(bankroll)
       .AddSingleton(mediator)
       .AddSingleton(xApiService)
       .AddSingleton(agentSessionContext)

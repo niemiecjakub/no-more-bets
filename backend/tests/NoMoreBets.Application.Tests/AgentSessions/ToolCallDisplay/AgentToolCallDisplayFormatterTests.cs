@@ -13,7 +13,6 @@ namespace NoMoreBets.Application.Tests.AgentSessions.ToolCallDisplay;
 
 public class AgentToolCallDisplayFormatterTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IAgentSessionRepository _agentSessions = Substitute.For<IAgentSessionRepository>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
@@ -21,10 +20,7 @@ public class AgentToolCallDisplayFormatterTests
 
   public AgentToolCallDisplayFormatterTests()
   {
-    _unitOfWork.AgentSessions.Returns(_agentSessions);
-    _unitOfWork.Betting.Returns(_betting);
-    _unitOfWork.Matches.Returns(_matches);
-    _sut = new AgentToolCallDisplayFormatter(_unitOfWork);
+    _sut = new AgentToolCallDisplayFormatter(_betting, _matches, _agentSessions);
   }
 
   [Fact]

@@ -19,7 +19,7 @@ public record UpdateTableCommand(int LeagueId) : IRequest<Unit>;
 /// </summary>
 public class UpdateTableHandler(
   ILeagueProvider leagueProvider,
-  IUnitOfWork unitOfWork,
+  IClubRepository clubs, ILeagueRepository leagues, IUnitOfWork unitOfWork,
   IMatchMatcher matchMatcher,
   ILogger<UpdateTableHandler> logger) : IRequestHandler<UpdateTableCommand, Unit>
 {
@@ -32,7 +32,7 @@ public class UpdateTableHandler(
       request.LeagueId);
 
     var snapshotDate = DateOnly.FromDateTime(DateTime.UtcNow);
-    var season = await unitOfWork.Leagues.GetLatestSeasonAsync(request.LeagueId, cancellationToken);
+    var season = await leagues.GetLatestSeasonAsync(request.LeagueId, cancellationToken);
 
     if (season == null)
     {
@@ -57,7 +57,7 @@ public class UpdateTableHandler(
       return Unit.Value;
     }
 
-    var snapshotExists = await unitOfWork.Leagues.TableSnapshotExists(season.Id, snapshotDate);
+    var snapshotExists = await leagues.TableSnapshotExists(season.Id, snapshotDate);
 
     if (snapshotExists)
     {
@@ -69,8 +69,8 @@ public class UpdateTableHandler(
       return Unit.Value;
     }
 
-    var domainClubs = await unitOfWork.Clubs.GetClubsForSeasonAsync(season.Id);
-    var league = (await unitOfWork.Leagues.GetLeagues())
+    var domainClubs = await clubs.GetClubsForSeasonAsync(season.Id);
+    var league = (await leagues.GetLeagues())
       .FirstOrDefault(l => l.Id == request.LeagueId);
     if (league == null)
     {
@@ -90,7 +90,7 @@ public class UpdateTableHandler(
 
     EnsureCompleteSeasonTableData(request.LeagueId, domainClubs, tableClubs, xgStats);
 
-    var latestSnapshot = await unitOfWork.Leagues.GetLatestTableSnapshot(season.Id) ?? new();
+    var latestSnapshot = await leagues.GetLatestTableSnapshot(season.Id) ?? new();
 
     if (latestSnapshot.Rows.Count > 0 && latestSnapshot.Rows.Count == tableClubs.Count)
     {
@@ -149,7 +149,7 @@ public class UpdateTableHandler(
       snapshot.Rows.Add(row);
     }
 
-    await unitOfWork.Leagues.AddLeagueTableSnapshot(snapshot);
+    await leagues.AddLeagueTableSnapshot(snapshot);
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     logger.LogInformation(

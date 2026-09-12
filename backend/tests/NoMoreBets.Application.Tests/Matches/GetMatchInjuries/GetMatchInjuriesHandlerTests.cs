@@ -11,15 +11,12 @@ namespace NoMoreBets.Application.Tests.Matches.GetMatchInjuries;
 public class GetMatchInjuriesHandlerTests
 {
   private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
-
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly GetMatchInjuriesHandler _sut;
 
   public GetMatchInjuriesHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetMatchInjuriesHandler(_unitOfWork);
+    _sut = new GetMatchInjuriesHandler(_matches);
   }
 
   [Fact]

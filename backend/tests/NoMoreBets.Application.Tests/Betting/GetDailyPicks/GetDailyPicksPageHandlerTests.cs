@@ -11,14 +11,12 @@ namespace NoMoreBets.Application.Tests.Betting.GetDailyPicks;
 
 public class GetDailyPicksPageHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly GetDailyPicksPageHandler _sut;
 
   public GetDailyPicksPageHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
-    _sut = new GetDailyPicksPageHandler(_unitOfWork);
+    _sut = new GetDailyPicksPageHandler(_betting);
   }
 
   [Fact]

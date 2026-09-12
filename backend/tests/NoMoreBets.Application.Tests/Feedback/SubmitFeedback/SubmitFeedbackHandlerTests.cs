@@ -15,8 +15,7 @@ public class SubmitFeedbackHandlerTests
 
   public SubmitFeedbackHandlerTests()
   {
-    _unitOfWork.Feedback.Returns(_feedbackRepository);
-    _sut = new SubmitFeedbackHandler(_unitOfWork);
+    _sut = new SubmitFeedbackHandler(_feedbackRepository, _unitOfWork);
   }
 
   [Fact]

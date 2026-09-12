@@ -13,7 +13,6 @@ namespace NoMoreBets.Application.Tests.Betting.DailySlip;
 public class DailySlipScheduleGateTests
 {
   private readonly IMediator _mediator = Substitute.For<IMediator>();
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly IAgentSessionRepository _sessions = Substitute.For<IAgentSessionRepository>();
   private readonly DailySlipScheduleGate _sut;
@@ -21,9 +20,7 @@ public class DailySlipScheduleGateTests
 
   public DailySlipScheduleGateTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
-    _unitOfWork.AgentSessions.Returns(_sessions);
-    _sut = new DailySlipScheduleGate(_mediator, _unitOfWork);
+    _sut = new DailySlipScheduleGate(_mediator, _betting, _sessions);
   }
 
   [Fact]

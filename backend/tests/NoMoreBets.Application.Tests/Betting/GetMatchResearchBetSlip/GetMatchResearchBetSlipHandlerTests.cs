@@ -11,14 +11,12 @@ namespace NoMoreBets.Application.Tests.Betting.GetMatchResearchBetSlip;
 
 public class GetMatchResearchBetSlipHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _bettingRepository = Substitute.For<IBettingRepository>();
   private readonly GetMatchResearchBetSlipHandler _sut;
 
   public GetMatchResearchBetSlipHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_bettingRepository);
-    _sut = new GetMatchResearchBetSlipHandler(_unitOfWork);
+    _sut = new GetMatchResearchBetSlipHandler(_bettingRepository);
   }
 
   [Fact]

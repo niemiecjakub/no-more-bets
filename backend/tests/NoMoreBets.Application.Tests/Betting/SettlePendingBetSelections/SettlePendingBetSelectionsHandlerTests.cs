@@ -21,9 +21,7 @@ public class SettlePendingBetSelectionsHandlerTests
 
   public SettlePendingBetSelectionsHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
-    _unitOfWork.Bankroll.Returns(_bankroll);
-    _sut = new SettlePendingBetSelectionsHandler(_unitOfWork);
+    _sut = new SettlePendingBetSelectionsHandler(_betting, _bankroll, _unitOfWork);
   }
 
   [Fact]

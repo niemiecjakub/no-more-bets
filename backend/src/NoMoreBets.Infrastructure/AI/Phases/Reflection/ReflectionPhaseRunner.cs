@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
+using NoMoreBets.Domain.AgentSessions;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using AgentSessionPhase = NoMoreBets.Domain.AgentSessions.AgentSessionPhase;
@@ -10,14 +11,15 @@ namespace NoMoreBets.Infrastructure.AI.Phases.Reflection;
 public sealed class ReflectionPhaseRunner(
   AgentBuilder agentBuilder,
   AgentRunMessageCollector messageCollector,
-  IUnitOfWork unitOfWork,
+  IBettingRepository betting,
+  IAgentSessionRepository agentSessions,
   AgentSessionContext agentSessionContext,
   IServiceProvider serviceProvider,
   ILogger<ReflectionPhaseRunner> logger)
 {
   public async Task<IReadOnlyList<IMessage>> RunAsync(CancellationToken cancellationToken = default)
   {
-    var slips = await unitOfWork.Betting
+    var slips = await betting
       .GetNonPendingBetSlipsAwaitingReflectionAsync(cancellationToken)
       .ConfigureAwait(false);
     if (slips.Count == 0)
@@ -33,7 +35,7 @@ public sealed class ReflectionPhaseRunner(
       "Betting agent phase",
       agentBuilder,
       messageCollector,
-      unitOfWork,
+      agentSessions,
       agentSessionContext,
       serviceProvider,
       logger,
@@ -46,7 +48,7 @@ public sealed class ReflectionPhaseRunner(
 
     if (result.TranscriptPersisted)
     {
-      await unitOfWork.Betting
+      await betting
         .MarkBetSlipsAgentSessionReflectedAsync(result.SessionId, reflectionBetSlipIds, cancellationToken)
         .ConfigureAwait(false);
     }

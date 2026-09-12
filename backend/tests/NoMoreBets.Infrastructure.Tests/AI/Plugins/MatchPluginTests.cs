@@ -34,8 +34,7 @@ public class MatchToolTests
 
   public MatchToolTests()
   {
-    _unitOfWork.Matches.Returns(_matchRepository);
-    _sut = new MatchTool(_unitOfWork, _mediator, new AgentSessionContext());
+    _sut = new MatchTool(_matchRepository, _unitOfWork, _mediator, new AgentSessionContext());
   }
 
   [Fact]

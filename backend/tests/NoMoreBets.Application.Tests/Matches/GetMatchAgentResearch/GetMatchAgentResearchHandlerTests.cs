@@ -12,16 +12,13 @@ namespace NoMoreBets.Application.Tests.Matches.GetMatchAgentResearch;
 public class GetMatchAgentResearchHandlerTests
 {
   private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
-
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly ILogger<GetMatchAgentResearchHandler> _logger = Substitute.For<ILogger<GetMatchAgentResearchHandler>>();
   private readonly GetMatchAgentResearchHandler _sut;
 
   public GetMatchAgentResearchHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetMatchAgentResearchHandler(_unitOfWork, _logger);
+    _sut = new GetMatchAgentResearchHandler(_matches, _logger);
   }
 
   [Fact]

@@ -11,7 +11,7 @@ public record UpdateDailySummaryCommand(int ClubId, string Summary) : IRequest<U
 
 public class UpdateDailySummaryHandler(
   IClubOverviewProvider clubOverviewProvider,
-  IUnitOfWork unitOfWork,
+  IClubRepository clubs, IUnitOfWork unitOfWork,
   ILogger<UpdateDailySummaryHandler> logger) : IRequestHandler<UpdateDailySummaryCommand, Unit>
 {
   public async Task<Unit> Handle(UpdateDailySummaryCommand request, CancellationToken cancellationToken)
@@ -21,7 +21,7 @@ public class UpdateDailySummaryHandler(
       nameof(UpdateDailySummaryHandler),
       request.ClubId);
 
-    var club = await unitOfWork.Clubs.GetByIdAsync(request.ClubId, cancellationToken).ConfigureAwait(false);
+    var club = await clubs.GetByIdAsync(request.ClubId, cancellationToken).ConfigureAwait(false);
 
     if (club == null)
     {
@@ -42,7 +42,7 @@ public class UpdateDailySummaryHandler(
       return Unit.Value;
     }
 
-    var latest = await unitOfWork.Clubs.GetDailySummaryAsync(club.Id, null, cancellationToken).ConfigureAwait(false);
+    var latest = await clubs.GetDailySummaryAsync(club.Id, null, cancellationToken).ConfigureAwait(false);
 
     if (latest?.Summary == request.Summary)
     {
@@ -59,7 +59,7 @@ public class UpdateDailySummaryHandler(
       Date = DateOnly.FromDateTime(DateTime.UtcNow),
       Summary = request.Summary
     };
-    await unitOfWork.Clubs.AddDailySummaryAsync(entity, cancellationToken).ConfigureAwait(false);
+    await clubs.AddDailySummaryAsync(entity, cancellationToken).ConfigureAwait(false);
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     logger.LogInformation(

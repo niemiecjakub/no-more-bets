@@ -1,19 +1,19 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Betting.GetMatchesAvailableForDailySlip;
 
 public record GetMatchesAvailableForDailySlipQuery(DateTime UtcNow) : IRequest<IReadOnlyList<Match>>;
 
-public sealed class GetMatchesAvailableForDailySlipHandler(IUnitOfWork unitOfWork)
+public sealed class GetMatchesAvailableForDailySlipHandler(IBettingRepository betting)
   : IRequestHandler<GetMatchesAvailableForDailySlipQuery, IReadOnlyList<Match>>
 {
   public async Task<IReadOnlyList<Match>> Handle(
     GetMatchesAvailableForDailySlipQuery request,
     CancellationToken cancellationToken)
   {
-    var matches = await unitOfWork.Betting
+    var matches = await betting
       .GetMatchesAvailableForBettingAsync(cancellationToken)
       .ConfigureAwait(false);
 

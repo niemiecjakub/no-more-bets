@@ -8,14 +8,12 @@ namespace NoMoreBets.Application.Tests.Leagues.GetSeasonYearsList;
 
 public class GetSeasonYearsListHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly ILeagueRepository _leagues = Substitute.For<ILeagueRepository>();
   private readonly GetSeasonYearsListHandler _sut;
 
   public GetSeasonYearsListHandlerTests()
   {
-    _unitOfWork.Leagues.Returns(_leagues);
-    _sut = new GetSeasonYearsListHandler(_unitOfWork);
+    _sut = new GetSeasonYearsListHandler(_leagues);
   }
 
   [Fact]

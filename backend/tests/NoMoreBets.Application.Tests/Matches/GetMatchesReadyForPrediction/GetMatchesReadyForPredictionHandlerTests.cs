@@ -1,25 +1,19 @@
 using FluentAssertions;
 using NSubstitute;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
-using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Tests.Matches.GetMatchesReadyForPrediction;
 
 public class GetMatchesReadyForPredictionHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
-  private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
 
   private readonly GetUpcomingMatchesReadyForPredictionHandler _sut;
 
   public GetMatchesReadyForPredictionHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _unitOfWork.Betting.Returns(_betting);
-    _sut = new GetUpcomingMatchesReadyForPredictionHandler(_unitOfWork);
+    _sut = new GetUpcomingMatchesReadyForPredictionHandler(_matches);
   }
 
   [Fact]

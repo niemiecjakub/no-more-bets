@@ -1,4 +1,6 @@
 using MediatR;
+using NoMoreBets.Domain.Bankrolls;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Enums;
 
@@ -6,11 +8,11 @@ namespace NoMoreBets.Application.Betting.CancelBetSlip;
 
 public record CancelBetSlipCommand(int BetSlipId) : IRequest<Unit>;
 
-public sealed class CancelBetSlipHandler(IUnitOfWork unitOfWork) : IRequestHandler<CancelBetSlipCommand, Unit>
+public sealed class CancelBetSlipHandler(IBettingRepository betting, IBankrollRepository bankroll, IUnitOfWork unitOfWork) : IRequestHandler<CancelBetSlipCommand, Unit>
 {
   public async Task<Unit> Handle(CancelBetSlipCommand request, CancellationToken cancellationToken)
   {
-    var slip = await unitOfWork.Betting
+    var slip = await betting
       .GetBetSlipWithSelectionsByIdAsync(request.BetSlipId, cancellationToken)
       .ConfigureAwait(false);
 
@@ -30,7 +32,7 @@ public sealed class CancelBetSlipHandler(IUnitOfWork unitOfWork) : IRequestHandl
     }
 
     var refund = slip.Cancel();
-    await unitOfWork.Bankroll.AddAsync(refund, cancellationToken).ConfigureAwait(false);
+    await bankroll.AddAsync(refund, cancellationToken).ConfigureAwait(false);
 
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return Unit.Value;

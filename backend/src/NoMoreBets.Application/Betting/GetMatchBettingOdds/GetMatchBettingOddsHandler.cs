@@ -1,6 +1,6 @@
 using MediatR;
+using NoMoreBets.Domain.Betting;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Application.Betting.GetMatchBettingOdds;
@@ -8,12 +8,12 @@ namespace NoMoreBets.Application.Betting.GetMatchBettingOdds;
 public record GetMatchBettingOddsQuery(int MatchId, bool IncludeExoticMarkets = false)
   : IRequest<IReadOnlyList<CurrentOddsMarket>>;
 
-public sealed class GetMatchBettingOddsHandler(IUnitOfWork unitOfWork, ILogger<GetMatchBettingOddsHandler>? logger = null)
+public sealed class GetMatchBettingOddsHandler(IBettingRepository betting, ILogger<GetMatchBettingOddsHandler>? logger = null)
   : IRequestHandler<GetMatchBettingOddsQuery, IReadOnlyList<CurrentOddsMarket>>
 {
   public async Task<IReadOnlyList<CurrentOddsMarket>> Handle(GetMatchBettingOddsQuery request, CancellationToken cancellationToken)
   {
-    var snapshots = await unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
+    var snapshots = await betting.GetBettingOddsSnapshotsForMatchAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
 
     if (snapshots.Count == 0)
     {

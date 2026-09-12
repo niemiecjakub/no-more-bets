@@ -1,6 +1,5 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
 
@@ -8,18 +7,18 @@ namespace NoMoreBets.Application.Matches.GetHeadToHeadStats;
 
 public record GetHeadToHeadStatsQuery(int MatchId) : IRequest<H2H?>;
 
-public sealed class GetHeadToHeadStatsHandler(IUnitOfWork unitOfWork, ILogger<GetHeadToHeadStatsHandler>? logger = null) : IRequestHandler<GetHeadToHeadStatsQuery, H2H?>
+public sealed class GetHeadToHeadStatsHandler(IMatchRepository matches, ILogger<GetHeadToHeadStatsHandler>? logger = null) : IRequestHandler<GetHeadToHeadStatsQuery, H2H?>
 {
   public async Task<H2H?> Handle(GetHeadToHeadStatsQuery request, CancellationToken cancellationToken)
   {
-    var match = await unitOfWork.Matches.GetMatchByIdAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
+    var match = await matches.GetMatchByIdAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
     if (match == null)
     {
       logger?.LogWarning("Match {MatchId} not found for head-to-head stats.", request.MatchId);
       return null;
     }
 
-    var head2head = await unitOfWork.Matches.GetHeadToHead(match.HomeClubId, match.AwayClubId).ConfigureAwait(false);
+    var head2head = await matches.GetHeadToHead(match.HomeClubId, match.AwayClubId).ConfigureAwait(false);
     if (head2head == null || string.IsNullOrWhiteSpace(head2head.Head2HeadJson))
     {
       logger?.LogWarning("No head-to-head payload found for match {MatchId}.", request.MatchId);

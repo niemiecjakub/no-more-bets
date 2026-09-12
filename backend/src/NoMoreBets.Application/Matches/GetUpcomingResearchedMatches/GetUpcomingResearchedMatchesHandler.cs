@@ -1,5 +1,4 @@
 using MediatR;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches.GetMatchesPage;
 using NoMoreBets.Domain.Matches;
 
@@ -7,24 +6,24 @@ namespace NoMoreBets.Application.Matches.GetUpcomingResearchedMatches;
 
 public record GetUpcomingResearchedMatchesQuery : IRequest<IReadOnlyList<MatchDto>>;
 
-public sealed class GetUpcomingResearchedMatchesHandler(IUnitOfWork unitOfWork)
+public sealed class GetUpcomingResearchedMatchesHandler(IMatchRepository matches)
   : IRequestHandler<GetUpcomingResearchedMatchesQuery, IReadOnlyList<MatchDto>>
 {
   public async Task<IReadOnlyList<MatchDto>> Handle(
     GetUpcomingResearchedMatchesQuery _,
     CancellationToken cancellationToken)
   {
-    var matches = await unitOfWork.Matches
+    var upcoming = await matches
       .GetUpcomingMatchesWithAnalysisCodeAsync(MatchAnalysis.StructuredResearchCode, cancellationToken)
       .ConfigureAwait(false);
 
-    if (matches.Count == 0)
+    if (upcoming.Count == 0)
       return Array.Empty<MatchDto>();
 
-    var hasResearchSet = matches.Select(m => m.Id).ToHashSet();
+    var hasResearchSet = upcoming.Select(m => m.Id).ToHashSet();
     var emptySet = new HashSet<int>();
 
-    return matches
+    return upcoming
       .Select(m => MatchDtoMapper.MapToMatchDto(
         m,
         emptySet,

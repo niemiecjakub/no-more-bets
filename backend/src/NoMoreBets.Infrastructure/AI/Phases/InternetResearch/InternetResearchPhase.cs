@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
+using NoMoreBets.Domain.Memories;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Memories;
@@ -51,7 +52,9 @@ internal sealed class InternetResearchExecuteStep : IAgentPhaseStep
 
   public IReadOnlyList<AIContextProvider> GetAIContextProviders(IServiceProvider serviceProvider) =>
   [
-    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+    new MemoriesProvider(
+      serviceProvider.GetRequiredService<IMemoryRepository>(),
+      serviceProvider.GetRequiredService<IUnitOfWork>()),
     new WebSearchProvider(
       serviceProvider.GetRequiredService<ISearchService>(),
       serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),

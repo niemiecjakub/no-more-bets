@@ -1,15 +1,15 @@
 using System.Text.Json;
+using NoMoreBets.Domain.Matches;
 using System.Text.RegularExpressions;
 using NoMoreBets.Application.AgentSessions.GetAgentSessionMessages;
 using NoMoreBets.Application.AgentTools;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Betting;
 using DomainMatch = NoMoreBets.Domain.Matches.Match;
 
 namespace NoMoreBets.Application.AgentSessions.ToolCallDisplay;
 
-public sealed class AgentToolCallDisplayFormatter(IUnitOfWork unitOfWork)
+public sealed class AgentToolCallDisplayFormatter(IBettingRepository betting, IMatchRepository matches, IAgentSessionRepository agentSessions)
 {
   private static readonly IReadOnlyDictionary<string, AgentToolDefinition> ToolByName =
     AgentToolCatalog.All.ToDictionary(t => t.Name, StringComparer.Ordinal);
@@ -54,7 +54,7 @@ public sealed class AgentToolCallDisplayFormatter(IUnitOfWork unitOfWork)
       CollectMatchIds(payload, matchIds);
     }
 
-    var sessionMatchIds = await unitOfWork.AgentSessions
+    var sessionMatchIds = await agentSessions
       .GetMatchIdsBySessionIdsAsync([sessionId], cancellationToken)
       .ConfigureAwait(false);
 
@@ -62,7 +62,7 @@ public sealed class AgentToolCallDisplayFormatter(IUnitOfWork unitOfWork)
     if (sessionMatchId > 0)
       matchIds.Add(sessionMatchId);
 
-    var betSlips = await unitOfWork.Betting
+    var betSlips = await betting
       .GetBetSlipsByAgentSessionIdAsync(sessionId, cancellationToken)
       .ConfigureAwait(false);
 
@@ -72,11 +72,11 @@ public sealed class AgentToolCallDisplayFormatter(IUnitOfWork unitOfWork)
         matchIds.Add(selection.MatchId);
     }
 
-    var matches = matchIds.Count > 0
-      ? await unitOfWork.Matches.GetMatchesByIdsAsync(matchIds.ToList(), cancellationToken).ConfigureAwait(false)
+    var matchEntities = matchIds.Count > 0
+      ? await matches.GetMatchesByIdsAsync(matchIds.ToList(), cancellationToken).ConfigureAwait(false)
       : [];
 
-    return ToolCallDisplayContext.Create(sessionMatchId, betSlips, matches);
+    return ToolCallDisplayContext.Create(sessionMatchId, betSlips, matchEntities);
   }
 
   private static void CollectMatchIds(FunctionCallPayload payload, ISet<int> matchIds)

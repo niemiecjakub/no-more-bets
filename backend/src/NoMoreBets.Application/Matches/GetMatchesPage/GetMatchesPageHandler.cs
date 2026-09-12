@@ -1,6 +1,7 @@
 using MediatR;
-using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Betting;
+using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Matches.GetMatchesReadyForPrediction;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Matches;
@@ -18,7 +19,7 @@ public record GetMatchesPageQuery(
   IReadOnlyList<string>? SeasonYears = null) : IRequest<Paged<MatchDto>>;
 
 public sealed class GetMatchesPageHandler(
-  IUnitOfWork unitOfWork,
+  IBettingRepository betting, IMatchRepository matches,
   IMediator mediator,
   IEmbeddingService embeddingService,
   IDocumentChunkSearch documentChunkSearch,
@@ -36,7 +37,7 @@ public sealed class GetMatchesPageHandler(
     }
     else
     {
-      page = await unitOfWork.Matches
+      page = await matches
         .GetMatchesPageAsync(
           request.Limit,
           request.MatchStatusId,
@@ -64,19 +65,19 @@ public sealed class GetMatchesPageHandler(
 
     if (pageIds.Count > 0)
     {
-      hasLineupSet = await unitOfWork.Matches
+      hasLineupSet = await matches
         .GetMatchIdsWithLineupAsync(pageIds, cancellationToken)
         .ConfigureAwait(false);
-      oddsByMatch = await unitOfWork.Matches
+      oddsByMatch = await matches
         .GetLatestMatchResultOddsAsync(pageIds, cancellationToken)
         .ConfigureAwait(false);
-      hasHeadToHeadSet = await unitOfWork.Matches
+      hasHeadToHeadSet = await matches
         .GetMatchIdsWithHeadToHeadAsync(pageIds, cancellationToken)
         .ConfigureAwait(false);
-      hasResearchSet = await unitOfWork.Matches
+      hasResearchSet = await matches
         .GetMatchIdsWithAnalysisCodeAsync(pageIds, MatchAnalysis.StructuredResearchCode, cancellationToken)
         .ConfigureAwait(false);
-      hasResearchBetSet = await unitOfWork.Betting
+      hasResearchBetSet = await betting
         .GetMatchIdsWithResearchPhaseSelectionsAsync(pageIds, cancellationToken)
         .ConfigureAwait(false);
     }
@@ -120,7 +121,7 @@ public sealed class GetMatchesPageHandler(
   private Task<MatchPage> GetKeywordSearchPageAsync(
     GetMatchesPageQuery request,
     CancellationToken cancellationToken) =>
-    unitOfWork.Matches.GetMatchesPageAsync(
+    matches.GetMatchesPageAsync(
       request.Limit,
       request.MatchStatusId,
       request.LeagueIds,
@@ -147,11 +148,11 @@ public sealed class GetMatchesPageHandler(
     if (rankedMatchIds.Count == 0)
       return new MatchPage([], false);
 
-    var matches = await unitOfWork.Matches
+    var foundMatches = await matches
       .GetMatchesByIdsAsync(rankedMatchIds, cancellationToken)
       .ConfigureAwait(false);
 
-    var byId = matches.ToDictionary(m => m.Id);
+    var byId = foundMatches.ToDictionary(m => m.Id);
     var selectedLeagueIds = request.LeagueIds.Distinct().ToHashSet();
     var hasLeagueFilter = selectedLeagueIds.Count > 0;
     var selectedSeasonYears = (request.SeasonYears ?? [])

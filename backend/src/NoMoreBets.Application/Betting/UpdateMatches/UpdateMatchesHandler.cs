@@ -1,4 +1,5 @@
 using MediatR;
+using NoMoreBets.Domain.Leagues;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
@@ -18,14 +19,14 @@ public record UpdateMatchesCommand(int LeagueId) : IRequest<IReadOnlyList<Match>
 /// </summary>
 public class UpdateMatchesHandler(
   IBookmakerMatchesProvider bookmakerMatchesProvider,
-  IUnitOfWork unitOfWork,
+  IMatchRepository matches, IClubRepository clubs, ILeagueRepository leagues, IUnitOfWork unitOfWork,
   IMatchMatcher matchMatcher,
   ILogger<UpdateMatchesHandler> logger) : IRequestHandler<UpdateMatchesCommand, IReadOnlyList<Match>>
 {
   /// <inheritdoc />
   public async Task<IReadOnlyList<Match>> Handle(UpdateMatchesCommand request, CancellationToken cancellationToken)
   {
-    var league = (await unitOfWork.Leagues.GetLeagues())
+    var league = (await leagues.GetLeagues())
       .FirstOrDefault(l => l.Id == request.LeagueId)
       ?? throw new InvalidOperationException($"League with id {request.LeagueId} not found.");
 
@@ -44,7 +45,7 @@ public class UpdateMatchesHandler(
     {
       var dateWithTime = CombineDateAndTime(game.Date, game.Time);
       var gameDayUtc = DateTime.SpecifyKind(dateWithTime, DateTimeKind.Utc);
-      var matchesOnDay = await unitOfWork.Matches.GetMatches(gameDayUtc);
+      var matchesOnDay = await matches.GetMatches(gameDayUtc);
 
       var candidates = matchesOnDay
         .Select(m => (m.HomeClub.Name, m.AwayClub.Name, m))
@@ -62,12 +63,12 @@ public class UpdateMatchesHandler(
       }
 
       
-      var stage = await unitOfWork.Leagues.GetStageForDateAsync(
+      var stage = await leagues.GetStageForDateAsync(
         league.SoccerdataId,
         DateOnly.FromDateTime(gameDayUtc));
       if (!clubsBySeason.TryGetValue(stage.SeasonId, out var allClubs))
       {
-        allClubs = await unitOfWork.Clubs.GetClubsForSeasonAsync(stage.SeasonId);
+        allClubs = await clubs.GetClubsForSeasonAsync(stage.SeasonId);
         clubsBySeason.Add(stage.SeasonId, allClubs);
       }
 
@@ -90,7 +91,7 @@ public class UpdateMatchesHandler(
       }
       var newMatch = Match.CreateUpcomming(gameDayUtc, stage.Id, homeClub.Id, awayClub.Id);
       newMatch.BetclicUrl = game.Url;
-      await unitOfWork.Matches.AddMatch(newMatch);
+      await matches.AddMatch(newMatch);
       added.Add(newMatch);
     }
 

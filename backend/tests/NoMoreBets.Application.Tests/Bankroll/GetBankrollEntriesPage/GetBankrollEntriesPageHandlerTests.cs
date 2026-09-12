@@ -9,14 +9,12 @@ namespace NoMoreBets.Application.Tests.Bankroll.GetBankrollEntriesPage;
 
 public class GetBankrollEntriesPageHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBankrollRepository _bankrollRepository = Substitute.For<IBankrollRepository>();
   private readonly GetBankrollEntriesPageHandler _sut;
 
   public GetBankrollEntriesPageHandlerTests()
   {
-    _unitOfWork.Bankroll.Returns(_bankrollRepository);
-    _sut = new GetBankrollEntriesPageHandler(_unitOfWork);
+    _sut = new GetBankrollEntriesPageHandler(_bankrollRepository);
   }
 
   [Fact]

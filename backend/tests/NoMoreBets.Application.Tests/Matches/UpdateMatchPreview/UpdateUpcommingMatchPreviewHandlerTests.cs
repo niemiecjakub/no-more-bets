@@ -14,6 +14,7 @@ namespace NoMoreBets.Application.Tests.Matches.UpdateMatchPreview;
 
 public class UpdateUpcommingMatchPreviewHandlerTests
 {
+  private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly IMatchPreviewProvider _matchPreviewProvider;
   private readonly IUnitOfWork _unitOfWork;
   private readonly ILogger<UpdateUpcommingMatchPreviewHandler> _logger;
@@ -24,7 +25,7 @@ public class UpdateUpcommingMatchPreviewHandlerTests
     _matchPreviewProvider = Substitute.For<IMatchPreviewProvider>();
     _unitOfWork = Substitute.For<IUnitOfWork>();
     _logger = Substitute.For<ILogger<UpdateUpcommingMatchPreviewHandler>>();
-    _sut = new UpdateUpcommingMatchPreviewHandler(_matchPreviewProvider, _unitOfWork, _logger);
+    _sut = new UpdateUpcommingMatchPreviewHandler(_matchPreviewProvider, _matches, _unitOfWork, _logger);
   }
 
   private static MatchPreviewDto CreatePreviewDto(IReadOnlyList<PreviewContentItem>? content = null) =>
@@ -50,12 +51,12 @@ public class UpdateUpcommingMatchPreviewHandlerTests
   public async Task Handle_WhenMatchNotFoundInDb_ReturnsWithoutSaving()
   {
     _matchPreviewProvider.GetMatchPreviewAsync(Arg.Any<int>(), Arg.Any<CancellationToken>()).Returns(CreatePreviewDto());
-    _unitOfWork.Matches.GetMatchBySoccerdataId(Arg.Any<int>()).Returns(Task.FromResult<DomainMatch?>(null));
+    _matches.GetMatchBySoccerdataId(Arg.Any<int>()).Returns(Task.FromResult<DomainMatch?>(null));
 
     var result = await _sut.Handle(new UpdateUpcommingMatchPreviewCommand(42), CancellationToken.None);
 
     result.Should().Be(Unit.Value);
-    await _unitOfWork.Matches.DidNotReceive().AddMatchPreview(Arg.Any<MatchPreview>());
+    await _matches.DidNotReceive().AddMatchPreview(Arg.Any<MatchPreview>());
     await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
@@ -64,12 +65,12 @@ public class UpdateUpcommingMatchPreviewHandlerTests
   {
     _matchPreviewProvider.GetMatchPreviewAsync(42, Arg.Any<CancellationToken>()).Returns(CreatePreviewDto());
     var match = new DomainMatch { Id = 10, SoccerdataId = 42 };
-    _unitOfWork.Matches.GetMatchBySoccerdataId(42).Returns(match);
-    _unitOfWork.Matches.GetMatchPreview(10).Returns((MatchPreview?)null);
+    _matches.GetMatchBySoccerdataId(42).Returns(match);
+    _matches.GetMatchPreview(10).Returns((MatchPreview?)null);
 
     await _sut.Handle(new UpdateUpcommingMatchPreviewCommand(42), CancellationToken.None);
 
-    await _unitOfWork.Matches.Received(1).AddMatchPreview(Arg.Is<MatchPreview>(p => p.MatchId == 10 && !string.IsNullOrEmpty(p.PreviewContentJson)));
+    await _matches.Received(1).AddMatchPreview(Arg.Is<MatchPreview>(p => p.MatchId == 10 && !string.IsNullOrEmpty(p.PreviewContentJson)));
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
@@ -78,14 +79,14 @@ public class UpdateUpcommingMatchPreviewHandlerTests
   {
     _matchPreviewProvider.GetMatchPreviewAsync(42, Arg.Any<CancellationToken>()).Returns(CreatePreviewDto(new[] { new PreviewContentItem { Name = "Form", Content = "New" } }));
     var match = new DomainMatch { Id = 10, SoccerdataId = 42 };
-    _unitOfWork.Matches.GetMatchBySoccerdataId(42).Returns(match);
+    _matches.GetMatchBySoccerdataId(42).Returns(match);
     var existing = new MatchPreview { MatchId = 10, PreviewContentJson = "old" };
-    _unitOfWork.Matches.GetMatchPreview(10).Returns(existing);
+    _matches.GetMatchPreview(10).Returns(existing);
 
     await _sut.Handle(new UpdateUpcommingMatchPreviewCommand(42), CancellationToken.None);
 
     existing.PreviewContentJson.Should().NotBe("old");
-    await _unitOfWork.Matches.DidNotReceive().AddMatchPreview(Arg.Any<MatchPreview>());
+    await _matches.DidNotReceive().AddMatchPreview(Arg.Any<MatchPreview>());
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 }

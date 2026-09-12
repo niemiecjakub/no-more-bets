@@ -1,11 +1,11 @@
 using NoMoreBets.Application.Betting.GetMatchesAvailableForDailySlip;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.AgentSessions;
 using MediatR;
 
 namespace NoMoreBets.Application.Betting.DailySlip;
 
-public sealed class DailySlipScheduleGate(IMediator mediator, IUnitOfWork unitOfWork)
+public sealed class DailySlipScheduleGate(IMediator mediator, IBettingRepository betting, IAgentSessionRepository agentSessions)
 {
   public async Task<string?> GetSkipReasonAsync(DateTime utcNow, CancellationToken cancellationToken = default)
   {
@@ -19,7 +19,7 @@ public sealed class DailySlipScheduleGate(IMediator mediator, IUnitOfWork unitOf
     }
 
     var cardDate = DateOnly.FromDateTime(utcNow);
-    var hasPick = await unitOfWork.Betting
+    var hasPick = await betting
       .AnyDailyPickOnDateAsync(cardDate, cancellationToken)
       .ConfigureAwait(false);
     if (hasPick)
@@ -29,7 +29,7 @@ public sealed class DailySlipScheduleGate(IMediator mediator, IUnitOfWork unitOf
 
     var startUtc = DateTime.SpecifyKind(cardDate.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
     var endUtc = startUtc.AddDays(1);
-    var hasSession = await unitOfWork.AgentSessions
+    var hasSession = await agentSessions
       .AnySessionInRangeAsync(AgentSessionPhase.DailySlip, startUtc, endUtc, cancellationToken)
       .ConfigureAwait(false);
     if (hasSession)

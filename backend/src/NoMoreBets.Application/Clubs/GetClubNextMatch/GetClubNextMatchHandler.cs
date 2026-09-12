@@ -1,25 +1,26 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Clubs.GetClubNextMatch;
 
 public record GetClubNextMatchQuery(int ClubId) : IRequest<ClubNextMatchDto?>;
 
-public sealed class GetClubNextMatchHandler(IUnitOfWork unitOfWork)
+public sealed class GetClubNextMatchHandler(IMatchRepository matches, IClubRepository clubs)
   : IRequestHandler<GetClubNextMatchQuery, ClubNextMatchDto?>
 {
   public async Task<ClubNextMatchDto?> Handle(
     GetClubNextMatchQuery request,
     CancellationToken cancellationToken)
   {
-    var club = await unitOfWork.Clubs
+    var club = await clubs
       .GetByIdAsync(request.ClubId, cancellationToken)
       .ConfigureAwait(false);
 
     if (club == null)
       return null;
 
-    var match = await unitOfWork.Matches
+    var match = await matches
       .GetNextUpcomingMatchForClubAsync(request.ClubId, cancellationToken)
       .ConfigureAwait(false);
 

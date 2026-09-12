@@ -8,14 +8,12 @@ namespace NoMoreBets.Application.Tests.AgentDashboard.GetAgentDashboardSessions;
 
 public class GetAgentDashboardSessionsHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IAgentSessionRepository _sessionsRepository = Substitute.For<IAgentSessionRepository>();
   private readonly GetAgentDashboardSessionsHandler _sut;
 
   public GetAgentDashboardSessionsHandlerTests()
   {
-    _unitOfWork.AgentSessions.Returns(_sessionsRepository);
-    _sut = new GetAgentDashboardSessionsHandler(_unitOfWork);
+    _sut = new GetAgentDashboardSessionsHandler(_sessionsRepository);
   }
 
   [Fact]

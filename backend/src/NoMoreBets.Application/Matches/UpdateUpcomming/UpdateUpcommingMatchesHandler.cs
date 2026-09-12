@@ -1,4 +1,6 @@
 using MediatR;
+using NoMoreBets.Domain.Leagues;
+using NoMoreBets.Domain.Clubs;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.MatchMatcher;
@@ -14,8 +16,7 @@ public record UpdateUpcommingMatchesCommand(int? SoccerdataLeagueId = null) : IR
 public class UpdateUpcommingMatchesHandler(
   IUpcommingMatchProvider upcommingMatchProvider,
   IMatchMatcher matchMatcher,
-  IUnitOfWork unitOfWork,
-  IMatchRepository matchRepository,
+  IMatchRepository matches, IClubRepository clubs, ILeagueRepository leagues, IUnitOfWork unitOfWork,
   ILogger<UpdateUpcommingMatchesHandler> logger)
   : IRequestHandler<UpdateUpcommingMatchesCommand, List<Match>>
 {
@@ -40,11 +41,11 @@ public class UpdateUpcommingMatchesHandler(
       .Distinct()
       .ToList();
 
-    var clubsBySoccerdataId = await unitOfWork.Clubs.GetBySoccerdataId(clubIds);
+    var clubsBySoccerdataId = await clubs.GetBySoccerdataId(clubIds);
     var clubsMap = clubsBySoccerdataId.ToDictionary(c => c.SoccerdataId, c => c);
 
-    var leagues = await unitOfWork.Leagues.GetLeagues();
-    var leagueIds = leagues.Select(c => c.SoccerdataId);
+    var leagueList = await leagues.GetLeagues();
+    var leagueIds = leagueList.Select(c => c.SoccerdataId);
     foreach (var league in previews)
     {
       if (!leagueIds.Contains(league.LeagueId))
@@ -59,7 +60,7 @@ public class UpdateUpcommingMatchesHandler(
           continue;
         }
 
-        var matchesOnDay = await matchRepository.GetMatches(gameDayUtc);
+        var matchesOnDay = await matches.GetMatches(gameDayUtc);
 
         var candidates = matchesOnDay
           .Select(m => (m.HomeClub.Name, m.AwayClub.Name, (Match)m))
@@ -76,7 +77,7 @@ public class UpdateUpcommingMatchesHandler(
           continue;
         }
 
-        var stage = await unitOfWork.Leagues.GetStageForDateAsync(
+        var stage = await leagues.GetStageForDateAsync(
           league.LeagueId,
           DateOnly.FromDateTime(gameDayUtc));
         if (!clubsMap.TryGetValue(matchPreview.Teams.Home.Id, out var homeClub) ||
@@ -97,7 +98,7 @@ public class UpdateUpcommingMatchesHandler(
 
         var newMatch = Match.CreateUpcomming(gameDayUtc, stage.Id, homeClub.Id, awayClub.Id);
         newMatch.SoccerdataId = matchPreview.Id;
-        await unitOfWork.Matches.AddMatch(newMatch);
+        await matches.AddMatch(newMatch);
         added.Add(newMatch);
       }
     }

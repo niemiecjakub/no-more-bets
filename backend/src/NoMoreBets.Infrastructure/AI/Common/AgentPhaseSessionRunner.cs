@@ -1,9 +1,9 @@
 using Microsoft.Agents.AI;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using AgentSessionPhase = NoMoreBets.Domain.AgentSessions.AgentSessionPhase;
+using IAgentSessionRepository = NoMoreBets.Domain.AgentSessions.IAgentSessionRepository;
 
 namespace NoMoreBets.Infrastructure.AI.Common;
 
@@ -31,7 +31,7 @@ internal static class AgentPhaseSessionRunner
     string logLabel,
     AgentBuilder agentBuilder,
     AgentRunMessageCollector messageCollector,
-    IUnitOfWork unitOfWork,
+    IAgentSessionRepository agentSessions,
     AgentSessionContext agentSessionContext,
     IServiceProvider serviceProvider,
     ILogger logger,
@@ -42,7 +42,7 @@ internal static class AgentPhaseSessionRunner
     logger.LogInformation("{LogLabel} {Phase} starting", logLabel, phaseName);
 
     var startedAt = DateTime.UtcNow;
-    var sessionId = await unitOfWork.AgentSessions
+    var sessionId = await agentSessions
       .CreateSessionAsync(phase, startedAt, cancellationToken)
       .ConfigureAwait(false);
     agentSessionContext.SessionId = sessionId;
@@ -72,14 +72,14 @@ internal static class AgentPhaseSessionRunner
       {
         if (messages.Count == 0)
         {
-          await unitOfWork.AgentSessions
+          await agentSessions
             .DeleteSessionAsync(sessionId, cancellationToken)
             .ConfigureAwait(false);
         }
         else
         {
           var rows = AgentSessionTranscriptMapper.ToEntities(messages);
-          await unitOfWork.AgentSessions
+          await agentSessions
             .AddMessagesAsync(sessionId, rows, cancellationToken)
             .ConfigureAwait(false);
           transcriptPersisted = true;

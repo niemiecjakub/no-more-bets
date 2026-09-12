@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto;
+using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Middlewares.AgentResponseMapping;
 using AgentSessionPhase = NoMoreBets.Domain.AgentSessions.AgentSessionPhase;
@@ -10,7 +10,7 @@ namespace NoMoreBets.Infrastructure.AI.Phases.MemoryCleanup;
 public sealed class MemoryCleanupPhaseRunner(
   AgentBuilder agentBuilder,
   AgentRunMessageCollector messageCollector,
-  IUnitOfWork unitOfWork,
+  IAgentSessionRepository agentSessions,
   AgentSessionContext agentSessionContext,
   IServiceProvider serviceProvider,
   ILogger<MemoryCleanupPhaseRunner> logger)
@@ -22,7 +22,7 @@ public sealed class MemoryCleanupPhaseRunner(
       "Betting agent phase",
       agentBuilder,
       messageCollector,
-      unitOfWork,
+      agentSessions,
       agentSessionContext,
       serviceProvider,
       logger,

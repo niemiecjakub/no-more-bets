@@ -1,6 +1,6 @@
 using MediatR;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Application.Clubs.Common;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues.GetClubLeagueStatistics;
 using NoMoreBets.Domain.Clubs;
 
@@ -8,14 +8,14 @@ namespace NoMoreBets.Application.Clubs.GetMatchLeagueStatisticsPair;
 
 public record GetMatchLeagueStatisticsPairQuery(int MatchId) : IRequest<ClubPairDto<ClubLeagueStats?>?>;
 
-public sealed class GetMatchLeagueStatisticsPairHandler(IUnitOfWork unitOfWork, IMediator mediator)
+public sealed class GetMatchLeagueStatisticsPairHandler(IMatchRepository matches, IMediator mediator)
   : IRequestHandler<GetMatchLeagueStatisticsPairQuery, ClubPairDto<ClubLeagueStats?>?>
 {
   public async Task<ClubPairDto<ClubLeagueStats?>?> Handle(
     GetMatchLeagueStatisticsPairQuery request,
     CancellationToken cancellationToken)
   {
-    var match = await unitOfWork.Matches
+    var match = await matches
       .GetMatchByIdAsync(request.MatchId, cancellationToken)
       .ConfigureAwait(false);
 

@@ -1,6 +1,7 @@
 using MediatR;
-using NoMoreBets.Application.Betting.Common;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Betting;
+using NoMoreBets.Application.Betting.Common;
 
 namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardBettingSummarySlips;
 
@@ -10,14 +11,14 @@ public record GetAgentDashboardBettingSummarySlipsQuery(
   int? AfterId,
   IReadOnlyList<string> SeasonYears) : IRequest<Paged<BetSlipListItemDto>>;
 
-public sealed class GetAgentDashboardBettingSummarySlipsHandler(IUnitOfWork unitOfWork)
+public sealed class GetAgentDashboardBettingSummarySlipsHandler(IBettingRepository betting)
   : IRequestHandler<GetAgentDashboardBettingSummarySlipsQuery, Paged<BetSlipListItemDto>>
 {
   public async Task<Paged<BetSlipListItemDto>> Handle(
     GetAgentDashboardBettingSummarySlipsQuery request,
     CancellationToken cancellationToken)
   {
-    var page = await unitOfWork.Betting
+    var page = await betting
       .GetSettledBettingSlipIdsPageAsync(
         request.Limit,
         request.AfterCreatedAtUtc,
@@ -31,7 +32,7 @@ public sealed class GetAgentDashboardBettingSummarySlipsHandler(IUnitOfWork unit
       return new Paged<BetSlipListItemDto>(Array.Empty<BetSlipListItemDto>(), false, null, null);
     }
 
-    var slips = await unitOfWork.Betting
+    var slips = await betting
       .GetBettingPhaseBetSlipsByIdsAsync(page.SlipIds, cancellationToken)
       .ConfigureAwait(false);
 

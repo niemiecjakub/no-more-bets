@@ -2,6 +2,7 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Matches;
 using NoMoreBets.Application.Matches.UpdateHeadToHead;
@@ -13,6 +14,8 @@ namespace NoMoreBets.Application.Tests.Matches.UpdateHeadToHead;
 
 public class UpdateHeadToHeadHandlerTests
 {
+  private readonly IClubRepository _clubs = Substitute.For<IClubRepository>();
+  private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly IHeadToHeadProvider _headToHeadProvider;
   private readonly IUnitOfWork _unitOfWork;
   private readonly ILogger<UpdateHeadToHeadHandler> _logger;
@@ -23,7 +26,7 @@ public class UpdateHeadToHeadHandlerTests
     _headToHeadProvider = Substitute.For<IHeadToHeadProvider>();
     _unitOfWork = Substitute.For<IUnitOfWork>();
     _logger = Substitute.For<ILogger<UpdateHeadToHeadHandler>>();
-    _sut = new UpdateHeadToHeadHandler(_headToHeadProvider, _unitOfWork, _logger);
+    _sut = new UpdateHeadToHeadHandler(_headToHeadProvider, _matches, _clubs, _unitOfWork, _logger);
   }
 
   private static HeadToHead CreateHeadToHeadDto() =>
@@ -43,7 +46,7 @@ public class UpdateHeadToHeadHandlerTests
   public async Task Handle_WhenOneClubMissingInDb_ReturnsWithoutSaving()
   {
     _headToHeadProvider.GetHeadToHeadAsync(1, 2, Arg.Any<CancellationToken>()).Returns(CreateHeadToHeadDto());
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
     {
       new() { Id = 1, SoccerdataId = 1, Name = "Arsenal" }
     });
@@ -51,7 +54,7 @@ public class UpdateHeadToHeadHandlerTests
     var result = await _sut.Handle(new UpdateHeadToHeadCommand(1, 2), CancellationToken.None);
 
     result.Should().Be(Unit.Value);
-    await _unitOfWork.Clubs.DidNotReceive().AddHead2Head(Arg.Any<Head2Head>());
+    await _clubs.DidNotReceive().AddHead2Head(Arg.Any<Head2Head>());
     await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
@@ -66,7 +69,7 @@ public class UpdateHeadToHeadHandlerTests
 
     // Assert
     result.Should().Be(Unit.Value);
-    await _unitOfWork.Clubs.DidNotReceive().GetBySoccerdataId(Arg.Any<IEnumerable<int>>());
+    await _clubs.DidNotReceive().GetBySoccerdataId(Arg.Any<IEnumerable<int>>());
     await _unitOfWork.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
@@ -74,16 +77,16 @@ public class UpdateHeadToHeadHandlerTests
   public async Task Handle_WhenBothClubsFound_NoExistingHead2Head_AddsAndSaveChanges()
   {
     _headToHeadProvider.GetHeadToHeadAsync(1, 2, Arg.Any<CancellationToken>()).Returns(CreateHeadToHeadDto());
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
     {
       new() { Id = 1, SoccerdataId = 1, Name = "Arsenal" },
       new() { Id = 2, SoccerdataId = 2, Name = "Chelsea" }
     });
-    _unitOfWork.Matches.GetHeadToHead(1, 2).Returns((Head2Head?)null);
+    _matches.GetHeadToHead(1, 2).Returns((Head2Head?)null);
 
     await _sut.Handle(new UpdateHeadToHeadCommand(1, 2), CancellationToken.None);
 
-    await _unitOfWork.Clubs.Received(1).AddHead2Head(Arg.Is<Head2Head>(h => h.Team1Id == 1 && h.Team2Id == 2 && !string.IsNullOrEmpty(h.Head2HeadJson)));
+    await _clubs.Received(1).AddHead2Head(Arg.Is<Head2Head>(h => h.Team1Id == 1 && h.Team2Id == 2 && !string.IsNullOrEmpty(h.Head2HeadJson)));
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
@@ -91,18 +94,18 @@ public class UpdateHeadToHeadHandlerTests
   public async Task Handle_WhenBothClubsFound_ExistingHead2Head_UpdatesJsonAndSaveChanges()
   {
     _headToHeadProvider.GetHeadToHeadAsync(1, 2, Arg.Any<CancellationToken>()).Returns(CreateHeadToHeadDto());
-    _unitOfWork.Clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
+    _clubs.GetBySoccerdataId(Arg.Any<IEnumerable<int>>()).Returns(new List<ClubEntity>
     {
       new() { Id = 1, SoccerdataId = 1, Name = "Arsenal" },
       new() { Id = 2, SoccerdataId = 2, Name = "Chelsea" }
     });
     var existing = new Head2Head { Team1Id = 1, Team2Id = 2, Head2HeadJson = "old" };
-    _unitOfWork.Matches.GetHeadToHead(1, 2).Returns(existing);
+    _matches.GetHeadToHead(1, 2).Returns(existing);
 
     await _sut.Handle(new UpdateHeadToHeadCommand(1, 2), CancellationToken.None);
 
     existing.Head2HeadJson.Should().NotBe("old");
-    await _unitOfWork.Clubs.DidNotReceive().AddHead2Head(Arg.Any<Head2Head>());
+    await _clubs.DidNotReceive().AddHead2Head(Arg.Any<Head2Head>());
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 }

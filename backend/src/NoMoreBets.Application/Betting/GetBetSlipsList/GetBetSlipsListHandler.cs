@@ -1,20 +1,20 @@
 using MediatR;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Application.Betting.Common;
-using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Betting.GetBetSlipsList;
 
 public record GetBetSlipsListQuery(IReadOnlyList<string> SeasonYears)
   : IRequest<IReadOnlyList<BetSlipListItemDto>>;
 
-public sealed class GetBetSlipsListHandler(IUnitOfWork unitOfWork)
+public sealed class GetBetSlipsListHandler(IBettingRepository betting)
   : IRequestHandler<GetBetSlipsListQuery, IReadOnlyList<BetSlipListItemDto>>
 {
   public async Task<IReadOnlyList<BetSlipListItemDto>> Handle(
     GetBetSlipsListQuery request,
     CancellationToken cancellationToken)
   {
-    var slips = await unitOfWork.Betting
+    var slips = await betting
       .GetBettingPhaseBetSlipsAsync(request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 

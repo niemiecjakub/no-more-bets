@@ -12,7 +12,7 @@ public record UpdateUpcommingMatchPreviewCommand(int SoccerdataMatchId) : IReque
 
 public class UpdateUpcommingMatchPreviewHandler(
   IMatchPreviewProvider matchPreviewProvider,
-  IUnitOfWork unitOfWork,
+  IMatchRepository matches, IUnitOfWork unitOfWork,
   ILogger<UpdateUpcommingMatchPreviewHandler> logger) : IRequestHandler<UpdateUpcommingMatchPreviewCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -26,7 +26,7 @@ public class UpdateUpcommingMatchPreviewHandler(
 
     var matchPreview = await matchPreviewProvider.GetMatchPreviewAsync(request.SoccerdataMatchId);
 
-    var match = await unitOfWork.Matches.GetMatchBySoccerdataId(request.SoccerdataMatchId);
+    var match = await matches.GetMatchBySoccerdataId(request.SoccerdataMatchId);
 
     if (match == null)
     {
@@ -38,7 +38,7 @@ public class UpdateUpcommingMatchPreviewHandler(
     }
 
     var previewContentJson = JsonSerializer.Serialize(matchPreview.PreviewContent, JsonOptions);
-    var entity = await unitOfWork.Matches.GetMatchPreview(match.Id);
+    var entity = await matches.GetMatchPreview(match.Id);
 
     if (entity == null)
     {
@@ -47,7 +47,7 @@ public class UpdateUpcommingMatchPreviewHandler(
         MatchId = match.Id,
         PreviewContentJson = previewContentJson
       };
-      await unitOfWork.Matches.AddMatchPreview(entity);
+      await matches.AddMatchPreview(entity);
 
       logger.LogInformation(
         "Handler {HandlerName} created new match preview for MatchId={MatchId}, SoccerdataMatchId={SoccerdataMatchId}",

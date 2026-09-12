@@ -1,19 +1,19 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Betting;
 
 namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardBettingSummaryDetails;
 
 public record GetAgentDashboardBettingSummaryDetailsQuery(IReadOnlyList<string> SeasonYears)
   : IRequest<AgentDashboardBettingSummaryDetailsDto>;
 
-public sealed class GetAgentDashboardBettingSummaryDetailsHandler(IUnitOfWork unitOfWork)
+public sealed class GetAgentDashboardBettingSummaryDetailsHandler(IBettingRepository betting)
   : IRequestHandler<GetAgentDashboardBettingSummaryDetailsQuery, AgentDashboardBettingSummaryDetailsDto>
 {
   public async Task<AgentDashboardBettingSummaryDetailsDto> Handle(
     GetAgentDashboardBettingSummaryDetailsQuery request,
     CancellationToken cancellationToken)
   {
-    var counts = await unitOfWork.Betting
+    var counts = await betting
       .GetBettingPhaseSettledDetailCountsAsync(request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 

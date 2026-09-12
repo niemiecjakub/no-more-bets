@@ -9,14 +9,12 @@ namespace NoMoreBets.Application.Tests.Betting.GetBettingPerformanceStats;
 
 public class GetBettingPerformanceStatsHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _bettingRepository = Substitute.For<IBettingRepository>();
   private readonly GetBettingPerformanceStatsHandler _sut;
 
   public GetBettingPerformanceStatsHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_bettingRepository);
-    _sut = new GetBettingPerformanceStatsHandler(_unitOfWork);
+    _sut = new GetBettingPerformanceStatsHandler(_bettingRepository);
   }
 
   [Fact]

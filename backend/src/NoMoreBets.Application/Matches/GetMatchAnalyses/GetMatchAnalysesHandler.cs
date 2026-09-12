@@ -1,33 +1,32 @@
 using MediatR;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.GetMatchAnalyses;
 
 public record GetMatchAnalysesQuery(int MatchId) : IRequest<MatchAnalysisPageDto?>;
 
-public sealed class GetMatchAnalysesHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetMatchAnalysesQuery, MatchAnalysisPageDto?>
+public sealed class GetMatchAnalysesHandler(IMatchRepository matches) : IRequestHandler<GetMatchAnalysesQuery, MatchAnalysisPageDto?>
 {
   public async Task<MatchAnalysisPageDto?> Handle(
     GetMatchAnalysesQuery request,
     CancellationToken cancellationToken)
   {
-     var match = await unitOfWork.Matches
+     var match = await matches
       .GetMatchByIdAsync(request.MatchId, cancellationToken)
       .ConfigureAwait(false);
 
     if (match == null)
       return null;
 
-    var researchAnalysis = await unitOfWork.Matches
+    var researchAnalysis = await matches
       .GetLatestMatchAnalysisByCodeAsync(request.MatchId, MatchAnalysis.StructuredResearchCode, cancellationToken)
       .ConfigureAwait(false);
 
-    researchAnalysis ??= await unitOfWork.Matches
+    researchAnalysis ??= await matches
       .GetLatestMatchAnalysisByCodeAsync(request.MatchId, MatchAnalysis.ResearchCode, cancellationToken)
       .ConfigureAwait(false);
 
-    var analysisEntities = await unitOfWork.Matches
+    var analysisEntities = await matches
       .GetNonResearchAnalysesForMatchAsync(request.MatchId, cancellationToken)
       .ConfigureAwait(false);
 

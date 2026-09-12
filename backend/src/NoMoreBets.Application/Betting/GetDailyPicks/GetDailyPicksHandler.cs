@@ -1,19 +1,19 @@
 using MediatR;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Application.Betting.Common;
-using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Betting.GetDailyPicks;
 
 public record GetDailyPicksQuery(DateOnly SlipDate) : IRequest<IReadOnlyList<BetSlipListItemDto>>;
 
-public sealed class GetDailyPicksHandler(IUnitOfWork unitOfWork)
+public sealed class GetDailyPicksHandler(IBettingRepository betting)
   : IRequestHandler<GetDailyPicksQuery, IReadOnlyList<BetSlipListItemDto>>
 {
   public async Task<IReadOnlyList<BetSlipListItemDto>> Handle(
     GetDailyPicksQuery request,
     CancellationToken cancellationToken)
   {
-    var slips = await unitOfWork.Betting
+    var slips = await betting
       .GetBetSlipsWithDailyPickOnDateAsync(request.SlipDate, cancellationToken)
       .ConfigureAwait(false);
 

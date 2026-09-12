@@ -1,4 +1,5 @@
 using System.Text.Json;
+using NoMoreBets.Domain.Leagues;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
@@ -18,7 +19,7 @@ public record UpdateLineupsCommand(int LeagueId) : IRequest<Unit>;
 public class UpdateLineupsHandler(
   ILineupProvider lineupProvider,
   IMatchMatcher matchMatcher,
-  IUnitOfWork unitOfWork,
+  IMatchRepository matches, ILeagueRepository leagues, IUnitOfWork unitOfWork,
   ILogger<UpdateLineupsHandler> logger) : IRequestHandler<UpdateLineupsCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -32,7 +33,7 @@ public class UpdateLineupsHandler(
       request.LeagueId);
 
     var supported = lineupProvider.SupportedLeagueSlugs.ToHashSet(StringComparer.OrdinalIgnoreCase);
-    var league = await unitOfWork.Leagues.GetByIdAsync(request.LeagueId, cancellationToken).ConfigureAwait(false);
+    var league = await leagues.GetByIdAsync(request.LeagueId, cancellationToken).ConfigureAwait(false);
     if (league is null)
     {
       logger.LogWarning(
@@ -54,7 +55,7 @@ public class UpdateLineupsHandler(
     }
 
     var today = DateOnly.FromDateTime(DateTime.UtcNow);
-    var season = await unitOfWork.Leagues.GetLatestSeasonAsync(request.LeagueId, cancellationToken).ConfigureAwait(false);
+    var season = await leagues.GetLatestSeasonAsync(request.LeagueId, cancellationToken).ConfigureAwait(false);
     if (season == null)
     {
       logger.LogInformation(
@@ -111,7 +112,7 @@ public class UpdateLineupsHandler(
 
     foreach (var lineup in lineups)
     {
-      var matchesOnDay = await unitOfWork.Matches.GetMatches(lineup.Date);
+      var matchesOnDay = await matches.GetMatches(lineup.Date);
 
       var candidates = matchesOnDay
         .Select(m => (m.HomeClub.Name, m.AwayClub.Name, m))
@@ -135,12 +136,12 @@ public class UpdateLineupsHandler(
       var homeTeamJson = JsonSerializer.Serialize(lineup.HomeTeam, JsonOptions);
       var awayTeamJson = JsonSerializer.Serialize(lineup.AwayTeam, JsonOptions);
 
-      var entity = await unitOfWork.Matches.GetLineup(matched.Id);
+      var entity = await matches.GetLineup(matched.Id);
 
       if (entity == null)
       {
         entity = new Lineup { MatchId = matched.Id };
-        await unitOfWork.Matches.AddLineup(entity);
+        await matches.AddLineup(entity);
         insertedCount++;
       }
       else

@@ -6,6 +6,8 @@ using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Search;
 using NoMoreBets.Domain.AgentSessions;
+using NoMoreBets.Domain.Bankrolls;
+using NoMoreBets.Domain.Memories;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.AgentMode;
 using NoMoreBets.Infrastructure.AI.Providers.Bankroll;
@@ -62,9 +64,11 @@ internal sealed class BettingExecuteStep : IAgentPhaseStep
   [
     new BankrollProvider(
       serviceProvider.GetRequiredService<IMediator>(),
-      serviceProvider.GetRequiredService<IUnitOfWork>()),
+      serviceProvider.GetRequiredService<IBankrollRepository>()),
     new BettingProvider(serviceProvider.GetRequiredService<BettingTool>()),
-    new MemoriesProvider(serviceProvider.GetRequiredService<IUnitOfWork>()),
+    new MemoriesProvider(
+      serviceProvider.GetRequiredService<IMemoryRepository>(),
+      serviceProvider.GetRequiredService<IUnitOfWork>()),
     new WebSearchProvider(
       serviceProvider.GetRequiredService<ISearchService>(),
       serviceProvider.GetRequiredService<AgentRunToolMetadataCollector>()),

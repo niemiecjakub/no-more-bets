@@ -2,6 +2,7 @@ using FluentAssertions;
 using NSubstitute;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations;
@@ -12,15 +13,15 @@ public class ResearchBetToolTests
 {
   private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
+  private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly AgentSessionContext _agentSessionContext = new();
   private readonly ResearchBetTool _sut;
 
   public ResearchBetToolTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
     _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>()).Returns(Task.CompletedTask);
     _agentSessionContext.SessionId = 42;
-    _sut = new ResearchBetTool(7, _unitOfWork, _agentSessionContext);
+    _sut = new ResearchBetTool(7, _betting, _matches, _unitOfWork, _agentSessionContext);
   }
 
   [Theory]

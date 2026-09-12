@@ -12,16 +12,13 @@ namespace NoMoreBets.Application.Tests.Club.GetClubRollingPerformance;
 
 public class GetClubRollingPerformanceHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IClubRepository _clubRepository = Substitute.For<IClubRepository>();
   private readonly IMatchRepository _matchRepository = Substitute.For<IMatchRepository>();
   private readonly GetClubRollingPerformanceHandler _sut;
 
   public GetClubRollingPerformanceHandlerTests()
   {
-    _unitOfWork.Clubs.Returns(_clubRepository);
-    _unitOfWork.Matches.Returns(_matchRepository);
-    _sut = new GetClubRollingPerformanceHandler(_unitOfWork);
+    _sut = new GetClubRollingPerformanceHandler(_matchRepository, _clubRepository);
   }
 
   [Fact]

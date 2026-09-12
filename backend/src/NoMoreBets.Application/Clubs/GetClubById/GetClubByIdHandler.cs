@@ -1,4 +1,5 @@
 using MediatR;
+using NoMoreBets.Domain.Clubs;
 using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Common.Dto.Clubs;
 using NoMoreBets.Domain.Leagues;
@@ -7,14 +8,14 @@ namespace NoMoreBets.Application.Clubs.GetClubById;
 
 public record GetClubByIdQuery(int ClubId) : IRequest<ClubDetailDto?>;
 
-public sealed class GetClubByIdHandler(IUnitOfWork unitOfWork)
+public sealed class GetClubByIdHandler(IClubRepository clubs)
   : IRequestHandler<GetClubByIdQuery, ClubDetailDto?>
 {
   public async Task<ClubDetailDto?> Handle(
     GetClubByIdQuery request,
     CancellationToken cancellationToken)
   {
-    var club = await unitOfWork.Clubs
+    var club = await clubs
       .GetByIdAsync(request.ClubId, cancellationToken)
       .ConfigureAwait(false);
 

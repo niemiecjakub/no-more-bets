@@ -12,15 +12,12 @@ namespace NoMoreBets.Application.Tests.Matches.GetMatchLineups;
 public class GetMatchLineupsHandlerTests
 {
   private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
-
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly GetMatchLineupsHandler _sut;
 
   public GetMatchLineupsHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetMatchLineupsHandler(_unitOfWork);
+    _sut = new GetMatchLineupsHandler(_matches);
   }
 
   [Fact]

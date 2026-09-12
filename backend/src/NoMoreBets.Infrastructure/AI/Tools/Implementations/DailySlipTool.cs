@@ -22,17 +22,20 @@ public class DailySlipTool
     Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true) }
   };
 
+  private readonly IBettingRepository _betting;
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
   private readonly AgentSessionContext _agentSessionContext;
   private readonly ILogger<DailySlipTool> _logger;
 
   public DailySlipTool(
+    IBettingRepository betting,
     IUnitOfWork unitOfWork,
     IMediator mediator,
     AgentSessionContext agentSessionContext,
     ILogger<DailySlipTool>? logger = null)
   {
+    _betting = betting;
     _unitOfWork = unitOfWork;
     _mediator = mediator;
     _agentSessionContext = agentSessionContext;
@@ -94,7 +97,7 @@ public class DailySlipTool
     }
 
     var slipDate = DateOnly.FromDateTime(DateTime.UtcNow);
-    var alreadyPlaced = await _unitOfWork.Betting
+    var alreadyPlaced = await _betting
       .AnyDailyPickOnDateWithRiskAsync(slipDate, (int)riskLevel, cancellationToken)
       .ConfigureAwait(false);
     if (alreadyPlaced)
@@ -105,7 +108,7 @@ public class DailySlipTool
     var selectionOdds = new List<decimal>(betSelections.Count);
     foreach (var record in betSelections)
     {
-      var odds = await _unitOfWork.Betting
+      var odds = await _betting
         .GetCurrentOddsForSelectionAsync(record.MatchId, record.EventType, record.EventOption, cancellationToken)
         .ConfigureAwait(false);
       if (odds is null)
@@ -154,7 +157,7 @@ public class DailySlipTool
       });
     }
 
-    await _unitOfWork.Betting.AddBetSlipAsync(betSlip, cancellationToken).ConfigureAwait(false);
+    await _betting.AddBetSlipAsync(betSlip, cancellationToken).ConfigureAwait(false);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return "Daily slip placed successfully.";
   }

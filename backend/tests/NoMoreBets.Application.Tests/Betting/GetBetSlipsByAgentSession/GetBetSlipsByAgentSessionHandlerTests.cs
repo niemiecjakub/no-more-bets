@@ -12,16 +12,13 @@ namespace NoMoreBets.Application.Tests.Betting.GetBetSlipsByAgentSession;
 
 public class GetBetSlipsByAgentSessionHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly IAgentSessionRepository _sessions = Substitute.For<IAgentSessionRepository>();
   private readonly GetBetSlipsByAgentSessionHandler _sut;
 
   public GetBetSlipsByAgentSessionHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
-    _unitOfWork.AgentSessions.Returns(_sessions);
-    _sut = new GetBetSlipsByAgentSessionHandler(_unitOfWork);
+    _sut = new GetBetSlipsByAgentSessionHandler(_betting, _sessions);
   }
 
   [Fact]

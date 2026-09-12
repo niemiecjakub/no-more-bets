@@ -1,25 +1,26 @@
 using MediatR;
+using NoMoreBets.Domain.AgentSessions;
+using NoMoreBets.Domain.Betting;
 using NoMoreBets.Application.Betting.Common;
-using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Betting.GetBetSlipsByAgentSession;
 
 public record GetBetSlipsByAgentSessionQuery(int SessionId)
   : IRequest<IReadOnlyList<BetSlipListItemDto>?>;
 
-public sealed class GetBetSlipsByAgentSessionHandler(IUnitOfWork unitOfWork)
+public sealed class GetBetSlipsByAgentSessionHandler(IBettingRepository betting, IAgentSessionRepository agentSessions)
   : IRequestHandler<GetBetSlipsByAgentSessionQuery, IReadOnlyList<BetSlipListItemDto>?>
 {
   public async Task<IReadOnlyList<BetSlipListItemDto>?> Handle(
     GetBetSlipsByAgentSessionQuery request,
     CancellationToken cancellationToken)
   {
-    if (!await unitOfWork.AgentSessions.SessionExistsAsync(request.SessionId, cancellationToken).ConfigureAwait(false))
+    if (!await agentSessions.SessionExistsAsync(request.SessionId, cancellationToken).ConfigureAwait(false))
     {
       return null;
     }
 
-    var slips = await unitOfWork.Betting
+    var slips = await betting
       .GetBetSlipsByAgentSessionIdAsync(request.SessionId, cancellationToken)
       .ConfigureAwait(false);
 

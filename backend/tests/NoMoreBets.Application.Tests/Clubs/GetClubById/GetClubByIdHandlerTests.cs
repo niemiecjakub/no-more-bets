@@ -10,14 +10,12 @@ namespace NoMoreBets.Application.Tests.Clubs.GetClubById;
 
 public class GetClubByIdHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IClubRepository _clubs = Substitute.For<IClubRepository>();
   private readonly GetClubByIdHandler _sut;
 
   public GetClubByIdHandlerTests()
   {
-    _unitOfWork.Clubs.Returns(_clubs);
-    _sut = new GetClubByIdHandler(_unitOfWork);
+    _sut = new GetClubByIdHandler(_clubs);
   }
 
   [Fact]

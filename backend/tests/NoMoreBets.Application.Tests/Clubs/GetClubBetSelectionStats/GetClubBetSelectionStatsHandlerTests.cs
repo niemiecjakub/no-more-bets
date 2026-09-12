@@ -10,16 +10,13 @@ namespace NoMoreBets.Application.Tests.Clubs.GetClubBetSelectionStats;
 
 public class GetClubBetSelectionStatsHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IClubRepository _clubs = Substitute.For<IClubRepository>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly GetClubBetSelectionStatsHandler _sut;
 
   public GetClubBetSelectionStatsHandlerTests()
   {
-    _unitOfWork.Clubs.Returns(_clubs);
-    _unitOfWork.Betting.Returns(_betting);
-    _sut = new GetClubBetSelectionStatsHandler(_unitOfWork);
+    _sut = new GetClubBetSelectionStatsHandler(_betting, _clubs);
   }
 
   [Fact]

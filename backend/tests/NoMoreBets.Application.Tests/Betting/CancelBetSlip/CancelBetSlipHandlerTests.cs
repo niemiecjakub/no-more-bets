@@ -19,9 +19,7 @@ public class CancelBetSlipHandlerTests
 
   public CancelBetSlipHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_bettingRepository);
-    _unitOfWork.Bankroll.Returns(_bankrollRepository);
-    _sut = new CancelBetSlipHandler(_unitOfWork);
+    _sut = new CancelBetSlipHandler(_bettingRepository, _bankrollRepository, _unitOfWork);
   }
 
   [Fact]

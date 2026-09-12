@@ -8,14 +8,12 @@ namespace NoMoreBets.Application.Tests.Memories.GetMemoriesPage;
 
 public class GetMemoriesPageHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMemoryRepository _memoryRepository = Substitute.For<IMemoryRepository>();
   private readonly GetMemoriesPageHandler _sut;
 
   public GetMemoriesPageHandlerTests()
   {
-    _unitOfWork.Memories.Returns(_memoryRepository);
-    _sut = new GetMemoriesPageHandler(_unitOfWork);
+    _sut = new GetMemoriesPageHandler(_memoryRepository);
   }
 
   [Fact]

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using NoMoreBets.Domain.Clubs;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using NoMoreBets.Application.Common;
@@ -11,7 +12,7 @@ public record UpdateHeadToHeadCommand(int Team1SoccerdataId, int Team2Soccerdata
 
 public class UpdateHeadToHeadHandler(
   IHeadToHeadProvider headToHeadProvider,
-  IUnitOfWork unitOfWork,
+  IMatchRepository matches, IClubRepository clubs, IUnitOfWork unitOfWork,
   ILogger<UpdateHeadToHeadHandler> logger) : IRequestHandler<UpdateHeadToHeadCommand, Unit>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -35,14 +36,14 @@ public class UpdateHeadToHeadHandler(
       return Unit.Value;
     }
 
-    var clubs = await unitOfWork.Clubs.GetBySoccerdataId(
+    var clubList = await clubs.GetBySoccerdataId(
     [
       request.Team1SoccerdataId,
       request.Team2SoccerdataId
     ]);
 
-    var club1 = clubs.FirstOrDefault(c => c.SoccerdataId == request.Team1SoccerdataId);
-    var club2 = clubs.FirstOrDefault(c => c.SoccerdataId == request.Team2SoccerdataId);
+    var club1 = clubList.FirstOrDefault(c => c.SoccerdataId == request.Team1SoccerdataId);
+    var club2 = clubList.FirstOrDefault(c => c.SoccerdataId == request.Team2SoccerdataId);
 
     if (club1 == null || club2 == null)
     {
@@ -57,7 +58,7 @@ public class UpdateHeadToHeadHandler(
     var (team1DbId, team2DbId) = Head2Head.NormalizeClubIds(club1.Id, club2.Id);
 
     var head2HeadJson = JsonSerializer.Serialize(headToHead, JsonOptions);
-    var entity = await unitOfWork.Matches.GetHeadToHead(team1DbId, team2DbId);
+    var entity = await matches.GetHeadToHead(team1DbId, team2DbId);
 
     if (entity == null)
     {
@@ -68,7 +69,7 @@ public class UpdateHeadToHeadHandler(
         Head2HeadJson = head2HeadJson,
         UpdatedAt = DateTime.UtcNow
       };
-      await unitOfWork.Clubs.AddHead2Head(entity);
+      await clubs.AddHead2Head(entity);
 
       logger.LogInformation(
         "Handler {HandlerName} created new Head2Head entry for clubs {Team1Id} vs {Team2Id}",

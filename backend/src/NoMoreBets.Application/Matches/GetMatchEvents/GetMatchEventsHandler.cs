@@ -1,18 +1,18 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.GetMatchEvents;
 
 public record GetMatchEventsQuery(int MatchId) : IRequest<IReadOnlyList<MatchEventDto>>;
 
-public sealed class GetMatchEventsHandler(IUnitOfWork unitOfWork)
+public sealed class GetMatchEventsHandler(IMatchRepository matches)
   : IRequestHandler<GetMatchEventsQuery, IReadOnlyList<MatchEventDto>>
 {
   public async Task<IReadOnlyList<MatchEventDto>> Handle(
     GetMatchEventsQuery request,
     CancellationToken cancellationToken)
   {
-    var events = await unitOfWork.Matches
+    var events = await matches
       .GetMatchEventsForMatchAsync(request.MatchId, cancellationToken)
       .ConfigureAwait(false);
 

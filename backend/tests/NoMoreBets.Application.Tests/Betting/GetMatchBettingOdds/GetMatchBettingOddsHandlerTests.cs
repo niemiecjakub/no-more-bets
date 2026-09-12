@@ -8,14 +8,12 @@ namespace NoMoreBets.Application.Tests.Betting.GetMatchBettingOdds;
 
 public class GetMatchBettingOddsHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly GetMatchBettingOddsHandler _sut;
 
   public GetMatchBettingOddsHandlerTests()
   {
-    _unitOfWork.Betting.Returns(_betting);
-    _sut = new GetMatchBettingOddsHandler(_unitOfWork);
+    _sut = new GetMatchBettingOddsHandler(_betting);
   }
 
   [Fact]

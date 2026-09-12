@@ -10,15 +10,13 @@ namespace NoMoreBets.Application.Tests.AgentDashboard.GetAgentDashboardBankroll;
 
 public class GetAgentDashboardBankrollHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IBankrollRepository _bankrollRepository = Substitute.For<IBankrollRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
   private readonly GetAgentDashboardBankrollHandler _sut;
 
   public GetAgentDashboardBankrollHandlerTests()
   {
-    _unitOfWork.Bankroll.Returns(_bankrollRepository);
-    _sut = new GetAgentDashboardBankrollHandler(_unitOfWork, _mediator);
+    _sut = new GetAgentDashboardBankrollHandler(_bankrollRepository, _mediator);
   }
 
   [Fact]

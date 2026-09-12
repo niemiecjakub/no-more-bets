@@ -1,20 +1,20 @@
 using MediatR;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Application.Clubs.Common;
 using NoMoreBets.Application.Clubs.GetClubRecentGames;
-using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Clubs.GetMatchRecentGamesPair;
 
 public record GetMatchRecentGamesPairQuery(int MatchId) : IRequest<ClubPairDto<IReadOnlyList<RecentMatch>?>?>;
 
-public sealed class GetMatchRecentGamesPairHandler(IUnitOfWork unitOfWork, IMediator mediator)
+public sealed class GetMatchRecentGamesPairHandler(IMatchRepository matches, IMediator mediator)
   : IRequestHandler<GetMatchRecentGamesPairQuery, ClubPairDto<IReadOnlyList<RecentMatch>?>?>
 {
   public async Task<ClubPairDto<IReadOnlyList<RecentMatch>?>?> Handle(
     GetMatchRecentGamesPairQuery request,
     CancellationToken cancellationToken)
   {
-    var match = await unitOfWork.Matches
+    var match = await matches
       .GetMatchByIdAsync(request.MatchId, cancellationToken)
       .ConfigureAwait(false);
 

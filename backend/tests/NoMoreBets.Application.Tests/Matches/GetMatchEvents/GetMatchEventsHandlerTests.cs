@@ -10,14 +10,12 @@ namespace NoMoreBets.Application.Tests.Matches.GetMatchEvents;
 
 public class GetMatchEventsHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly GetMatchEventsHandler _sut;
 
   public GetMatchEventsHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _sut = new GetMatchEventsHandler(_unitOfWork);
+    _sut = new GetMatchEventsHandler(_matches);
   }
 
   [Fact]

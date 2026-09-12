@@ -8,14 +8,12 @@ namespace NoMoreBets.Application.Tests.Club.GetClubDailySummary;
 
 public class GetClubDailySummaryHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IClubRepository _clubRepository = Substitute.For<IClubRepository>();
   private readonly GetClubDailySummaryHandler _sut;
 
   public GetClubDailySummaryHandlerTests()
   {
-    _unitOfWork.Clubs.Returns(_clubRepository);
-    _sut = new GetClubDailySummaryHandler(_unitOfWork);
+    _sut = new GetClubDailySummaryHandler(_clubRepository);
   }
 
   [Fact]

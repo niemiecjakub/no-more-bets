@@ -1,5 +1,4 @@
 using MediatR;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Betting;
 
 namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardResearchBettingSummary;
@@ -9,18 +8,18 @@ public record GetAgentDashboardResearchBettingSummaryQuery(
   IReadOnlyList<string> SeasonYears)
   : IRequest<AgentDashboardResearchBettingSummaryDto>;
 
-public sealed class GetAgentDashboardResearchBettingSummaryHandler(IUnitOfWork unitOfWork)
+public sealed class GetAgentDashboardResearchBettingSummaryHandler(IBettingRepository betting)
   : IRequestHandler<GetAgentDashboardResearchBettingSummaryQuery, AgentDashboardResearchBettingSummaryDto>
 {
   public async Task<AgentDashboardResearchBettingSummaryDto> Handle(
     GetAgentDashboardResearchBettingSummaryQuery request,
     CancellationToken cancellationToken)
   {
-    var stats = await unitOfWork.Betting
+    var stats = await betting
       .GetResearchPhaseSettledSummaryAsync(request.LeagueIds, request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 
-    var legs = await unitOfWork.Betting
+    var legs = await betting
       .GetResearchPhaseSettledScenarioLegsAsync(request.LeagueIds, request.SeasonYears, cancellationToken)
       .ConfigureAwait(false);
 

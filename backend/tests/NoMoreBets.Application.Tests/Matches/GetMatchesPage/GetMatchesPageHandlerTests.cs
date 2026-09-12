@@ -14,7 +14,6 @@ namespace NoMoreBets.Application.Tests.Matches.GetMatchesPage;
 
 public class GetMatchesPageHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
   private readonly IMediator _mediator = Substitute.For<IMediator>();
@@ -24,10 +23,8 @@ public class GetMatchesPageHandlerTests
 
   public GetMatchesPageHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matches);
-    _unitOfWork.Betting.Returns(_betting);
     _embedding.ModelId.Returns("text-embedding-3-small");
-    _sut = new GetMatchesPageHandler(_unitOfWork, _mediator, _embedding, _chunkSearch);
+    _sut = new GetMatchesPageHandler(_betting, _matches, _mediator, _embedding, _chunkSearch);
   }
 
   [Fact]

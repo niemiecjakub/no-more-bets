@@ -1,7 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Domain.Leagues;
 using NoMoreBets.Domain.Matches;
@@ -11,7 +10,7 @@ namespace NoMoreBets.Application.Leagues.GetMatchGroupTable;
 public record GetMatchGroupTableQuery(int MatchId) : IRequest<IReadOnlyList<LeagueTableStanding>?>;
 
 public sealed class GetMatchGroupTableHandler(
-  IUnitOfWork unitOfWork,
+  IMatchRepository matches, ILeagueRepository leagues,
   WorldCupGroupRegistry worldCupGroupRegistry,
   ILogger<GetMatchGroupTableHandler>? logger = null)
   : IRequestHandler<GetMatchGroupTableQuery, IReadOnlyList<LeagueTableStanding>?>
@@ -22,7 +21,7 @@ public sealed class GetMatchGroupTableHandler(
     GetMatchGroupTableQuery request,
     CancellationToken cancellationToken)
   {
-    var match = await unitOfWork.Matches.GetMatchByIdAsync(request.MatchId, cancellationToken)
+    var match = await matches.GetMatchByIdAsync(request.MatchId, cancellationToken)
       .ConfigureAwait(false);
 
     if (match?.Stage?.Season?.League is not { } league)
@@ -57,7 +56,7 @@ public sealed class GetMatchGroupTableHandler(
         request.MatchId);
     }
 
-    var standings = await unitOfWork.Leagues
+    var standings = await leagues
       .GetLeagueTableAsOfAsync(league.Id, asOfDate: null, cancellationToken)
       .ConfigureAwait(false);
 

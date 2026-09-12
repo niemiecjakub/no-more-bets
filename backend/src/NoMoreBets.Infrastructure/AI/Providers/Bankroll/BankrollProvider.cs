@@ -3,7 +3,7 @@ using Microsoft.Agents.AI;
 using Microsoft.Extensions.AI;
 using NoMoreBets.Application.Bankroll.GetDaysUntilPayday;
 using NoMoreBets.Application.AgentTools;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Bankrolls;
 
 namespace NoMoreBets.Infrastructure.AI.Providers.Bankroll;
 
@@ -21,12 +21,12 @@ public sealed class BankrollProvider : AIContextProvider
         """;
 
   private readonly IMediator _mediator;
-  private readonly IUnitOfWork _unitOfWork;
+  private readonly IBankrollRepository _bankroll;
 
-  public BankrollProvider(IMediator mediator, IUnitOfWork unitOfWork)
+  public BankrollProvider(IMediator mediator, IBankrollRepository bankroll)
   {
     _mediator = mediator;
-    _unitOfWork = unitOfWork;
+    _bankroll = bankroll;
   }
 
   protected override ValueTask<AIContext> ProvideAIContextAsync(InvokingContext context, CancellationToken cancellationToken = default)
@@ -68,7 +68,7 @@ public sealed class BankrollProvider : AIContextProvider
 
   private async Task<decimal> GetCurrentBalanceAsync(CancellationToken cancellationToken = default)
   {
-    return await _unitOfWork.Bankroll.GetCurrentBalanceAsync(cancellationToken).ConfigureAwait(false);
+    return await _bankroll.GetCurrentBalanceAsync(cancellationToken).ConfigureAwait(false);
   }
 
   private async Task<int> GetDaysUntilPaydayAsync(CancellationToken cancellationToken = default)

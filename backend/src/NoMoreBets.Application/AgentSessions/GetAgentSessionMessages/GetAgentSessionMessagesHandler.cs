@@ -1,6 +1,5 @@
 using MediatR;
 using NoMoreBets.Application.AgentSessions.ToolCallDisplay;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 
 namespace NoMoreBets.Application.AgentSessions.GetAgentSessionMessages;
@@ -8,7 +7,7 @@ namespace NoMoreBets.Application.AgentSessions.GetAgentSessionMessages;
 public record GetAgentSessionMessagesQuery(int SessionId) : IRequest<IReadOnlyList<AgentSessionMessageDto>?>;
 
 public sealed class GetAgentSessionMessagesHandler(
-  IUnitOfWork unitOfWork,
+  IAgentSessionRepository agentSessions,
   AgentToolCallDisplayFormatter displayFormatter)
   : IRequestHandler<GetAgentSessionMessagesQuery, IReadOnlyList<AgentSessionMessageDto>?>
 {
@@ -16,10 +15,10 @@ public sealed class GetAgentSessionMessagesHandler(
     GetAgentSessionMessagesQuery request,
     CancellationToken cancellationToken)
   {
-    if (!await unitOfWork.AgentSessions.SessionExistsAsync(request.SessionId, cancellationToken).ConfigureAwait(false))
+    if (!await agentSessions.SessionExistsAsync(request.SessionId, cancellationToken).ConfigureAwait(false))
       return null;
 
-    var messages = await unitOfWork.AgentSessions
+    var messages = await agentSessions
       .GetMessagesAsync(request.SessionId, cancellationToken)
       .ConfigureAwait(false);
 

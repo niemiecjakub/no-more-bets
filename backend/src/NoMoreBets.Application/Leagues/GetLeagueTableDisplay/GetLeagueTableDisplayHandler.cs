@@ -1,5 +1,6 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Clubs;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Application.Leagues;
 using NoMoreBets.Domain.Enums;
 using NoMoreBets.Domain.Leagues;
@@ -9,7 +10,7 @@ namespace NoMoreBets.Application.Leagues.GetLeagueTableDisplay;
 public record GetLeagueTableDisplayQuery(int LeagueId, int SeasonId, int? ClubId = null) : IRequest<LeagueTableDto?>;
 
 public sealed class GetLeagueTableDisplayHandler(
-  IUnitOfWork unitOfWork,
+  IMatchRepository matches, IClubRepository clubs, ILeagueRepository leagues,
   WorldCupGroupRegistry worldCupGroupRegistry)
   : IRequestHandler<GetLeagueTableDisplayQuery, LeagueTableDto?>
 {
@@ -17,7 +18,7 @@ public sealed class GetLeagueTableDisplayHandler(
     GetLeagueTableDisplayQuery request,
     CancellationToken cancellationToken)
   {
-    var snapshot = await unitOfWork.Leagues
+    var snapshot = await leagues
       .GetLatestLeagueTableSnapshotAsync(request.LeagueId, request.SeasonId, cancellationToken)
       .ConfigureAwait(false);
 
@@ -25,7 +26,7 @@ public sealed class GetLeagueTableDisplayHandler(
       return null;
 
     var clubIds = snapshot.Rows.Select(r => r.ClubId).ToList();
-    var formByClub = await unitOfWork.Matches
+    var formByClub = await matches
       .GetFormForClubsInSeasonAsync(snapshot.SeasonId, clubIds, 5, cancellationToken)
       .ConfigureAwait(false);
 
@@ -39,7 +40,7 @@ public sealed class GetLeagueTableDisplayHandler(
       return MapFlatDto(snapshot, rowDtosByClubId.Values.OrderBy(r => r.Position).ToList());
     }
 
-    var club = await unitOfWork.Clubs.GetByIdAsync(request.ClubId.Value, cancellationToken)
+    var club = await clubs.GetByIdAsync(request.ClubId.Value, cancellationToken)
       .ConfigureAwait(false);
     if (club is null || club.ClubSeasons.All(cs => cs.SeasonId != request.SeasonId))
       return null;

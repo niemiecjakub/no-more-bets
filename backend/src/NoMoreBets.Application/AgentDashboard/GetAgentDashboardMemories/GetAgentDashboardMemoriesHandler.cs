@@ -1,18 +1,18 @@
 using MediatR;
-using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Memories;
 
 namespace NoMoreBets.Application.AgentDashboard.GetAgentDashboardMemories;
 
 public record GetAgentDashboardMemoriesQuery : IRequest<AgentDashboardMemoriesDto>;
 
-public sealed class GetAgentDashboardMemoriesHandler(IUnitOfWork unitOfWork)
+public sealed class GetAgentDashboardMemoriesHandler(IMemoryRepository memories)
   : IRequestHandler<GetAgentDashboardMemoriesQuery, AgentDashboardMemoriesDto>
 {
   public async Task<AgentDashboardMemoriesDto> Handle(
     GetAgentDashboardMemoriesQuery request,
     CancellationToken cancellationToken)
   {
-    var data = await unitOfWork.Memories
+    var data = await memories
       .GetActiveMemoriesWidgetAsync(cancellationToken)
       .ConfigureAwait(false);
 

@@ -1,17 +1,18 @@
 using MediatR;
+using NoMoreBets.Domain.Matches;
+using NoMoreBets.Domain.Betting;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Enums;
 
 namespace NoMoreBets.Application.Betting.GetMatchBettingOddsHistory;
 
 public record GetMatchBettingOddsHistoryQuery(int MatchId) : IRequest<IReadOnlyList<MarketPriceHistory>?>;
 
-public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork, ILogger<GetMatchBettingOddsHistoryHandler>? logger = null) : IRequestHandler<GetMatchBettingOddsHistoryQuery, IReadOnlyList<MarketPriceHistory>?>
+public sealed class GetMatchBettingOddsHistoryHandler(IBettingRepository betting, IMatchRepository matches, ILogger<GetMatchBettingOddsHistoryHandler>? logger = null) : IRequestHandler<GetMatchBettingOddsHistoryQuery, IReadOnlyList<MarketPriceHistory>?>
 {
   public async Task<IReadOnlyList<MarketPriceHistory>?> Handle(GetMatchBettingOddsHistoryQuery request, CancellationToken cancellationToken)
   {
-    var snapshots = await unitOfWork.Betting.GetBettingOddsSnapshotsForMatchAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
+    var snapshots = await betting.GetBettingOddsSnapshotsForMatchAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
 
     if (snapshots.Count == 0)
     {
@@ -19,7 +20,7 @@ public sealed class GetMatchBettingOddsHistoryHandler(IUnitOfWork unitOfWork, IL
       return null;
     }
 
-    var match = await unitOfWork.Matches.GetMatchByIdAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
+    var match = await matches.GetMatchByIdAsync(request.MatchId, cancellationToken).ConfigureAwait(false);
     var homeName = match?.HomeClub?.Name;
     var awayName = match?.AwayClub?.Name;
 

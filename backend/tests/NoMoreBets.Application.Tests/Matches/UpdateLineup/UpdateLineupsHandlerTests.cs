@@ -14,6 +14,7 @@ namespace NoMoreBets.Application.Tests.Matches.UpdateLineup;
 
 public class UpdateLineupsHandlerTests
 {
+  private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private const int SupportedLeagueId = 42;
   private const string SupportedLeagueSlug = "premier-league";
   private readonly ILineupProvider _lineupProvider;
@@ -30,7 +31,6 @@ public class UpdateLineupsHandlerTests
     _unitOfWork = Substitute.For<IUnitOfWork>();
     _leagueRepository = Substitute.For<ILeagueRepository>();
     _logger = Substitute.For<ILogger<UpdateLineupsHandler>>();
-    _unitOfWork.Leagues.Returns(_leagueRepository);
     _leagueRepository.GetByIdAsync(SupportedLeagueId, Arg.Any<CancellationToken>())
       .Returns(Task.FromResult<League?>(new League
       {
@@ -39,7 +39,7 @@ public class UpdateLineupsHandlerTests
         Name = "Premier League"
       }));
     _lineupProvider.SupportedLeagueSlugs.Returns(new[] { "premier-league" });
-    _sut = new UpdateLineupsHandler(_lineupProvider, _matchMatcher, _unitOfWork, _logger);
+    _sut = new UpdateLineupsHandler(_lineupProvider, _matchMatcher, _matches, _leagueRepository, _unitOfWork, _logger);
   }
 
   private void SetupInWindowSeason()
@@ -135,7 +135,7 @@ public class UpdateLineupsHandlerTests
     await _sut.Handle(new UpdateLineupsCommand(SupportedLeagueId), CancellationToken.None);
 
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
-    await _unitOfWork.Matches.DidNotReceive().AddLineup(Arg.Any<Lineup>());
+    await _matches.DidNotReceive().AddLineup(Arg.Any<Lineup>());
   }
 
   [Fact]
@@ -145,12 +145,12 @@ public class UpdateLineupsHandlerTests
     var date = new DateTime(2026, 1, 15, 14, 0, 0, DateTimeKind.Utc);
     _lineupProvider.GetSoccerLineupsAsync(SupportedLeagueSlug, Arg.Any<CancellationToken>())
       .Returns(new[] { CreateLineup(date) });
-    _unitOfWork.Matches.GetMatches(Arg.Any<DateTime>()).Returns(new List<Match>());
+    _matches.GetMatches(Arg.Any<DateTime>()).Returns(new List<Match>());
     _matchMatcher.FindBestMatch(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>()).Returns((Match?)null);
 
     await _sut.Handle(new UpdateLineupsCommand(SupportedLeagueId), CancellationToken.None);
 
-    await _unitOfWork.Matches.DidNotReceive().AddLineup(Arg.Any<Lineup>());
+    await _matches.DidNotReceive().AddLineup(Arg.Any<Lineup>());
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
@@ -164,13 +164,13 @@ public class UpdateLineupsHandlerTests
       .Returns(new[] { lineup });
 
     var match = new Match { Id = 10, HomeClub = new ClubEntity { Name = "Arsenal" }, AwayClub = new ClubEntity { Name = "Chelsea" } };
-    _unitOfWork.Matches.GetMatches(date).Returns(new List<Match> { match });
+    _matches.GetMatches(date).Returns(new List<Match> { match });
     _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>()).Returns(match);
-    _unitOfWork.Matches.GetLineup(10).Returns((Lineup?)null);
+    _matches.GetLineup(10).Returns((Lineup?)null);
 
     await _sut.Handle(new UpdateLineupsCommand(SupportedLeagueId), CancellationToken.None);
 
-    await _unitOfWork.Matches.Received(1).AddLineup(Arg.Is<Lineup>(l => l.MatchId == 10 && !string.IsNullOrEmpty(l.HomeTeamJson) && !string.IsNullOrEmpty(l.AwayTeamJson)));
+    await _matches.Received(1).AddLineup(Arg.Is<Lineup>(l => l.MatchId == 10 && !string.IsNullOrEmpty(l.HomeTeamJson) && !string.IsNullOrEmpty(l.AwayTeamJson)));
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 
@@ -184,17 +184,17 @@ public class UpdateLineupsHandlerTests
       .Returns(new[] { lineup });
 
     var match = new Match { Id = 10, HomeClub = new ClubEntity { Name = "Arsenal" }, AwayClub = new ClubEntity { Name = "Chelsea" } };
-    _unitOfWork.Matches.GetMatches(date).Returns(new List<Match> { match });
+    _matches.GetMatches(date).Returns(new List<Match> { match });
     _matchMatcher.FindBestMatch("Arsenal", "Chelsea", Arg.Any<IReadOnlyList<(string HomeName, string AwayName, Match Value)>>()).Returns(match);
 
     var existingLineup = new Lineup { MatchId = 10, HomeTeamJson = "old", AwayTeamJson = "old" };
-    _unitOfWork.Matches.GetLineup(10).Returns(existingLineup);
+    _matches.GetLineup(10).Returns(existingLineup);
 
     await _sut.Handle(new UpdateLineupsCommand(SupportedLeagueId), CancellationToken.None);
 
     existingLineup.HomeTeamJson.Should().NotBe("old");
     existingLineup.AwayTeamJson.Should().NotBe("old");
-    await _unitOfWork.Matches.DidNotReceive().AddLineup(Arg.Any<Lineup>());
+    await _matches.DidNotReceive().AddLineup(Arg.Any<Lineup>());
     await _unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
   }
 }

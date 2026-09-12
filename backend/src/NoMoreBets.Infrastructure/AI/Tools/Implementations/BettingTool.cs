@@ -11,6 +11,7 @@ using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Bankrolls;
 using NoMoreBets.Domain.Betting;
 using NoMoreBets.Domain.Enums;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Domain.Matches.Dto;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations.Models;
 using NoMoreBets.Infrastructure.AI.Common;
@@ -24,13 +25,26 @@ public class BettingTool
     Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true) }
   };
 
+  private readonly IBettingRepository _betting;
+  private readonly IMatchRepository _matches;
+  private readonly IBankrollRepository _bankroll;
   private readonly IUnitOfWork _unitOfWork;
   private readonly IMediator _mediator;
   private readonly AgentSessionContext _agentSessionContext;
   private readonly ILogger<BettingTool> _logger;
 
-  public BettingTool(IUnitOfWork unitOfWork, IMediator mediator, AgentSessionContext agentSessionContext, ILogger<BettingTool>? logger = null)
+  public BettingTool(
+    IBettingRepository betting,
+    IMatchRepository matches,
+    IBankrollRepository bankroll,
+    IUnitOfWork unitOfWork,
+    IMediator mediator,
+    AgentSessionContext agentSessionContext,
+    ILogger<BettingTool>? logger = null)
   {
+    _betting = betting;
+    _matches = matches;
+    _bankroll = bankroll;
     _unitOfWork = unitOfWork;
     _mediator = mediator;
     _agentSessionContext = agentSessionContext;
@@ -40,7 +54,7 @@ public class BettingTool
   [Description("Retrieves matches for which bets can currently be placed.")]
   public async Task<IReadOnlyList<AvailableMatch>> GetAvailableMatchesAsync(CancellationToken cancellationToken = default)
   {
-    var matches = await _unitOfWork.Betting
+    var matches = await _betting
       .GetMatchesAvailableForBettingAsync(cancellationToken)
       .ConfigureAwait(false);
     return matches
@@ -74,7 +88,7 @@ public class BettingTool
   [Description("Returns structured match analysis for the given match.")]
   public async Task<MatchResearchOutput?> GetMatchAnalysisAsync(int matchId, CancellationToken cancellationToken = default)
   {
-    var analysis = await _unitOfWork.Matches.GetLatestMatchAnalysisAsync(matchId, cancellationToken).ConfigureAwait(false);
+    var analysis = await _matches.GetLatestMatchAnalysisAsync(matchId, cancellationToken).ConfigureAwait(false);
     return analysis?.TryGetAgentResearchOutput();
   }
 
@@ -126,7 +140,7 @@ public class BettingTool
       throw new ArgumentException("At least one selection is required to place a bet slip.", nameof(betSelectionsJson));
     }
 
-    var balance = await _unitOfWork.Bankroll.GetCurrentBalanceAsync(cancellationToken).ConfigureAwait(false);
+    var balance = await _bankroll.GetCurrentBalanceAsync(cancellationToken).ConfigureAwait(false);
 
     if (stakeAmount > balance)
     {
@@ -137,7 +151,7 @@ public class BettingTool
     var selectionOdds = new List<decimal>(betSelections.Count);
     foreach (var record in betSelections)
     {
-      var odds = await _unitOfWork.Betting.GetCurrentOddsForSelectionAsync(record.MatchId, record.EventType, record.EventOption, cancellationToken).ConfigureAwait(false);
+      var odds = await _betting.GetCurrentOddsForSelectionAsync(record.MatchId, record.EventType, record.EventOption, cancellationToken).ConfigureAwait(false);
       if (odds is null)
       {
         _logger.LogWarning(
@@ -179,7 +193,7 @@ public class BettingTool
       });
     }
 
-    await _unitOfWork.Betting.AddBetSlipAsync(betSlip, cancellationToken).ConfigureAwait(false);
+    await _betting.AddBetSlipAsync(betSlip, cancellationToken).ConfigureAwait(false);
     await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     return "Bet slip placed successfully.";
   }
@@ -247,7 +261,7 @@ public class BettingTool
       throw new ArgumentException("lastDays must be greater than zero.", nameof(lastDays));
     }
 
-    var slips = await _unitOfWork.Betting
+    var slips = await _betting
       .GetNonPendingBetSlipsUpdatedInLastDaysAsync(lastDays, cancellationToken)
       .ConfigureAwait(false);
 
@@ -257,7 +271,7 @@ public class BettingTool
   public async Task<IReadOnlyList<BetSlipSummary>> GetBetSlipsAwaitingReflectionAsync(
     CancellationToken cancellationToken = default)
   {
-    var slips = await _unitOfWork.Betting
+    var slips = await _betting
       .GetNonPendingBetSlipsAwaitingReflectionAsync(cancellationToken)
       .ConfigureAwait(false);
 

@@ -1,20 +1,20 @@
 using MediatR;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Application.Clubs.Common;
 using NoMoreBets.Application.Clubs.GetClubRollingPerformance;
-using NoMoreBets.Application.Common;
 
 namespace NoMoreBets.Application.Clubs.GetMatchRollingPerformancePair;
 
 public record GetMatchRollingPerformancePairQuery(int MatchId) : IRequest<ClubPairDto<TeamPerformanceResult?>?>;
 
-public sealed class GetMatchRollingPerformancePairHandler(IUnitOfWork unitOfWork, IMediator mediator)
+public sealed class GetMatchRollingPerformancePairHandler(IMatchRepository matches, IMediator mediator)
   : IRequestHandler<GetMatchRollingPerformancePairQuery, ClubPairDto<TeamPerformanceResult?>?>
 {
   public async Task<ClubPairDto<TeamPerformanceResult?>?> Handle(
     GetMatchRollingPerformancePairQuery request,
     CancellationToken cancellationToken)
   {
-    var match = await unitOfWork.Matches
+    var match = await matches
       .GetMatchByIdAsync(request.MatchId, cancellationToken)
       .ConfigureAwait(false);
 

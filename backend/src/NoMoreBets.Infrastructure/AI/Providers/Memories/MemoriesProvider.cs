@@ -32,11 +32,13 @@ public sealed class MemoriesProvider : AIContextProvider
 
         """;
 
+  private readonly IMemoryRepository _memories;
   private readonly IUnitOfWork _unitOfWork;
   private readonly ILogger<MemoriesProvider> _logger;
 
-  public MemoriesProvider(IUnitOfWork unitOfWork, ILogger<MemoriesProvider>? logger = null)
+  public MemoriesProvider(IMemoryRepository memories, IUnitOfWork unitOfWork, ILogger<MemoriesProvider>? logger = null)
   {
+    _memories = memories;
     _unitOfWork = unitOfWork;
     _logger = logger ?? NullLogger<MemoriesProvider>.Instance;
   }
@@ -122,7 +124,7 @@ public sealed class MemoriesProvider : AIContextProvider
 
   private async Task<List<MemoryRecordListItem>> GetMemoryRecordsAsync(CancellationToken cancellationToken = default)
   {
-    var records = await _unitOfWork.Memories.GetRecordsAsync(cancellationToken).ConfigureAwait(false);
+    var records = await _memories.GetRecordsAsync(cancellationToken).ConfigureAwait(false);
     return records.ToList();
   }
 
@@ -132,7 +134,7 @@ public sealed class MemoriesProvider : AIContextProvider
     CancellationToken cancellationToken = default)
   {
     var normalizedName = NormalizeName(name);
-    var memory = await _unitOfWork.Memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
+    var memory = await _memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
     if (memory == null)
     {
       _logger.LogWarning("Memory record {MemoryName} not found for read operation.", normalizedName);
@@ -153,7 +155,7 @@ public sealed class MemoriesProvider : AIContextProvider
   {
     var normalizedName = NormalizeName(name);
 
-    var existing = await _unitOfWork.Memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
+    var existing = await _memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
     if (existing != null)
     {
       existing.ReplaceContent(text);
@@ -164,7 +166,7 @@ public sealed class MemoriesProvider : AIContextProvider
     }
     else
     {
-      await _unitOfWork.Memories.AddAsync(
+      await _memories.AddAsync(
         Memory.Create(normalizedName, text, description),
         cancellationToken).ConfigureAwait(false);
     }
@@ -181,7 +183,7 @@ public sealed class MemoriesProvider : AIContextProvider
     CancellationToken cancellationToken = default)
   {
     var normalizedName = NormalizeName(name);
-    var memory = await _unitOfWork.Memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
+    var memory = await _memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
     if (memory == null)
     {
       _logger.LogWarning("Memory record {MemoryName} not found for append operation.", normalizedName);
@@ -205,7 +207,7 @@ public sealed class MemoriesProvider : AIContextProvider
     CancellationToken cancellationToken = default)
   {
     var normalizedName = NormalizeName(name);
-    var memory = await _unitOfWork.Memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
+    var memory = await _memories.GetByNameAsync(normalizedName, cancellationToken).ConfigureAwait(false);
     if (memory == null)
     {
       _logger.LogWarning("Memory record {MemoryName} not found for replace operation.", normalizedName);
@@ -223,7 +225,7 @@ public sealed class MemoriesProvider : AIContextProvider
     CancellationToken cancellationToken = default)
   {
     Memory.ValidateName(name);
-    var removed = await _unitOfWork.Memories.SoftDeleteByNameAsync(name, cancellationToken).ConfigureAwait(false);
+    var removed = await _memories.SoftDeleteByNameAsync(name, cancellationToken).ConfigureAwait(false);
     if (!removed)
     {
       _logger.LogWarning("Memory record {MemoryName} not found for delete operation.", name);

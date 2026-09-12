@@ -3,6 +3,9 @@ using MediatR;
 using NSubstitute;
 using NoMoreBets.Application.AgentTools;
 using NoMoreBets.Application.Common;
+using NoMoreBets.Domain.Bankrolls;
+using NoMoreBets.Domain.Betting;
+using NoMoreBets.Domain.Matches;
 using NoMoreBets.Infrastructure.AI.Common;
 using NoMoreBets.Infrastructure.AI.Providers.DailySlip;
 using NoMoreBets.Infrastructure.AI.Tools.Implementations;
@@ -17,10 +20,13 @@ public class DailySlipProviderTests
   public DailySlipProviderTests()
   {
     var unitOfWork = Substitute.For<IUnitOfWork>();
+    var betting = Substitute.For<IBettingRepository>();
+    var matches = Substitute.For<IMatchRepository>();
+    var bankroll = Substitute.For<IBankrollRepository>();
     var mediator = Substitute.For<IMediator>();
     var agentSessionContext = new AgentSessionContext();
-    _dailySlipTool = new DailySlipTool(unitOfWork, mediator, agentSessionContext);
-    _bettingTool = new BettingTool(unitOfWork, mediator, agentSessionContext);
+    _dailySlipTool = new DailySlipTool(betting, unitOfWork, mediator, agentSessionContext);
+    _bettingTool = new BettingTool(betting, matches, bankroll, unitOfWork, mediator, agentSessionContext);
   }
 
   [Fact]

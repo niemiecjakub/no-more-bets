@@ -9,14 +9,12 @@ namespace NoMoreBets.Application.Tests.Matches.GetHeadToHeadStats;
 
 public class GetHeadToHeadStatsHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
   private readonly IMatchRepository _matchRepository = Substitute.For<IMatchRepository>();
   private readonly GetHeadToHeadStatsHandler _sut;
 
   public GetHeadToHeadStatsHandlerTests()
   {
-    _unitOfWork.Matches.Returns(_matchRepository);
-    _sut = new GetHeadToHeadStatsHandler(_unitOfWork);
+    _sut = new GetHeadToHeadStatsHandler(_matchRepository);
   }
 
   [Fact]

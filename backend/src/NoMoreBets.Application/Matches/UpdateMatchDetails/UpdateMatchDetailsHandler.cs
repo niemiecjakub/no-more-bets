@@ -21,7 +21,7 @@ public record UpdateMatchDetailsResult(bool CreatedNewMatch, int? MatchId = null
 public class UpdateMatchDetailsHandler(
   IMatchDetailsProvider matchDetailsProvider,
   IMatchMatcher matchMatcher,
-  IUnitOfWork unitOfWork,
+  IMatchRepository matches, IClubRepository clubs, ILeagueRepository leagues, IUnitOfWork unitOfWork,
   ILogger<UpdateMatchDetailsHandler> logger) : IRequestHandler<UpdateMatchDetailsCommand, UpdateMatchDetailsResult>
 {
   private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -48,7 +48,7 @@ public class UpdateMatchDetailsHandler(
     }
 
     // Path A: existing match by FotmobUrl
-    var existingDetails = await unitOfWork.Matches.GetMatchDetailsByFotmobUrlAsync(fotmobGameUrl, cancellationToken).ConfigureAwait(false);
+    var existingDetails = await matches.GetMatchDetailsByFotmobUrlAsync(fotmobGameUrl, cancellationToken).ConfigureAwait(false);
     if (existingDetails != null)
     {
       logger.LogInformation(
@@ -88,7 +88,7 @@ public class UpdateMatchDetailsHandler(
     }
 
     var matchDate = dto.MatchDate.Value.UtcDateTime;
-    var matchesOnDay = await unitOfWork.Matches.GetMatches(matchDate).ConfigureAwait(false);
+    var matchesOnDay = await matches.GetMatches(matchDate).ConfigureAwait(false);
     var candidates = matchesOnDay
       .Select(m => (m.HomeClub.Name, m.AwayClub.Name, m))
       .ToList();
@@ -96,7 +96,7 @@ public class UpdateMatchDetailsHandler(
 
     if (matched != null)
     {
-      var detailsForMatch = await unitOfWork.Matches.GetMatchDetailsByMatchIdAsync(matched.Id, cancellationToken).ConfigureAwait(false);
+      var detailsForMatch = await matches.GetMatchDetailsByMatchIdAsync(matched.Id, cancellationToken).ConfigureAwait(false);
       if (detailsForMatch != null)
       {
         detailsForMatch.FotmobUrl = fotmobGameUrl;
@@ -110,7 +110,7 @@ public class UpdateMatchDetailsHandler(
           FotmobUrl = fotmobGameUrl,
           FotmobDetailsJson = json
         };
-        await unitOfWork.Matches.AddMatchDetailsAsync(newDetails, cancellationToken).ConfigureAwait(false);
+        await matches.AddMatchDetailsAsync(newDetails, cancellationToken).ConfigureAwait(false);
       }
       ApplyStatusAndScoreIfUpcoming(matched, dto);
       await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -122,8 +122,8 @@ public class UpdateMatchDetailsHandler(
     }
 
     // Path C: insert new match under the Unknown league (Fotmob-discovered fixtures).
-    var allClubs = (await unitOfWork.Clubs.GetClubs().ConfigureAwait(false)).ToList();
-    var stage = await unitOfWork.Leagues.GetStageForDateAsync(
+    var allClubs = (await clubs.GetClubs().ConfigureAwait(false)).ToList();
+    var stage = await leagues.GetStageForDateAsync(
       League.UnknownSoccerdataId,
       DateOnly.FromDateTime(matchDate)).ConfigureAwait(false);
 
@@ -141,7 +141,7 @@ public class UpdateMatchDetailsHandler(
     }
 
     var newMatch = Match.CreateUpcomming(matchDate, stage.Id, homeClub.Id, awayClub.Id);
-    await unitOfWork.Matches.AddMatch(newMatch, cancellationToken).ConfigureAwait(false);
+    await matches.AddMatch(newMatch, cancellationToken).ConfigureAwait(false);
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
     var matchDetails = new MatchDetails
@@ -150,7 +150,7 @@ public class UpdateMatchDetailsHandler(
       FotmobUrl = fotmobGameUrl,
       FotmobDetailsJson = json
     };
-    await unitOfWork.Matches.AddMatchDetailsAsync(matchDetails, cancellationToken).ConfigureAwait(false);
+    await matches.AddMatchDetailsAsync(matchDetails, cancellationToken).ConfigureAwait(false);
     ApplyStatusAndScoreIfUpcoming(newMatch, dto);
     await unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
@@ -195,7 +195,7 @@ public class UpdateMatchDetailsHandler(
       ClubSeasons = [new ClubSeason { SeasonId = unknownSeasonId }],
     };
 
-    await unitOfWork.Clubs.AddClubAsync(club, cancellationToken).ConfigureAwait(false);
+    await clubs.AddClubAsync(club, cancellationToken).ConfigureAwait(false);
     allClubs.Add(club);
 
     logger.LogInformation(

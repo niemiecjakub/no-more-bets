@@ -1,22 +1,21 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.Matches;
 
 namespace NoMoreBets.Application.Matches.GetMatchAgentResearch;
 
 public record GetMatchAgentResearchQuery(int MatchId) : IRequest<MatchResearchOutputDto?>;
 
-public sealed class GetMatchAgentResearchHandler(IUnitOfWork unitOfWork, ILogger<GetMatchAgentResearchHandler> logger)
+public sealed class GetMatchAgentResearchHandler(IMatchRepository matches, ILogger<GetMatchAgentResearchHandler> logger)
   : IRequestHandler<GetMatchAgentResearchQuery, MatchResearchOutputDto?>
 {
   public async Task<MatchResearchOutputDto?> Handle(GetMatchAgentResearchQuery request, CancellationToken cancellationToken)
   {
-    var analysis = await unitOfWork.Matches
+    var analysis = await matches
       .GetLatestMatchAnalysisByCodeAsync(request.MatchId, MatchAnalysis.StructuredResearchCode, cancellationToken)
       .ConfigureAwait(false);
 
-    analysis ??= await unitOfWork.Matches
+    analysis ??= await matches
       .GetLatestMatchAnalysisByCodeAsync(request.MatchId, MatchAnalysis.ResearchCode, cancellationToken)
       .ConfigureAwait(false);
 

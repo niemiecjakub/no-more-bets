@@ -1,7 +1,6 @@
 using FluentAssertions;
 using NoMoreBets.Application.AgentSessions.GetAgentSessionMessages;
 using NoMoreBets.Application.AgentSessions.ToolCallDisplay;
-using NoMoreBets.Application.Common;
 using NoMoreBets.Domain.AgentSessions;
 using NoMoreBets.Domain.Betting;
 using DomainClub = NoMoreBets.Domain.Clubs.Club;
@@ -12,16 +11,16 @@ namespace NoMoreBets.Application.Tests.AgentSessions.GetAgentSessionMessages;
 
 public class GetAgentSessionMessagesHandlerTests
 {
-  private readonly IUnitOfWork _unitOfWork = Substitute.For<IUnitOfWork>();
+  private readonly IBettingRepository _betting = Substitute.For<IBettingRepository>();
+  private readonly IMatchRepository _matches = Substitute.For<IMatchRepository>();
   private readonly IAgentSessionRepository _agentSessions = Substitute.For<IAgentSessionRepository>();
   private readonly AgentToolCallDisplayFormatter _displayFormatter;
   private readonly GetAgentSessionMessagesHandler _sut;
 
   public GetAgentSessionMessagesHandlerTests()
   {
-    _unitOfWork.AgentSessions.Returns(_agentSessions);
-    _displayFormatter = new AgentToolCallDisplayFormatter(_unitOfWork);
-    _sut = new GetAgentSessionMessagesHandler(_unitOfWork, _displayFormatter);
+    _displayFormatter = new AgentToolCallDisplayFormatter(_betting, _matches, _agentSessions);
+    _sut = new GetAgentSessionMessagesHandler(_agentSessions, _displayFormatter);
   }
 
   [Fact]
@@ -56,18 +55,13 @@ public class GetAgentSessionMessagesHandlerTests
       },
     };
 
-    var betting = Substitute.For<IBettingRepository>();
-    var matches = Substitute.For<IMatchRepository>();
-    _unitOfWork.Betting.Returns(betting);
-    _unitOfWork.Matches.Returns(matches);
-
     _agentSessions.SessionExistsAsync(sessionId, Arg.Any<CancellationToken>()).Returns(true);
     _agentSessions.GetMessagesAsync(sessionId, Arg.Any<CancellationToken>()).Returns(messages);
     _agentSessions.GetMatchIdsBySessionIdsAsync(Arg.Any<IReadOnlyCollection<int>>(), Arg.Any<CancellationToken>())
       .Returns(new Dictionary<int, int>());
-    betting.GetBetSlipsByAgentSessionIdAsync(sessionId, Arg.Any<CancellationToken>())
+    _betting.GetBetSlipsByAgentSessionIdAsync(sessionId, Arg.Any<CancellationToken>())
       .Returns(Array.Empty<BetSlip>());
-    matches.GetMatchesByIdsAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
+    _matches.GetMatchesByIdsAsync(Arg.Any<IReadOnlyList<int>>(), Arg.Any<CancellationToken>())
       .Returns([
         new Match
         {
